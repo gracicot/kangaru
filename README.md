@@ -52,8 +52,8 @@ In order to have the container to construct all of your objects, you must declar
         // MyClass depends on Foo and Bar
         using Dependencies = Dependency<Foo, Bar>;
     };
-What all of this mean? Okay. Let's take a look at the first and second line. We are declaring a template struct.
-It is the specialization of the struct "Service" with your class. The only thing it contains is the dependencies of the service. The order of each dependency is the order the dependency is in our constructor.
+What all of this mean? Okay. Let's take a look at the first and second line after our class. We are declaring a template struct.
+It is the specialization of the struct "Service" with your class. The only thing it contains is the dependencies of the service, which we can see at the fourth line after our class. The order of each dependency is the order the dependency is in our constructor.
 Take note that Foo and Bar need to be services too to make this example valid.
 
 Container aware services

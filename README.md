@@ -16,12 +16,12 @@ The namespace sdicl is containing the namespace detail which contains implementa
 The Container
 -------------
 The container contains three methods:
- * single<T>()
- * service<T>()
- * init()
+ * `single<T, Bases...>()`
+ * `service<T>()`
+ * `init()`
 
 ### single
-single will instanciate an object of type T and will register it as a type that is meant to have a single instance within the container. It only accept class that are a service
+single will instanciate an object of type T and will register it as a type that is meant to have a single instance within the container. It only accept class that are a service. If you want an abstract class to be represented by this single, you can replace `Bases...` by all of it's abstract base you need to.
 
 ### service
 service will instanciate a service of type T (if needed) and will return it. If the service as been registered as a "single", it will reuse the same instance everytime. However, the default behaviour is to construct new object each time.
@@ -53,8 +53,13 @@ In order to have the container to construct all of your objects, you must declar
         using Dependencies = Dependency<Foo, Bar>;
     };
 What all of this mean? Okay. Let's take a look at the first and second line after our class. We are declaring a template struct.
+
 It is the specialization of the struct "Service" with your class. The only thing it contains is the dependencies of the service, which we can see at the fourth line after our class. The order of each dependency is the order the dependency is in our constructor.
+
 Take note that Foo and Bar need to be services too to make this example valid.
+It's possible to have an abstract class as a dependency. It will work as long as you register a concrete class to be the default service for this abstract service.
+
+When you have no dependency, it is still required to declare this struct. the dependencies will be equal to `Dependency<>`
 
 Container aware services
 ------------------------
@@ -113,6 +118,7 @@ The process of resolving dependencies recursively is completely abstracted.
 If you missed something, here's a complete example of a small program using sdicl:
 
     #include <iostream>
+
     #include "sdicl.hpp"
 
     using namespace std;
@@ -130,25 +136,37 @@ If you missed something, here's a complete example of a small program using sdic
 
     struct B {
         // B needs A
-        B(shared_ptr<A> a) : a{a} {}
-        
+        B(shared_ptr<A> a) : a {a} {}
+
         shared_ptr<A> a;
     };
 
-    struct C {
+    struct AC {
+        virtual int getN() const = 0;
+    };
+
+    struct C : AC {
         // C needs A and B
-        C(shared_ptr<A> a, shared_ptr<B> b) : a{a}, b{b} {}
-        
+        C(shared_ptr<A> a, shared_ptr<B> b) : a {a}, b {b} {}
+
+        int getN() const override;
+
         shared_ptr<A> a;
         shared_ptr<B> b;
     };
+
+    int C::getN() const
+    {
+        return 21;
+    }
+
 
     struct D {
-        // D needs B and C
-        D(shared_ptr<B> b, shared_ptr<C> c) : b{b}, c{c} {}
-        
+        // D needs B and AC
+        D(shared_ptr<B> b, shared_ptr<AC> c) : b {b}, c {c} {}
+
         shared_ptr<B> b;
-        shared_ptr<C> c;
+        shared_ptr<AC> c;
     };
 
     struct E : C {
@@ -156,8 +174,8 @@ If you missed something, here's a complete example of a small program using sdic
         // We needs A and B because C needs them
         // weak_ptr because we don't want the MyContainer to hold a shared_ptr to himself
         E(weak_ptr<MyContainer> container, shared_ptr<A> a, shared_ptr<B> b) :
-            C{a, b}, container{container} {}
-            
+            C {a, b}, container {container} {}
+
         weak_ptr<MyContainer> container;
     };
 
@@ -169,7 +187,8 @@ If you missed something, here's a complete example of a small program using sdic
     {
         single<A>();
         single<B>();
-        single<C>();
+		// the service C will be registered as AC too
+        single<C, AC>();
         // let's say that D is not single
         single<E>();
     }
@@ -200,8 +219,9 @@ If you missed something, here's a complete example of a small program using sdic
 
     template<>
     struct Service<D> {
-        // D depends on B and C
-        using Dependencies = Dependency<B, C>;
+        // D depends on B and AC
+		// The AC class will be a C (see init for details)
+        using Dependencies = Dependency<B, AC>;
     };
 
     template<>
@@ -215,9 +235,10 @@ If you missed something, here's a complete example of a small program using sdic
     ///////////////////////////////
     //        Usage Example      //
     ///////////////////////////////
-    int main(int argc, char **argv) {
+    int main(int argc, char** argv)
+    {
         auto container = make_container<MyContainer>();
-        
+
         // let's get some services
         auto a = container->service<A>();
         auto b = container->service<B>();
@@ -225,24 +246,25 @@ If you missed something, here's a complete example of a small program using sdic
         auto d1 = container->service<D>();
         auto d2 = container->service<D>();
         auto e = container->service<E>();
-        
+
         a->n = 9;
         b->a->n = 8;
-        d1->c->a->n = 1;
         // 5 will be the last value.
         // Since A is single, we will see the value 5 across all classes
-        d2->b->a->n = 5;
-        
-        cout << "is same container: " << (e->container.lock() == container ? "true":"false") << endl;
-        cout << "is same D: " << (d1 == d2 ? "true":"false") << endl;
-        cout << "is same A: " << ((a == b->a) && (a == d1->c->a) && (a == d2->b->a) ? "true":"false") << endl;
+        e->a->n = 5;
+
+        cout << "is same container: " << (e->container.lock() == container ? "true" : "false") << endl;
+        cout << "is same D: " << (d1 == d2 ? "true" : "false") << endl;
+        cout << "is same A: " << ((a == b->a) && (a == e->a) ? "true" : "false") << endl;
         cout << "a: " << a->n << endl;
         cout << "b: " << b->a->n << endl;
-        cout << "d1: " << d1->c->a->n << endl;
-        cout << "d2: " << d2->b->a->n << endl;
-        
+        cout << "d1: " << d1->b->a->n << endl;
+        cout << "d2: " << d2->c->getN() << endl;
+
         return 0;
     }
+
+
 This program should output:
 
     is same container: true
@@ -251,4 +273,11 @@ This program should output:
     a: 5
     b: 5
     d1: 5
-    d2: 5
+    d2: 21
+
+What's next?
+------------
+There is some feature I would like to see become real. Here's a list of those, feel free to contribute!
+ * Testing with mutliple / virtual inheritance
+ * Have callback to initialize services
+ * Cleanup the code

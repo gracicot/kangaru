@@ -95,7 +95,7 @@ Recieving the provided Container class works too:
     
     }
 Notice how we changed the type.
-As I said before, if the containe cannot convert himself to a MyContainer as in this example or whatever you container type is, it will create a new one as a "single" service.
+As I said before, if the container cannot convert himself to a MyContainer as in this example or whatever you container type is, it will create a new one as a "single" service.
 We can notice that we used weak_ptr instead of a shared_ptr. This practice prevent memory leak in recursive structures (Container -> MyClass -> Container ...)
   
 Using your services

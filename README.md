@@ -37,7 +37,7 @@ It returns a shared_ptr of your container's type.
 
 Declare a service
 -----------------
-In order to have the container to construct all of your objects, you must declare a service. Declaring a service is pretty is done in a couple of lines:
+In order to have the container to construct all of your objects, you must declare a service. Declaring a service is done in a couple of lines:
     
     struct MyClass {
         // MyClass needs Foo and Bar

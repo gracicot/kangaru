@@ -111,8 +111,8 @@ Using your services is probably the easiest part. You just have to use the `serv
 The process of resolving dependencies recursively is completely abstracted.
 
 If you missed something, here's a complete example of a small program using sdicl:
-    #include <iostream>
 
+    #include <iostream>
     #include "sdicl.hpp"
 
     using namespace std;

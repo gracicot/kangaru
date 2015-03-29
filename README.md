@@ -37,7 +37,7 @@ It returns a shared_ptr of your container's type.
 
 Declare a service
 -----------------
-In order to have the container to construct all of your objects, you must declare a service. Declaring a service is done in a couple of lines:
+In order to have the container to construct all of your objects, you must declare a service. Declaring a service is done in a couple of lines. Let's say we have this class:
     
     struct MyClass {
         // MyClass needs Foo and Bar
@@ -47,14 +47,13 @@ In order to have the container to construct all of your objects, you must declar
         shared_ptr<Bar> bar;
     };
 
-    template<>
-    struct Service<MyClass> {
-        // MyClass depends on Foo and Bar
-        using Dependencies = Dependency<Foo, Bar>;
-    };
-What all of this mean? Okay. Let's take a look at the first and second line after our class. We are declaring a template struct.
+In order to make this class a service, you must declare this struct:
 
-It is the specialization of the struct "Service" with your class. The only thing it contains is the dependencies of the service, which we can see at the fourth line after our class. The order of each dependency is the order the dependency is in our constructor.
+    namespace sdicl {
+    // MyClass depends on Foo and Bar
+    template<> struct Service<MyClass> : Dependency<Foo, Bar> {};
+    }
+What all of this mean? Let's take a look at this line. We are declaring a template struct. It is the specialization of the struct `Service` with your class. We are inheriting `Dependency`, which contains the information about our service. `Dependency` has template paramaters, which are the dependencies of the service `MyClass`. The order of dependencies in the templates of `Dependency` is the order the dependencies are in the constructor of our service `MyClass`. The specialization of the struct `Service` must be in the namespace sdicl, because the original struct is declared in this very namespace.
 
 Take note that Foo and Bar need to be services too to make this example valid.
 It's possible to have an abstract class as a dependency. It will work as long as you register a concrete class to be the default service for this abstract service.
@@ -73,13 +72,8 @@ Sometimes, you need to manage services in a service. That's why it's possible to
     };
 
     namespace sdicl {
-
-    template<>
-    struct Service<MyClass> {
-        // MyClass depends on MyContainer
-        using Dependencies = Dependency<MyContainer>;
-    };
-    
+    // MyClass depends on MyContainer
+    template<> struct Service<MyClass> : Dependency<MyContainer> {};
     }
 Recieving the provided Container class works too:
     
@@ -91,13 +85,8 @@ Recieving the provided Container class works too:
     };
 
     namespace sdicl {
-    
-    template<>
-    struct Service<MyClass> {
-        // MyClass depends on MyContainer
-        using Dependencies = Dependency<Container>;
-    };
-    
+    // MyClass depends on MyContainer
+    template<> struct Service<MyClass> : Dependency<Container> {};
     }
 Notice how we changed the type.
 As I said before, if the container cannot convert himself to a MyContainer as in this example or whatever you container type is, it will create a new one as a "single" service.
@@ -206,40 +195,25 @@ If you missed something, here's a complete example of a small program using sdic
     //     Service Meta Data     //
     ///////////////////////////////
     namespace sdicl {
-
-    template<>
-    struct Service<A> {
-        // A depends on nothing
-        using Dependencies = Dependency<>;
-    };
-
-    template<>
-    struct Service<B> {
-        // B depends on A
-        using Dependencies = Dependency<A>;
-    };
-
-    template<>
-    struct Service<C> {
-        // C depends on A and B
-        using Dependencies = Dependency<A, B>;
-    };
-
-    template<>
-    struct Service<D> {
-        // D depends on B and AC
-		// The AC class will be a C (see init for details)
-        using Dependencies = Dependency<B, AC>;
-    };
-
-    template<>
-    struct Service<E> {
-        // E depends on MyContainer, A and B
-        using Dependencies = Dependency<MyContainer, A, B>;
-    };
-
+    
+    // A depends on nothing
+    template<> struct Service<A> : Dependency<> {};
+    
+    // B depends on A
+    template<> struct Service<B> : Dependency<A> {};
+    
+    // C depends on A and B
+    template<> struct Service<C> : Dependency<A, B> {};
+    
+    // D depends on B and AC
+    // The AC class will be a C (see init for details)
+    template<> struct Service<D> : Dependency<B, AC> {};
+    
+    // E depends on MyContainer, A and B
+    template<> struct Service<E> : Dependency<MyContainer, A, B> {};
+    
     }
-
+    
     ///////////////////////////////
     //        Usage Example      //
     ///////////////////////////////

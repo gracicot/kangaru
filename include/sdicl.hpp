@@ -51,8 +51,8 @@ private:
 struct Container : std::enable_shared_from_this<Container> {
 	template<typename T, typename ...Bases>
 	void single() {
-		auto dependencies = dependency<typename Service<T>::Dependencies::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::Dependencies::DependenciesTypes>::value>::type());
-		auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::Dependencies::DependenciesTypes>::value>::type(), dependencies);
+		auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
+		auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
 		save_instance<T, Bases...>(service);
 	}
 	
@@ -60,8 +60,8 @@ struct Container : std::enable_shared_from_this<Container> {
 	typename std::enable_if<(!std::is_abstract<T>::value && !std::is_base_of<Container, T>::value), std::shared_ptr<T>>::type service() {
 		auto it = _services.find(typeid(T).name());
 		if (it == _services.end()) {
-			auto dependencies = dependency<typename Service<T>::Dependencies::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::Dependencies::DependenciesTypes>::value>::type());
-			auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::Dependencies::DependenciesTypes>::value>::type(), dependencies);
+			auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
+			auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
 			
 			return service;
 		} else {
@@ -106,10 +106,9 @@ struct Container : std::enable_shared_from_this<Container> {
 			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
 			if (holder) {
 				return holder->getInstance();
-			} else {
-				return nullptr;
 			}
 		}
+		return nullptr;
 	}
 	
 	virtual void init(){}

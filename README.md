@@ -21,7 +21,7 @@ The container contains three methods:
  * `init()`
 
 ### single
-single will instanciate an object of type T and will register it as a type that is meant to have a single instance within the container. It only accept class that are a service. If you want an abstract class to be represented by this single, you can replace `Bases...` by all of it's abstract base you need to.
+Single will instanciate an object of type T and will register it as a type that is meant to have a single instance within the container. It only accept class that are a service. If you want an abstract class to be represented by this single, you can replace `Bases...` by all of it's abstract base you need to. Specifying bases will act as  overriding Parent services.
 
 ### service
 service will instanciate a service of type T (if needed) and will return it. If the service as been registered as a "single", it will reuse the same instance everytime. However, the default behaviour is to construct new object each time.
@@ -92,13 +92,13 @@ Notice how we changed the type.
 As I said before, if the container cannot convert himself to a MyContainer as in this example or whatever you container type is, it will create a new one as a "single" service.
 We can notice that we used weak_ptr instead of a shared_ptr. This practice prevent memory leak in recursive structures (Container -> MyClass -> Container ...)
 
-Overriting Services
+Overriding Services
 -------------------
-Overriting services is easy. It currently only work with single services. You simly add parameters to the `single<T, Bases...>()` method. The specified bases will be the one you service overrites.
+Overriding services is easy. It currently only work with single services. You simly add parameters to the `single<T, Bases...>()` method. The specified bases will be the one your service overrides.
 Here's an example:
 
     container->single<Child, Parent, ParentParent>();
-The service Child will overrite the Parent service and the ParentParent service. However, if ParentParent extends another service, this ParentParent's Parent will not be overrited.    
+The service Child will override the Parent service and the ParentParent service. However, if ParentParent extends another service, this ParentParent's Parent will not be overrided.    
   
 Using your services
 -------------------
@@ -264,3 +264,4 @@ There is some feature I would like to see become real. Here's a list of those, f
  * Have callback to initialize services
  * Cleanup the code
  * Unit tests
+ * CMake

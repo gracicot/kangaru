@@ -62,7 +62,7 @@ When you have no dependency, it is still required to declare this struct. the de
 
 Container aware services
 ------------------------
-Sometimes, you need to manage services in a service. That's why it's possible to send the container as a service. The container's type can be polymorphic. However, if the container fail to convert itself to it's base class, it will create a new container of this type as a "single"
+Sometimes, you need to manage services in a service. That's why it's possible to send the container as a service. The container's type can be polymorphic. However, if the container fail to convert itself to it's base class, it will inject a null pointer.
     
     struct MyClass {
         // MyClass needs MyContainer

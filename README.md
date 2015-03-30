@@ -1,6 +1,6 @@
 sdicl
 =====
-sdicl, pronounced S-dicle, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
+sdicl, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
 sdicl stands for "Simple Dependency Injection Container Library"
 
 Getting Started

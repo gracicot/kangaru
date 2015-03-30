@@ -1,17 +1,17 @@
-sdicl
+sioc
 =====
-sdicl, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
-sdicl stands for "Simple Dependency Injection Container Library"
+sioc, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
+sioc stands for "Simple Inversion Of Control"
 
 Getting Started
 ---------------
-Getting started with sdicl is easy. First of all, you need to include the library:
+Getting started with sioc is easy. First of all, you need to include the library:
 
-    #include <sdicl.hpp>
+    #include <sioc.hpp>
 
 Take note that you will need either to add the header to your include paths or to add it to your project.
-Every declarations are made in the namespace sdicl.
-The namespace sdicl is containing the namespace detail which contains implementation detail.
+Every declarations are made in the namespace sioc.
+The namespace sioc is containing the namespace detail which contains implementation detail.
 
 The Container
 -------------
@@ -49,11 +49,11 @@ In order to have the container to construct all of your objects, you must declar
 
 In order to make this class a service, you must declare this struct:
 
-    namespace sdicl {
+    namespace sioc {
     // MyClass depends on Foo and Bar
     template<> struct Service<MyClass> : Dependency<Foo, Bar> {};
     }
-What all of this mean? Let's take a look at this line. We are declaring a template struct. It is the specialization of the struct `Service` with your class. We are inheriting `Dependency`, which contains the information about our service. `Dependency` has template paramaters, which are the dependencies of the service `MyClass`. The order of dependencies in the templates of `Dependency` is the order the dependencies are in the constructor of our service `MyClass`. The specialization of the struct `Service` must be in the namespace sdicl, because the original struct is declared in this very namespace.
+What all of this mean? Let's take a look at this line. We are declaring a template struct. It is the specialization of the struct `Service` with your class. We are inheriting `Dependency`, which contains the information about our service. `Dependency` has template paramaters, which are the dependencies of the service `MyClass`. The order of dependencies in the templates of `Dependency` is the order the dependencies are in the constructor of our service `MyClass`. The specialization of the struct `Service` must be in the namespace sioc, because the original struct is declared in this very namespace.
 
 Take note that Foo and Bar need to be services too to make this example valid.
 It's possible to have an abstract class as a dependency. It will work as long as you register a concrete class to be the default service for this abstract service.
@@ -71,7 +71,7 @@ Sometimes, you need to manage services in a service. That's why it's possible to
         weak_ptr<MyContainer> container;
     };
 
-    namespace sdicl {
+    namespace sioc {
     // MyClass depends on MyContainer
     template<> struct Service<MyClass> : Dependency<MyContainer> {};
     }
@@ -84,7 +84,7 @@ Recieving the provided Container class works too:
         weak_ptr<Container> container;
     };
 
-    namespace sdicl {
+    namespace sioc {
     // MyClass depends on MyContainer
     template<> struct Service<MyClass> : Dependency<Container> {};
     }
@@ -104,7 +104,7 @@ Using your services
 -------------------
 Using your services is probably the easiest part. You just have to use the `service<T>()` method and you're done!
     
-    using namespace sdicl;
+    using namespace sioc;
     auto container = make_container<MyContainer>();
 	
     // let's get some services
@@ -112,14 +112,14 @@ Using your services is probably the easiest part. You just have to use the `serv
     myObject->foo->baz(); // myObject got a Foo injected!
 The process of resolving dependencies recursively is completely abstracted.
 
-If you missed something, here's a complete example of a small program using sdicl:
+If you missed something, here's a complete example of a small program using sioc:
 
     #include <iostream>
 
-    #include "sdicl.hpp"
+    #include "sioc.hpp"
 
     using namespace std;
-    using namespace sdicl;
+    using namespace sioc;
 
     class MyContainer;
 
@@ -194,7 +194,7 @@ If you missed something, here's a complete example of a small program using sdic
     ///////////////////////////////
     //     Service Meta Data     //
     ///////////////////////////////
-    namespace sdicl {
+    namespace sioc {
     
     // A depends on nothing
     template<> struct Service<A> : Dependency<> {};

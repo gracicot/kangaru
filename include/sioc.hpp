@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <tuple>
 
-namespace sdicl {
+namespace soic {
 
 template<typename... Types>
 struct Dependency {

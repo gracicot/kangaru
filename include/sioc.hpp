@@ -46,6 +46,18 @@ private:
 	std::shared_ptr<T> _instance;
 };
 
+template<typename T, typename... Args>
+struct CallbackHolder : Holder {
+	CallbackHolder(std::function<std::shared_ptr<T>(Args...)> callback) : _callback{callback} {}
+	
+	std::function<std::shared_ptr<T>(Args...)> getCallback() const {
+		return _callback;
+	}
+	
+private:
+	std::function<std::shared_ptr<T>(Args...)> _callback;
+};
+
 }
 
 struct Container : std::enable_shared_from_this<Container> {
@@ -53,6 +65,11 @@ struct Container : std::enable_shared_from_this<Container> {
 	void single() {
 		auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
 		auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
+		save_instance<T, Bases...>(service);
+	}
+	
+	template<typename T, typename ...Bases>
+	void single(std::shared_ptr<T> service) {
 		save_instance<T, Bases...>(service);
 	}
 	
@@ -99,10 +116,20 @@ struct Container : std::enable_shared_from_this<Container> {
 		}
 	}
 	
+	template<typename T, typename ...Bases, typename U>
+	void callback(U callback) {
+		save_callback<T, typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), callback);
+	}
+	
 	template<typename T>
 	typename std::enable_if<std::is_abstract<T>::value, std::shared_ptr<T>>::type service() {
 		auto it = _services.find(typeid(T).name());
-		if (it != _services.end()) {
+		if (it == _services.end()) {
+			auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
+			auto service = callback_make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
+			
+			return service;
+		} else {
 			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
 			if (holder) {
 				return holder->getInstance();
@@ -120,12 +147,30 @@ private:
 	}
 	
 	template<typename T, typename Tuple, int ...S>
-	std::shared_ptr<T> make_service(detail::seq<S...>, Tuple dependencies) const {
+	std::shared_ptr<T> callback_make_service(detail::seq<S...> seq, Tuple dependencies) const {
+		auto it = _callbacks.find(typeid(T).name());
+		if (it != _callbacks.end()) {
+			auto holder = dynamic_cast<detail::CallbackHolder<T, typename std::tuple_element<S, Tuple>::type...>*>(it->second.get());
+			if (holder) {
+				return holder->getCallback()(std::get<S>(dependencies)...);
+			} else {
+				std::cout << "shit" << std::endl;
+			}
+		}
+		return nullptr;
+	}
+	
+	template<typename T, typename Tuple, int ...S>
+	std::shared_ptr<T> make_service(detail::seq<S...> seq, Tuple dependencies) const {
+		auto service = callback_make_service<T, Tuple>(seq, dependencies);
+		if (service) {
+			return service;
+		}
 		return std::make_shared<T>(std::get<S>(dependencies)...);
 	}
 	
 	template<typename T, typename ...Others>
-	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_instance (std::shared_ptr<T> service) {
+	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_instance(std::shared_ptr<T> service) {
 		save_instance<T>(service);
 		save_instance<Others...>(service);
 	}
@@ -135,6 +180,18 @@ private:
 		_services[typeid(T).name()] = std::unique_ptr<detail::InstanceHolder<T>>(new detail::InstanceHolder<T>(service));
 	}
 	
+	template<typename T, typename Tuple, typename ...Others,  int ...S, typename U>
+	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_callback(detail::seq<S...> seq, U callback) {
+		save_callback<T, Tuple>(seq, service);
+		save_callback<T, Tuple, Others...>(seq, service);
+	}
+	
+	template<typename T, typename Tuple, int ...S, typename U>
+	void save_callback (detail::seq<S...>, U callback) {
+		_callbacks[typeid(T).name()] = std::unique_ptr<detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>>(new detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>(callback));
+	}
+	
+	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _callbacks;
 	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _services;
 };
 

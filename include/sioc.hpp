@@ -197,12 +197,6 @@ private:
 		_services[typeid(T).name()] = std::unique_ptr<detail::InstanceHolder<T>>(new detail::InstanceHolder<T>(service));
 	}
 	
-	template<typename T, typename Tuple, typename ...Others,  int ...S, typename U>
-	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_callback(detail::seq<S...> seq, U callback) {
-		save_callback<T, Tuple>(seq, callback);
-		save_callback<T, Tuple, Others...>(seq, callback);
-	}
-	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
 		_callbacks[typeid(T).name()] = std::unique_ptr<detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>>(new detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>(callback));

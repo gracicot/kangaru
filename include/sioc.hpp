@@ -84,7 +84,7 @@ struct Container : std::enable_shared_from_this<Container> {
 	void instance() {
 		static_assert(std::is_base_of<Single, Service<T>>::value, "instance only accept Single Service instance.");
 		auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
-		auto service = make_service<T, decltype(dependencies)>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
+		auto service = make_service<T>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), dependencies);
 		call_save_instance(service, typename detail::seq_gen<std::tuple_size<typename Service<T>::ParentTypes>::value>::type());
 	}
 	

@@ -198,8 +198,8 @@ private:
 	
 	template<typename T, typename Tuple, typename ...Others,  int ...S, typename U>
 	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_callback(detail::seq<S...> seq, U callback) {
-		save_callback<T, Tuple>(seq, service);
-		save_callback<T, Tuple, Others...>(seq, service);
+		save_callback<T, Tuple>(seq, callback);
+		save_callback<T, Tuple, Others...>(seq, callback);
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>

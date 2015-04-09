@@ -119,7 +119,7 @@ struct Container : std::enable_shared_from_this<Container> {
 		return nullptr;
 	}
 	
-	template<typename T, typename ...Bases, typename U>
+	template<typename T, typename U>
 	void callback(U callback) {
 		static_assert(!std::is_base_of<Single, Service<T>>::value, "instance does not accept Single Service.");
 		save_callback<T, typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type(), callback);

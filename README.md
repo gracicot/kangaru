@@ -24,6 +24,7 @@ Features
  * Self-injection
  * Polymorphic resoltuion of services
  * Clean and simple API
+ * Near zero runtime overhead
 
 What's next?
 ------------

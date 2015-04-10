@@ -1,13 +1,12 @@
-sioc
-=====
-sioc, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
-sioc stands for "Simple Inversion Of Control"
+Kangaru
+=======
+Kangaru is a simple dependency injection container library for C++11. It manages multiple level of dependency. The name Kangaru came from the feature of injecting itself as a dependency into a service.
 
 Getting Started
 ---------------
-Getting started with sioc is easy. First of all, you need to include the library:
+Getting started with Kangaru is easy. First of all, you need to include the library:
 
-    #include <sioc.hpp>
+    #include <kangaru.hpp>
 
 Take note that you will need either to add the header to your include paths or to add it to your project.
 Every declarations are made in the namespace sioc.

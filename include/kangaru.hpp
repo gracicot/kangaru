@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <tuple>
 
-namespace sioc {
+namespace kgr {
 
 struct NoDependencies {
 	using DependenciesTypes = std::tuple<>;

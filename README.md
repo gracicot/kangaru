@@ -1,267 +1,34 @@
-sioc
-=====
-sioc, is a simple dependency injection container library for C++11. It manages multiple level of dependency, and can even inject himself into a service!
-sioc stands for "Simple Inversion Of Control"
+Kangaru
+=======
+Kangaru is a simple dependency injection container library for C++11. It manages multiple level of dependency. The name Kangaru came from the feature of injecting itself as a dependency into a service.
 
 Getting Started
 ---------------
-Getting started with sioc is easy. First of all, you need to include the library:
+Getting started with Kangaru is easy. First of all, you need to include the library:
 
-    #include <sioc.hpp>
+    #include <kangaru.hpp>
 
 Take note that you will need either to add the header to your include paths or to add it to your project.
 Every declarations are made in the namespace sioc.
 The namespace sioc is containing the namespace detail which contains implementation detail.
 
-The Container
--------------
-The container contains three methods:
- * `single<T, Bases...>()`
- * `service<T>()`
- * `init()`
+For more tutorial and more details, please visit the wiki!
 
-### single
-Single will instanciate an object of type T and will register it as a type that is meant to have a single instance within the container. It only accept class that are a service. If you want an abstract class to be represented by this single, you can replace `Bases...` by all of it's abstract base you need to. Specifying bases will act as  overriding Parent services.
-
-### service
-service will instanciate a service of type T (if needed) and will return it. If the service as been registered as a "single", it will reuse the same instance everytime. However, the default behaviour is to construct new object each time.
-
-### init
-init is empty and virtual, it is meant to register every "single" services. The function is empty by default.
-
-make_container
---------------
-make container is a helper function to construct and initialize a container of any type. T must extends from Container.
-It recieve every argument you need to send to your container's constructor (this should be very rare) and forward them just like make_shared.
-It returns a shared_ptr of your container's type.
-
-Declare a service
------------------
-In order to have the container to construct all of your objects, you must declare a service. Declaring a service is done in a couple of lines. Let's say we have this class:
-    
-    struct MyClass {
-        // MyClass needs Foo and Bar
-        MyClass(shared_ptr<Foo> foo, shared_ptr<Bar> bar) : foo{foo}, bar{bar} {}
-    
-        shared_ptr<Foo> foo;
-        shared_ptr<Bar> bar;
-    };
-
-In order to make this class a service, you must declare this struct:
-
-    namespace sioc {
-    // MyClass depends on Foo and Bar
-    template<> struct Service<MyClass> : Dependency<Foo, Bar> {};
-    }
-What all of this mean? Let's take a look at this line. We are declaring a template struct. It is the specialization of the struct `Service` with your class. We are inheriting `Dependency`, which contains the information about our service. `Dependency` has template paramaters, which are the dependencies of the service `MyClass`. The order of dependencies in the templates of `Dependency` is the order the dependencies are in the constructor of our service `MyClass`. The specialization of the struct `Service` must be in the namespace sioc, because the original struct is declared in this very namespace.
-
-Take note that Foo and Bar need to be services too to make this example valid.
-It's possible to have an abstract class as a dependency. It will work as long as you register a concrete class to be the default service for this abstract service.
-
-When you have no dependency, it is still required to declare this struct. the dependencies will be equal to `Dependency<>`
-
-Container aware services
-------------------------
-Sometimes, you need to manage services in a service. That's why it's possible to send the container as a service. The container's type can be polymorphic. However, if the container fail to convert itself to it's base class, it will inject a null pointer.
-    
-    struct MyClass {
-        // MyClass needs MyContainer
-        MyClass(weak_ptr<MyContainer> container) : container{container} {}
-    
-        weak_ptr<MyContainer> container;
-    };
-
-    namespace sioc {
-    // MyClass depends on MyContainer
-    template<> struct Service<MyClass> : Dependency<MyContainer> {};
-    }
-Recieving the provided Container class works too:
-    
-    struct MyClass {
-        // MyClass needs Foo and Bar
-        MyClass(weak_ptr<Container> container) : container{container} {}
-    
-        weak_ptr<Container> container;
-    };
-
-    namespace sioc {
-    // MyClass depends on MyContainer
-    template<> struct Service<MyClass> : Dependency<Container> {};
-    }
-Notice how we changed the type.
-As I said before, if the container cannot convert himself to a MyContainer as in this example or whatever you container type is, it will create a new one as a "single" service.
-We can notice that we used weak_ptr instead of a shared_ptr. This practice prevent memory leak in recursive structures (Container -> MyClass -> Container ...)
-
-Overriding Services
--------------------
-Overriding services is easy. It currently only work with single services. You simly add parameters to the `single<T, Bases...>()` method. The specified bases will be the one your service overrides.
-Here's an example:
-
-    container->single<Child, Parent, ParentParent>();
-The service Child will override the Parent service and the ParentParent service. However, if ParentParent extends another service, this ParentParent's Parent will not be overrided.    
-  
-Using your services
--------------------
-Using your services is probably the easiest part. You just have to use the `service<T>()` method and you're done!
-    
-    using namespace sioc;
-    auto container = make_container<MyContainer>();
-	
-    // let's get some services
-    auto myObject = container->service<MyClass>();
-    myObject->foo->baz(); // myObject got a Foo injected!
-The process of resolving dependencies recursively is completely abstracted.
-
-If you missed something, here's a complete example of a small program using sioc:
-
-    #include <iostream>
-
-    #include "sioc.hpp"
-
-    using namespace std;
-    using namespace sioc;
-
-    class MyContainer;
-
-    ///////////////////////////////
-    //      Service Classes      //
-    ///////////////////////////////
-    struct A {
-        // A needs nothing
-        int n = 0;
-    };
-
-    struct B {
-        // B needs A
-        B(shared_ptr<A> a) : a {a} {}
-
-        shared_ptr<A> a;
-    };
-
-    struct AC {
-        virtual int getN() const = 0;
-    };
-
-    struct C : AC {
-        // C needs A and B
-        C(shared_ptr<A> a, shared_ptr<B> b) : a {a}, b {b} {}
-
-        int getN() const override;
-
-        shared_ptr<A> a;
-        shared_ptr<B> b;
-    };
-
-    int C::getN() const
-    {
-        return 21;
-    }
-
-
-    struct D {
-        // D needs B and AC
-        D(shared_ptr<B> b, shared_ptr<AC> c) : b {b}, c {c} {}
-
-        shared_ptr<B> b;
-        shared_ptr<AC> c;
-    };
-
-    struct E : C {
-        // E needs MyContainer, A and B
-        // We needs A and B because C needs them
-        // weak_ptr because we don't want the MyContainer to hold a shared_ptr to himself
-        E(weak_ptr<MyContainer> container, shared_ptr<A> a, shared_ptr<B> b) :
-            C {a, b}, container {container} {}
-
-        weak_ptr<MyContainer> container;
-    };
-
-    struct MyContainer : Container {
-        void init() override;
-    };
-
-    void MyContainer::init()
-    {
-        single<A>();
-        single<B>();
-		// the service C will be registered as AC too
-        single<C, AC>();
-        // let's say that D is not single
-        single<E>();
-    }
-
-
-    ///////////////////////////////
-    //     Service Meta Data     //
-    ///////////////////////////////
-    namespace sioc {
-    
-    // A depends on nothing
-    template<> struct Service<A> : Dependency<> {};
-    
-    // B depends on A
-    template<> struct Service<B> : Dependency<A> {};
-    
-    // C depends on A and B
-    template<> struct Service<C> : Dependency<A, B> {};
-    
-    // D depends on B and AC
-    // The AC class will be a C (see init for details)
-    template<> struct Service<D> : Dependency<B, AC> {};
-    
-    // E depends on MyContainer, A and B
-    template<> struct Service<E> : Dependency<MyContainer, A, B> {};
-    
-    }
-    
-    ///////////////////////////////
-    //        Usage Example      //
-    ///////////////////////////////
-    int main(int argc, char** argv)
-    {
-        auto container = make_container<MyContainer>();
-
-        // let's get some services
-        auto a = container->service<A>();
-        auto b = container->service<B>();
-        auto c = container->service<C>();
-        auto d1 = container->service<D>();
-        auto d2 = container->service<D>();
-        auto e = container->service<E>();
-
-        a->n = 9;
-        b->a->n = 8;
-        // 5 will be the last value.
-        // Since A is single, we will see the value 5 across all classes
-        e->a->n = 5;
-
-        cout << "is same container: " << (e->container.lock() == container ? "true" : "false") << endl;
-        cout << "is same D: " << (d1 == d2 ? "true" : "false") << endl;
-        cout << "is same A: " << ((a == b->a) && (a == e->a) ? "true" : "false") << endl;
-        cout << "a: " << a->n << endl;
-        cout << "b: " << b->a->n << endl;
-        cout << "d1: " << d1->b->a->n << endl;
-        cout << "d2: " << d2->c->getN() << endl;
-
-        return 0;
-    }
-
-
-This program should output:
-
-    is same container: true
-    is same D: false
-    is same A: true
-    a: 5
-    b: 5
-    d1: 5
-    d2: 21
+Features
+--------
+ * Recursive dependency resolution
+ * Does not need to modify existing classes
+ * Instances shared accross every services (Single Services)
+ * Providing your own instances
+ * Providing callback to construct your services
+ * Self-injection
+ * Polymorphic resoltuion of services
+ * Clean and simple API
 
 What's next?
 ------------
 There is some feature I would like to see become real. Here's a list of those, feel free to contribute!
  * Testing with mutliple / virtual inheritance
- * Have callback to initialize services
  * Cleanup the code
  * Unit tests
  * CMake

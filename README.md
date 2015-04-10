@@ -30,7 +30,6 @@ What's next?
 ------------
 There is some feature I would like to see become real. Here's a list of those, feel free to contribute!
  * Testing with mutliple / virtual inheritance
- * Have callback to initialize services
  * Cleanup the code
  * Unit tests
  * CMake

@@ -7,14 +7,12 @@
 
 namespace kgr {
 
-struct NoDependencies {
-	using DependenciesTypes = std::tuple<>;
-};
-
 template<typename... Types>
-struct Dependency : NoDependencies {
+struct Dependency {
 	using DependenciesTypes = std::tuple<Types...>;
 };
+
+using NoDependencies = Dependency<>;
 
 struct Single {
 	using ParentTypes = std::tuple<>;
@@ -30,6 +28,9 @@ struct Overrides : Single {
 
 namespace detail {
 
+template <bool B, typename T>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
 template<int ...>
 struct seq { };
 
@@ -38,8 +39,9 @@ struct seq_gen : seq_gen<N-1, N-1, S...> { };
 
 template<int ...S>
 struct seq_gen<0, S...> {
-  typedef seq<S...> type;
+	using type = seq<S...>;
 };
+
 
 struct Holder {
 	virtual ~Holder() {
@@ -49,7 +51,7 @@ struct Holder {
 
 template<typename T>
 struct InstanceHolder : Holder {
-	InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
+	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
 	
 	std::shared_ptr<T> getInstance() const {
 		return _instance;
@@ -61,14 +63,16 @@ private:
 
 template<typename T, typename... Args>
 struct CallbackHolder : Holder {
-	CallbackHolder(std::function<std::shared_ptr<T>(Args...)> callback) : _callback{callback} {}
+	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
+
+	explicit CallbackHolder(callback_t callback) : _callback{callback} {}
 	
-	std::function<std::shared_ptr<T>(Args...)> getCallback() const {
+	callback_t getCallback() const {
 		return _callback;
 	}
 	
 private:
-	std::function<std::shared_ptr<T>(Args...)> _callback;
+	callback_t _callback;
 };
 
 template<typename T, typename ...Args>
@@ -77,7 +81,7 @@ std::unique_ptr<T> make_unique( Args&& ...args )
     return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
 }
 
-}
+} // namespace detail
 
 struct Container : std::enable_shared_from_this<Container> {
 private:
@@ -89,27 +93,24 @@ private:
 	template<typename T> using is_container = std::is_same<T, Container>;
 	template<typename T> using dependency_types = typename Service<T>::DependenciesTypes;
 	template<typename T> using parent_types = typename Service<T>::ParentTypes;
-	template<typename T> using seq_dep = typename detail::seq_gen<std::tuple_size<dependency_types<T>>::value>::type;
-	template<typename T> using seq_parent = typename detail::seq_gen<std::tuple_size<parent_types<T>>::value>::type;
+	template <typename Tuple> using tuple_seq = typename detail::seq_gen<std::tuple_size<Tuple>::value>::type;
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
-	
+	using holder_ptr = std::unique_ptr<detail::Holder>;
+
 public:
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 		
-		call_save_instance(service, seq_parent<T>());
+		call_save_instance(service, tuple_seq<parent_types<T>>());
 	}
 	
 	template<typename T>
 	void instance() {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 		
-		auto dependencies = dependency<dependency_types<T>>(seq_dep<T>());
-		auto service = make_service<T>(seq_dep<T>(), dependencies);
-		
-		call_save_instance(service, seq_parent<T>());
+		instance(make_service<T>());
 	}
 	
 	template<typename T, disable_if<is_abstract<T>>..., disable_if<is_base_of_container<T>>...>
@@ -124,13 +125,7 @@ public:
 	
 	template<typename T, disable_if<is_container<T>>..., enable_if<is_base_of_container<T>>...>
 	std::shared_ptr<T> service() {
-		auto service = std::dynamic_pointer_cast<T>(shared_from_this());
-		
-		if (service) {
-			return service;
-		} else {
-			return nullptr;
-		}
+		return std::dynamic_pointer_cast<T>(shared_from_this());
 	}
 	
 	template<typename T, enable_if<is_abstract<T>>...>
@@ -144,15 +139,14 @@ public:
 				return holder->getInstance();
 			}
 		}
-		
-		return nullptr;
+		return {};
 	}
 	
 	template<typename T, typename U>
 	void callback(U callback) {
 		static_assert(!is_service_single<T>::value, "instance does not accept Single Service.");
 		
-		save_callback<T, dependency_types<T>>(seq_dep<T>(), callback);
+		save_callback<T, dependency_types<T>>(tuple_seq<dependency_types<T>>{}, callback);
 	}
 	
 	virtual void init(){}
@@ -163,10 +157,8 @@ private:
 		auto it = _services.find(typeid(T).name());
 		
 		if (it == _services.end()) {
-			auto dependencies = dependency<dependency_types<T>>(seq_dep<T>());
-			auto service = make_service<T>(seq_dep<T>(), dependencies);
-			
-			call_save_instance(service, seq_parent<T>());
+			auto service = make_service<T>();
+			instance(service);
 			
 			return service;
 		} else {
@@ -174,18 +166,14 @@ private:
 			
 			if (holder) {
 				return holder->getInstance();
-			} else {
-				return nullptr;
 			}
 		}
+		return {};
 	}
 	
 	template<typename T, disable_if<is_service_single<T>>...>
 	std::shared_ptr<T> get_service() {
-		auto dependencies = dependency<dependency_types<T>>(seq_dep<T>());
-		auto service = make_service<T>(seq_dep<T>(), dependencies);
-		
-		return service;
+		return make_service<T>();
 	}
 	
 	template<typename T, int ...S>
@@ -208,8 +196,7 @@ private:
 				return holder->getCallback()(std::get<S>(dependencies)...);
 			}
 		}
-		
-		return nullptr;
+		return {};
 	}
 	
 	template<typename T, typename Tuple, int ...S>
@@ -222,9 +209,15 @@ private:
 		
 		return std::make_shared<T>(std::get<S>(dependencies)...);
 	}
+
+	template <typename T>
+	std::shared_ptr<T> make_service() {
+		auto seq = tuple_seq<dependency_types<T>>{};
+		return make_service<T>(seq, dependency<dependency_types<T>>(seq));
+	}
 	
 	template<typename T, typename ...Others>
-	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_instance(std::shared_ptr<T> service) {
+	detail::enable_if_t<(sizeof...(Others) > 0), void> save_instance(std::shared_ptr<T> service) {
 		save_instance<T>(service);
 		save_instance<Others...>(service);
 	}
@@ -239,8 +232,8 @@ private:
 		_callbacks[typeid(T).name()] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
 	}
 	
-	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _callbacks;
-	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _services;
+	std::unordered_map<std::string, holder_ptr> _callbacks;
+	std::unordered_map<std::string, holder_ptr> _services;
 };
 
 template<typename T = Container, typename ...Args>
@@ -253,4 +246,5 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 	return container;
 }
 
-}
+}  // namespace kgr
+

@@ -42,6 +42,9 @@ struct seq_gen<0, S...> {
 template <typename Tuple>
 using tuple_seq = typename seq_gen<std::tuple_size<Tuple>::value>::type;
 
+template <bool B, typename T>
+using enable_if_t = typename std::enable_if<B, T>::type;
+
 struct Holder {
 	virtual ~Holder() {
 		
@@ -91,17 +94,17 @@ struct Container : std::enable_shared_from_this<Container> {
 	}
 	
 	template<typename T>
-	typename std::enable_if<(!std::is_abstract<T>::value && !std::is_base_of<Container, T>::value), std::shared_ptr<T>>::type service() {
+	detail::enable_if_t<(!std::is_abstract<T>::value && !std::is_base_of<Container, T>::value), std::shared_ptr<T>> service() {
 		return get_service<T>();
 	}
 	
 	template<typename T>
-	typename std::enable_if<(std::is_same<T, Container>::value), std::shared_ptr<T>>::type service() {
+	detail::enable_if_t<(std::is_same<T, Container>::value), std::shared_ptr<T>> service() {
 		return shared_from_this();
 	}
 	
 	template<typename T>
-	typename std::enable_if<(std::is_base_of<Container, T>::value && !std::is_same<T, Container>::value), std::shared_ptr<T>>::type service() {
+	detail::enable_if_t<(std::is_base_of<Container, T>::value && !std::is_same<T, Container>::value), std::shared_ptr<T>> service() {
 		auto service = std::dynamic_pointer_cast<T>(shared_from_this());
 		if (service) {
 			return service;
@@ -111,7 +114,7 @@ struct Container : std::enable_shared_from_this<Container> {
 	}
 	
 	template<typename T>
-	typename std::enable_if<std::is_abstract<T>::value, std::shared_ptr<T>>::type service() {
+	detail::enable_if_t<std::is_abstract<T>::value, std::shared_ptr<T>> service() {
 		auto it = _services.find(typeid(T).name());
 		if (it != _services.end()) {
 			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
@@ -133,7 +136,7 @@ struct Container : std::enable_shared_from_this<Container> {
 	
 private:
 	template<typename T>
-	typename std::enable_if<std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>>::type get_service() {
+	detail::enable_if_t<std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>> get_service() {
 		using DependenciesTypes = typename Service<T>::DependenciesTypes;
 		auto it = _services.find(typeid(T).name());
 		if (it == _services.end()) {
@@ -152,7 +155,7 @@ private:
 	}
 	
 	template<typename T>
-	typename std::enable_if<!std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>>::type get_service() {
+	detail::enable_if_t<!std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>> get_service() {
 		using DependenciesTypes = typename Service<T>::DependenciesTypes;
 		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
 		auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
@@ -192,7 +195,7 @@ private:
 	}
 	
 	template<typename T, typename ...Others>
-	typename std::enable_if<(sizeof...(Others) > 0), void>::type save_instance(std::shared_ptr<T> service) {
+	detail::enable_if_t<(sizeof...(Others) > 0), void> save_instance(std::shared_ptr<T> service) {
 		save_instance<T>(service);
 		save_instance<Others...>(service);
 	}

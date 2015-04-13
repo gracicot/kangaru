@@ -87,11 +87,11 @@ private:
 	template<typename T> using is_abstract = std::is_abstract<T>;
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;
 	template<typename T> using is_container = std::is_same<T, Container>;
-	template<typename T> using seq_dep = typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type;
-	template<typename T> using seq_parent = typename detail::seq_gen<std::tuple_size<typename Service<T>::ParentTypes>::value>::type;
 	template<typename T> using dependency_types = typename Service<T>::DependenciesTypes;
 	template<typename T> using parent_types = typename Service<T>::ParentTypes;
-	template<int S, typename T> using parent_element = typename std::tuple_element<S, typename Service<T>::ParentTypes>::type;
+	template<typename T> using seq_dep = typename detail::seq_gen<std::tuple_size<dependency_types<T>>::value>::type;
+	template<typename T> using seq_parent = typename detail::seq_gen<std::tuple_size<parent_types<T>>::value>::type;
+	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	
 public:

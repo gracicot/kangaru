@@ -115,7 +115,7 @@ struct Container : std::enable_shared_from_this<Container> {
 				return holder->getInstance();
 			}
 		}
-		return nullptr;
+		return {};
 	}
 	
 	template<typename T, typename U>
@@ -171,7 +171,7 @@ private:
 				return holder->getCallback()(std::get<S>(dependencies)...);
 			}
 		}
-		return nullptr;
+		return {};
 	}
 	
 	template<typename T, typename Tuple, int ...S>

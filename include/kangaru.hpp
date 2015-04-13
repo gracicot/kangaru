@@ -88,9 +88,7 @@ struct Container : std::enable_shared_from_this<Container> {
 	template<typename T>
 	void instance() {
 		static_assert(std::is_base_of<Single, Service<T>>::value, "instance only accept Single Service instance.");
-		using DependenciesTypes = typename Service<T>::DependenciesTypes;
-		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
-		instance(make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies));
+		instance(make_service<T>());
 	}
 	
 	template<typename T>
@@ -135,30 +133,23 @@ private:
 
 	template<typename T>
 	detail::enable_if_t<std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>> get_service() {
-		using DependenciesTypes = typename Service<T>::DependenciesTypes;
 		auto it = _services.find(typeid(T).name());
 		if (it == _services.end()) {
-			auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
-			auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
+			auto service = make_service<T>();
 			instance(service);
 			return service;
 		} else {
 			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
 			if (holder) {
 				return holder->getInstance();
-			} else {
-				return nullptr;
 			}
 		}
+		return {};
 	}
 	
 	template<typename T>
 	detail::enable_if_t<!std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>> get_service() {
-		using DependenciesTypes = typename Service<T>::DependenciesTypes;
-		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
-		auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
-		
-		return service;
+		return make_service<T>();
 	}
 	
 	template<typename T, int ...S>
@@ -190,6 +181,13 @@ private:
 			return service;
 		}
 		return std::make_shared<T>(std::get<S>(dependencies)...);
+	}
+
+	template <typename T>
+	std::shared_ptr<T> make_service() {
+		using DependenciesTypes = typename Service<T>::DependenciesTypes;
+		auto seq = detail::tuple_seq<DependenciesTypes>{};
+		return make_service<T>(seq, dependency<DependenciesTypes>(seq));
 	}
 	
 	template<typename T, typename ...Others>

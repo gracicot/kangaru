@@ -69,7 +69,7 @@ private:
 	std::function<std::shared_ptr<T>(Args...)> _callback;
 };
 
-}
+}  // namespace detail
 
 struct Container : std::enable_shared_from_this<Container> {
 	template<typename T>
@@ -212,4 +212,5 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 	return container;
 }
 
-}
+}  // namespace kgr
+

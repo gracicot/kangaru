@@ -84,8 +84,9 @@ struct Container : std::enable_shared_from_this<Container> {
 	template<typename T>
 	void instance() {
 		static_assert(std::is_base_of<Single, Service<T>>::value, "instance only accept Single Service instance.");
-		auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
-		auto service = make_service<T>(detail::tuple_seq<typename Service<T>::DependenciesTypes>{}, dependencies);
+		using DependenciesTypes = typename Service<T>::DependenciesTypes;
+		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
+		auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
 		call_save_instance(service, detail::tuple_seq<typename Service<T>::ParentTypes>{});
 	}
 	
@@ -124,7 +125,8 @@ struct Container : std::enable_shared_from_this<Container> {
 	template<typename T, typename U>
 	void callback(U callback) {
 		static_assert(!std::is_base_of<Single, Service<T>>::value, "instance does not accept Single Service.");
-		save_callback<T, typename Service<T>::DependenciesTypes>(detail::tuple_seq<typename Service<T>::DependenciesTypes>{}, callback);
+		using DependenciesTypes = typename Service<T>::DependenciesTypes;
+		save_callback<T, DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{}, callback);
 	}
 	
 	virtual void init(){}
@@ -132,10 +134,11 @@ struct Container : std::enable_shared_from_this<Container> {
 private:
 	template<typename T>
 	typename std::enable_if<std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>>::type get_service() {
+		using DependenciesTypes = typename Service<T>::DependenciesTypes;
 		auto it = _services.find(typeid(T).name());
 		if (it == _services.end()) {
-			auto dependencies = dependency<typename Service<T>::DependenciesTypes>(detail::tuple_seq<typename Service<T>::DependenciesTypes>{});
-			auto service = make_service<T, decltype(dependencies)>(detail::tuple_seq<typename Service<T>::DependenciesTypes>{}, dependencies);
+			auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
+			auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
 			call_save_instance(service, detail::tuple_seq<typename Service<T>::ParentTypes>{});
 			return service;
 		} else {
@@ -150,8 +153,9 @@ private:
 	
 	template<typename T>
 	typename std::enable_if<!std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>>::type get_service() {
-		auto dependencies = dependency<typename Service<T>::DependenciesTypes>(typename detail::seq_gen<std::tuple_size<typename Service<T>::DependenciesTypes>::value>::type());
-		auto service = make_service<T, decltype(dependencies)>(detail::tuple_seq<typename Service<T>::DependenciesTypes>{}, dependencies);
+		using DependenciesTypes = typename Service<T>::DependenciesTypes;
+		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
+		auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
 		
 		return service;
 	}

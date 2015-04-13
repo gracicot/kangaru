@@ -22,7 +22,7 @@ Features
  * Providing your own instances
  * Providing callback to construct your services
  * Self-injection
- * Polymorphic resoltuion of services
+ * Polymorphic resolution of services
  * Clean and simple API
  * Near zero runtime overhead
 

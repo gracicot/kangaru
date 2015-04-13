@@ -90,8 +90,7 @@ struct Container : std::enable_shared_from_this<Container> {
 		static_assert(std::is_base_of<Single, Service<T>>::value, "instance only accept Single Service instance.");
 		using DependenciesTypes = typename Service<T>::DependenciesTypes;
 		auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
-		auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
-		call_save_instance(service, detail::tuple_seq<typename Service<T>::ParentTypes>{});
+		instance(make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies));
 	}
 	
 	template<typename T>
@@ -143,7 +142,7 @@ private:
 		if (it == _services.end()) {
 			auto dependencies = dependency<DependenciesTypes>(detail::tuple_seq<DependenciesTypes>{});
 			auto service = make_service<T>(detail::tuple_seq<DependenciesTypes>{}, dependencies);
-			call_save_instance(service, detail::tuple_seq<typename Service<T>::ParentTypes>{});
+			instance(service);
 			return service;
 		} else {
 			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());

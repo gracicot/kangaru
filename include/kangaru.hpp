@@ -36,7 +36,7 @@ struct seq_gen : seq_gen<N-1, N-1, S...> { };
 
 template<int ...S>
 struct seq_gen<0, S...> {
-  typedef seq<S...> type;
+	using type = seq<S...>;
 };
 
 struct Holder {

@@ -130,6 +130,9 @@ struct Container : std::enable_shared_from_this<Container> {
 	virtual void init(){}
 	
 private:
+	using HolderPtr = std::unique_ptr<detail::Holder>;
+	using Holders   = std::unordered_map<std::string, HolderPtr>;
+
 	template<typename T>
 	detail::enable_if_t<std::is_base_of<Single, Service<T>>::value, std::shared_ptr<T>> get_service() {
 		using DependenciesTypes = typename Service<T>::DependenciesTypes;
@@ -205,8 +208,8 @@ private:
 		_callbacks[typeid(T).name()] = std::unique_ptr<detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>>(new detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>(callback));
 	}
 	
-	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _callbacks;
-	std::unordered_map<std::string, std::unique_ptr<detail::Holder>> _services;
+	Holders _callbacks;
+	Holders _services;
 };
 
 template<typename T = Container, typename ...Args>

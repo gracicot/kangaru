@@ -65,14 +65,15 @@ private:
 
 template<typename T, typename... Args>
 struct CallbackHolder : Holder {
-	CallbackHolder(std::function<std::shared_ptr<T>(Args...)> callback) : _callback{callback} {}
+	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
+
+	CallbackHolder(callback_t callback) : _callback{callback} {}
 	
-	std::function<std::shared_ptr<T>(Args...)> getCallback() const {
+	callback_t getCallback() const {
 		return _callback;
 	}
-	
 private:
-	std::function<std::shared_ptr<T>(Args...)> _callback;
+	callback_t _callback;
 };
 
 }  // namespace detail

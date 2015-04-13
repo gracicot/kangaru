@@ -247,4 +247,3 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 }
 
 }  // namespace kgr
-

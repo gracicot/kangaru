@@ -105,12 +105,7 @@ struct Container : std::enable_shared_from_this<Container> {
 	
 	template<typename T>
 	detail::enable_if_t<(std::is_base_of<Container, T>::value && !std::is_same<T, Container>::value), std::shared_ptr<T>> service() {
-		auto service = std::dynamic_pointer_cast<T>(shared_from_this());
-		if (service) {
-			return service;
-		} else {
-			return nullptr;
-		}
+		return std::dynamic_pointer_cast<T>(shared_from_this());
 	}
 	
 	template<typename T>

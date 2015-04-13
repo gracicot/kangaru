@@ -53,7 +53,7 @@ struct Holder {
 
 template<typename T>
 struct InstanceHolder : Holder {
-	InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
+	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
 	
 	std::shared_ptr<T> getInstance() const {
 		return _instance;
@@ -67,7 +67,7 @@ template<typename T, typename... Args>
 struct CallbackHolder : Holder {
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 
-	CallbackHolder(callback_t callback) : _callback{callback} {}
+	explicit CallbackHolder(callback_t callback) : _callback{callback} {}
 	
 	callback_t getCallback() const {
 		return _callback;
@@ -200,12 +200,12 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[typeid(T).name()] = std::unique_ptr<detail::InstanceHolder<T>>(new detail::InstanceHolder<T>(service));
+		_services[typeid(T).name()] = HolderPtr{new detail::InstanceHolder<T>(service)};
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
-		_callbacks[typeid(T).name()] = std::unique_ptr<detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>>(new detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>(callback));
+		_callbacks[typeid(T).name()] = HolderPtr{new detail::CallbackHolder<T, std::shared_ptr<typename std::tuple_element<S, Tuple>::type>...>(callback)};
 	}
 	
 	Holders _callbacks;

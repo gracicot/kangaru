@@ -85,8 +85,8 @@ std::unique_ptr<T> make_unique( Args&& ...args )
 
 struct Container : std::enable_shared_from_this<Container> {
 private:
-	template<typename Condition, typename T = void> using enable_if = typename std::enable_if<Condition::value, T>::type;
-	template<typename Condition, typename T = void> using disable_if = typename std::enable_if<!Condition::value, T>::type;
+	template<typename Condition, typename T = void> using enable_if = detail::enable_if_t<Condition::value, T>;
+	template<typename Condition, typename T = void> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;
 	template<typename T> using is_abstract = std::is_abstract<T>;
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;

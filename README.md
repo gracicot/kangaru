@@ -12,7 +12,7 @@ Take note that you will need either to add the header to your include paths or t
 Every declarations are made in the namespace sioc.
 The namespace sioc is containing the namespace detail which contains implementation detail.
 
-For more tutorial and more details, please visit the wiki!
+Documentation and tutorial is in the wiki!
 
 Features
 --------
@@ -30,6 +30,5 @@ What's next?
 ------------
 There is some feature I would like to see become real. Here's a list of those, feel free to contribute!
  * Testing with mutliple / virtual inheritance
- * Cleanup the code
  * Unit tests
  * CMake

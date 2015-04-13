@@ -7,14 +7,12 @@
 
 namespace kgr {
 
-struct NoDependencies {
-	using DependenciesTypes = std::tuple<>;
-};
-
 template<typename... Types>
-struct Dependency : NoDependencies {
+struct Dependency {
 	using DependenciesTypes = std::tuple<Types...>;
 };
+
+using NoDependencies = Dependency<>;
 
 struct Single {
 	using ParentTypes = std::tuple<>;

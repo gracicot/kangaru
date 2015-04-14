@@ -51,7 +51,7 @@ struct Holder {
 
 template<typename T>
 struct InstanceHolder : Holder {
-	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
+	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
 	
 	std::shared_ptr<T> getInstance() const {
 		return _instance;
@@ -65,7 +65,7 @@ template<typename T, typename... Args>
 struct CallbackHolder : Holder {
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 
-	explicit CallbackHolder(callback_t callback) : _callback{callback} {}
+	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
 	
 	callback_t getCallback() const {
 		return _callback;
@@ -102,8 +102,8 @@ public:
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
-		
-		call_save_instance(service, tuple_seq<parent_types<T>>());
+
+		call_save_instance(std::move(service), tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T>
@@ -178,7 +178,7 @@ private:
 	
 	template<typename T, int ...S>
 	void call_save_instance(std::shared_ptr<T> service, detail::seq<S...>) {
-		save_instance<T, parent_element<S, T>...>(service);
+		save_instance<T, parent_element<S, T>...>(std::move(service));
 	}
 	
 	template<typename Tuple, int ...S>
@@ -219,7 +219,7 @@ private:
 	template<typename T, typename ...Others>
 	detail::enable_if_t<(sizeof...(Others) > 0), void> save_instance(std::shared_ptr<T> service) {
 		save_instance<T>(service);
-		save_instance<Others...>(service);
+		save_instance<Others...>(std::move(service));
 	}
 	
 	template<typename T>
@@ -247,3 +247,4 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 }
 
 }  // namespace kgr
+

@@ -9,7 +9,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wc++98-compat"
 #pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
-#pragma clang diagnostic ignored "-Wweak-vtables"
 #endif  // CLANG
 
 namespace kgr {
@@ -52,9 +51,7 @@ struct seq_gen<0, S...> {
 };
 
 
-struct Holder {
-	virtual ~Holder() = default; 
-};
+struct Holder {};
 
 template<typename T>
 struct InstanceHolder final : Holder {

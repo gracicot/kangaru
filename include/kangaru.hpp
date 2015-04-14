@@ -97,7 +97,7 @@ private:
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
-
+	using holder_cont = std::unordered_map<std::string, holder_ptr>;
 public:
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
@@ -232,8 +232,8 @@ private:
 		_callbacks[typeid(T).name()] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
 	}
 	
-	std::unordered_map<std::string, holder_ptr> _callbacks;
-	std::unordered_map<std::string, holder_ptr> _services;
+	holder_cont _callbacks;
+	holder_cont _services;
 };
 
 template<typename T = Container, typename ...Args>

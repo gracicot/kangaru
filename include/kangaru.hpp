@@ -88,8 +88,7 @@ using type_id_fn = void(*)();
 
 } // namespace detail
 
-struct Container : std::enable_shared_from_this<Container> {
-private:
+class Container : public std::enable_shared_from_this<Container> {
 	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;

@@ -4,7 +4,7 @@
 using namespace std;
 using namespace kgr;
 
-class MyContainer;
+struct MyContainer;
 
 ///////////////////////////////
 //      Service Classes      //
@@ -68,8 +68,7 @@ int E::getN() const
 	return 66;
 }
 
-class MyContainer : public Container {
-public:
+struct MyContainer : Container {
 	void init() override;
 };
 

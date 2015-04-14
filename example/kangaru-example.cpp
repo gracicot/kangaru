@@ -1,6 +1,5 @@
 #include <iostream>
-
-#include "../include/kangaru.hpp"
+#include "kangaru.hpp"
 
 using namespace std;
 using namespace kgr;

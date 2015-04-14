@@ -50,7 +50,6 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-
 struct Holder {};
 
 template<typename T>

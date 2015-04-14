@@ -5,12 +5,6 @@
 #include <type_traits>
 #include <tuple>
 
-#if defined(__clang__)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wc++98-compat"
-#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
-#endif  // CLANG
-
 namespace kgr {
 
 template<typename... Types>
@@ -260,7 +254,3 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 }
 
 }  // namespace kgr
-
-#if defined(__clang__)
-#pragma clang diagnostic pop
-#endif  // CLANG

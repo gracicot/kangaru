@@ -35,6 +35,8 @@ struct Overrides : Single {
 
 namespace detail {
 
+enum class enabler {};
+
 template <bool B, typename T>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
@@ -94,8 +96,8 @@ using type_id_fn = void(*)();
 } // namespace detail
 
 class Container : public std::enable_shared_from_this<Container> {
-	template<typename Condition, typename T = void> using enable_if = detail::enable_if_t<Condition::value, T>;
-	template<typename Condition, typename T = void> using disable_if = detail::enable_if_t<!Condition::value, T>;
+	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
+	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;
 	template<typename T> using is_abstract = std::is_abstract<T>;
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;
@@ -107,6 +109,7 @@ class Container : public std::enable_shared_from_this<Container> {
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using holder_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
+	constexpr static detail::enabler null = {};
 public:
 	Container() = default;
 	Container(const Container &) = default;
@@ -129,22 +132,22 @@ public:
 		instance(make_service<T>());
 	}
 	
-	template<typename T, disable_if<is_abstract<T>>* = nullptr, disable_if<is_base_of_container<T>>* = nullptr>
+	template<typename T, disable_if<is_abstract<T>> = null, disable_if<is_base_of_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return get_service<T>();
 	}
 	
-	template<typename T, enable_if<is_container<T>>* = nullptr>
+	template<typename T, enable_if<is_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return shared_from_this();
 	}
 	
-	template<typename T, disable_if<is_container<T>>* = nullptr, enable_if<is_base_of_container<T>>* = nullptr>
+	template<typename T, disable_if<is_container<T>> = null, enable_if<is_base_of_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return std::dynamic_pointer_cast<T>(shared_from_this());
 	}
 	
-	template<typename T, enable_if<is_abstract<T>>* = nullptr>
+	template<typename T, enable_if<is_abstract<T>> = null>
 	std::shared_ptr<T> service() {
 		auto it = _services.find(&detail::template type_id<T>);
 		
@@ -168,7 +171,7 @@ public:
 	virtual void init(){}
 	
 private:
-	template<typename T, enable_if<is_service_single<T>>* = nullptr>
+	template<typename T, enable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
 		auto it = _services.find(&detail::template type_id<T>);
 		
@@ -187,7 +190,7 @@ private:
 		return {};
 	}
 	
-	template<typename T, disable_if<is_service_single<T>>* = nullptr>
+	template<typename T, disable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
 		return make_service<T>();
 	}

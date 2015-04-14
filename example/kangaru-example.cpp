@@ -1,6 +1,5 @@
 #include <iostream>
-
-#include "../include/kangaru.hpp"
+#include "kangaru.hpp"
 
 using namespace std;
 using namespace kgr;
@@ -69,7 +68,8 @@ int E::getN() const
 	return 66;
 }
 
-struct MyContainer : Container {
+class MyContainer : public Container {
+public:
 	void init() override;
 };
 

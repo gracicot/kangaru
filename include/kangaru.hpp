@@ -5,6 +5,12 @@
 #include <type_traits>
 #include <tuple>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++98-compat"
+#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
+#endif  // CLANG
+
 namespace kgr {
 
 template<typename... Types>
@@ -28,6 +34,8 @@ struct Overrides : Single {
 
 namespace detail {
 
+enum class enabler {};
+
 template <bool B, typename T>
 using enable_if_t = typename std::enable_if<B, T>::type;
 
@@ -42,16 +50,11 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-
-struct Holder {
-	virtual ~Holder() {
-		
-	}
-};
+struct Holder {};
 
 template<typename T>
-struct InstanceHolder : Holder {
-	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{instance} {}
+struct InstanceHolder final : Holder {
+	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
 	
 	std::shared_ptr<T> getInstance() const {
 		return _instance;
@@ -62,15 +65,14 @@ private:
 };
 
 template<typename T, typename... Args>
-struct CallbackHolder : Holder {
+struct CallbackHolder final : Holder {
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 
-	explicit CallbackHolder(callback_t callback) : _callback{callback} {}
+	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
 	
-	callback_t getCallback() const {
-		return _callback;
+	std::shared_ptr<T> operator ()(Args... args) {
+		return _callback(args...);
 	}
-	
 private:
 	callback_t _callback;
 };
@@ -81,12 +83,15 @@ std::unique_ptr<T> make_unique( Args&& ...args )
     return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
 }
 
+template <typename T> void type_id() {}
+using type_id_fn = void(*)();
+
 } // namespace detail
 
 struct Container : std::enable_shared_from_this<Container> {
 private:
-	template<typename Condition, typename T = void> using enable_if = detail::enable_if_t<Condition::value, T>;
-	template<typename Condition, typename T = void> using disable_if = detail::enable_if_t<!Condition::value, T>;
+	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
+	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;
 	template<typename T> using is_abstract = std::is_abstract<T>;
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;
@@ -97,43 +102,52 @@ private:
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
-
+	using holder_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
+	constexpr static detail::enabler null = {};
+	
 public:
+	Container() = default;
+	Container(const Container &) = default;
+	Container(Container &&) = default;
+	Container& operator =(const Container &) = default;
+	Container& operator =(Container &&) = default;
+	~Container() = default;
+
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
-		
-		call_save_instance(service, tuple_seq<parent_types<T>>());
+
+		call_save_instance(std::move(service), tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T>
 	void instance() {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
-		
+
 		instance(make_service<T>());
 	}
 	
-	template<typename T, disable_if<is_abstract<T>>..., disable_if<is_base_of_container<T>>...>
+	template<typename T, disable_if<is_abstract<T>> = null, disable_if<is_base_of_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return get_service<T>();
 	}
 	
-	template<typename T, enable_if<is_container<T>>...>
+	template<typename T, enable_if<is_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return shared_from_this();
 	}
 	
-	template<typename T, disable_if<is_container<T>>..., enable_if<is_base_of_container<T>>...>
+	template<typename T, disable_if<is_container<T>> = null, enable_if<is_base_of_container<T>> = null>
 	std::shared_ptr<T> service() {
 		return std::dynamic_pointer_cast<T>(shared_from_this());
 	}
 	
-	template<typename T, enable_if<is_abstract<T>>...>
+	template<typename T, enable_if<is_abstract<T>> = null>
 	std::shared_ptr<T> service() {
-		auto it = _services.find(typeid(T).name());
+		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
+			auto holder = static_cast<detail::InstanceHolder<T>*>(it->second.get());
 			
 			if (holder) {
 				return holder->getInstance();
@@ -152,9 +166,9 @@ public:
 	virtual void init(){}
 	
 private:
-	template<typename T, enable_if<is_service_single<T>>...>
+	template<typename T, enable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
-		auto it = _services.find(typeid(T).name());
+		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it == _services.end()) {
 			auto service = make_service<T>();
@@ -162,7 +176,7 @@ private:
 			
 			return service;
 		} else {
-			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
+			auto holder = static_cast<detail::InstanceHolder<T>*>(it->second.get());
 			
 			if (holder) {
 				return holder->getInstance();
@@ -171,14 +185,14 @@ private:
 		return {};
 	}
 	
-	template<typename T, disable_if<is_service_single<T>>...>
+	template<typename T, disable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
 		return make_service<T>();
 	}
 	
 	template<typename T, int ...S>
 	void call_save_instance(std::shared_ptr<T> service, detail::seq<S...>) {
-		save_instance<T, parent_element<S, T>...>(service);
+		save_instance<T, parent_element<S, T>...>(std::move(service));
 	}
 	
 	template<typename Tuple, int ...S>
@@ -187,13 +201,13 @@ private:
 	}
 	
 	template<typename T, typename Tuple, int ...S>
-	std::shared_ptr<T> callback_make_service(detail::seq<S...> seq, Tuple dependencies) const {
-		auto it = _callbacks.find(typeid(T).name());
+	std::shared_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies) const {
+		auto it = _callbacks.find(&detail::type_id<T>);
 		
 		if (it != _callbacks.end()) {
-			auto holder = dynamic_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
+			auto holder = static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
 			if (holder) {
-				return holder->getCallback()(std::get<S>(dependencies)...);
+				return (*holder)(std::get<S>(dependencies)...);
 			}
 		}
 		return {};
@@ -219,21 +233,21 @@ private:
 	template<typename T, typename ...Others>
 	detail::enable_if_t<(sizeof...(Others) > 0), void> save_instance(std::shared_ptr<T> service) {
 		save_instance<T>(service);
-		save_instance<Others...>(service);
+		save_instance<Others...>(std::move(service));
 	}
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[typeid(T).name()] = detail::make_unique<detail::InstanceHolder<T>>(service);
+		_services[&detail::type_id<T>] = detail::make_unique<detail::InstanceHolder<T>>(std::move(service));
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
-		_callbacks[typeid(T).name()] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
+		_callbacks[&detail::type_id<T>] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
 	}
 	
-	std::unordered_map<std::string, holder_ptr> _callbacks;
-	std::unordered_map<std::string, holder_ptr> _services;
+	holder_cont _callbacks;
+	holder_cont _services;
 };
 
 template<typename T = Container, typename ...Args>
@@ -247,3 +261,7 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 }
 
 }  // namespace kgr
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif  // CLANG

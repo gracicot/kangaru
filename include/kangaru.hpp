@@ -133,7 +133,7 @@ public:
 		auto it = _services.find(typeid(T).name());
 		
 		if (it != _services.end()) {
-			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
+			auto holder = static_cast<detail::InstanceHolder<T>*>(it->second.get());
 			
 			if (holder) {
 				return holder->getInstance();
@@ -162,7 +162,7 @@ private:
 			
 			return service;
 		} else {
-			auto holder = dynamic_cast<detail::InstanceHolder<T>*>(it->second.get());
+			auto holder = static_cast<detail::InstanceHolder<T>*>(it->second.get());
 			
 			if (holder) {
 				return holder->getInstance();
@@ -191,7 +191,7 @@ private:
 		auto it = _callbacks.find(typeid(T).name());
 		
 		if (it != _callbacks.end()) {
-			auto holder = dynamic_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
+			auto holder = static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
 			if (holder) {
 				return holder->getCallback()(std::get<S>(dependencies)...);
 			}

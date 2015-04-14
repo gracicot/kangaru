@@ -68,7 +68,8 @@ int E::getN() const
 	return 66;
 }
 
-struct MyContainer : Container {
+class MyContainer : public Container {
+public:
 	void init() override;
 };
 

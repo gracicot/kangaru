@@ -56,7 +56,7 @@ public:
 };
 
 template<typename T>
-class InstanceHolder : public Holder {
+class InstanceHolder final : public Holder {
 public:
 	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
 	
@@ -69,7 +69,7 @@ private:
 };
 
 template<typename T, typename... Args>
-class CallbackHolder : public Holder {
+class CallbackHolder final : public Holder {
 public:
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 

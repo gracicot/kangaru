@@ -5,6 +5,13 @@
 #include <type_traits>
 #include <tuple>
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wc++98-compat"
+#pragma clang diagnostic ignored "-Wc++98-compat-pedantic"
+#pragma clang diagnostic ignored "-Wweak-vtables"
+#endif  // CLANG
+
 namespace kgr {
 
 template<typename... Types>
@@ -43,14 +50,14 @@ struct seq_gen<0, S...> {
 };
 
 
-struct Holder {
-	virtual ~Holder() {
-		
-	}
+class Holder {
+public:
+	virtual ~Holder() = default; 
 };
 
 template<typename T>
-struct InstanceHolder : Holder {
+class InstanceHolder : public Holder {
+public:
 	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
 	
 	std::shared_ptr<T> getInstance() const {
@@ -62,15 +69,15 @@ private:
 };
 
 template<typename T, typename... Args>
-struct CallbackHolder : Holder {
+class CallbackHolder : public Holder {
+public:
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 
 	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
 	
-	callback_t getCallback() const {
-		return _callback;
+	std::shared_ptr<T> operator ()(Args... args) {
+		return _callback(args...);
 	}
-	
 private:
 	callback_t _callback;
 };
@@ -86,8 +93,7 @@ using type_id_fn = void(*)();
 
 } // namespace detail
 
-struct Container : std::enable_shared_from_this<Container> {
-private:
+class Container : public std::enable_shared_from_this<Container> {
 	template<typename Condition, typename T = void> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = void> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;
@@ -102,6 +108,13 @@ private:
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using holder_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
 public:
+	Container() = default;
+	Container(const Container &) = default;
+	Container(Container &&) = default;
+	Container& operator =(const Container &) = default;
+	Container& operator =(Container &&) = default;
+	virtual ~Container() = default;
+
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
@@ -116,22 +129,22 @@ public:
 		instance(make_service<T>());
 	}
 	
-	template<typename T, disable_if<is_abstract<T>>..., disable_if<is_base_of_container<T>>...>
+	template<typename T, disable_if<is_abstract<T>>* = nullptr, disable_if<is_base_of_container<T>>* = nullptr>
 	std::shared_ptr<T> service() {
 		return get_service<T>();
 	}
 	
-	template<typename T, enable_if<is_container<T>>...>
+	template<typename T, enable_if<is_container<T>>* = nullptr>
 	std::shared_ptr<T> service() {
 		return shared_from_this();
 	}
 	
-	template<typename T, disable_if<is_container<T>>..., enable_if<is_base_of_container<T>>...>
+	template<typename T, disable_if<is_container<T>>* = nullptr, enable_if<is_base_of_container<T>>* = nullptr>
 	std::shared_ptr<T> service() {
 		return std::dynamic_pointer_cast<T>(shared_from_this());
 	}
 	
-	template<typename T, enable_if<is_abstract<T>>...>
+	template<typename T, enable_if<is_abstract<T>>* = nullptr>
 	std::shared_ptr<T> service() {
 		auto it = _services.find(&detail::template type_id<T>);
 		
@@ -155,7 +168,7 @@ public:
 	virtual void init(){}
 	
 private:
-	template<typename T, enable_if<is_service_single<T>>...>
+	template<typename T, enable_if<is_service_single<T>>* = nullptr>
 	std::shared_ptr<T> get_service() {
 		auto it = _services.find(&detail::template type_id<T>);
 		
@@ -174,7 +187,7 @@ private:
 		return {};
 	}
 	
-	template<typename T, disable_if<is_service_single<T>>...>
+	template<typename T, disable_if<is_service_single<T>>* = nullptr>
 	std::shared_ptr<T> get_service() {
 		return make_service<T>();
 	}
@@ -190,13 +203,13 @@ private:
 	}
 	
 	template<typename T, typename Tuple, int ...S>
-	std::shared_ptr<T> callback_make_service(detail::seq<S...> seq, Tuple dependencies) const {
+	std::shared_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies) const {
 		auto it = _callbacks.find(&detail::template type_id<T>);
 		
 		if (it != _callbacks.end()) {
 			auto holder = static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
 			if (holder) {
-				return holder->getCallback()(std::get<S>(dependencies)...);
+				return (*holder)(std::get<S>(dependencies)...);
 			}
 		}
 		return {};
@@ -251,3 +264,6 @@ std::shared_ptr<T> make_container(Args&& ...args) {
 
 }  // namespace kgr
 
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif  // CLANG

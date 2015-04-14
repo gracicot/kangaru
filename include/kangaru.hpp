@@ -145,7 +145,7 @@ public:
 	
 	template<typename T, enable_if<is_abstract<T>> = null>
 	std::shared_ptr<T> service() {
-		auto it = _services.find(&detail::template type_id<T>);
+		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
 			auto holder = static_cast<detail::InstanceHolder<T>*>(it->second.get());
@@ -169,7 +169,7 @@ public:
 private:
 	template<typename T, enable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
-		auto it = _services.find(&detail::template type_id<T>);
+		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it == _services.end()) {
 			auto service = make_service<T>();
@@ -203,7 +203,7 @@ private:
 	
 	template<typename T, typename Tuple, int ...S>
 	std::shared_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies) const {
-		auto it = _callbacks.find(&detail::template type_id<T>);
+		auto it = _callbacks.find(&detail::type_id<T>);
 		
 		if (it != _callbacks.end()) {
 			auto holder = static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get());
@@ -239,12 +239,12 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[&detail::template type_id<T>] = detail::make_unique<detail::InstanceHolder<T>>(std::move(service));
+		_services[&detail::type_id<T>] = detail::make_unique<detail::InstanceHolder<T>>(std::move(service));
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
-		_callbacks[&detail::template type_id<T>] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
+		_callbacks[&detail::type_id<T>] = detail::make_unique<detail::CallbackHolder<T, std::shared_ptr<tuple_element<S, Tuple>>...>>(callback);
 	}
 	
 	holder_cont _callbacks;

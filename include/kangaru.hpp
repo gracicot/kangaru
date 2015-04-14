@@ -52,14 +52,12 @@ struct seq_gen<0, S...> {
 };
 
 
-class Holder {
-public:
+struct Holder {
 	virtual ~Holder() = default; 
 };
 
 template<typename T>
-class InstanceHolder final : public Holder {
-public:
+struct InstanceHolder final : Holder {
 	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
 	
 	std::shared_ptr<T> getInstance() const {
@@ -71,8 +69,7 @@ private:
 };
 
 template<typename T, typename... Args>
-class CallbackHolder final : public Holder {
-public:
+struct CallbackHolder final : Holder {
 	using callback_t = std::function<std::shared_ptr<T>(Args...)>;
 
 	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
@@ -95,7 +92,8 @@ using type_id_fn = void(*)();
 
 } // namespace detail
 
-class Container : public std::enable_shared_from_this<Container> {
+struct Container : std::enable_shared_from_this<Container> {
+private:
 	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using is_service_single = std::is_base_of<Single, Service<T>>;
@@ -110,6 +108,7 @@ class Container : public std::enable_shared_from_this<Container> {
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using holder_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
 	constexpr static detail::enabler null = {};
+	
 public:
 	Container() = default;
 	Container(const Container &) = default;

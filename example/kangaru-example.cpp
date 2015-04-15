@@ -108,7 +108,7 @@ template<> struct Service<E> : Dependency<MyContainer, A, B>, Overrides<C> {};
 ///////////////////////////////
 //        Usage Example      //
 ///////////////////////////////
-int main(int argc, char** argv)
+int main()
 {
 	auto container = make_container<MyContainer>();
 
@@ -143,6 +143,4 @@ int main(int argc, char** argv)
 	cout << "ac (it's a C): " << ac->getN() << endl;
 	cout << "d1 n: " << d1->b->a->n << endl;
 	cout << "d2 c getN(): " << d2->c->getN() << endl;
-
-	return 0;
 }

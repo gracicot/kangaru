@@ -36,12 +36,12 @@ using enable_if_t = typename std::enable_if<b, T>::type;
 template<int ...>
 struct seq {};
 
-template<int n, int ...s>
-struct seq_gen : seq_gen<n-1, n-1, s...> {};
+template<int n, int ...S>
+struct seq_gen : seq_gen<n-1, n-1, S...> {};
 
-template<int ...s>
-struct seq_gen<0, s...> {
-	using type = seq<s...>;
+template<int ...S>
+struct seq_gen<0, S...> {
+	using type = seq<S...>;
 };
 
 struct Holder {};

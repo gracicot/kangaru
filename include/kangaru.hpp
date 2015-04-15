@@ -140,7 +140,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
+			return static_cast<detail::InstanceHolder<T>&>(*it->second).getInstance();
 		}
 		
 		return {};
@@ -190,9 +190,9 @@ private:
 	template<typename T, typename Tuple, int ...S>
 	std::shared_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies) const {
 		auto it = _callbacks.find(&detail::type_id<T>);
-		
+
 		if (it != _callbacks.end()) {
-			return (*static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>*>(it->second.get()))(std::get<S>(dependencies)...);
+			return static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>...>&>(*it->second)(std::get<S>(dependencies)...);
 		}
 		
 		return {};

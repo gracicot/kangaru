@@ -10,7 +10,8 @@ struct MyContainer;
 //      Service Classes      //
 ///////////////////////////////
 struct A {
-	A(int n = 0) : n{n} {};
+	A() = default;
+	A(int val) : n{val} {}
 
 	// A needs nothing
 	int n = 0;
@@ -18,7 +19,7 @@ struct A {
 
 struct B {
 	// B needs A
-	B(shared_ptr<A> a) : a{a} {}
+	B(shared_ptr<A> a_ptr) : a{std::move(a_ptr)} {}
 
 	shared_ptr<A> a;
 };
@@ -29,7 +30,7 @@ struct AC {
 
 struct C : AC {
 	// C needs A and B
-	C(shared_ptr<A> a, shared_ptr<B> b) : a{a}, b{b} {}
+	C(shared_ptr<A> a_ptr, shared_ptr<B> b_ptr) : a{std::move(a_ptr)}, b{std::move(b_ptr)} {}
 
 	int getN() const override;
 
@@ -45,7 +46,7 @@ int C::getN() const
 
 struct D {
 	// D needs B and AC
-	D(shared_ptr<B> b, shared_ptr<AC> c) : b{b}, c{c} {}
+	D(shared_ptr<B> b_ptr, shared_ptr<AC> c_ptr) : b{std::move(b_ptr)}, c{std::move(c_ptr)} {}
 
 	shared_ptr<B> b;
 	shared_ptr<AC> c;
@@ -54,8 +55,8 @@ struct D {
 struct E : C {
 	// E needs MyContainer, A and B
 	// We needs A and B because C needs them
-	E(shared_ptr<MyContainer> container, shared_ptr<A> a, shared_ptr<B> b) :
-		C {a, b}, container{container} {}
+	E(shared_ptr<MyContainer> cont_ptr, shared_ptr<A> a_ptr, shared_ptr<B> b_ptr) :
+		C {std::move(a_ptr), std::move(b_ptr)}, container{std::move(cont_ptr)} {}
 
 	int getN() const override;
 

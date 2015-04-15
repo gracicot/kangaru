@@ -104,7 +104,7 @@ public:
 	Container(Container &&) = default;
 	Container& operator =(const Container &) = default;
 	Container& operator =(Container &&) = default;
-	~Container() = default;
+	virtual ~Container() = default;
 
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {

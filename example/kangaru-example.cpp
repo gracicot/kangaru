@@ -11,7 +11,7 @@ struct MyContainer;
 ///////////////////////////////
 struct A {
 	A() = default;
-	A(int val) : n{val} {}
+	explicit A(int val) : n{val} {}
 
 	// A needs nothing
 	int n = 0;
@@ -25,8 +25,11 @@ struct B {
 };
 
 struct AC {
+	virtual ~AC();
 	virtual int getN() const = 0;
 };
+
+AC::~AC() = default;
 
 struct C : AC {
 	// C needs A and B

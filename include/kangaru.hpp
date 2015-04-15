@@ -30,18 +30,18 @@ namespace detail {
 
 enum class enabler {};
 
-template <bool B, typename T>
-using enable_if_t = typename std::enable_if<B, T>::type;
+template <bool b, typename T>
+using enable_if_t = typename std::enable_if<b, T>::type;
 
 template<int ...>
-struct seq { };
+struct seq {};
 
-template<int N, int ...S>
-struct seq_gen : seq_gen<N-1, N-1, S...> { };
+template<int n, int ...s>
+struct seq_gen : seq_gen<n-1, n-1, s...> {};
 
-template<int ...S>
-struct seq_gen<0, S...> {
-	using type = seq<S...>;
+template<int ...s>
+struct seq_gen<0, s...> {
+	using type = seq<s...>;
 };
 
 struct Holder {};

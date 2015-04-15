@@ -142,6 +142,7 @@ public:
 		if (it != _services.end()) {
 			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
 		}
+		
 		return {};
 	}
 	

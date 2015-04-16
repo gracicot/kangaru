@@ -13,7 +13,7 @@ struct A {
 	A(int n = 0) : n{n} {};
 
 	// A needs nothing
-	int n = 0;
+	int n;
 };
 
 struct B {
@@ -42,10 +42,9 @@ int C::getN() const
 	return 21;
 }
 
-
 struct D {
 	// D needs B and AC
-	D(shared_ptr<B> b, shared_ptr<AC> c) : b{b}, c{c} {}
+	D(shared_ptr<B> b, shared_ptr<AC> c, int i) : b{b}, c{c} {}
 
 	shared_ptr<B> b;
 	shared_ptr<AC> c;
@@ -74,7 +73,7 @@ struct MyContainer : Container {
 
 void MyContainer::init()
 {
-	instance(make_shared<A>(8));
+	instance<A>(8);
 	instance<C>();
 	instance<E>();
 }
@@ -110,10 +109,10 @@ template<> struct Service<E> : Dependency<MyContainer, A, B>, Overrides<C> {};
 int main(int argc, char** argv)
 {
 	auto container = make_container<MyContainer>();
-
-	container->callback<D>([](std::shared_ptr<B> b, std::shared_ptr<AC> ac) {
-		cout << "a D is built" << endl;
-		return make_shared<D>(b, ac);
+	
+	container->callback([](std::shared_ptr<B> b, std::shared_ptr<AC> ac, int i) {
+		cout << "a D is built with: " << i << endl;
+		return make_shared<D>(b, ac, i);
 	});
 
 	// let's get some services
@@ -121,8 +120,8 @@ int main(int argc, char** argv)
 	auto b = container->service<B>();
 	auto c = container->service<C>(); // I'm a E!
 	auto ac = container->service<AC>(); // I'm a C!
-	auto d1 = container->service<D>();
-	auto d2 = container->service<D>();
+	auto d1 = container->service<D>(3);
+	auto d2 = container->service<D>(4);
 	auto e = container->service<E>();
 
 	cout << "a default value: " << a->n << endl;

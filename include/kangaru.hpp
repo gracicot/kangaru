@@ -44,7 +44,9 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-struct Holder {};
+struct Holder {
+	virtual ~Holder() = default;
+};
 
 template<typename T>
 struct InstanceHolder final : Holder {
@@ -152,7 +154,7 @@ public:
 		
 		save_callback<T, dependency_types<T>>(tuple_seq<dependency_types<T>>{}, callback);
 	}
-	
+
 	virtual void init(){}
 	
 private:

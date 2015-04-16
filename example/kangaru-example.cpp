@@ -73,7 +73,8 @@ int E::getN() const
 }
 
 struct MyContainer : Container {
-	void init() override;
+protected:
+	virtual void init() override;
 };
 
 void MyContainer::init()

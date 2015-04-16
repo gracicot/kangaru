@@ -101,12 +101,19 @@ class Container : public std::enable_shared_from_this<Container> {
 	constexpr static detail::enabler null = {};
 	
 public:
-	Container() = default;
-	Container(const Container &) = default;
-	Container(Container &&) = default;
-	Container& operator =(const Container &) = default;
-	Container& operator =(Container &&) = default;
+	Container(const Container &) = delete;
+	Container(Container &&) = delete;
+	Container& operator =(const Container &) = delete;
+	Container& operator =(Container &&) = delete;
 	virtual ~Container() = default;
+
+	template <typename T, typename... Args, 
+		 enable_if<is_base_of_container<T>> = null>
+	static std::shared_ptr<T> make_container(Args&&... args) {
+		auto container = std::make_shared<T>(std::forward<Args>(args)...);
+		static_cast<Container&>(*container).init();
+		return container;
+	}
 
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
@@ -154,9 +161,9 @@ public:
 		
 		save_callback<T, dependency_types<T>>(tuple_seq<dependency_types<T>>{}, callback);
 	}
-
-	virtual void init(){}
-	
+protected:
+	Container() = default;
+	virtual void init(){}	
 private:
 	template<typename T, enable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
@@ -240,11 +247,8 @@ private:
 template<typename T = Container, typename ...Args>
 std::shared_ptr<T> make_container(Args&& ...args) {
 	static_assert(std::is_base_of<Container, T>::value, "make_container only accept container types.");
-	
-	auto container = std::make_shared<T>(std::forward<Args>(args)...);
-	container->init();
-	
-	return container;
+
+	return Container::make_container<T>(std::forward<Args>(args)...);
 }
 
 }  // namespace kgr

@@ -9,8 +9,7 @@ Getting started with Kangaru is easy. First of all, you need to include the libr
     #include <kangaru.hpp>
 
 Take note that you will need either to add the header to your include paths or to add it to your project.
-Every declarations are made in the namespace sioc.
-The namespace sioc is containing the namespace detail which contains implementation detail.
+Everything is declared in the namespace `kgr`
 
 Documentation and tutorial is in the wiki!
 

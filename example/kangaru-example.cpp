@@ -59,7 +59,7 @@ struct E : C {
 	// E needs MyContainer, A and B
 	// We needs A and B because C needs them
 	E(shared_ptr<MyContainer> cont_ptr, shared_ptr<A> a_ptr, shared_ptr<B> b_ptr) :
-		C {std::move(a_ptr), std::move(b_ptr)}, container{std::move(cont_ptr)} {}
+		C {std::move(a_ptr), std::move(b_ptr)}, container{cont_ptr} {}
 
 	int getN() const override;
 

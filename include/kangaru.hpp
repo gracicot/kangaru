@@ -177,12 +177,12 @@ private:
 		} 
 		return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
 	}
-	
+
 	template<typename T, disable_if<is_service_single<T>> = null>
 	std::shared_ptr<T> get_service() {
 		return make_service<T>();
 	}
-	
+
 	template<typename T, int ...S>
 	void call_save_instance(std::shared_ptr<T> service, detail::seq<S...>) {
 		save_instance<T, parent_element<S, T>...>(std::move(service));

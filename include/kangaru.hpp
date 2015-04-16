@@ -174,11 +174,8 @@ private:
 			instance(service);
 			
 			return service;
-		} else {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
-		}
-		
-		return {};
+		} 
+		return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
 	}
 	
 	template<typename T, disable_if<is_service_single<T>> = null>
@@ -211,11 +208,7 @@ private:
 	std::shared_ptr<T> make_service(detail::seq<S...> seq, Tuple dependencies) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies);
 		
-		if (service) {
-			return service;
-		}
-		
-		return std::make_shared<T>(std::get<S>(dependencies)...);
+		return service ? service : std::make_shared<T>(std::get<S>(dependencies)...);
 	}
 
 	template <typename T>

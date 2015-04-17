@@ -60,16 +60,25 @@ struct function_traits<R(*)(Args...)> {
 
 struct Holder {};
 
-template<typename T>
 struct InstanceHolder final : Holder {
-	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
-	
+	template <typename T>
+	explicit InstanceHolder(std::shared_ptr<T> instance_ptr) :
+		_instance{static_cast<void*>(
+				new std::shared_ptr<T>{
+					std::move(instance_ptr)}),
+			&deleter<T> } {}
+
+	template <typename T>
 	std::shared_ptr<T> getInstance() const {
-		return _instance;
+		return *reinterpret_cast<std::shared_ptr<T>*>(_instance.get());
 	}
-	
 private:
-	std::shared_ptr<T> _instance;
+	template <typename T>
+	static void deleter(void *ptr) {
+		delete reinterpret_cast<std::shared_ptr<T>*>(ptr);
+	}
+
+	std::unique_ptr<void, void(*)(void*)> _instance;
 };
 
 template<typename T, typename... Args>
@@ -242,7 +251,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
+			return static_cast<detail::InstanceHolder&>(*it->second).getInstance<T>();
 		}
 		
 		return {};
@@ -277,11 +286,8 @@ private:
 			instance(service);
 			
 			return service;
-		} else {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
-		}
-		
-		return {};
+		} 
+		return static_cast<detail::InstanceHolder*>(it->second.get())->getInstance<T>();
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
@@ -340,7 +346,7 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[&detail::type_id<T>] = detail::make_unique<detail::InstanceHolder<T>>(std::move(service));
+		_services[&detail::type_id<T>] = detail::make_unique<detail::InstanceHolder>(std::move(service));
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>

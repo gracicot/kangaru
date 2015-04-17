@@ -58,7 +58,9 @@ struct function_traits<R(*)(Args...)> {
 	using argument_types = std::tuple<Args...>;
 };
 
-struct Holder {};
+struct Holder {
+	virtual ~Holder() = default;
+};
 
 using InstanceHolder = std::unique_ptr<void, void(*)(void*)>;
 
@@ -207,12 +209,18 @@ class Container : public std::enable_shared_from_this<Container> { public:
 	constexpr static detail::enabler null = {};
 	
 public:
-	Container() = default;
-	Container(const Container &) = default;
-	Container(Container &&) = default;
-	Container& operator =(const Container &) = default;
-	Container& operator =(Container &&) = default;
-	~Container() = default;
+	Container(const Container &) = delete;
+	Container(Container &&) = delete;
+	Container& operator =(const Container &) = delete;
+	Container& operator =(Container &&) = delete;
+	virtual ~Container() = default;
+
+	template <typename T, typename... Args, enable_if<is_base_of_container<T>> = null>
+	static std::shared_ptr<T> make_container(Args&&... args) {
+		auto container = std::make_shared<T>(std::forward<Args>(args)...);
+		static_cast<Container&>(*container).init();
+		return container;
+	}
 
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
@@ -273,9 +281,9 @@ public:
 		
 		call_save_callback<T, arguments>(tuple_seq<dependency_types<T>>{}, callback);
 	}
-	
-	virtual void init(){}
-	
+protected:
+	Container() = default;
+	virtual void init(){}	
 private:
 	template<typename T, enable_if<is_service_single<T>> = null>
 	ptr_type<T> get_service() {
@@ -294,7 +302,7 @@ private:
 	ptr_type<T> get_service(Args ...args) {
 		return make_service<T>(std::forward<Args>(args)...);
 	}
-	
+
 	template<typename T, int ...S>
 	void call_save_instance(std::shared_ptr<T> service, detail::seq<S...>) {
 		save_instance<T, parent_element<S, T>...>(std::move(service));
@@ -310,7 +318,7 @@ private:
 		auto it = _callbacks.find(&detail::type_id<T, tuple_element<S, Tuple>..., Args...>);
 		
 		if (it != _callbacks.end()) {
-			return (*static_cast<detail::CallbackHolder<ptr_type<T>, tuple_element<S, Tuple>..., Args...>*>(it->second.get()))(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+			return static_cast<detail::CallbackHolder<ptr_type<T>, tuple_element<S, Tuple>..., Args...>&>(*it->second.get())(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 		}
 		
 		return {};
@@ -325,11 +333,7 @@ private:
 	ptr_type<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
 		
-		if (service) {
-			return std::move(service);
-		}
-		
-		return ptr_type_helper<T>::make_pointer(std::move(std::get<S>(dependencies))..., std::forward<Args>(args)...);
+		return service ? service : std::make_shared<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 	}
 
 	template <typename T, typename ...Args>
@@ -377,11 +381,8 @@ private:
 template<typename T = Container, typename ...Args>
 std::shared_ptr<T> make_container(Args&& ...args) {
 	static_assert(std::is_base_of<Container, T>::value, "make_container only accept container types.");
-	
-	auto container = std::make_shared<T>(std::forward<Args>(args)...);
-	container->init();
-	
-	return container;
+
+	return Container::make_container<T>(std::forward<Args>(args)...);
 }
 
 }  // namespace kgr

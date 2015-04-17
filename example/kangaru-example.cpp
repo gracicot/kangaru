@@ -10,11 +10,10 @@ struct MyContainer;
 //      Service Classes      //
 ///////////////////////////////
 struct A {
-	A() = default;
-	explicit A(int val) : n{val} {}
+	explicit A(int val = 0) : n{val} {}
 
 	// A needs nothing
-	int n = 0;
+	int n;
 };
 
 struct B {
@@ -46,13 +45,14 @@ int C::getN() const
 	return 21;
 }
 
-
 struct D {
 	// D needs B and AC
-	D(shared_ptr<B> b_ptr, shared_ptr<AC> c_ptr) : b{std::move(b_ptr)}, c{std::move(c_ptr)} {}
+	D(shared_ptr<B> b_ptr, shared_ptr<AC> c_ptr, int) : b{std::move(b_ptr)}, c{std::move(c_ptr)} {}
 
 	shared_ptr<B> b;
 	shared_ptr<AC> c;
+
+	~D() { cout << "D is destroyed\n"; }
 };
 
 struct E : C {
@@ -79,7 +79,7 @@ protected:
 
 void MyContainer::init()
 {
-	instance(make_shared<A>(8));
+	instance<A>(8);
 	instance<C>();
 	instance<E>();
 }
@@ -116,9 +116,9 @@ int main()
 {
 	auto container = make_container<MyContainer>();
 
-	container->callback<D>([](std::shared_ptr<B> b, std::shared_ptr<AC> ac) {
-		cout << "a D is built\n";
-		return make_shared<D>(std::move(b), std::move(ac));
+	container->callback([](std::shared_ptr<B> b, std::shared_ptr<AC> ac, int i) {
+		cout << "a D is built with: " << i << '\n';
+		return make_shared<D>(std::move(b), std::move(ac), i);
 	});
 
 	// let's get some services
@@ -126,8 +126,8 @@ int main()
 	auto b = container->service<B>();
 	auto c = container->service<C>(); // I'm a E!
 	auto ac = container->service<AC>(); // I'm a C!
-	auto d1 = container->service<D>();
-	auto d2 = container->service<D>();
+	auto d1 = container->service<D>(3);
+	auto d2 = container->service<D>(4);
 	auto e = container->service<E>();
 
 	cout << "a default value: " << a->n;

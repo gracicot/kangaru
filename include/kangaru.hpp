@@ -60,27 +60,25 @@ struct function_traits<R(*)(Args...)> {
 
 struct Holder {};
 
-struct InstanceHolder final {
-	InstanceHolder() : _instance{ nullptr, &deleter<void> } {}
-	template <typename T>
-	explicit InstanceHolder(std::shared_ptr<T> instance_ptr) :
-		_instance{static_cast<void*>(
-				new std::shared_ptr<T>{
-					std::move(instance_ptr)}),
-			&deleter<T> } {}
+using InstanceHolder = std::unique_ptr<void, void(*)(void*)>;
 
-	template <typename T>
-	std::shared_ptr<T> getInstance() const {
-		return *reinterpret_cast<std::shared_ptr<T>*>(_instance.get());
-	}
-private:
-	template <typename T>
-	static void deleter(void *ptr) {
-		delete reinterpret_cast<std::shared_ptr<T>*>(ptr);
-	}
+template <typename T>
+static void instance_deleter(void *ptr) noexcept(std::is_nothrow_destructible<T>::value) {
+	delete reinterpret_cast<std::shared_ptr<T>*>(ptr);
+}
 
-	std::unique_ptr<void, void(*)(void*)> _instance;
-};
+template <typename T>
+InstanceHolder make_instance_holder(std::shared_ptr<T> ptr) {
+	return InstanceHolder{static_cast<void*>(
+			new std::shared_ptr<T>{std::move(ptr)}),
+			&instance_deleter<T>
+	};
+}
+
+template <typename T>
+std::shared_ptr<T> get_instance(InstanceHolder &holder) {
+	return *reinterpret_cast<std::shared_ptr<T>*>(holder.get());
+}
 
 template<typename T, typename... Args>
 struct CallbackHolder final : Holder {
@@ -253,7 +251,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return it->second.template getInstance<T>();
+			return detail::get_instance<T>(it->second);
 		}
 		
 		return {};
@@ -289,7 +287,7 @@ private:
 			
 			return service;
 		} 
-		return it->second.template getInstance<T>();
+		return detail::get_instance<T>(it->second);
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
@@ -348,7 +346,14 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[&detail::type_id<T>] = detail::InstanceHolder{std::move(service)};
+		auto instance_holder = detail::make_instance_holder(std::move(service));
+
+		auto instance = _services.find(&detail::type_id<T>);
+		if (instance != _services.end()) {
+			instance->second = std::move(instance_holder);
+		} else {
+			_services.emplace(std::make_pair(&detail::type_id<T>, std::move(instance_holder)));
+		}
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>

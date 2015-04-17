@@ -207,6 +207,9 @@ public:
 
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
+		static_assert(!std::is_base_of<Unique, Service<T>>::value, "Single cannot be unique");
+		static_assert(!std::is_base_of<Raw, Service<T>>::value, "Single cannot be raw pointers");
+		static_assert(std::is_same<ptr_type<T>, std::shared_ptr<T>>::value, "Single can only be held by shared_ptr");
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 
 		call_save_instance(std::move(service), tuple_seq<parent_types<T>>{});
@@ -235,7 +238,7 @@ public:
 	}
 	
 	template<typename T, enable_if<is_abstract<T>> = null>
-	std::shared_ptr<T> service() {
+	ptr_type<T> service() {
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {

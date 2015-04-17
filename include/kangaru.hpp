@@ -60,17 +60,25 @@ struct function_traits<R(*)(Args...)> {
 
 struct Holder {};
 
-template<typename T>
-struct InstanceHolder final : Holder {
-	explicit InstanceHolder(std::shared_ptr<T> instance) : _instance{std::move(instance)} {}
-	
-	std::shared_ptr<T> getInstance() const {
-		return _instance;
-	}
-	
-private:
-	std::shared_ptr<T> _instance;
-};
+using InstanceHolder = std::unique_ptr<void, void(*)(void*)>;
+
+template <typename T>
+static void instance_deleter(void *ptr) noexcept(std::is_nothrow_destructible<T>::value) {
+	delete reinterpret_cast<std::shared_ptr<T>*>(ptr);
+}
+
+template <typename T>
+InstanceHolder make_instance_holder(std::shared_ptr<T> ptr) {
+	return InstanceHolder{static_cast<void*>(
+			new std::shared_ptr<T>{std::move(ptr)}),
+			&instance_deleter<T>
+	};
+}
+
+template <typename T>
+std::shared_ptr<T> get_instance(InstanceHolder &holder) {
+	return *reinterpret_cast<std::shared_ptr<T>*>(holder.get());
+}
 
 template<typename T, typename... Args>
 struct CallbackHolder final : Holder {
@@ -190,7 +198,8 @@ class Container : public std::enable_shared_from_this<Container> { public:
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
-	using holder_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
+	using callback_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
+	using instance_cont = std::unordered_map<detail::type_id_fn, detail::InstanceHolder>;
 	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type;
 	template<int S, typename Services> using ptr_type_helpers = ptr_type_helper<typename std::tuple_element<S, Services>::type>;
 	template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type::Type;
@@ -242,7 +251,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
+			return detail::get_instance<T>(it->second);
 		}
 		
 		return {};
@@ -277,11 +286,8 @@ private:
 			instance(service);
 			
 			return service;
-		} else {
-			return static_cast<detail::InstanceHolder<T>*>(it->second.get())->getInstance();
-		}
-		
-		return {};
+		} 
+		return detail::get_instance<T>(it->second);
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
@@ -340,7 +346,14 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		_services[&detail::type_id<T>] = detail::make_unique<detail::InstanceHolder<T>>(std::move(service));
+		auto instance_holder = detail::make_instance_holder(std::move(service));
+
+		auto instance = _services.find(&detail::type_id<T>);
+		if (instance != _services.end()) {
+			instance->second = std::move(instance_holder);
+		} else {
+			_services.emplace(std::make_pair(&detail::type_id<T>, std::move(instance_holder)));
+		}
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>
@@ -357,8 +370,8 @@ private:
 		_callbacks[&detail::type_id<T, tuple_element<S, Tuple>...>] = detail::make_unique<detail::CallbackHolder<ptr_type<T>, tuple_element<S, Tuple>...>>(callback);
 	}
 	
-	holder_cont _callbacks;
-	holder_cont _services;
+	callback_cont _callbacks;
+	instance_cont _services;
 };
 
 template<typename T = Container, typename ...Args>

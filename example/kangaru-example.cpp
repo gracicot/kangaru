@@ -117,8 +117,8 @@ int main()
 	auto container = make_container<MyContainer>();
 
 	container->callback<D>([](std::shared_ptr<B> b, std::shared_ptr<AC> ac) {
-		cout << "a D is built" << endl;
-		return make_shared<D>(b, ac);
+		cout << "a D is built\n";
+		return make_shared<D>(std::move(b), std::move(ac));
 	});
 
 	// let's get some services
@@ -130,7 +130,7 @@ int main()
 	auto d2 = container->service<D>();
 	auto e = container->service<E>();
 
-	cout << "a default value: " << a->n << endl;
+	cout << "a default value: " << a->n;
 
 	a->n = 9;
 	b->a->n = 8;
@@ -138,13 +138,14 @@ int main()
 	// Since A is single, we will see the value 5 across all classes
 	e->a->n = 5;
 
-	cout << "is same container: " << (e->container.lock() == container ? "true" : "false") << endl;
-	cout << "is same D: " << (d1 == d2 ? "true" : "false") << endl;
-	cout << "is same A: " << ((a == b->a) && (a == e->a) ? "true" : "false") << endl;
-	cout << "a: " << a->n << endl;
-	cout << "b: " << b->a->n << endl;
-	cout << "c (it's a E): " << c->getN() << endl;
-	cout << "ac (it's a C): " << ac->getN() << endl;
-	cout << "d1 n: " << d1->b->a->n << endl;
-	cout << "d2 c getN(): " << d2->c->getN() << endl;
+	cout << boolalpha;
+	cout << "\nis same container: " << (e->container.lock() == container);
+	cout << "\nis same D: " << (d1 == d2);
+	cout << "\nis same A: " << ((a == b->a) && (a == e->a));
+	cout << "\na: " << a->n;
+	cout << "\nb: " << b->a->n;
+	cout << "\nc (it's a E): " << c->getN();
+	cout << "\nac (it's a C): " << ac->getN();
+	cout << "\nd1 n: " << d1->b->a->n;
+	cout << "\nd2 c getN(): " << d2->c->getN() << '\n';
 }

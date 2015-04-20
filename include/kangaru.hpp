@@ -63,6 +63,8 @@ struct Holder {
 };
 
 struct InstanceHolder {
+	InstanceHolder() = default;
+
 	template <typename T>
 	explicit InstanceHolder(std::shared_ptr<T> ptr) : _deleter{&custom_deleter<T>} {
 		static_assert(sizeof(ptr) <= sizeof(std::shared_ptr<void>), "Wrong guess about shared_ptr size");
@@ -94,6 +96,16 @@ struct InstanceHolder {
 		return *this;
 	}
 
+	template <typename T>
+	InstanceHolder& operator =(std::shared_ptr<T> &&rhs) {
+		if (_deleter) _deleter(_ptr);
+		_deleter = &custom_deleter<T>;
+
+		new (_ptr) std::shared_ptr<T>{std::move(rhs)};
+
+		return *this;
+	}
+
 	~InstanceHolder() noexcept {
 		if (_deleter) _deleter(_ptr);
 	}
@@ -113,7 +125,7 @@ private:
 		reinterpret_cast<ptr_t*>(ptr)->~ptr_t();
 	}
 
-	deleter_fn _deleter;
+	deleter_fn _deleter = nullptr;
 	char       _ptr[sizeof(std::shared_ptr<void>)];
 };
 
@@ -385,12 +397,7 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		auto instance = _services.find(&detail::type_id<T>);
-		if (instance != _services.end()) {
-			instance->second = detail::InstanceHolder{std::move(service)};
-		} else {
-			_services.emplace(std::make_pair(&detail::type_id<T>, detail::InstanceHolder{std::move(service)}));
-		}
+		_services[&detail::type_id<T>] = std::move(service);
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>

@@ -62,25 +62,60 @@ struct Holder {
 	virtual ~Holder() = default;
 };
 
-using InstanceHolder = std::unique_ptr<void, void(*)(void*)>;
+struct InstanceHolder {
+	template <typename T>
+	explicit InstanceHolder(std::shared_ptr<T> ptr) : _deleter{&custom_deleter<T>} {
+		static_assert(sizeof(ptr) <= sizeof(std::shared_ptr<void>), "Wrong guess about shared_ptr size");
+		new (_ptr) std::shared_ptr<T>{std::move(ptr)};
+	}
 
-template <typename T>
-static void instance_deleter(void *ptr) noexcept(std::is_nothrow_destructible<T>::value) {
-	delete reinterpret_cast<std::shared_ptr<T>*>(ptr);
-}
+	InstanceHolder(const InstanceHolder &) = delete;
+	InstanceHolder& operator =(const InstanceHolder &) = delete;
 
-template <typename T>
-InstanceHolder make_instance_holder(std::shared_ptr<T> ptr) {
-	return InstanceHolder{static_cast<void*>(
-			new std::shared_ptr<T>{std::move(ptr)}),
-			&instance_deleter<T>
-	};
-}
+	InstanceHolder(InstanceHolder &&other) noexcept : _deleter{other._deleter} {
+		std::copy(std::begin(other._ptr), std::end(other._ptr),
+				std::begin(_ptr));
+		other._deleter = nullptr;
+	}
 
-template <typename T>
-std::shared_ptr<T> get_instance(InstanceHolder &holder) {
-	return *reinterpret_cast<std::shared_ptr<T>*>(holder.get());
-}
+	InstanceHolder& operator =(InstanceHolder &&rhs) noexcept {
+		if (&rhs != this) {
+			if (_deleter) {
+				_deleter(_ptr);
+			}
+
+			_deleter = rhs._deleter;
+			rhs._deleter = nullptr;
+
+			std::copy(std::begin(rhs._ptr), std::end(rhs._ptr),
+					std::begin(_ptr));
+		}
+
+		return *this;
+	}
+
+	~InstanceHolder() noexcept {
+		if (_deleter) _deleter(_ptr);
+	}
+
+	template <typename T>
+	std::shared_ptr<T> get() const {
+		if (_deleter != &custom_deleter<T>)
+			throw std::bad_cast{};
+		return *reinterpret_cast<const std::shared_ptr<T>*>(_ptr);
+	}
+private:
+	using deleter_fn = void(*)(void*);
+
+	template <typename T>
+	static void custom_deleter(void *ptr) noexcept {
+		using ptr_t = std::shared_ptr<T>;
+		reinterpret_cast<ptr_t*>(ptr)->~ptr_t();
+	}
+
+	deleter_fn _deleter;
+	char       _ptr[sizeof(std::shared_ptr<void>)];
+};
 
 template<typename T, typename... Args>
 struct CallbackHolder final : Holder {
@@ -259,7 +294,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return detail::get_instance<T>(it->second);
+			return it->second.template get<T>();
 		}
 		
 		return {};
@@ -295,7 +330,7 @@ private:
 			
 			return service;
 		} 
-		return detail::get_instance<T>(it->second);
+		return it->second.template get<T>();
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
@@ -350,13 +385,11 @@ private:
 	
 	template<typename T>
 	void save_instance (std::shared_ptr<T> service) {
-		auto instance_holder = detail::make_instance_holder(std::move(service));
-
 		auto instance = _services.find(&detail::type_id<T>);
 		if (instance != _services.end()) {
-			instance->second = std::move(instance_holder);
+			instance->second = detail::InstanceHolder{std::move(service)};
 		} else {
-			_services.emplace(std::make_pair(&detail::type_id<T>, std::move(instance_holder)));
+			_services.emplace(std::make_pair(&detail::type_id<T>, detail::InstanceHolder{std::move(service)}));
 		}
 	}
 	

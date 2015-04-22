@@ -40,7 +40,5 @@ using function_result_t = typename function_traits<F...>::return_type;
 template <int n, typename... F>
 using function_argument_t = typename function_traits<F...>::template argument_type<n>;
 
-using type_id_fn = void(*)();
-
 } // namespace detail
 } // namespace kgr

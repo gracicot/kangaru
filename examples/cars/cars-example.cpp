@@ -1,15 +1,25 @@
 #include <iostream>
 #include <iomanip>
+#include <stdexcept>
 #include "kangaru.hpp"
 
 struct CarsContainer;
 
 struct Fuel {
-	virtual ~Fuel();
-	virtual auto getPrice() const noexcept -> double = 0;
-};
+	auto getPrice() const noexcept -> double {
+		return price_;
+	}
 
-Fuel::~Fuel() = default;
+	auto setPrice(double price) -> void {
+		if (price < 0.0) 
+			throw std::runtime_error{"Price cannot be negative"};
+		price_ = price;
+	}
+protected:
+	Fuel() = default;
+private:
+	double price_;
+};
 
 struct Car {
 	auto refuel(size_t litres) const noexcept -> double {
@@ -26,21 +36,15 @@ private:
 };
 
 struct Petrol : Fuel {
-	virtual auto getPrice() const noexcept -> double override {
-		return 130.70;
-	}
+	Petrol() = default;
 };
 
 struct PremiumPetrol : Petrol {
-	virtual auto getPrice() const noexcept -> double override final {
-		return 144.30;
-	}
+	PremiumPetrol() = default;
 };
 
 struct Diesel : Fuel {
-	virtual auto getPrice() const noexcept -> double override final {
-		return 135.30;
-	}
+	Diesel() = default;
 };
 
 struct OpelAstra : Car {
@@ -69,7 +73,11 @@ protected:
 	virtual auto init() -> void override final;
 };
 
-auto CarsContainer::init() -> void {}
+auto CarsContainer::init() -> void {
+	service<Petrol>()->setPrice(130.70);
+	service<PremiumPetrol>()->setPrice(144.50);
+	service<Diesel>()->setPrice(135.30);
+}
 
 namespace kgr {
 
@@ -106,6 +114,8 @@ int main() {
 		(hrv == hrv_diesel) <<
 		"\npremium petrol is single:                " << 
 		(premium == garage->service<PremiumPetrol>()) <<
+		"\nPremium petrol costs " << premium->getPrice() <<
+		" per litre"
 		"\n\nRefuel costs:"
 		"\n\tOpel Astra(1),   50 litres: " << astra1->refuel(50) <<
 		"\n\tOpel Astra(2),   50 litres: " << astra2->refuel(50) <<
@@ -113,6 +123,11 @@ int main() {
 		"\n\tHonda"
 		"\n\t  HR-V,          30 litres: " << hrv->refuel(30) <<
 		"\n\t  HR-V Diesel,   30 litres: " << hrv_diesel->refuel(30) <<
+		'\n';
+	premium->setPrice(147.20);
+	std::cout << "Update premium petrol price to " << premium->getPrice() <<
+		"\nNow refuel of Honda HR-V (30 litres) costs " <<
+		hrv->refuel(30) << 
 		'\n';
 }
 

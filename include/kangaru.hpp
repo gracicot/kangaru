@@ -68,33 +68,6 @@ struct Holder {
 	virtual ~Holder() = default;
 };
 
-struct InstanceHolder {
-	InstanceHolder() = default;
-
-	template <typename T>
-	explicit InstanceHolder(std::shared_ptr<T> ptr) : _ptr{std::move(ptr)} {}
-
-	InstanceHolder(const InstanceHolder &) = delete;
-	InstanceHolder& operator =(const InstanceHolder &) = delete;
-	InstanceHolder(InstanceHolder &&other) noexcept = default;
-	InstanceHolder& operator =(InstanceHolder &&rhs) noexcept = default;
-
-	template <typename T>
-	InstanceHolder& operator =(std::shared_ptr<T> &&rhs) {
-		_ptr = std::move(rhs);
-		return *this;
-	}
-
-	~InstanceHolder() noexcept = default;
-
-	template <typename T>
-	std::shared_ptr<T> get() const {
-		return std::static_pointer_cast<T>(_ptr);
-	}
-private:
-	std::shared_ptr<void> _ptr;
-};
-
 template<typename T, typename... Args>
 struct CallbackHolder final : Holder {
 	using callback_t = std::function<T(Args...)>;
@@ -210,7 +183,8 @@ class Container : public std::enable_shared_from_this<Container> { public:
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using callback_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
-	using instance_cont = std::unordered_map<detail::type_id_fn, detail::InstanceHolder>;
+	using InstanceHolder = std::shared_ptr<void>;
+	using instance_cont = std::unordered_map<detail::type_id_fn, InstanceHolder>;
 	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type;
 	template<int S, typename Services> using ptr_type_helpers = ptr_type_helper<typename std::tuple_element<S, Services>::type>;
 	template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type::Type;
@@ -268,7 +242,7 @@ public:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return it->second.template get<T>();
+			return std::static_pointer_cast<T>(it->second);
 		}
 		
 		return {};
@@ -302,7 +276,7 @@ private:
 			
 			return service;
 		} 
-		return it->second.template get<T>();
+		return std::static_pointer_cast<T>(it->second);
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>

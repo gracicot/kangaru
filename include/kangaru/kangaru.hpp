@@ -40,8 +40,6 @@ struct Overrides : Single {
 	using ParentTypes = std::tuple<Types...>;
 };
 
-
-
 class Container : public std::enable_shared_from_this<Container> {
 	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
@@ -74,6 +72,7 @@ public:
 	static std::shared_ptr<T> make_container(Args&&... args) {
 		auto container = std::make_shared<T>(std::forward<Args>(args)...);
 		static_cast<Container&>(*container).init();
+		
 		return container;
 	}
 
@@ -148,7 +147,8 @@ private:
 			instance(service);
 			
 			return service;
-		} 
+		}
+		
 		return std::static_pointer_cast<T>(it->second);
 	}
 	

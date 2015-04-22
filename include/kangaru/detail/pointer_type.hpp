@@ -70,5 +70,7 @@ public:
 	constexpr static bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
 
+template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type::Type;
+
 } // namespace detail
 } // namespace kgr

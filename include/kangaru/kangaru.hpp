@@ -57,7 +57,7 @@ class Container : public std::enable_shared_from_this<Container> { public:
 	using instance_cont = std::unordered_map<detail::type_id_fn, std::shared_ptr<void>>;
 	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type;
 	template<int S, typename Services> using ptr_type_helpers = ptr_type_helper<typename std::tuple_element<S, Services>::type>;
-	template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type::Type;
+	template<typename T> using ptr_type = detail::ptr_type<T>;
 	template<int S, typename Services> using ptr_types = ptr_type<typename std::tuple_element<S, Services>::type>;
 	constexpr static detail::enabler null = {};
 	
@@ -170,7 +170,7 @@ private:
 		auto it = _callbacks.find(&detail::type_id<T, tuple_element<S, Tuple>..., Args...>);
 		
 		if (it != _callbacks.end()) {
-			return static_cast<detail::CallbackHolder<ptr_type<T>, tuple_element<S, Tuple>..., Args...>&>(*it->second.get())(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+			return static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>..., Args...>&>(*it->second.get())(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 		}
 		
 		return {};
@@ -216,7 +216,7 @@ private:
 	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
-		_callbacks[&detail::type_id<T, tuple_element<S, Tuple>...>] = detail::make_unique<detail::CallbackHolder<ptr_type<T>, tuple_element<S, Tuple>...>>(callback);
+		_callbacks[&detail::type_id<T, tuple_element<S, Tuple>...>] = detail::make_unique<detail::CallbackHolder<T, tuple_element<S, Tuple>...>>(callback);
 	}
 	
 	callback_cont _callbacks;

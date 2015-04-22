@@ -210,6 +210,7 @@ private:
 		using argument_dependency_types = std::tuple<detail::function_argument_t<S, U>...>;
 		using dependency_ptr = std::tuple<ptr_types<S, dependency_types<T>>...>;
 		static_assert(std::is_same<dependency_ptr, argument_dependency_types>::value, "The callback should receive the dependencies in the right order as first parameters");
+		static_assert(std::is_same<detail::function_result_t<U>, ptr_type<T>>::value, "The callback should return the right type of pointer.");
 		
 		save_callback<T, detail::function_arguments_t<U>>(tuple_seq<detail::function_arguments_t<U>>{}, callback);
 	}

@@ -1,5 +1,10 @@
 #pragma once
 
+#include "detail/callback_holder.hpp"
+#include "detail/function_traits.hpp"
+#include "detail/pointer_type.hpp"
+#include "detail/utils.hpp"
+
 #include <unordered_map>
 #include <memory>
 #include <type_traits>
@@ -16,140 +21,6 @@ using NoDependencies = Dependency<>;
 
 template<typename T>
 struct Service;
-
-namespace detail {
-
-enum class enabler {};
-
-template <bool b, typename T>
-using enable_if_t = typename std::enable_if<b, T>::type;
-
-template<int ...>
-struct seq {};
-
-template<int n, int ...S>
-struct seq_gen : seq_gen<n-1, n-1, S...> {};
-
-template<int ...S>
-struct seq_gen<0, S...> {
-	using type = seq<S...>;
-};
-
-template <typename U>
-struct function_traits
-	: function_traits<decltype(&U::operator())>
-{};
-
-template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const> {
-	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-};
-
-template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...)> {
-	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-};
-
-template <typename R, typename... Args>
-struct function_traits<R(*)(Args...)> {
-	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-};
-
-template <typename... F>
-using function_arguments_t = typename function_traits<F...>::argument_types;
-
-template <typename... F>
-using function_result_t = typename function_traits<F...>::return_type;
-
-struct Holder {
-	virtual ~Holder() = default;
-};
-
-template<typename T, typename... Args>
-struct CallbackHolder final : Holder {
-	using callback_t = std::function<T(Args...)>;
-
-	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
-	
-	T operator ()(Args... args) {
-		return _callback(args...);
-	}
-private:
-	callback_t _callback;
-};
-
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique( Args&& ...args )
-{
-	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
-
-template <typename T, typename ...Args> void type_id() {}
-using type_id_fn = void(*)();
-
-template<typename T>
-struct check_pointer_type {
-private:
-	using yes = char;
-	using no = struct { char array[2]; };
-
-	template<typename C> static yes test(typename Service<C>::template PointerType<C>*);
-	template<typename C> static no test(...);
-	
-public:
-	constexpr static bool value = sizeof(test<T>(0)) == sizeof(yes);
-};
-
-template<typename Ptr>
-struct PointerType {};
-
-template<typename T>
-struct PointerType<T*> {
-	using Type = T*;
-	using ServiceType = T;
-	
-	template<typename ...Args>
-	static Type make_pointer(Args&&... args) {
-		return new T(std::forward<Args>(args)...);
-	}
-};
-
-template<typename T>
-struct PointerType<std::shared_ptr<T>> {
-	using Type = std::shared_ptr<T>;
-	using ServiceType = T;
-	
-	template<typename ...Args>
-	static Type make_pointer(Args&&... args) {
-		return std::make_shared<T>(std::forward<Args>(args)...);
-	}
-};
-
-template<typename T>
-struct PointerType<std::unique_ptr<T>> {
-	using Type = std::unique_ptr<T>;
-	using ServiceType = T;
-	
-	template<typename ...Args>
-	static Type make_pointer(Args&&... args) {
-		return make_unique<T>(std::forward<Args>(args)...);
-	}
-};
-
-template <bool, typename T>
-struct pointer_type_helper {
-	using type = typename Service<T>::template PointerType<T>;
-};
-
-template <typename T>
-struct pointer_type_helper<false, T> {
-	using type = PointerType<std::shared_ptr<T>>;
-};
-
-} // namespace detail
 
 struct Single {
 	using ParentTypes = std::tuple<>;
@@ -183,11 +54,10 @@ class Container : public std::enable_shared_from_this<Container> { public:
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using callback_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
-	using InstanceHolder = std::shared_ptr<void>;
-	using instance_cont = std::unordered_map<detail::type_id_fn, InstanceHolder>;
-	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type;
+	using instance_cont = std::unordered_map<detail::type_id_fn, std::shared_ptr<void>>;
+	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type;
 	template<int S, typename Services> using ptr_type_helpers = ptr_type_helper<typename std::tuple_element<S, Services>::type>;
-	template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::check_pointer_type<T>::value, T>::type::Type;
+	template<typename T> using ptr_type = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type::Type;
 	template<int S, typename Services> using ptr_types = ptr_type<typename std::tuple_element<S, Services>::type>;
 	constexpr static detail::enabler null = {};
 	
@@ -250,10 +120,9 @@ public:
 	
 	template<typename T, typename U>
 	void callback(U callback) {
-		using arguments = detail::function_arguments_t<U>;
 		static_assert(!is_service_single<T>::value, "instance does not accept Single Service.");
 		
-		call_save_callback<T, arguments>(tuple_seq<dependency_types<T>>{}, callback);
+		call_save_callback<T>(tuple_seq<dependency_types<T>>{}, callback);
 	}
 	
 	template<typename U>
@@ -262,9 +131,11 @@ public:
 
 		this->callback<T,U>(callback);
 	}
+	
 protected:
 	Container() = default;
 	virtual void init(){}	
+	
 private:
 	template<typename T, enable_if<is_service_single<T>> = null>
 	ptr_type<T> get_service() {
@@ -314,7 +185,7 @@ private:
 	ptr_type<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
 		
-		return service ? service : std::make_shared<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+		return service ? service : ptr_type_helper<T>::make_pointer(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 	}
 
 	template <typename T, typename ...Args>
@@ -334,13 +205,13 @@ private:
 		_services[&detail::type_id<T>] = std::move(service);
 	}
 	
-	template<typename T, typename Tuple, int ...S, typename U>
+	template<typename T, int ...S, typename U>
 	void call_save_callback(detail::seq<S...>, U callback) {
-		using argument_dependency_types = std::tuple<tuple_element<S, Tuple>...>;
+		using argument_dependency_types = std::tuple<detail::function_argument_t<S, U>...>;
 		using dependency_ptr = std::tuple<ptr_types<S, dependency_types<T>>...>;
 		static_assert(std::is_same<dependency_ptr, argument_dependency_types>::value, "The callback should receive the dependencies in the right order as first parameters");
 		
-		save_callback<T, Tuple>(tuple_seq<Tuple>{}, callback);
+		save_callback<T, detail::function_arguments_t<U>>(tuple_seq<detail::function_arguments_t<U>>{}, callback);
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename U>

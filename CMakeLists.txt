@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 2.6)
-project(kangaru-example)
+project(kangaru)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -Werror")
-add_executable(kangaru-example example/kangaru-example.cpp)
-include_directories(${PROJECT_SOURCE_DIR}/include/kangaru)
-
-install(TARGETS kangaru-example RUNTIME DESTINATION bin)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+add_subdirectory(examples)

@@ -70,7 +70,7 @@ public:
 
 	template <typename T, typename... Args, enable_if<is_base_of_container<T>> = null>
 	static std::shared_ptr<T> make_container(Args&&... args) {
-		auto container = std::make_shared<T>(std::forward<Args>(args)...);
+		auto container = std::shared_ptr<T>(new T {std::forward<Args>(args)...});
 		static_cast<Container&>(*container).init();
 		
 		return container;

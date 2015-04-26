@@ -47,7 +47,7 @@ int main()
 	
 	provider->path = "/home/test";
 	
-	// every printer will print /home/test, because every provider has the same instance of PathProvider
+	// every printer will print /home/test, because every printer has the same instance of PathProvider
 	printer1->print();
 	printer2->print();
 	printer3->print();

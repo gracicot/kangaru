@@ -55,10 +55,7 @@ class Container : public std::enable_shared_from_this<Container> {
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using callback_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
 	using instance_cont = std::unordered_map<detail::type_id_fn, std::shared_ptr<void>>;
-	template<typename T> using ptr_type_helper = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type;
-	template<int S, typename Services> using ptr_type_helpers = ptr_type_helper<typename std::tuple_element<S, Services>::type>;
-	template<typename T> using ptr_type = detail::ptr_type<T>;
-	template<int S, typename Services> using ptr_types = ptr_type<typename std::tuple_element<S, Services>::type>;
+	template<int S, typename Services> using service_ptrs = service_ptr<typename std::tuple_element<S, Services>::type>;
 	constexpr static detail::enabler null = {};
 	
 public:
@@ -80,7 +77,7 @@ public:
 	void instance(std::shared_ptr<T> service) {
 		static_assert(!std::is_base_of<Unique, Service<T>>::value, "Single cannot be unique");
 		static_assert(!std::is_base_of<Raw, Service<T>>::value, "Single cannot be raw pointers");
-		static_assert(std::is_same<ptr_type<T>, std::shared_ptr<T>>::value, "Single can only be held by shared_ptr");
+		static_assert(std::is_same<service_ptr<T>, std::shared_ptr<T>>::value, "Single can only be held by shared_ptr");
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 
 		call_save_instance(std::move(service), tuple_seq<parent_types<T>>{});
@@ -90,11 +87,11 @@ public:
 	void instance(Args&& ...args) {
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 
-		instance(make_service<T>(std::forward<Args>(args)...));
+		instance(make_service_instance<T>(std::forward<Args>(args)...));
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_abstract<T>> = null, disable_if<is_base_of_container<T>> = null>
-	ptr_type<T> service(Args&& ...args) {
+	service_ptr<T> service(Args&& ...args) {
 		return get_service<T>(std::forward<Args>(args)...);
 	}
 	
@@ -109,7 +106,7 @@ public:
 	}
 	
 	template<typename T, enable_if<is_abstract<T>> = null>
-	ptr_type<T> service() {
+	service_ptr<T> service() {
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it != _services.end()) {
@@ -139,11 +136,11 @@ protected:
 	
 private:
 	template<typename T, enable_if<is_service_single<T>> = null>
-	ptr_type<T> get_service() {
+	service_ptr<T> get_service() {
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it == _services.end()) {
-			auto service = make_service<T>();
+			auto service = make_service_instance<T>();
 			instance(service);
 			
 			return service;
@@ -153,8 +150,8 @@ private:
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
-	ptr_type<T> get_service(Args ...args) {
-		return make_service<T>(std::forward<Args>(args)...);
+	service_ptr<T> get_service(Args ...args) {
+		return make_service_instance<T>(std::forward<Args>(args)...);
 	}
 
 	template<typename T, int ...S>
@@ -163,12 +160,12 @@ private:
 	}
 	
 	template<typename Tuple, int ...S>
-	std::tuple<ptr_types<S, Tuple>...> dependency(detail::seq<S...>) {
+	std::tuple<service_ptrs<S, Tuple>...> dependency(detail::seq<S...>) {
 		return std::make_tuple(service<tuple_element<S, Tuple>>()...);
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename ...Args>
-	ptr_type<T> callback_make_service(detail::seq<S...>, Tuple dependencies, Args&& ...args) const {
+	service_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies, Args&& ...args) const {
 		auto it = _callbacks.find(&detail::type_id<T, tuple_element<S, Tuple>..., Args...>);
 		
 		if (it != _callbacks.end()) {
@@ -179,19 +176,18 @@ private:
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename ...Args, enable_if<is_service_single<T>> = null>
-	ptr_type<T> make_service_dependency(detail::seq<S...>, Tuple dependencies, Args&& ...args) const {
-		return ptr_type_helper<T>::make_pointer(std::move(std::get<S>(dependencies))..., std::forward<Args>(args)...);
+	service_ptr<T> make_service_dependency(detail::seq<S...>, Tuple dependencies, Args&& ...args) const {
+		return make_service<T>(std::move(std::get<S>(dependencies))..., std::forward<Args>(args)...);
 	}
 	
 	template<typename T, typename Tuple, int ...S, typename ...Args, disable_if<is_service_single<T>> = null>
-	ptr_type<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
+	service_ptr<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
-		
-		return service ? service : ptr_type_helper<T>::make_pointer(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+		return service ? service : make_service<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 	}
-
+	
 	template <typename T, typename ...Args>
-	ptr_type<T> make_service(Args&& ...args) {
+	service_ptr<T> make_service_instance(Args&& ...args) {
 		auto seq = tuple_seq<dependency_types<T>>{};
 		return make_service_dependency<T>(seq, dependency<dependency_types<T>>(seq), std::forward<Args>(args)...);
 	}
@@ -210,9 +206,9 @@ private:
 	template<typename T, int ...S, typename U>
 	void call_save_callback(detail::seq<S...>, U callback) {
 		using argument_dependency_types = std::tuple<detail::function_argument_t<S, U>...>;
-		using dependency_ptr = std::tuple<ptr_types<S, dependency_types<T>>...>;
+		using dependency_ptr = std::tuple<service_ptrs<S, dependency_types<T>>...>;
 		static_assert(std::is_same<dependency_ptr, argument_dependency_types>::value, "The callback should receive the dependencies in the right order as first parameters");
-		static_assert(std::is_same<detail::function_result_t<U>, ptr_type<T>>::value, "The callback should return the right type of pointer.");
+		static_assert(std::is_same<detail::function_result_t<U>, service_ptr<T>>::value, "The callback should return the right type of pointer.");
 		
 		save_callback<T, detail::function_arguments_t<U>>(tuple_seq<detail::function_arguments_t<U>>{}, callback);
 	}

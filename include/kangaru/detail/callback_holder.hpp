@@ -13,11 +13,11 @@ struct Holder {
 
 template<typename T, typename... Args>
 struct CallbackHolder final : Holder {
-	using callback_t = std::function<ptr_type<T>(Args...)>;
+	using callback_t = std::function<service_ptr<T>(Args...)>;
 
 	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
 	
-	ptr_type<T> operator ()(Args... args) {
+	service_ptr<T> operator ()(Args... args) {
 		return _callback(args...);
 	}
 	

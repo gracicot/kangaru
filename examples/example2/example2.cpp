@@ -24,12 +24,17 @@ struct Carpenter {
 	Carpenter(shared_ptr<Container> _container, shared_ptr<WoodStack> _stack) : container{_container}, stack{_stack} {}
 	
 	shared_ptr<Product> makeProduct(string name) {
-		cout << "Another " << name << " made, but only " << --stack->planks << " planks left!" << endl;
+		if (stack->planks > 0) {
+			cout << "Another " << name << " made, but only " << --stack->planks << " planks left!" << endl;
 		
-		auto product = container->service<Product>();
-		product->name = name;
+			auto product = container->service<Product>();
+			product->name = name;
 		
-		return product;
+			return product;
+		}
+		
+		cout << "No planks left, no product made." << endl;	
+		return nullptr;
 	}
 	
 private:
@@ -49,9 +54,9 @@ int main()
 {
 	auto container = make_container();
 	
-	// We made the stack ourself and set the number of planks to 30
+	// We made the stack ourself and set the number of planks to 2
 	auto stack = make_shared<WoodStack>();
-	stack->planks = 30;
+	stack->planks = 2;
 	
 	// We are providing our stack instance to the container.
 	container->instance(stack);
@@ -59,11 +64,15 @@ int main()
 	// It has the Container and the WoodStack injected.
 	auto gerald = container->service<Carpenter>();
 	
-	// Will print: Another computer desk made, but only 29 planks left!
+	// Will print: Another computer desk made, but only 1 planks left!
 	auto product1 = gerald->makeProduct("computer desk");
 	
-	// Will print: Another chair made, but only 28 planks left!
+	// Will print: Another chair made, but only 0 planks left!
 	auto product2 = gerald->makeProduct("chair");
+	
+	// Will print: No planks left, no product made.
+	// As a result, product3 is null.
+	auto product3 = gerald->makeProduct("table");
 	
 	return 0;
 }

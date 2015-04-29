@@ -6,7 +6,7 @@
 
 /**
  * This example explains moderate use of kangaru and it's components.
- * It covers providing instances to the container and self-injection.
+ * It covers providing instances to the container, self-injection and service_ptr.
  */
 
 using namespace std;
@@ -23,7 +23,9 @@ struct WoodStack {
 struct Carpenter {
 	Carpenter(shared_ptr<Container> _container, shared_ptr<WoodStack> _stack) : container{_container}, stack{_stack} {}
 	
-	shared_ptr<Product> makeProduct(string name) {
+	// We are using service_ptr, which in this case is an alias to shared_ptr<Product>.
+	// Since the pointer type can be changed, using only shared_ptr here may be wrong.
+	service_ptr<Product> makeProduct(string name) {
 		if (stack->planks > 0) {
 			cout << "Another " << name << " made, but only " << --stack->planks << " planks left!" << endl;
 		
@@ -57,7 +59,11 @@ int main()
 	auto container = make_container();
 	
 	// We made the stack ourself and set the number of planks to 2
-	auto stack = make_shared<WoodStack>();
+	// We are using make_service here, because we want to make a new pointer to a service.
+	// Since pointer types can be can changed, make_shared can be wrong.
+	// In this case, make_service will simply call make_shared.
+	// In the moment, the pointer type of a Single service is always shared.
+	auto stack = make_service<WoodStack>();
 	stack->planks = 2;
 	
 	// We are providing our stack instance to the container.

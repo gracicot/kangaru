@@ -6,7 +6,7 @@
 
 /**
  * This example explains moderate use of kangaru and it's components.
- * It covers callbacks, extending the container and providing instance of a single service.
+ * It covers callbacks and extending the container
  */
 
 using namespace std;
@@ -19,16 +19,16 @@ struct Amp {
 };
 
 struct Guitar {
-	Guitar(shared_ptr<Amp> myAmp) : amp{myAmp} {};
+	Guitar(service_ptr<Amp> myAmp) : amp{myAmp} {};
 	
 	string model;
-	shared_ptr<Amp> amp;
+	service_ptr<Amp> amp;
 };
 
 struct Studio {
 	Studio(string myName = "") : name{myName} {};
 	
-	void record(shared_ptr<Guitar> guitar) {
+	void record(service_ptr<Guitar> guitar) {
 		cout << "The studio \"" << name << "\" records a " << guitar->model << " with a " << guitar->amp->watts << " watt amp." << endl;
 	}
 	
@@ -39,17 +39,24 @@ struct MyContainer : Container {
 	// This is the init function, we are initiating what we need to make the main() work.
     virtual void init() {
 		// We are making our studio with a pretty name.
-		auto studio = make_shared<Studio>("The Music Box");
+		// We are using make_service to make the right type of pointer.
+		// In this case this will be equivalent to make_shared().
+		// In the moment, the pointer type of a Single service is always shared.
+		auto studio = make_service<Studio>("The Music Box");
 		
 		// We are registering the studio instance to the conatiner.
 		instance(studio);
 		
 		// Here we are giving the container a callback used to make Amps.
+		// The container knows this function returns an Amp, so it will be used to construct the Amp service.
 		// The container will always use this callback everytime we need an Amp.
 		callback([]{
 			// We are making a new amp with some watts, incrementing each time.
+			// We are using make_service to make the right type of pointer.
+			// In this case this will be equivalent to make_shared().
+			// Since this is not a Single service, the pointer type may be changed.
 			static int watts = 0;
-			auto amp = make_shared<Amp>(watts += 65);
+			auto amp = make_service<Amp>(watts += 65);
 			
 			cout << "A new amp is made with it's power at " << amp->watts << endl;
 			

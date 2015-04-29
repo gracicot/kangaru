@@ -42,8 +42,10 @@ private:
 	shared_ptr<WoodStack> stack;
 };
 
+// Service definitions must be in the kgr namespace
 namespace kgr {
 
+// This is our service definitions
 template<> struct Service<Product> : NoDependencies {};
 template<> struct Service<Carpenter> : Dependency<Container, WoodStack> {};
 template<> struct Service<WoodStack> : NoDependencies, Single {};

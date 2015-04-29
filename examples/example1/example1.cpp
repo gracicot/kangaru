@@ -27,8 +27,10 @@ private:
 	shared_ptr<PathProvider> pathProvider;
 };
 
+// Service definitions must be in the kgr namespace
 namespace kgr {
 
+// This is our service definitions
 template<> struct Service<PathProvider> : NoDependencies, Single {};
 template<> struct Service<PathPrinter> : Dependency<PathProvider> {};
 

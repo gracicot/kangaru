@@ -17,6 +17,7 @@ struct PathProvider {
 };
 
 struct PathPrinter {
+	// For the sake of simplicity, we use a shared_ptr
 	PathPrinter(shared_ptr<PathProvider> _pathProvider) : pathProvider{_pathProvider} {}
 	
 	void print() {

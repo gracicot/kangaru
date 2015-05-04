@@ -41,7 +41,6 @@ struct MyContainer : Container {
 		// We are making our studio with a pretty name.
 		// We are using make_service to make the right type of pointer.
 		// In this case this will be equivalent to make_shared().
-		// In the moment, the pointer type of a Single service is always shared.
 		auto studio = make_service<Studio>("The Music Box");
 		
 		// We are registering the studio instance to the conatiner.
@@ -54,7 +53,7 @@ struct MyContainer : Container {
 			// We are making a new amp with some watts, incrementing each time.
 			// We are using make_service to make the right type of pointer.
 			// In this case this will be equivalent to make_shared().
-			// Since this is not a Single service, the pointer type may be changed.
+			// The pointer type may change in the future.
 			static int watts = 0;
 			auto amp = make_service<Amp>(watts += 65);
 			

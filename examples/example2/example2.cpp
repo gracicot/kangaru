@@ -21,7 +21,7 @@ struct WoodStack {
 };
 
 struct Carpenter {
-	Carpenter(shared_ptr<Container> _container, shared_ptr<WoodStack> _stack) : container{_container}, stack{_stack} {}
+	Carpenter(shared_ptr<Container> _container, service_ptr<WoodStack> _stack) : container{_container}, stack{_stack} {}
 	
 	// We are using service_ptr, which in this case is an alias to shared_ptr<Product>.
 	// Since the pointer type can be changed, using only shared_ptr here may be wrong.
@@ -41,7 +41,7 @@ struct Carpenter {
 	
 private:
 	shared_ptr<Container> container;
-	shared_ptr<WoodStack> stack;
+	service_ptr<WoodStack> stack;
 };
 
 // Service definitions must be in the kgr namespace
@@ -62,7 +62,6 @@ int main()
 	// We are using make_service here, because we want to make a new pointer to a service.
 	// Since pointer types can be can changed, make_shared can be wrong.
 	// In this case, make_service will simply call make_shared.
-	// In the moment, the pointer type of a Single service is always shared.
 	auto stack = make_service<WoodStack>();
 	stack->planks = 2;
 	

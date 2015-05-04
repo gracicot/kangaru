@@ -24,7 +24,6 @@ struct Service;
 
 struct Single {
 	using ParentTypes = std::tuple<>;
-	template<typename T> using PointerType = detail::PointerType<std::shared_ptr<T>>;
 };
 
 struct Unique {
@@ -76,11 +75,17 @@ public:
 	template<typename T>
 	void instance(std::shared_ptr<T> service) {
 		static_assert(!std::is_base_of<Unique, Service<T>>::value, "Single cannot be unique");
-		static_assert(!std::is_base_of<Raw, Service<T>>::value, "Single cannot be raw pointers");
-		static_assert(std::is_same<service_ptr<T>, std::shared_ptr<T>>::value, "Single can only be held by shared_ptr");
+		static_assert(std::is_same<service_ptr<T>, std::shared_ptr<T>>::value || std::is_same<service_ptr<T>, T*>::value, "Single pointer type can only be raw of shared_ptr.");
 		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
 
 		call_save_instance(std::move(service), tuple_seq<parent_types<T>>{});
+	}
+
+	template<typename T, enable_if<std::is_same<service_ptr<T>, T*>> = null>
+	void instance(T* service) {
+		static_assert(is_service_single<T>::value, "instance only accept Single Service instance.");
+
+		call_save_instance(std::shared_ptr<T>(service), tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, typename ...Args>
@@ -140,13 +145,13 @@ private:
 		auto it = _services.find(&detail::type_id<T>);
 		
 		if (it == _services.end()) {
-			auto service = make_service_instance<T>();
+			auto service = std::shared_ptr<T>(make_service_instance<T>());
 			instance(service);
 			
-			return service;
+			return detail::PointerConverter<T, service_ptr<T>, std::shared_ptr<T>>::convert(std::move(service));
 		}
 		
-		return std::static_pointer_cast<T>(it->second);
+		return detail::PointerConverter<T, service_ptr<T>, std::shared_ptr<T>>::convert(std::static_pointer_cast<T>(it->second));
 	}
 	
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>

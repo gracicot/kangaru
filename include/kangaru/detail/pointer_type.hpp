@@ -70,6 +70,29 @@ public:
 	constexpr static bool value = sizeof(test<T>(0)) == sizeof(yes);
 };
 
+template<typename Service, typename Target, typename Input>
+struct PointerConverter;
+
+template<typename Service>
+struct PointerConverter<Service, Service*, std::shared_ptr<Service>> {
+	static Service* convert(std::shared_ptr<Service>&& input) {
+		return input.get();
+	}
+	static Service* convert(std::shared_ptr<Service>& input) {
+		return input.get();
+	}
+};
+
+template<typename Service>
+struct PointerConverter<Service, std::shared_ptr<Service>, std::shared_ptr<Service>> {
+	static std::shared_ptr<Service> convert(std::shared_ptr<Service>&& input) {
+		return std::move(input);
+	}
+	static std::shared_ptr<Service> convert(std::shared_ptr<Service>& input) {
+		return std::move(input);
+	}
+};
+
 } // namespace detail
 
 template<typename T> using service_ptr = typename detail::pointer_type_helper<detail::has_pointer_type<T>::value, T>::type::Type;

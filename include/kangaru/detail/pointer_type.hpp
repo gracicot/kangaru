@@ -78,7 +78,7 @@ struct PointerConverter<Service, Service*, std::shared_ptr<Service>> {
 	static Service* convert(std::shared_ptr<Service>&& input) {
 		return input.get();
 	}
-	static Service* convert(std::shared_ptr<Service>& input) {
+	static Service* convert(const std::shared_ptr<Service>& input) {
 		return input.get();
 	}
 };
@@ -88,8 +88,8 @@ struct PointerConverter<Service, std::shared_ptr<Service>, std::shared_ptr<Servi
 	static std::shared_ptr<Service> convert(std::shared_ptr<Service>&& input) {
 		return std::move(input);
 	}
-	static std::shared_ptr<Service> convert(std::shared_ptr<Service>& input) {
-		return std::move(input);
+	static std::shared_ptr<Service> convert(const std::shared_ptr<Service>& input) {
+		return input;
 	}
 };
 

@@ -43,7 +43,7 @@ struct PointerType<std::unique_ptr<T>> {
 	
 	template<typename ...Args>
 	static Type make_pointer(Args&&... args) {
-		return make_unique<T>(std::forward<Args>(args)...);
+		return kgr::detail::make_unique<T>(std::forward<Args>(args)...);
 	}
 };
 

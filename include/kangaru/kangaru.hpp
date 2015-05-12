@@ -188,7 +188,7 @@ private:
 	template<typename T, typename Tuple, int ...S, typename ...Args, disable_if<is_service_single<T>> = null>
 	service_ptr<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
-		return service ? service : make_service<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+		return service ? std::move(service) : make_service<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
 	}
 	
 	template <typename T, typename ...Args>

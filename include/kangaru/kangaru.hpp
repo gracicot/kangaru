@@ -171,7 +171,7 @@ private:
 	
 	template<typename T, typename Tuple, int ...S, typename ...Args>
 	service_ptr<T> callback_make_service(detail::seq<S...>, Tuple dependencies, Args&& ...args) const {
-		auto it = _callbacks.find(&detail::type_id<T, tuple_element<S, Tuple>..., Args...>);
+		auto it = _callbacks.find(detail::type_id<T, tuple_element<S, Tuple>..., Args...>);
 		
 		if (it != _callbacks.end()) {
 			return static_cast<detail::CallbackHolder<T, tuple_element<S, Tuple>..., Args...>&>(*it->second.get())(std::get<S>(dependencies)..., std::forward<Args>(args)...);
@@ -185,10 +185,21 @@ private:
 		return make_service<T>(std::move(std::get<S>(dependencies))..., std::forward<Args>(args)...);
 	}
 	
-	template<typename T, typename Tuple, int ...S, typename ...Args, disable_if<is_service_single<T>> = null>
+	template<typename T, typename Tuple, int ...S, typename ...Args, disable_if<is_service_single<T>> = null, enable_if<std::is_constructible<T, tuple_element<S, Tuple>..., Args...>> = null>
 	service_ptr<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
 		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
 		return service ? std::move(service) : make_service<T>(std::get<S>(dependencies)..., std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename Tuple, int ...S, typename ...Args, disable_if<is_service_single<T>> = null, disable_if<std::is_constructible<T, tuple_element<S, Tuple>..., Args...>> = null>
+	service_ptr<T> make_service_dependency(detail::seq<S...> seq, Tuple dependencies, Args&& ...args) const {
+		auto service = callback_make_service<T, Tuple>(seq, dependencies, std::forward<Args>(args)...);
+		
+		if (service) {
+			return std::move(service);
+		} else {
+			throw std::invalid_argument{"No callback with the provided arguments has been found"};
+		}
 	}
 	
 	template <typename T, typename ...Args>
@@ -220,7 +231,7 @@ private:
 	
 	template<typename T, typename Tuple, int ...S, typename U>
 	void save_callback (detail::seq<S...>, U callback) {
-		_callbacks[&detail::type_id<T, tuple_element<S, Tuple>...>] = detail::make_unique<detail::CallbackHolder<T, tuple_element<S, Tuple>...>>(callback);
+		_callbacks[detail::type_id<T, tuple_element<S, Tuple>...>] = detail::make_unique<detail::CallbackHolder<T, tuple_element<S, Tuple>...>>(callback);
 	}
 	
 	callback_cont _callbacks;

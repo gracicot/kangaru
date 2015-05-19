@@ -47,7 +47,7 @@ int C::getN() const
 
 struct D {
 	// D needs B and AC
-	D(shared_ptr<B> b_ptr, shared_ptr<AC> c_ptr, int) : b{std::move(b_ptr)}, c{std::move(c_ptr)} {}
+	D(shared_ptr<B> b_ptr, shared_ptr<AC> c_ptr) : b{std::move(b_ptr)}, c{std::move(c_ptr)} {}
 
 	shared_ptr<B> b;
 	shared_ptr<AC> c;
@@ -118,7 +118,7 @@ int main()
 
 	container->callback([](std::shared_ptr<B> b, std::shared_ptr<AC> ac, int i) {
 		cout << "a D is built with: " << i << '\n';
-		return make_shared<D>(std::move(b), std::move(ac), i);
+		return make_shared<D>(std::move(b), std::move(ac));
 	});
 
 	// let's get some services
@@ -126,7 +126,7 @@ int main()
 	auto b = container->service<B>();
 	auto c = container->service<C>(); // I'm a E!
 	auto ac = container->service<AC>(); // I'm a C!
-	auto d1 = container->service<D>(3);
+	auto d1 = container->service<D>();
 	auto d2 = container->service<D>(4);
 	auto e = container->service<E>();
 

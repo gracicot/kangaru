@@ -17,8 +17,8 @@ struct CallbackHolder final : Holder {
 
 	explicit CallbackHolder(callback_t callback) : _callback{std::move(callback)} {}
 	
-	service_ptr<T> operator ()(Args... args) {
-		return _callback(args...);
+	service_ptr<T> operator ()(Args&&... args) {
+		return _callback(std::forward<Args>(args)...);
 	}
 	
 private:

@@ -5,7 +5,7 @@
 #include "kangaru.hpp"
 
 /**
- * This example explains moderate use of kangaru and it's components.
+ * This example explains advanced use of kangaru and it's components.
  * It covers overriding services
  */
 
@@ -81,6 +81,10 @@ struct MyContainer : Container {
 		instance<LavaWand>();
     }
 };
+
+void c(service_ptr<Wizard>, service_ptr<FireWand>, service_ptr<FireMage>) {
+	cout << "invoked" << endl;
+}
 
 // Service definitions must be in the kgr namespace
 namespace kgr {

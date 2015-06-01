@@ -49,12 +49,14 @@ class Container : public std::enable_shared_from_this<Container> {
 	template<typename T> using dependency_types = typename Service<T>::DependenciesTypes;
 	template<typename T> using parent_types = typename Service<T>::ParentTypes;
 	template<typename Tuple> using tuple_seq = typename detail::seq_gen<std::tuple_size<Tuple>::value>::type;
+	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<int S, typename Tuple> using tuple_element = typename std::tuple_element<S, Tuple>::type;
 	using holder_ptr = std::unique_ptr<detail::Holder>;
 	using callback_cont = std::unordered_map<detail::type_id_fn, holder_ptr>;
 	using instance_cont = std::unordered_map<detail::type_id_fn, std::shared_ptr<void>>;
 	template<int S, typename Services> using service_ptrs = service_ptr<typename std::tuple_element<S, Services>::type>;
+	template<typename T> using service_type = typename detail::PointerType<T>::ServiceType;
 	constexpr static detail::enabler null = {};
 	
 public:
@@ -130,9 +132,12 @@ public:
 	
 	template<typename U>
 	void callback(U callback) {
-		using T = typename detail::PointerType<detail::function_result_t<U>>::ServiceType;
-
-		this->callback<T,U>(callback);
+		this->callback<service_type<detail::function_result_t<U>>,U>(callback);
+	}
+	
+	template<typename U, typename ...Args>
+	detail::function_result_t<U> invoke(U function, Args&&... args) {
+		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{}, function, std::forward<Args>(args)...);
 	}
 	
 protected:
@@ -157,6 +162,11 @@ private:
 	template<typename T, typename ...Args, disable_if<is_service_single<T>> = null>
 	service_ptr<T> get_service(Args ...args) {
 		return make_service_instance<T>(std::forward<Args>(args)...);
+	}
+	
+	template<typename U, int... S, typename ...Args>
+	detail::function_result_t<U> invoke_helper(detail::seq<S...>, U function, Args&&... args) {
+		return function(service<service_type<detail::function_argument_t<S, U>>>()..., std::forward<Args>(args)...);
 	}
 
 	template<typename T, int ...S>

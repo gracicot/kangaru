@@ -37,6 +37,12 @@ struct PointerType<std::shared_ptr<T>> {
 };
 
 template<typename T>
+struct PointerType<std::weak_ptr<T>> {
+	using Type = std::weak_ptr<T>;
+	using ServiceType = T;
+};
+
+template<typename T>
 struct PointerType<std::unique_ptr<T>> {
 	using Type = std::unique_ptr<T>;
 	using ServiceType = T;

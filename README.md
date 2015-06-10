@@ -32,6 +32,7 @@ Features
  * Polymorphic resolution of services
  * Clean and simple API
  * Near zero runtime overhead
+ * Header only library
 
 What's next?
 ------------

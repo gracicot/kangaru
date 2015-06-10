@@ -82,10 +82,6 @@ struct MyContainer : Container {
     }
 };
 
-void c(service_ptr<Wizard>, service_ptr<FireWand>, service_ptr<FireMage>) {
-	cout << "invoked" << endl;
-}
-
 // Service definitions must be in the kgr namespace
 namespace kgr {
 

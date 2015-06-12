@@ -18,7 +18,7 @@ to add it to your project.
 
 Everything is declared in the namespace `kgr`
 
-Documentation and tutorial is in the wiki!
+[Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki!
 
 Features
 --------

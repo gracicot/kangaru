@@ -43,3 +43,6 @@ feel free to contribute!
  * Testing with multiple / virtual inheritance
  * Unit tests
  * CMake
+ * Named service instead of typed service
+ * Value/Reference type in addition of pointer types
+ * Automatic invoke setters at service construction

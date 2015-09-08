@@ -6,7 +6,7 @@
 namespace kgr {
 namespace detail {
 
-using type_id_fn = void(*)();
+using type_id_t = void(*)();
 template <typename ...T> void type_id() {}
 
 enum class enabler {};
@@ -24,12 +24,6 @@ template<int ...S>
 struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
-
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique( Args&& ...args )
-{
-	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
 
 } // namespace detail
 } // namespace kgr

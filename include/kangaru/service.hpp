@@ -49,7 +49,6 @@ struct BaseGenericService {
 	BaseGenericService(BaseGenericService&&) = default;
 	BaseGenericService(const BaseGenericService&) = default;
 	BaseGenericService& operator=(const BaseGenericService&) = default;
-	BaseGenericService& operator=(const BaseGenericService&) = default;
 	BaseGenericService(ContainedType instance) {
 		setInstance(std::move(instance));
 	}

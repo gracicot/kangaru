@@ -11,6 +11,8 @@ template <typename ...T> void type_id() {}
 
 enum class enabler {};
 
+constexpr enabler null = {};
+
 template <bool b, typename T>
 using enable_if_t = typename std::enable_if<b, T>::type;
 

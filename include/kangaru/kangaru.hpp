@@ -29,7 +29,8 @@ private:
 	Container* _instance;
 };
 
-class Container {
+struct Container {
+private:
 	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
@@ -72,7 +73,7 @@ public:
 	T release() {
 		static_assert(is_single<T>::value, "release() only accept Single Service instance.");
 		
-		auto s = service<T>();
+		auto s = std::move(*_services[detail::type_id<T>]);
 		_services.erase(detail::type_id<T>);
 		
 		return std::move(s);
@@ -89,7 +90,7 @@ public:
 	}
 	
 	template<typename T, enable_if<is_abstract<T>> = null>
-	service_type<T> service() {
+	service_type<T>& service() {
 		auto it = _services.find(detail::type_id<T>);
 		
 		if (it != _services.end()) {
@@ -151,14 +152,13 @@ private:
 	}
 	
 	template<typename T, enable_if<is_single<T>> = null, disable_if<is_base_of_container<typename std::remove_pointer<T>::type>> = null>
-	T get_service() {
+	T& get_service() {
 		auto it = _services.find(detail::type_id<T>);
 		
 		if (it == _services.end()) {
-			auto service = make_service_instance<T>();
-			instance(service);
+			instance(make_service_instance<T>());
 			
-			return service;
+			return *_services[detail::type_id<T>];
 		}
 		
 		return *static_cast<T*>(it->second.get());

@@ -5,6 +5,13 @@
 namespace kgr {
 
 struct Single {
+	Single() = default;
+	~Single() = default;
+	Single(const Single&) = delete;
+	Single& operator=(const Single&) = delete;
+	Single(Single&&) = default;
+	Single& operator=(Single&&) = default;
+	
 	using ParentTypes = std::tuple<>;
 };
 
@@ -69,8 +76,6 @@ struct BaseGenericService {
 		
 	}
 	
-	template<typename...> friend struct Injector;
-	
 protected:
 	ContainedType& getInstance() {
 		return *reinterpret_cast<ContainedType*>(&_instance);
@@ -113,17 +118,9 @@ struct SingleService;
 
 template<typename Type>
 struct SingleService<Type> : GenericService<SingleService<Type>, Type, Type*>, Single {
-private:
-	using Parent = GenericService<SingleService<Type>, Type, Type*>;
-	
-public:
-	using Parent::Parent;
-	SingleService(const SingleService&) = delete;
-	SingleService& operator=(const SingleService&) = delete;
-	
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static SingleService makeService(Args&&... args) {
+		return SingleService{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -133,17 +130,9 @@ public:
 
 template<typename Type, typename... Deps>
 struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Single {
-private:
-	using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>;
-	
-public:
-	using Parent::Parent;
-	SingleService(const SingleService&) = delete;
-	SingleService& operator=(const SingleService&) = delete;
-	
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static SingleService makeService(Args&&... args) {
+		return SingleService{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -153,17 +142,9 @@ public:
 
 template<typename Type, typename... O>
 struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type>, Type, Type*>, Overrides<O...> {
-private:
-	using Parent = GenericService<SingleService<Type>, Type, Type*>;
-	
-public:
-	using Parent::Parent;
-	SingleService(const SingleService&) = delete;
-	SingleService& operator=(const SingleService&) = delete;
-	
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static SingleService makeService(Args&&... args) {
+		return SingleService{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -173,17 +154,9 @@ public:
 
 template<typename Type, typename... Deps, typename... O>
 struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Overrides<O...> {
-private:
-	using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>;
-	
-public:
-	using Parent::Parent;
-	SingleService(const SingleService&) = delete;
-	SingleService& operator=(const SingleService&) = delete;
-	
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static SingleService makeService(Args&&... args) {
+		return SingleService{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -197,17 +170,9 @@ struct Service;
 
 template<typename Type>
 struct Service<Type> : GenericService<Service<Type>, Type, Type> {
-private:
-	using Parent = GenericService<Service<Type>, Type, Type>;
-	
-public:
-	using Parent::Parent;
-	Service(const Service&) = delete;
-	Service& operator=(const Service&) = delete;
-	
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static Service makeService(Args&&... args) {
+		return Service{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type forward() {
@@ -216,18 +181,10 @@ public:
 };
 
 template<typename Type, typename... Deps>
-struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>>, Single {
-private:
-	using Parent = GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>>;
-	
-public:
-	using Parent::Parent;
-	Service(const Service&) = delete;
-	Service& operator=(const Service&) = delete;
-	
+struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>> {
 	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+	static Service makeService(Args&&... args) {
+		return Service{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type forward() {

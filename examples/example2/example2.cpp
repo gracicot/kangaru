@@ -84,7 +84,7 @@ private:
 struct CarpenterService : Type<Carpenter> {
 	CarpenterService(Carpenter instance) : _instance{move(instance)} {}
 	
-	static CarpenterService construct(ContainerService container, WoodStackService stack) {
+	static CarpenterService construct(ContainerService container, WoodStackService& stack) {
 		return Carpenter{container.forward(), stack.forward()};
 	}
 	

@@ -35,39 +35,26 @@ struct Studio {
 	string name;
 };
 
+// This is our service definitions
+struct AmpService : Service<Amp> {
+	static Self construct() {
+		static int watts = 0;
+		return Amp{watts+=48};
+	}
+};
+
+struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
+struct StudioService : SingleService<Studio> {};
+
 struct MyContainer : Container {
 	// This is the init function, we are initiating what we need to make the main() work.
     virtual void init() {
 		// We are making our studio with a pretty name.
 		// We are using make_service to make the right type of pointer.
 		// In this case this will be equivalent to make_shared().
-// 		auto studio = make_service<Studio>("The Music Box");
-		
-		// We are registering the studio instance to the conatiner.
-// 		instance(studio);
-		
-		// Here we are giving the container a callback used to make Amps.
-		// The container knows this function returns an Amp, so it will be used to construct the Amp service.
-		// The container will always use this callback everytime we need an Amp.
-// 		callback([]{
-// 			// We are making a new amp with some watts, incrementing each time.
-// 			// We are using make_service to make the right type of pointer.
-// 			// In this case this will be equivalent to make_shared().
-// 			// The pointer type may change in the future.
-// 			static int watts = 0;
-// 			auto amp = make_service<Amp>(watts += 65);
-// 			
-// 			cout << "A new amp is made with it's power at " << amp->watts << endl;
-// 			
-// 			return amp;
-// 		});
+		service<StudioService>()->name = "The Music Box";
     }
 };
-
-// This is our service definitions
-struct AmpService : Service<Amp> {};
-struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
-struct StudioService : SingleService<Studio> {};
 
 int main()
 {

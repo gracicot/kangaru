@@ -44,7 +44,7 @@ private:
 struct ProductService : Type<unique_ptr<Product>> {
 	ProductService(unique_ptr<Product> instance) : _instance{move(instance)} {}
 	
-	static ProductService construct(WoodStackService stack) {
+	static ProductService construct(WoodStackService& stack) {
 		return unique_ptr<Product>(new Product{stack.forward()});
 	}
 	

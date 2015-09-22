@@ -30,24 +30,24 @@ private:
 
 // This is our service definitions
 struct PathProviderService : Type<PathProvider*>, Single {
-	PathProviderService(shared_ptr<PathProvider> instance) : _instance{move(instance)} {}
+	PathProviderService(PathProvider instance) : _instance{move(instance)} {}
 	
 	static PathProviderService construct() {
-		return {make_shared<PathProvider>()};
+		return PathProvider{};
 	}
 	
 	ServiceType forward() {
-		return _instance.get();
+		return &_instance;
 	}
 	
 private:
-	shared_ptr<PathProvider> _instance;
+	PathProvider _instance;
 };
 
 struct PathPrinterService : Type<PathPrinter> {
 	PathPrinterService(PathPrinter instance) : _instance{move(instance)} {}
 	
-	static PathPrinterService construct(PathProviderService provider) {
+	static PathPrinterService construct(PathProviderService& provider) {
 		return {provider.forward()};
 	}
 	

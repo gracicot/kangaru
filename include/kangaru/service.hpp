@@ -50,7 +50,6 @@ struct Injector<CRTP> {
 template<typename CRTP, typename ContainedType, typename ST>
 struct BaseGenericService {
 	using ServiceType = ST;
-	using Self = CRTP;
 	
 	BaseGenericService() = default;
 	BaseGenericService(BaseGenericService&&) = default;
@@ -68,12 +67,24 @@ struct BaseGenericService {
 	
 	template<typename T, typename = typename std::enable_if<std::is_base_of<CRTP, T>::value>::type>
 	operator T () const & {
+		T service;
 		
+		if (_initiated) {
+			service.setInstance(getInstance());
+		}
+		
+		return service;
 	}
 	
 	template<typename T, typename = typename std::enable_if<std::is_base_of<CRTP, T>::value>::type>
-	operator T () const && {
+	operator T () && {
+		T service;
 		
+		if (_initiated) {
+			service.setInstance(std::move(getInstance()));
+		}
+		
+		return service;
 	}
 	
 protected:
@@ -102,6 +113,7 @@ struct GenericService<CRTP, ContainedType, ST, Dependency<Deps...>> :
 {
 	using BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
 	using C = CRTP;
+	using Self = GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>;
 };
 
 template<typename CRTP, typename ContainedType, typename ST>
@@ -111,6 +123,7 @@ struct GenericService<CRTP, ContainedType, ST> :
 {
 	using BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
 	using C = CRTP;
+	using Self = GenericService<CRTP, ContainedType, ST>;
 };
 
 template<typename...>
@@ -119,8 +132,8 @@ struct SingleService;
 template<typename Type>
 struct SingleService<Type> : GenericService<SingleService<Type>, Type, Type*>, Single {
 	template<typename... Args>
-	static SingleService makeService(Args&&... args) {
-		return SingleService{Type{std::forward<Args>(args)...}};
+	static GenericService<SingleService<Type>, Type, Type*> makeService(Args&&... args) {
+		return GenericService<SingleService<Type>, Type, Type*>{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -131,8 +144,8 @@ struct SingleService<Type> : GenericService<SingleService<Type>, Type, Type*>, S
 template<typename Type, typename... Deps>
 struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Single {
 	template<typename... Args>
-	static SingleService makeService(Args&&... args) {
-		return SingleService{Type{std::forward<Args>(args)...}};
+	static GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>> makeService(Args&&... args) {
+		return GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -143,8 +156,8 @@ struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<T
 template<typename Type, typename... O>
 struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type>, Type, Type*>, Overrides<O...> {
 	template<typename... Args>
-	static SingleService makeService(Args&&... args) {
-		return SingleService{Type{std::forward<Args>(args)...}};
+	static GenericService<SingleService<Type>, Type, Type*> makeService(Args&&... args) {
+		return GenericService<SingleService<Type>, Type, Type*>{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -155,8 +168,8 @@ struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type>
 template<typename Type, typename... Deps, typename... O>
 struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Overrides<O...> {
 	template<typename... Args>
-	static SingleService makeService(Args&&... args) {
-		return SingleService{Type{std::forward<Args>(args)...}};
+	static GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>> makeService(Args&&... args) {
+		return GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type* forward() {
@@ -164,15 +177,14 @@ struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericServic
 	}
 };
 
-
 template<typename...>
 struct Service;
 
 template<typename Type>
 struct Service<Type> : GenericService<Service<Type>, Type, Type> {
 	template<typename... Args>
-	static Service makeService(Args&&... args) {
-		return Service{Type{std::forward<Args>(args)...}};
+	static GenericService<Service<Type>, Type, Type> makeService(Args&&... args) {
+		return GenericService<Service<Type>, Type, Type>{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type forward() {
@@ -183,8 +195,8 @@ struct Service<Type> : GenericService<Service<Type>, Type, Type> {
 template<typename Type, typename... Deps>
 struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>> {
 	template<typename... Args>
-	static Service makeService(Args&&... args) {
-		return Service{Type{std::forward<Args>(args)...}};
+	static GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>> makeService(Args&&... args) {
+		return GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>>{Type{args.forward()...}};
 	}
 	
 	Type forward() {

@@ -39,7 +39,7 @@ struct Studio {
 struct AmpService : Service<Amp> {
 	static Self construct() {
 		static int watts = 0;
-		return Amp{watts+=48};
+		return Amp{watts += 48};
 	}
 };
 

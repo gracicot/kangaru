@@ -94,13 +94,12 @@ protected:
 	
 private:
 	void setInstance(ContainedType instance) {
-		new (_instance) ContainedType{std::move(instance)};
+		new (&_instance) ContainedType{std::move(instance)};
 		_initiated = true;
 	}
 	
 	bool _initiated = false;
-	char _instance[sizeof(ContainedType)];
-// 	static_assert(sizeof(ContainedType) != sizeof(BaseGenericService<CRTP, ContainedType, ST>::_instance), "Wrong instance size");
+	typename std::aligned_storage<sizeof(ContainedType), alignof(ContainedType)>::type _instance;
 };
 
 template<typename...>

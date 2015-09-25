@@ -8,6 +8,7 @@
 #include <memory>
 #include <type_traits>
 #include <tuple>
+#include <vector>
 
 namespace kgr {
 
@@ -43,9 +44,14 @@ private:
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<typename Tuple> using tuple_seq = typename detail::seq_gen<std::tuple_size<Tuple>::value>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
-	using instance_cont = std::unordered_map<detail::type_id_t, std::shared_ptr<void>>;
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	
 	constexpr static detail::enabler null = detail::null;
+	
+	template<typename T>
+	static void deleter(void * i) {
+		delete static_cast<T*>(i);
+	}
 	
 public:
 	Container(const Container &) = delete;
@@ -129,17 +135,18 @@ private:
 	
 	template<typename U, typename T, int... S>
 	void save_instance(T&& service, detail::seq<S...>) {
-		save_instance_helper<decay<U>, parent_element<S, decay<U>>...>(std::make_shared<decay<U>>(std::move(service)));
+		save_instance_helper<decay<U>, parent_element<S, decay<U>>...>(instance_ptr<decay<U>>(new decay<U>{std::move(service)}, &Container::deleter<U>));
 	}
 	
 	template<typename T>
-	void save_instance_helper(std::shared_ptr<T> service) {
-		_services.emplace(detail::type_id<T>, std::move(service));
+	void save_instance_helper(instance_ptr<T> service) {
+		_services.emplace(detail::type_id<T>, service.get());
+		_instances.emplace_back(std::move(service));
 	}
 	
 	template<typename T, typename Save, typename... Others>
-	void save_instance_helper(std::shared_ptr<T> service) {
-		_services.emplace(detail::type_id<Save>, service);
+	void save_instance_helper(instance_ptr<T> service) {
+		_services.emplace(detail::type_id<Save>, service.get());
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	
@@ -165,10 +172,10 @@ private:
 		if (it == _services.end()) {
 			instance(make_service_instance<decay<T>>());
 			
-			return *static_cast<decay<T>*>(_services[detail::type_id<decay<T>>].get());
+			return *static_cast<decay<T>*>(_services[detail::type_id<decay<T>>]);
 		}
 		
-		return *static_cast<decay<T>*>(it->second.get());
+		return *static_cast<decay<T>*>(it->second);
 	}
 	
 	template<typename T, typename... Args>
@@ -187,7 +194,8 @@ private:
 		return function(service<typename Map<detail::function_argument_t<S, U>, S>::Service>()..., std::forward<Args>(args)...);
 	}
 	
-	instance_cont _services;
+	std::vector<instance_ptr<void>> _instances;
+	std::unordered_map<detail::type_id_t, void*> _services;
 };
 
 template<typename T = Container, typename ...Args>

@@ -29,35 +29,8 @@ private:
 };
 
 // This is our service definitions
-struct PathProviderService : Type<PathProvider*>, Single {
-	PathProviderService(PathProvider instance) : _instance{move(instance)} {}
-	
-	static PathProviderService construct() {
-		return PathProvider{};
-	}
-	
-	ServiceType forward() {
-		return &_instance;
-	}
-	
-private:
-	PathProvider _instance;
-};
-
-struct PathPrinterService : Type<PathPrinter> {
-	PathPrinterService(PathPrinter instance) : _instance{move(instance)} {}
-	
-	static PathPrinterService construct(PathProviderService& provider) {
-		return {provider.forward()};
-	}
-	
-	ServiceType forward() {
-		return move(_instance);
-	}
-	
-private:
-	PathPrinter _instance;
-};
+struct PathProviderService : SingleService<PathProvider> {};
+struct PathPrinterService : Service<PathPrinter, Dependency<PathProviderService>> {};
 
 int main()
 {

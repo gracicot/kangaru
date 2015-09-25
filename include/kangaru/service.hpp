@@ -33,9 +33,9 @@ struct Injector;
 
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
-	static CRTP construct(Deps&&... deps) {
+	static CRTP construct(typename std::conditional<std::is_base_of<Single, Deps>::value, Deps&, Deps&&>::type... deps) {
 		using C = typename CRTP::C;
-		return C::makeService(std::forward<Deps>(deps)...);
+		return C::makeService(deps...);
 	}
 };
 

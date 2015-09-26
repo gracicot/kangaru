@@ -48,11 +48,11 @@ struct StudioService : SingleService<Studio> {};
 
 struct MyContainer : Container {
 	// This is the init function, we are initiating what we need to make the main() work.
-    virtual void init() {
+    void init() {
 		// We are making our studio with a pretty name.
 		// We are using make_service to make the right type of pointer.
 		// In this case this will be equivalent to make_shared().
-		service<StudioService>()->name = "The Music Box";
+		service<StudioService>().name = "The Music Box";
     }
 };
 
@@ -61,19 +61,19 @@ int main()
 	// The container type will be MyContainer.
 	auto container = make_container<MyContainer>();
 	
-	auto guitar1 = container->service<GuitarService>();
-	auto guitar2 = container->service<GuitarService>();
-	auto guitar3 = container->service<GuitarService>();
+	auto guitar1 = container.service<GuitarService>();
+	auto guitar2 = container.service<GuitarService>();
+	auto guitar3 = container.service<GuitarService>();
 	
 	guitar1.model = "Gibson";
 	guitar2.model = "Fender";
 	guitar3.model = "Ibanez";
 	
-	auto studio = container->service<StudioService>();
+	auto& studio = container.service<StudioService>();
 	
-	studio->record(guitar1);
-	studio->record(guitar2);
-	studio->record(guitar3);
+	studio.record(guitar1);
+	studio.record(guitar2);
+	studio.record(guitar3);
 	
 	return 0;
 }

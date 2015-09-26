@@ -129,50 +129,58 @@ template<typename...>
 struct SingleService;
 
 template<typename Type>
-struct SingleService<Type> : GenericService<SingleService<Type>, Type, Type*>, Single {
+struct SingleService<Type> : GenericService<SingleService<Type>, Type, Type&>, Single {
+	using Parent = GenericService<SingleService<Type>, Type, Type&>;
+	
 	template<typename... Args>
-	static GenericService<SingleService<Type>, Type, Type*> makeService(Args&&... args) {
-		return GenericService<SingleService<Type>, Type, Type*>{Type{std::forward<Args>(args)...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
-	Type* forward() {
-		return &this->getInstance();
+	Type& forward() {
+		return this->getInstance();
 	}
 };
 
 template<typename Type, typename... Deps>
-struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Single {
+struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>, Single {
+	using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>;
+	
 	template<typename... Args>
-	static GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>> makeService(Args&&... args) {
-		return GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>{Type{std::forward<Args>(args)...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
-	Type* forward() {
-		return &this->getInstance();
+	Type& forward() {
+		return this->getInstance();
 	}
 };
 
 template<typename Type, typename... O>
-struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type>, Type, Type*>, Overrides<O...> {
+struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type>, Type, Type&>, Overrides<O...> {
+	using Parent = GenericService<SingleService<Type>, Type, Type&>;
+	
 	template<typename... Args>
-	static GenericService<SingleService<Type>, Type, Type*> makeService(Args&&... args) {
-		return GenericService<SingleService<Type>, Type, Type*>{Type{std::forward<Args>(args)...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
-	Type* forward() {
-		return &this->getInstance();
+	Type& forward() {
+		return this->getInstance();
 	}
 };
 
 template<typename Type, typename... Deps, typename... O>
-struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>, Overrides<O...> {
+struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>, Overrides<O...> {
+	using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>;
+	
 	template<typename... Args>
-	static GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>> makeService(Args&&... args) {
-		return GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type*, Dependency<Deps...>>{Type{std::forward<Args>(args)...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
-	Type* forward() {
-		return &this->getInstance();
+	Type& forward() {
+		return this->getInstance();
 	}
 };
 
@@ -181,9 +189,11 @@ struct Service;
 
 template<typename Type>
 struct Service<Type> : GenericService<Service<Type>, Type, Type> {
+	using Parent = GenericService<Service<Type>, Type, Type>;
+	
 	template<typename... Args>
-	static GenericService<Service<Type>, Type, Type> makeService(Args&&... args) {
-		return GenericService<Service<Type>, Type, Type>{Type{std::forward<Args>(args)...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type forward() {
@@ -193,9 +203,11 @@ struct Service<Type> : GenericService<Service<Type>, Type, Type> {
 
 template<typename Type, typename... Deps>
 struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>> {
+	using Parent = GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>>;
+	
 	template<typename... Args>
-	static GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>> makeService(Args&&... args) {
-		return GenericService<Service<Type, Dependency<Deps...>>, Type, Type, Dependency<Deps...>>{Type{args.forward()...}};
+	static Parent makeService(Args&&... args) {
+		return Parent{Type{args.forward()...}};
 	}
 	
 	Type forward() {

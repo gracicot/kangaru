@@ -36,74 +36,72 @@ struct LavaWand : FireWand {
 
 // Every following service_ptr will be shared_ptr.
 struct Trickster {
-	Trickster(Wand* _wand) : wand{move(_wand)} {}
+	Trickster(Wand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	Wand* wand;
+	Wand& wand;
 };
 
 struct Wizard {
-	Wizard(MagicWand* _wand) : wand{move(_wand)} {}
+	Wizard(MagicWand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	MagicWand* wand;
+	MagicWand& wand;
 };
 
 struct FireMage {
-	FireMage(FireWand* _wand) : wand{move(_wand)} {}
+	FireMage(FireWand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	FireWand* wand;
+	FireWand& wand;
 };
+
+struct WandService : Type<Wand&> {};
+struct MagicWandService : SingleService<MagicWand, Overrides<WandService>> {};
+struct FireWandService : SingleService<FireWand, Overrides<MagicWandService>> {};
+struct LavaWandService : SingleService<LavaWand, Overrides<FireWandService, MagicWandService>> {};
+struct TricksterService : Service<Trickster, Dependency<WandService>> {};
+struct WizardService : Service<Wizard, Dependency<MagicWandService>> {};
+struct FireMageService : Service<FireMage, Dependency<FireWandService>> {};
 
 struct MyContainer : Container {
 	// This is the init function, we are initiating what we need to make the container behave correctly.
-    virtual void init() {
+    void init() {
 		// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-		instance<MagicWand>();
+		instance<MagicWandService>();
 		
 		// FireWand is the second, because it's the second service in the hierarchy.
-		instance<FireWand>();
+		instance<FireWandService>();
 		
 		// LavaWand is the last, because it's the last service in the hierarchy.
-		instance<LavaWand>();
+		instance<LavaWandService>();
     }
 };
 
 // Service definitions must be in the kgr namespace
-namespace kgr {
-
 // This is our service definitions
-struct WandService : SingleService<Wand> {};
-struct MagicWandService : SingleService<MagicWand, Overrides<Wand>> {};
-struct FireWandService : SingleService<FireWand, Overrides<MagicWand>> {};
-struct LavaWandService : SingleService<LavaWand, Overrides<FireWand, MagicWand>> {};
-struct TricksterService : Service<Trickster, Dependency<Wand>> {};
-struct WizardService : Service<Wizard, Dependency<MagicWand>> {};
-struct FireMageService : Service<FireMage, Dependency<FireWand>> {};
 
-}
 
 int main()
 {
 	// The container type will be MyContainer.
 	auto container = make_container<MyContainer>();
 	
-	auto trickster = container->service<TricksterService>();
-	auto wizard = container->service<WizardService>();
-	auto fireMage = container->service<FireMageService>();
+	auto trickster = container.service<TricksterService>();
+	auto wizard = container.service<WizardService>();
+	auto fireMage = container.service<FireMageService>();
 	
 	// The trickster will show "It's doing magic tricks!"
 	// because the only service that overrides Wand is MagicWand.

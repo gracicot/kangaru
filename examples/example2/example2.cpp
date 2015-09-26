@@ -57,7 +57,7 @@ private:
 };
 
 struct Carpenter {
-	Carpenter(Container* _container, WoodStack* _stack) : container{_container}, stack{_stack} {}
+	Carpenter(Container& _container, WoodStack* _stack) : container{&_container}, stack{_stack} {}
 	
 	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
 	// Since the pointer type can be changed, using only unique_ptr here may be wrong.
@@ -104,12 +104,12 @@ int main()
 	auto stack = make_shared<WoodStack>();
 	
 	// We are providing our stack instance to the container.
-	container->instance(WoodStackService{stack});
+	container.instance(WoodStackService{stack});
 	
 	stack->planks = 2;
 	
 	// It has the Container and the WoodStack injected.
-	auto gerald = container->service<CarpenterService>();
+	auto gerald = container.service<CarpenterService>();
 	
 	// Will print: Another computer desk made, but only 1 planks left!
 	auto product1 = gerald.makeProduct("computer desk");

@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <tuple>
 #include <vector>
+#include <exception>
 
 namespace kgr {
 
@@ -40,7 +41,7 @@ private:
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;
 	template<typename T> using is_container = std::is_same<T, Container>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
-	template<typename T> using is_abstract = std::is_abstract<service_type<T>>;
+	template<typename T> using is_abstract = std::is_abstract<T>;
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
 	template<typename Tuple> using tuple_seq = typename detail::seq_gen<std::tuple_size<Tuple>::value>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
@@ -91,20 +92,9 @@ public:
 		save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
 	}
 	
-	template<typename T, typename... Args, disable_if<is_abstract<T>> = null, disable_if<is_base_of_container<T>> = null>
+	template<typename T, typename... Args, disable_if<is_base_of_container<decay<T>>> = null>
 	service_type<decay<T>> service(Args&& ...args) {
 		return get_service<decay<T>>(std::forward<Args>(args)...).forward();
-	}
-	
-	template<typename T, enable_if<is_abstract<T>> = null>
-	service_type<T>& service() {
-		auto it = _services.find(detail::type_id<T>);
-		
-		if (it != _services.end()) {
-			return std::static_pointer_cast<T>(it->second);
-		}
-		
-		return {};
 	}
 	
 	template<typename U, typename ...Args>
@@ -147,26 +137,51 @@ private:
 	
 	template<typename T, typename Save, typename... Others>
 	void save_instance_helper(instance_ptr<T> service) {
-		_services.emplace(detail::type_id<Save>, service.get());
+		struct SaveType : Save {
+			virtual ~SaveType() {}
+			SaveType(T& service) : _service{service} {}
+			
+			typename Save::ServiceType forward() override {
+				return static_cast<typename Save::ServiceType>(_service.forward());
+			}
+			
+		private:
+			T& _service;
+		};
+		
+		auto baseService = instance_ptr<SaveType>{new SaveType{*service.get()}, &Container::deleter<SaveType>};
+		_services[detail::type_id<Save>] = baseService.get();
+		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	
-	template<typename T, typename... Args, disable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<typename std::remove_pointer<decay<T>>::type>> = null>
+	template<typename T, typename... Args, disable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
 	decay<T> get_service(Args ...args) {
 		return make_service_instance<decay<T>>(std::forward<Args>(args)...);
 	}
 	
 	template<typename T, enable_if<is_container<decay<T>>> = null>
-	T get_service() {
+	decay<T>& get_service() {
 		return *this;
 	}
 	
 	template<typename T, disable_if<is_container<decay<T>>> = null, enable_if<is_base_of_container<decay<T>>> = null>
-	T get_service() {
+	decay<T>& get_service() {
 		return dynamic_cast<T>(this);
 	}
 	
-	template<typename T, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
+	template<typename T, enable_if<is_abstract<decay<T>>> = null, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
+	decay<T>& get_service() {
+		auto it = _services.find(detail::type_id<decay<T>>);
+		
+		if (it != _services.end()) {
+			return *static_cast<decay<T>*>(it->second);
+		}
+		
+		throw std::runtime_error("No service instance can be used as abstract service");
+	}
+	
+	template<typename T, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null, disable_if<is_abstract<decay<T>>> = null>
 	decay<T>& get_service() {
 		auto it = _services.find(detail::type_id<decay<T>>);
 		

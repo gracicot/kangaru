@@ -68,7 +68,9 @@ private:
 	FireWand& wand;
 };
 
-struct WandService : Type<Wand&> {};
+struct WandService : Type<Wand&>, Single {
+	virtual ServiceType forward() = 0;
+};
 struct MagicWandService : SingleService<MagicWand, Overrides<WandService>> {};
 struct FireWandService : SingleService<FireWand, Overrides<MagicWandService>> {};
 struct LavaWandService : SingleService<LavaWand, Overrides<FireWandService, MagicWandService>> {};

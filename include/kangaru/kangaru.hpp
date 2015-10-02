@@ -16,14 +16,13 @@ namespace kgr {
 struct Container;
 
 struct ContainerService {
-	using ServiceType = Container&;
 	ContainerService(Container& instance) : _instance{instance} {}
 	
 	static ContainerService construct(Container& container) {
 		return {container};
 	}
 	
-	ServiceType forward() {
+	Container& forward() {
 		return _instance;
 	}
 	
@@ -36,7 +35,6 @@ private:
 	template<typename Condition, typename T = detail::enabler> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = detail::enabler> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
-	template<typename T> using service_type = typename decay<T>::ServiceType;
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
 	template<typename T> using is_base_of_container = std::is_base_of<Container, T>;
 	template<typename T> using is_container = std::is_same<T, Container>;
@@ -93,18 +91,18 @@ public:
 	}
 	
 	template<typename T, typename... Args, disable_if<is_base_of_container<decay<T>>> = null>
-	service_type<decay<T>> service(Args&& ...args) {
+	ServiceType<decay<T>> service(Args&& ...args) {
 		return get_service<decay<T>>(std::forward<Args>(args)...).forward();
 	}
 	
 	template<typename U, typename ...Args>
-	detail::function_result_t<U> invoke(U&& function, Args&&... args) {
-		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
+		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
 	template<template<typename, int> class Map, typename U, typename ...Args>
-	detail::function_result_t<U> invoke(U&& function, Args&&... args) {
-		return invoke_helper<Map>(tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
+		return invoke_helper<Map>(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
 protected:
@@ -137,18 +135,8 @@ private:
 	
 	template<typename T, typename Save, typename... Others>
 	void save_instance_helper(instance_ptr<T> service) {
-		struct SaveType : Save {
-			virtual ~SaveType() {}
-			SaveType(T& service) : _service{service} {}
-			
-			typename Save::ServiceType forward() override {
-				return static_cast<typename Save::ServiceType>(_service.forward());
-			}
-			
-		private:
-			T& _service;
-		};
-		
+		using SaveType = detail::SaveType<T, Save>;
+
 		auto baseService = instance_ptr<SaveType>{new SaveType{*service.get()}, &Container::deleter<SaveType>};
 		_services[detail::type_id<Save>] = baseService.get();
 		_instances.emplace_back(std::move(baseService));
@@ -157,7 +145,9 @@ private:
 	
 	template<typename T, typename... Args, disable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
 	decay<T> get_service(Args ...args) {
-		return make_service_instance<decay<T>>(std::forward<Args>(args)...);
+		auto service = make_service_instance<decay<T>>(std::forward<Args>(args)...);
+		invoke_service(service);
+		return std::move(service);
 	}
 	
 	template<typename T, enable_if<is_container<decay<T>>> = null>
@@ -167,7 +157,7 @@ private:
 	
 	template<typename T, disable_if<is_container<decay<T>>> = null, enable_if<is_base_of_container<decay<T>>> = null>
 	decay<T>& get_service() {
-		return dynamic_cast<T>(this);
+		return *dynamic_cast<T>(this);
 	}
 	
 	template<typename T, enable_if<is_abstract<decay<T>>> = null, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
@@ -188,7 +178,9 @@ private:
 		if (it == _services.end()) {
 			instance(make_service_instance<decay<T>>());
 			
-			return *static_cast<decay<T>*>(_services[detail::type_id<decay<T>>]);
+			auto service = static_cast<decay<T>*>(_services[detail::type_id<decay<T>>]);
+			invoke_service(*service);
+			return *service;
 		}
 		
 		return *static_cast<decay<T>*>(it->second);
@@ -197,18 +189,56 @@ private:
 	template<typename T, typename... Args>
 	decay<T> make_service_instance(Args&&... args) {
 		using U = decay<T>;
-		return invoke(&U::construct, std::forward<Args>(args)...);
+		return static_cast<decay<T>>(invoke(&U::construct, std::forward<Args>(args)...));
 	}
 	
 	template<typename U, typename ...Args, int... S>
-	detail::function_result_t<U> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return function(get_service<detail::function_argument_t<S, U>>()..., std::forward<Args>(args)...);
+	detail::function_result_t<decay<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
+		return function(get_service<detail::function_argument_t<S, decay<U>>>()..., std::forward<Args>(args)...);
 	}
 	
 	template<template<typename, int> class Map, typename U, typename ...Args, int... S>
-	detail::function_result_t<U> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return function(service<typename Map<detail::function_argument_t<S, U>, S>::Service>()..., std::forward<Args>(args)...);
+	detail::function_result_t<decay<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
+		return function(service<typename Map<detail::function_argument_t<S, decay<U>>, S>::Service>()..., std::forward<Args>(args)...);
 	}
+	
+	template<typename T, enable_if<detail::has_invoke<decay<T>>> = null>
+	void invoke_service(T&& service) {
+		using U = decay<T>;
+		invoke_service(std::forward<T>(service), tuple_seq<decltype(U::invoke)>{});
+	}
+	
+	template<typename T, int... S, enable_if<detail::has_invoke<decay<T>>> = null>
+	void invoke_service(T&& service, detail::seq<S...>) {
+		using U = decay<T>;
+		invoke_service_helper(std::forward<T>(service), std::get<S>(U::invoke)...);
+	}
+	
+	template<typename T, typename F, typename... O, enable_if<std::is_member_function_pointer<decay<F>>> = null>
+	void invoke_service_helper(T&& service, F&& function, O&&... others) {
+		invoke_service_helper(tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
+		invoke_service_helper(std::forward<T>(service), std::forward<O>(others)...);
+	}
+	
+	template<typename T, typename F, typename... O, disable_if<std::is_member_function_pointer<decay<F>>> = null>
+	void invoke_service_helper(T&& service, F&& function, O&&... others) {
+		invoke(function);
+		invoke_service_helper(std::forward<T>(service), std::forward<O>(others)...);
+	}
+	
+	template<typename T, typename F, int... S, enable_if<std::is_member_function_pointer<decay<F>>> = null>
+	void invoke_service_helper(detail::seq<S...>, T&& service, F&& function) {
+		invoke([&service, &function](detail::function_argument_t<S, decay<F>>... args){
+			(service.*function)(std::forward<detail::function_argument_t<S, decay<F>>>(args)...);
+		});
+		invoke_service_helper(std::forward<T>(service));
+	}
+	
+	template<typename T>
+	void invoke_service_helper(T&& service) {}
+	
+	template<typename T, disable_if<detail::has_invoke<decay<T>>> = null>
+	void invoke_service(T&& service) {}
 	
 	std::vector<instance_ptr<void>> _instances;
 	std::unordered_map<detail::type_id_t, void*> _services;

@@ -2,6 +2,8 @@
 
 #include <type_traits>
 
+#include "detail/utils.hpp"
+
 namespace kgr {
 
 struct Single {
@@ -20,22 +22,26 @@ struct Overrides : Single {
 	using ParentTypes = std::tuple<Types...>;
 };
 
-template<typename Service>
-struct Type {
-	using ServiceType = Service;
-};
-
 template<typename... Args>
 struct Dependency {};
+
+namespace detail {
+
+template<typename T>
+struct InjectType {
+	using Type = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
+};
+
+template<typename T> using InjectType_t = typename InjectType<T>::Type;
 
 template<typename...>
 struct Injector;
 
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
-	static CRTP construct(typename std::conditional<std::is_base_of<Single, Deps>::value, Deps&, Deps&&>::type... deps) {
+	static CRTP construct(InjectType_t<Deps>... deps) {
 		using C = typename CRTP::C;
-		return C::makeService(deps...);
+		return C::makeService(deps.forward()...);
 	}
 };
 
@@ -47,10 +53,8 @@ struct Injector<CRTP> {
 	}
 };
 
-template<typename CRTP, typename ContainedType, typename ST>
+template<typename CRTP, typename ContainedType, typename ServiceType>
 struct BaseGenericService {
-	using ServiceType = ST;
-	
 	BaseGenericService() = default;
 	BaseGenericService(BaseGenericService&&) = default;
 	BaseGenericService(const BaseGenericService&) = default;
@@ -92,9 +96,14 @@ protected:
 		return *reinterpret_cast<ContainedType*>(&_instance);
 	}
 	
+	template<typename F, F f, typename... T>
+	void autocall(InjectType_t<T>... others) {
+		(getInstance().*f)(others.forward()...);
+	}
+	
 private:
 	void setInstance(ContainedType instance) {
-		new (&_instance) ContainedType{std::move(instance)};
+		new (&_instance) ContainedType(std::move(instance));
 		_initiated = true;
 	}
 	
@@ -102,27 +111,48 @@ private:
 	typename std::aligned_storage<sizeof(ContainedType), alignof(ContainedType)>::type _instance;
 };
 
+template<typename Original, typename Service>
+struct SaveType : Service {
+	virtual ~SaveType() {}
+	SaveType(Original& service) : _service{service} {}
+	
+	ServiceType<Service> forward() override {
+		return static_cast<ServiceType<Service>>(_service.forward());
+	}
+	
+private:
+	Original& _service;
+};
+
+}
+
 template<typename...>
 struct GenericService;
 
 template<typename CRTP, typename ContainedType, typename ST, typename... Deps>
 struct GenericService<CRTP, ContainedType, ST, Dependency<Deps...>> : 
-	Injector<GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>, Dependency<Deps...>>,
-	BaseGenericService<CRTP, ContainedType, ST>
+	detail::Injector<GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>, Dependency<Deps...>>,
+	detail::BaseGenericService<CRTP, ContainedType, ST>
 {
-	using BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
-	using C = CRTP;
+	template<typename...> friend struct detail::Injector;
 	using Self = GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>;
+	using detail::BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
+	
+private:
+	using C = CRTP;
 };
 
 template<typename CRTP, typename ContainedType, typename ST>
 struct GenericService<CRTP, ContainedType, ST> : 
-	Injector<GenericService<CRTP, ContainedType, ST>>,
-	BaseGenericService<CRTP, ContainedType, ST>
+	detail::Injector<GenericService<CRTP, ContainedType, ST>>,
+	detail::BaseGenericService<CRTP, ContainedType, ST>
 {
-	using BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
-	using C = CRTP;
+	template<typename...> friend struct detail::Injector;
 	using Self = GenericService<CRTP, ContainedType, ST>;
+	using detail::BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
+	
+private:
+	using C = CRTP;
 };
 
 template<typename...>
@@ -156,7 +186,7 @@ struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<T
 	
 	template<typename... Args>
 	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
+		return Parent(Type(std::forward<Args>(args)...));
 	}
 	
 	virtual Type& forward() {
@@ -225,12 +255,17 @@ struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Depende
 	
 	template<typename... Args>
 	static Parent makeService(Args&&... args) {
-		return Parent{Type{args.forward()...}};
+		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
 	Type forward() {
 		return std::move(this->getInstance());
 	}
+};
+
+template<typename T>
+struct AbstractService : Single {
+	virtual T& forward() = 0;
 };
 
 }

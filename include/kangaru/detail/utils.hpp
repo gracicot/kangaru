@@ -3,6 +3,8 @@
 #include <memory>
 #include <type_traits>
 
+#include "function_traits.hpp"
+
 namespace kgr {
 namespace detail {
 
@@ -27,5 +29,19 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
+template<typename T>
+struct has_invoke {
+private:
+	template<typename C> static std::true_type test(decltype(C::invoke)*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
+
 } // namespace detail
+
+template<typename T>
+using ServiceType = detail::function_result_t<decltype(&T::forward)>;
+
 } // namespace kgr

@@ -17,7 +17,7 @@ struct PathProvider {
 };
 
 struct PathPrinter {
-	// For the sake of simplicity, we use a shared_ptr
+	// PathPrinter needs a PathProvider
 	PathPrinter(PathProvider& _pathProvider) : pathProvider{_pathProvider} {}
 	
 	void print() {
@@ -29,7 +29,10 @@ private:
 };
 
 // This is our service definitions
+// PathProviderService is a single service of PathProvider
 struct PathProviderService : SingleService<PathProvider> {};
+
+// PathPrinterService is a (not single) service of PathProvider and has a PathProviderService as dependency
 struct PathPrinterService : Service<PathPrinter, Dependency<PathProviderService>> {};
 
 int main()

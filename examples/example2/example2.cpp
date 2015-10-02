@@ -25,14 +25,14 @@ struct Product {
 };
 
 // This is our wood stack service definitions
-struct WoodStackService : Type<WoodStack*>, Single {
+struct WoodStackService : Single {
 	WoodStackService(shared_ptr<WoodStack> instance) : _instance{move(instance)} {}
 	
 	static WoodStackService construct() {
 		return make_shared<WoodStack>();
 	}
 	
-	ServiceType forward() {
+	WoodStack* forward() {
 		return _instance.get();
 	}
 	
@@ -41,14 +41,14 @@ private:
 };
 
 // This is our product service definitions
-struct ProductService : Type<unique_ptr<Product>> {
+struct ProductService {
 	ProductService(unique_ptr<Product> instance) : _instance{move(instance)} {}
 	
 	static ProductService construct(WoodStackService& stack) {
 		return unique_ptr<Product>(new Product{stack.forward()});
 	}
 	
-	ServiceType forward() {
+	unique_ptr<Product> forward() {
 		return move(_instance);
 	}
 	
@@ -61,7 +61,7 @@ struct Carpenter {
 	
 	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
 	// Since the pointer type can be changed, using only unique_ptr here may be wrong.
-	ProductService::ServiceType makeProduct(string name) {
+	ServiceType<ProductService> makeProduct(string name) {
 		if (stack->planks > 0) {
 			cout << "Another " << name << " made, but only " << stack->planks << " planks left!" << endl;
 		
@@ -81,14 +81,14 @@ private:
 };
 
 // This is our carpenter service definitions
-struct CarpenterService : Type<Carpenter> {
+struct CarpenterService {
 	CarpenterService(Carpenter instance) : _instance{move(instance)} {}
 	
 	static CarpenterService construct(ContainerService container, WoodStackService& stack) {
 		return Carpenter{container.forward(), stack.forward()};
 	}
 	
-	ServiceType forward() {
+	Carpenter forward() {
 		return move(_instance);
 	}
 	

@@ -110,7 +110,7 @@ private:
 };
 
 template<typename Original, typename Service>
-struct SaveType : Service {
+struct ServiceOverride : Service {
 	virtual ~SaveType() {}
 	SaveType(Original& service) : _service{service} {}
 	

@@ -140,12 +140,12 @@ private:
 		_instances.emplace_back(std::move(service));
 	}
 	
-	template<typename T, typename Save, typename... Others>
+	template<typename T, typename Override, typename... Others>
 	void save_instance_helper(instance_ptr<T> service) {
-		using SaveType = detail::SaveType<T, Save>;
+		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		auto baseService = instance_ptr<SaveType>{new SaveType{*service.get()}, &Container::deleter<SaveType>};
-		_services[detail::type_id<Save>] = baseService.get();
+		auto baseService = instance_ptr<ServiceOverride>{new ServiceOverride{*service.get()}, &Container::deleter<ServiceOverride>};
+		_services[detail::type_id<Override>] = baseService.get();
 		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
 	}

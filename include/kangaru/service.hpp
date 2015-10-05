@@ -111,8 +111,8 @@ private:
 
 template<typename Original, typename Service>
 struct ServiceOverride : Service {
-	virtual ~SaveType() {}
-	SaveType(Original& service) : _service{service} {}
+	virtual ~ServiceOverride() {}
+	ServiceOverride(Original& service) : _service{service} {}
 	
 	ServiceType<Service> forward() override {
 		return static_cast<ServiceType<Service>>(_service.forward());

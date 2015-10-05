@@ -221,19 +221,13 @@ private:
 		invoke_service_helper(std::forward<T>(service), std::get<S>(U::invoke)...);
 	}
 	
-	template<typename T, typename F, typename... O, enable_if<std::is_member_function_pointer<decay<F>>> = null>
+	template<typename T, typename F, typename... O>
 	void invoke_service_helper(T&& service, F&& function, O&&... others) {
 		invoke_service_helper(tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
 		invoke_service_helper(std::forward<T>(service), std::forward<O>(others)...);
 	}
 	
-	template<typename T, typename F, typename... O, disable_if<std::is_member_function_pointer<decay<F>>> = null>
-	void invoke_service_helper(T&& service, F&& function, O&&... others) {
-		invoke(function);
-		invoke_service_helper(std::forward<T>(service), std::forward<O>(others)...);
-	}
-	
-	template<typename T, typename F, int... S, enable_if<std::is_member_function_pointer<decay<F>>> = null>
+	template<typename T, typename F, int... S>
 	void invoke_service_helper(detail::seq<S...>, T&& service, F&& function) {
 		invoke([&service, &function](detail::function_argument_t<S, decay<F>>... args){
 			(service.*function)(std::forward<detail::function_argument_t<S, decay<F>>>(args)...);

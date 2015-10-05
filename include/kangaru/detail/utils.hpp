@@ -39,6 +39,16 @@ public:
 	constexpr static bool value = decltype(test<T>(nullptr))::value;
 };
 
+template<typename T>
+struct has_overrides {
+private:
+	template<typename C> static std::true_type test(typename C::ParentTypes*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
+
 } // namespace detail
 
 template<typename T>

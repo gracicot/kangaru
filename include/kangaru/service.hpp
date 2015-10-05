@@ -13,8 +13,6 @@ struct Single {
 	Single& operator=(const Single&) = delete;
 	Single(Single&&) = default;
 	Single& operator=(Single&&) = default;
-	
-	using ParentTypes = std::tuple<>;
 };
 
 template<typename... Types>
@@ -129,27 +127,27 @@ private:
 template<typename...>
 struct GenericService;
 
-template<typename CRTP, typename ContainedType, typename ST, typename... Deps>
-struct GenericService<CRTP, ContainedType, ST, Dependency<Deps...>> : 
-	detail::Injector<GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>, Dependency<Deps...>>,
-	detail::BaseGenericService<CRTP, ContainedType, ST>
+template<typename CRTP, typename ContainedType, typename ServiceType, typename... Deps>
+struct GenericService<CRTP, ContainedType, ServiceType, Dependency<Deps...>> : 
+	detail::Injector<GenericService<CRTP, ContainedType, ServiceType, Dependency<Deps...>>, Dependency<Deps...>>,
+	detail::BaseGenericService<CRTP, ContainedType, ServiceType>
 {
 	template<typename...> friend struct detail::Injector;
-	using Self = GenericService<CRTP, ContainedType, ST, Dependency<Deps...>>;
-	using detail::BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
+	using Self = GenericService<CRTP, ContainedType, ServiceType, Dependency<Deps...>>;
+	using detail::BaseGenericService<CRTP, ContainedType, ServiceType>::BaseGenericService;
 	
 private:
 	using C = CRTP;
 };
 
-template<typename CRTP, typename ContainedType, typename ST>
-struct GenericService<CRTP, ContainedType, ST> : 
-	detail::Injector<GenericService<CRTP, ContainedType, ST>>,
-	detail::BaseGenericService<CRTP, ContainedType, ST>
+template<typename CRTP, typename ContainedType, typename ServiceType>
+struct GenericService<CRTP, ContainedType, ServiceType> : 
+	detail::Injector<GenericService<CRTP, ContainedType, ServiceType>>,
+	detail::BaseGenericService<CRTP, ContainedType, ServiceType>
 {
 	template<typename...> friend struct detail::Injector;
-	using Self = GenericService<CRTP, ContainedType, ST>;
-	using detail::BaseGenericService<CRTP, ContainedType, ST>::BaseGenericService;
+	using Self = GenericService<CRTP, ContainedType, ServiceType>;
+	using detail::BaseGenericService<CRTP, ContainedType, ServiceType>::BaseGenericService;
 	
 private:
 	using C = CRTP;
@@ -187,44 +185,6 @@ struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<T
 	template<typename... Args>
 	static Parent makeService(Args&&... args) {
 		return Parent(Type(std::forward<Args>(args)...));
-	}
-	
-	virtual Type& forward() {
-		return this->getInstance();
-	}
-};
-
-template<typename Type, typename... O>
-struct SingleService<Type, Overrides<O...>> : GenericService<SingleService<Type, Overrides<O...>>, Type, Type&>, Overrides<O...> {
-	using Parent = GenericService<SingleService<Type, Overrides<O...>>, Type, Type&>;
-	virtual ~SingleService() = default;
-	SingleService() = default;
-	SingleService(SingleService&&) = default;
-	SingleService& operator=(SingleService&&) = default;
-
-	
-	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
-	}
-	
-	virtual Type& forward() {
-		return this->getInstance();
-	}
-};
-
-template<typename Type, typename... Deps, typename... O>
-struct SingleService<Type, Dependency<Deps...>, Overrides<O...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>, Overrides<O...> {
-	using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Type&, Dependency<Deps...>>;
-	virtual ~SingleService() = default;
-	SingleService() = default;
-	SingleService(SingleService&&) = default;
-	SingleService& operator=(SingleService&&) = default;
-	
-	
-	template<typename... Args>
-	static Parent makeService(Args&&... args) {
-		return Parent{Type{std::forward<Args>(args)...}};
 	}
 	
 	virtual Type& forward() {

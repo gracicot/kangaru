@@ -117,14 +117,21 @@ private:
 		save_instance<U>(std::forward<T>(service));
 	}
 	
-	template<typename U, typename T>
+	template<typename U, typename T, enable_if<detail::has_overrides<decay<U>>> = null>
 	void save_instance(T&& service) {
 		save_instance<U>(std::forward<T>(service), tuple_seq<parent_types<T>>{});
 	}
 	
+	template<typename U, typename T, disable_if<detail::has_overrides<decay<U>>> = null>
+	void save_instance(T&& service) {
+		using V = decay<U>;
+		save_instance_helper<V>(instance_ptr<V>{new V{std::move(service)}, &Container::deleter<V>});
+	}
+	
 	template<typename U, typename T, int... S>
 	void save_instance(T&& service, detail::seq<S...>) {
-		save_instance_helper<decay<U>, parent_element<S, decay<U>>...>(instance_ptr<decay<U>>(new decay<U>{std::move(service)}, &Container::deleter<U>));
+		using V = decay<U>;
+		save_instance_helper<V, parent_element<S, V>...>(instance_ptr<V>{new V{std::move(service)}, &Container::deleter<V>});
 	}
 	
 	template<typename T>

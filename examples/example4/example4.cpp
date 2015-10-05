@@ -69,9 +69,9 @@ private:
 };
 
 struct WandService : AbstractService<Wand> {};
-struct MagicWandService : SingleService<MagicWand, Overrides<WandService>> {};
-struct FireWandService : SingleService<FireWand, Overrides<MagicWandService>> {};
-struct LavaWandService : SingleService<LavaWand, Overrides<FireWandService, MagicWandService>> {};
+struct MagicWandService : SingleService<MagicWand>, Overrides<WandService> {};
+struct FireWandService : SingleService<FireWand>, Overrides<MagicWandService> {};
+struct LavaWandService : SingleService<LavaWand>, Overrides<FireWandService, MagicWandService> {};
 struct TricksterService : Service<Trickster, Dependency<WandService>> {};
 struct WizardService : Service<Wizard, Dependency<MagicWandService>> {};
 struct FireMageService : Service<FireMage, Dependency<FireWandService>> {};

@@ -17,43 +17,41 @@ struct PathProvider {
 };
 
 struct PathPrinter {
-	// For the sake of simplicity, we use a shared_ptr
-	PathPrinter(shared_ptr<PathProvider> _pathProvider) : pathProvider{_pathProvider} {}
+	// PathPrinter needs a PathProvider
+	PathPrinter(PathProvider& _pathProvider) : pathProvider{_pathProvider} {}
 	
 	void print() {
-		cout << pathProvider->path << endl;
+		cout << pathProvider.path << endl;
 	}
 	
 private:
-	shared_ptr<PathProvider> pathProvider;
+	PathProvider& pathProvider;
 };
 
-// Service definitions must be in the kgr namespace
-namespace kgr {
-
 // This is our service definitions
-template<> struct Service<PathProvider> : NoDependencies, Single {};
-template<> struct Service<PathPrinter> : Dependency<PathProvider> {};
+// PathProviderService is a single service of PathProvider
+struct PathProviderService : SingleService<PathProvider> {};
 
-}
+// PathPrinterService is a (not single) service of PathProvider and has a PathProviderService as dependency
+struct PathPrinterService : Service<PathPrinter, Dependency<PathProviderService>> {};
 
 int main()
 {
 	auto container = make_container();
 	
 	// a PathProvider is provided for every printer
-	auto printer1 = container->service<PathPrinter>();
-	auto printer2 = container->service<PathPrinter>();
-	auto printer3 = container->service<PathPrinter>();
+	auto printer1 = container.service<PathPrinterService>();
+	auto printer2 = container.service<PathPrinterService>();
+	auto printer3 = container.service<PathPrinterService>();
 	
-	auto provider = container->service<PathProvider>();
+	auto& provider = container.service<PathProviderService>();
 	
-	provider->path = "/home/test";
+	provider.path = "/home/test";
 	
 	// every printer will print /home/test, because every printer has the same instance of PathProvider
-	printer1->print();
-	printer2->print();
-	printer3->print();
+	printer1.print();
+	printer2.print();
+	printer3.print();
 	
 	return 0;
 }

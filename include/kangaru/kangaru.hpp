@@ -58,7 +58,7 @@ public:
 	
 	Container(Container &&) = default;
 	Container& operator =(Container &&) = default;
-	~Container() = default;
+	virtual ~Container() = default;
 
 	template <typename T, typename... Args, enable_if<is_base_of_container<T>> = null>
 	static T make_container(Args&&... args) {
@@ -70,16 +70,16 @@ public:
 
 	template<typename T>
 	void instance(T&& service) {
-		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
+		static_assert(is_single<decay<T>>::value, "instance() only accept Single Service instance.");
 		
-		save_instance<T>(std::forward<T>(service));
+		save_instance(std::forward<T>(service));
 	}
 	
 	template<typename T>
 	T release() {
 		static_assert(is_single<T>::value, "release() only accept Single Service instance.");
 		
-		auto s = std::move(*static_cast<decay<T>*>(_services[detail::type_id<T>]));
+		auto s = std::move(*static_cast<T*>(_services[detail::type_id<T>]));
 		_services.erase(detail::type_id<T>);
 		
 		return std::move(s);
@@ -87,12 +87,13 @@ public:
 	
 	template<typename T, typename... Args>
 	void instance(Args&& ...args) {
-		save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
+		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
 	}
 	
-	template<typename T, typename... Args, disable_if<is_base_of_container<decay<T>>> = null>
-	ServiceType<decay<T>> service(Args&& ...args) {
-		return get_service<decay<T>>(std::forward<Args>(args)...).forward();
+	template<typename T, typename... Args, disable_if<is_base_of_container<T>> = null>
+	ServiceType<T> service(Args&& ...args) {
+		return get_service<T>(std::forward<Args>(args)...).forward();
 	}
 	
 	template<typename U, typename ...Args>
@@ -100,7 +101,7 @@ public:
 		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
-	template<template<typename, int> class Map, typename U, typename ...Args>
+	template<template<typename> class Map, typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
 		return invoke_helper<Map>(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
@@ -110,33 +111,26 @@ protected:
 	void init(){}
 	
 private:
-	template<typename U, typename T>
-	void instance(T&& service) {
-		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
-		
-		save_instance<U>(std::forward<T>(service));
+	template<typename T, enable_if<detail::has_overrides<decay<T>>> = null>
+	void save_instance(T&& service) {
+		save_instance(std::forward<T>(service), tuple_seq<parent_types<T>>{});
 	}
 	
-	template<typename U, typename T, enable_if<detail::has_overrides<decay<U>>> = null>
+	template<typename T, disable_if<detail::has_overrides<decay<T>>> = null>
 	void save_instance(T&& service) {
-		save_instance<U>(std::forward<T>(service), tuple_seq<parent_types<T>>{});
-	}
-	
-	template<typename U, typename T, disable_if<detail::has_overrides<decay<U>>> = null>
-	void save_instance(T&& service) {
-		using V = decay<U>;
+		using V = decay<T>;
 		save_instance_helper<V>(instance_ptr<V>{new V{std::move(service)}, &Container::deleter<V>});
 	}
 	
-	template<typename U, typename T, int... S>
+	template<typename T, int... S>
 	void save_instance(T&& service, detail::seq<S...>) {
-		using V = decay<U>;
+		using V = decay<T>;
 		save_instance_helper<V, parent_element<S, V>...>(instance_ptr<V>{new V{std::move(service)}, &Container::deleter<V>});
 	}
 	
 	template<typename T>
 	void save_instance_helper(instance_ptr<T> service) {
-		_services.emplace(detail::type_id<T>, service.get());
+		_services[detail::type_id<T>] = service.get();
 		_instances.emplace_back(std::move(service));
 	}
 	
@@ -144,69 +138,68 @@ private:
 	void save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		auto baseService = instance_ptr<ServiceOverride>{new ServiceOverride{*service.get()}, &Container::deleter<ServiceOverride>};
+		auto baseService = instance_ptr<Override>{new ServiceOverride{*service.get()}, &Container::deleter<ServiceOverride>};
 		_services[detail::type_id<Override>] = baseService.get();
 		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	
-	template<typename T, typename... Args, disable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
-	decay<T> get_service(Args ...args) {
-		auto service = make_service_instance<decay<T>>(std::forward<Args>(args)...);
+	template<typename T, typename... Args, disable_if<is_single<T>> = null, disable_if<is_base_of_container<T>> = null>
+	T get_service(Args ...args) {
+		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service);
 		return std::move(service);
 	}
 	
-	template<typename T, enable_if<is_container<decay<T>>> = null>
-	decay<T>& get_service() {
+	template<typename T, enable_if<is_container<T>> = null>
+	T& get_service() {
 		return *this;
 	}
 	
-	template<typename T, disable_if<is_container<decay<T>>> = null, enable_if<is_base_of_container<decay<T>>> = null>
-	decay<T>& get_service() {
+	template<typename T, disable_if<is_container<T>> = null, enable_if<is_base_of_container<T>> = null>
+	T& get_service() {
 		return *dynamic_cast<T>(this);
 	}
 	
-	template<typename T, enable_if<is_abstract<decay<T>>> = null, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null>
-	decay<T>& get_service() {
-		auto it = _services.find(detail::type_id<decay<T>>);
+	template<typename T, enable_if<is_abstract<T>> = null, enable_if<is_single<T>> = null, disable_if<is_base_of_container<T>> = null>
+	T& get_service() {
+		auto it = _services.find(detail::type_id<T>);
 		
 		if (it != _services.end()) {
-			return *static_cast<decay<T>*>(it->second);
+			return *static_cast<T*>(it->second);
 		}
 		
 		throw std::runtime_error("No service instance can be used as abstract service");
 	}
 	
-	template<typename T, enable_if<is_single<decay<T>>> = null, disable_if<is_base_of_container<decay<T>>> = null, disable_if<is_abstract<decay<T>>> = null>
-	decay<T>& get_service() {
-		auto it = _services.find(detail::type_id<decay<T>>);
+	template<typename T, enable_if<is_single<T>> = null, disable_if<is_base_of_container<T>> = null, disable_if<is_abstract<T>> = null>
+	T& get_service() {
+		auto it = _services.find(detail::type_id<T>);
 		
 		if (it == _services.end()) {
-			instance(make_service_instance<decay<T>>());
+			instance(make_service_instance<T>());
 			
-			auto service = static_cast<decay<T>*>(_services[detail::type_id<decay<T>>]);
+			auto service = static_cast<T*>(_services[detail::type_id<T>]);
 			invoke_service(*service);
 			return *service;
+		} else {
+			return *static_cast<T*>(it->second);
 		}
-		
-		return *static_cast<decay<T>*>(it->second);
 	}
 	
 	template<typename T, typename... Args>
-	decay<T> make_service_instance(Args&&... args) {
-		using U = decay<T>;
-		return static_cast<decay<T>>(invoke(&U::construct, std::forward<Args>(args)...));
+	T make_service_instance(Args&&... args) {
+		return invoke(&T::construct, std::forward<Args>(args)...);
 	}
 	
 	template<typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return function(get_service<detail::function_argument_t<S, decay<U>>>()..., std::forward<Args>(args)...);
+		return function(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
-	template<template<typename, int> class Map, typename U, typename ...Args, int... S>
+	template<template<typename> class Map, typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return function(service<typename Map<detail::function_argument_t<S, decay<U>>, S>::Service>()..., std::forward<Args>(args)...);
+		return function(service<typename Map<detail::function_argument_t<S, decay<U>>>::Service>()..., std::forward<Args>(args)...);
 	}
 	
 	template<typename T, enable_if<detail::has_invoke<decay<T>>> = null>

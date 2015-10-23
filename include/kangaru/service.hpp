@@ -25,12 +25,7 @@ struct Dependency {};
 
 namespace detail {
 
-template<typename T>
-struct InjectType {
-	using Type = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
-};
-
-template<typename T> using InjectType_t = typename InjectType<T>::Type;
+template<typename T> using InjectType_t = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
 
 template<typename...>
 struct Injector;
@@ -54,9 +49,25 @@ struct Injector<CRTP> {
 template<typename CRTP, typename ContainedType>
 struct BaseGenericService {
 	BaseGenericService() = default;
-	BaseGenericService(BaseGenericService&&) = default;
-	BaseGenericService(const BaseGenericService&) = default;
-	BaseGenericService& operator=(const BaseGenericService&) = default;
+	
+    BaseGenericService(BaseGenericService&& other) {
+		setInstance(std::move(other.getInstance()));
+    }
+    
+    BaseGenericService& operator=(BaseGenericService&& other) {
+		setInstance(std::move(other.getInstance()));
+		return *this;
+    }
+    
+	BaseGenericService(const BaseGenericService& other) {
+		setInstance(other.getInstance());
+	}
+	
+	BaseGenericService& operator=(const BaseGenericService& other) {
+		setInstance(other.getInstance());
+		return *this;
+	}
+	
 	BaseGenericService(ContainedType instance) {
 		setInstance(std::move(instance));
 	}

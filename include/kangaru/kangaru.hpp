@@ -56,7 +56,11 @@ public:
 	Container(const Container &) = delete;
 	Container& operator =(const Container &) = delete;
 	
-	Container(Container &&) = default;
+	Container(Container&& other) {
+		std::swap(other._instances, _instances);
+		std::swap(other._services, _services);
+	}
+	
 	Container& operator =(Container &&) = default;
 	virtual ~Container() = default;
 
@@ -232,7 +236,7 @@ private:
 	void invoke_service_helper(T&& service) {}
 	
 	template<typename T, disable_if<detail::has_invoke<decay<T>>> = null>
-	void invoke_service(T&& service) {}
+	void invoke_service(T&&) {}
 	
 	std::vector<instance_ptr<void>> _instances;
 	std::unordered_map<detail::type_id_t, void*> _services;
@@ -246,3 +250,4 @@ T make_container(Args&& ...args) {
 }
 
 }  // namespace kgr
+

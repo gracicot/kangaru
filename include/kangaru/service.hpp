@@ -16,7 +16,7 @@ struct Single {
 };
 
 template<typename... Types>
-struct Overrides : Single {
+struct Overrides {
 	using ParentTypes = std::tuple<Types...>;
 };
 

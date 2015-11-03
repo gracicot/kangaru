@@ -79,6 +79,7 @@ public:
 		save_instance(std::forward<T>(service));
 	}
 	
+	// TODO: not ready. Maybe for 2.1
 	template<typename T>
 	T release() {
 		static_assert(is_single<T>::value, "release() only accept Single Service instance.");
@@ -115,6 +116,7 @@ protected:
 	void init(){}
 	
 private:
+	// save instance functions
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = null>
 	void save_instance(T&& service) {
 		save_instance(std::forward<T>(service), tuple_seq<parent_types<T>>{});
@@ -148,6 +150,7 @@ private:
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	
+	// get service functions
 	template<typename T, typename... Args, disable_if<is_single<T>> = null, disable_if<is_base_of_container<T>> = null>
 	T get_service(Args ...args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
@@ -191,11 +194,13 @@ private:
 		}
 	}
 	
+	// make instance
 	template<typename T, typename... Args>
 	T make_service_instance(Args&&... args) {
 		return invoke(&T::construct, std::forward<Args>(args)...);
 	}
 	
+	// invoke
 	template<typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
 		return function(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
@@ -206,6 +211,7 @@ private:
 		return function(service<typename Map<detail::function_argument_t<S, decay<U>>>::Service>()..., std::forward<Args>(args)...);
 	}
 	
+	// invoke service and autocall
 	template<typename T, enable_if<detail::has_invoke<decay<T>>> = null>
 	void invoke_service(T&& service) {
 		using U = decay<T>;

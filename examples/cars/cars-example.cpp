@@ -72,7 +72,7 @@ struct CarsContainer : kgr::Container {
 };
 
 struct FuelService           : kgr::SingleService<Fuel> {};
-struct PetrolService         : kgr::SingleService<Petrol, kgr::Overrides<FuelService>> {};
+struct PetrolService         : kgr::SingleService<Petrol>, kgr::Overrides<FuelService> {};
 struct PremiumPetrolService  : kgr::SingleService<PremiumPetrol> {};
 struct DieselService         : kgr::SingleService<Diesel> {};
 

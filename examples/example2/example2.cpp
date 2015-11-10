@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "kangaru.hpp"
 
@@ -17,113 +18,74 @@ struct WoodStack {
 };
 
 struct Product {
-	Product(WoodStack* stack) {
-		stack->planks--;
+	Product(WoodStack& stack) {
+		stack.planks--;
 	}
 	
 	string name;
 };
 
-// This is our wood stack service definitions
-struct WoodStackService : Single {
-	WoodStackService(shared_ptr<WoodStack> instance) : _instance{move(instance)} {}
+// This is our wood stack service definition
+struct WoodStackService : SingleService<WoodStack> {
+	// SingleService still needs a default constructor to be declared
+	WoodStackService() = default;
 	
-	static WoodStackService construct() {
-		return make_shared<WoodStack>();
-	}
-	
-	WoodStack* forward() {
-		return _instance.get();
-	}
-	
-private:
-	shared_ptr<WoodStack> _instance;
+	// define custom constructor
+	WoodStackService(WoodStack w) : SingleService<WoodStack>{w} {}
 };
 
-// This is our product service definitions
-struct ProductService {
-	ProductService(unique_ptr<Product> instance) : _instance{move(instance)} {}
-	
-	static ProductService construct(WoodStackService& stack) {
-		return unique_ptr<Product>(new Product{stack.forward()});
-	}
-	
-	unique_ptr<Product> forward() {
-		return move(_instance);
-	}
-	
-private:
-	unique_ptr<Product> _instance;
-};
+// This is our product service definition
+struct ProductService : Service<Product, Dependency<WoodStackService>> {};
 
 struct Carpenter {
-	Carpenter(Container& _container, WoodStack* _stack) : container{&_container}, stack{_stack} {}
+	Carpenter(Container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
 	
 	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
-	// Since the pointer type can be changed, using only unique_ptr here may be wrong.
-	ServiceType<ProductService> makeProduct(string name) {
-		if (stack->planks > 0) {
-			cout << "Another " << name << " made, but only " << stack->planks << " planks left!" << endl;
+	void makeProduct(string name) {
+		if (stack.planks > 0) {
+			cout << "Another " << name << " made, but only " << stack.planks << " planks left!" << endl;
 		
-			auto product = container->service<ProductService>();
-			product->name = name;
+			auto product = container.service<ProductService>();
+			product.name = name;
 		
-			return product;
+			products.emplace_back(move(product));
+		} else {
+			cout << "No planks left, no product made." << endl;
 		}
-		
-		cout << "No planks left, no product made." << endl;	
-		return nullptr;
 	}
 	
 private:
-	Container* container;
-	WoodStack* stack;
+	vector<Product> products;
+	Container& container;
+	WoodStack& stack;
 };
 
-// This is our carpenter service definitions
-struct CarpenterService {
-	CarpenterService(Carpenter instance) : _instance{move(instance)} {}
-	
-	static CarpenterService construct(ContainerService container, WoodStackService& stack) {
-		return Carpenter{container.forward(), stack.forward()};
-	}
-	
-	Carpenter forward() {
-		return move(_instance);
-	}
-	
-private:
-	Carpenter _instance;
-};
+// This is our carpenter service definition
+struct CarpenterService : Service<Carpenter, Dependency<ContainerService, WoodStackService>> {};
 
 int main()
 {
 	auto container = make_container();
 	
 	// We made the stack ourself and set the number of planks to 2
-	auto stack = make_shared<WoodStack>();
+	WoodStack stack{2};
 	
 	// We are providing our stack instance to the container.
 	container.instance(WoodStackService{stack});
 	
-	stack->planks = 2;
 	
 	// It has the Container and the WoodStack injected.
 	auto gerald = container.service<CarpenterService>();
 	
 	// Will print: Another computer desk made, but only 1 planks left!
-	auto product1 = gerald.makeProduct("computer desk");
+	gerald.makeProduct("computer desk");
 	
 	// Will print: Another chair made, but only 0 planks left!
-	auto product2 = gerald.makeProduct("chair");
+	gerald.makeProduct("chair");
 	
 	// Will print: No planks left, no product made.
-	// As a result, product3 is null.
-	auto product3 = gerald.makeProduct("table");
-	
-	if (!product3) {
-		cout << "There's definitely no product made!" << endl;
-	}
+	// As a result, product3 is not made.
+	gerald.makeProduct("table");
 	
 	return 0;
 }

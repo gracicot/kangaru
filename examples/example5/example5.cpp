@@ -6,66 +6,146 @@
 
 /**
  * This example explains advanced use of kangaru and it's components.
- * It covers pointer types
+ * It covers custom service definition
  */
 
 using namespace std;
 using namespace kgr;
 
-struct ScrewDriver {
-	double length = 0;
+struct FlourBag {
+	int quantity = 99;
 };
 
-struct Hammer {
-	double weight = 0;
+struct Bakery;
+
+struct Oven {
+	void bake() {
+		cout << "Bread baking..." << endl;
+	}
 };
 
-struct Plumber {
-	// Here we receive a unique_ptr and a raw pointer as dependency.
-	Plumber(unique_ptr<ScrewDriver> _sd, Hammer* _h) : sd{move(_sd)}, h{_h} {
-		sd->length = 6;
-		h->weight = 3;
+struct Baker {
+	Baker(unique_ptr<FlourBag> myFlour) : flour{move(myFlour)} {}
+	void makeBread(Bakery& b, Oven* o);
+	
+private:
+	unique_ptr<FlourBag> flour;
+};
+
+struct Bakery {
+	Bakery(Oven* myOven) : oven{myOven} {}
+	
+	void start(shared_ptr<Baker> baker) {
+		baker->makeBread(*this, oven);
 	}
 	
-	~Plumber() {
-		// The container assumes that the plumber is responsible for
-		// the allocation of his hammer, so we must delete it ourself.
-		delete h;
+	string name;
+	
+private:
+	Oven* oven;
+};
+
+void Baker::makeBread(Bakery& b, Oven* o) {
+	flour->quantity -= 8;
+	o->bake();
+	cout << "Bread baked at the \"" << b.name << "\" bakery. " << flour->quantity << " cups of flour left." << endl;
+}
+
+// FlourBag service definition. 
+struct FlourBagService {
+	// constructor. Receives a fully constructed flour bag to contain.
+	FlourBagService(unique_ptr<FlourBag> f) : flour{move(f)} {}
+	
+	// construct method. Receives dependencies of a FlourBag. In this case none.
+	static FlourBagService construct() {
+		return unique_ptr<FlourBag>{new FlourBag};
 	}
 	
-	void doJob() {
-		cout << "I got a unique screw driver with a length of " << sd->length;
-		cout << " and a hammer with a weight of " << h->weight << endl;
+	// forward method. This method define how the service is injected.
+	unique_ptr<FlourBag> forward() {
+		return move(flour);
 	}
 	
 private:
-	unique_ptr<ScrewDriver> sd;
-	Hammer* h;
+	unique_ptr<FlourBag> flour;
 };
 
-namespace kgr {
+// Oven service definition. 
+struct OvenService : Single {
+	// constructor. Receives a fully constructed oven to contain.
+	OvenService(unique_ptr<Oven> o) : oven{move(o)} {}
+	
+	// construct method. Receives dependencies of a Oven. In this case none.
+	static OvenService construct() {
+		return unique_ptr<Oven>{new Oven};
+	}
+	
+	// forward method. This method define how the service is injected.
+	// It's virtual because other services can override this one.
+	// See example 4 for more detail.
+	virtual Oven* forward() {
+		return oven.get();
+	}
+	
+private:
+	unique_ptr<Oven> oven;
+};
 
-// ScrewDriver will now be used as unique pointer
-template<> struct Service<ScrewDriver> : NoDependencies, Unique {};
+// Baker service definition. 
+struct BakerService : Single {
+	// constructor. Receives a fully constructed baker to contain.
+	BakerService(shared_ptr<Baker> b) : baker{move(b)} {}
+	
+	// construct method. Receives dependencies of a Baker.
+	static BakerService construct(FlourBagService flourBag) {
+		// dependencies are injected with the forward method.
+		return make_shared<Baker>(flourBag.forward());
+	}
+	
+	// forward method. This method define how the service is injected.
+	// It's virtual because other services can override this one.
+	// See example 4 for more detail.
+	virtual shared_ptr<Baker> forward() {
+		return baker;
+	}
+	
+private:
+	shared_ptr<Baker> baker;
+};
 
-// We are using Raw pointer for the plumber.
-// The container will manage the instance of the plumber because it's a single service.
-template<> struct Service<Plumber> : Dependency<ScrewDriver, Hammer>, Raw, Single {};
-
-// Hammer will be injected as Raw pointer.
-template<> struct Service<Hammer> : NoDependencies, Raw {};
-
-}
+// Bakery service definition. 
+struct BakeryService {
+	// constructor. Receives a fully constructed bakery to contain.
+	BakeryService(Bakery b) : bakery{move(b)} {}
+	
+	// construct method. Receives dependencies of a Baker.
+	// We have to receive the OvenService has a reference because it's single.
+	static BakeryService construct(OvenService& oven) {
+		// dependencies are injected with the forward method.
+		return Bakery{oven.forward()};
+	}
+	
+	// forward method. This method define how the service is injected.
+	Bakery forward() {
+		return move(bakery);
+	}
+	
+private:
+	Bakery bakery;
+};
 
 int main()
 {
 	auto container = make_container();
 	
-	Plumber* plumber = container->service<Plumber>();
+	// The return type of 'service<BakeryService>' is the same as the BakeryService::forward return type.
+	Bakery bakery = container.service<BakeryService>();
+	bakery.name = "Le bon pain";
 	
-	plumber->doJob();
+	// The return type of 'service<BakerService>' is the same as the BakerService::forward return type.
+	shared_ptr<Baker> baker = container.service<BakerService>();
 	
-	// We do not need to delete single services.
-	// The container still tracking and managing instances of single services, even when they are raw pointers.
+	bakery.start(baker);
+	
 	return 0;
 }

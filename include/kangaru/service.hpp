@@ -8,7 +8,7 @@ namespace kgr {
 
 struct Single {
 	Single() = default;
-	~Single() = default;
+	virtual ~Single() = default;
 	Single(const Single&) = delete;
 	Single& operator=(const Single&) = delete;
 	Single(Single&&) = default;
@@ -100,14 +100,14 @@ struct BaseGenericService {
 		return service;
 	}
 	
-protected:
-	ContainedType& getInstance() {
-		return *reinterpret_cast<ContainedType*>(&_instance);
-	}
-	
 	template<typename F, F f, typename... T>
 	void autocall(InjectType_t<T>... others) {
 		(getInstance().*f)(others.forward()...);
+	}
+	
+protected:
+	ContainedType& getInstance() {
+		return *reinterpret_cast<ContainedType*>(&_instance);
 	}
 	
 private:
@@ -133,15 +133,15 @@ private:
     Original& _service;
 };
 
-}
+} // detail
 
 template<typename...>
 struct GenericService;
 
 template<typename CRTP, typename ContainedType, typename... Deps>
 struct GenericService<CRTP, ContainedType, Dependency<Deps...>> :
-                detail::Injector<GenericService<CRTP, ContainedType, Dependency<Deps...>>, Dependency<Deps...>>,
-                detail::BaseGenericService<CRTP, ContainedType>
+	detail::Injector<GenericService<CRTP, ContainedType, Dependency<Deps...>>, Dependency<Deps...>>,
+	detail::BaseGenericService<CRTP, ContainedType>
 {
     template<typename...> friend struct detail::Injector;
     using Self = GenericService<CRTP, ContainedType, Dependency<Deps...>>;
@@ -153,8 +153,8 @@ private:
 
 template<typename CRTP, typename ContainedType>
 struct GenericService<CRTP, ContainedType> :
-        detail::Injector<GenericService<CRTP, ContainedType>>,
-                detail::BaseGenericService<CRTP, ContainedType>
+	detail::Injector<GenericService<CRTP, ContainedType>>,
+	detail::BaseGenericService<CRTP, ContainedType>
 {
     template<typename...> friend struct detail::Injector;
     using Self = GenericService<CRTP, ContainedType>;
@@ -169,15 +169,19 @@ struct SingleService;
 
 template<typename Type>
 struct SingleService<Type> : GenericService<SingleService<Type>, Type>, Single {
-    using Parent = GenericService<SingleService<Type>, Type>;
+    using typename GenericService<SingleService<Type>, Type>::Self;
+	using Self::Self;
+	
     virtual ~SingleService() = default;
     SingleService() = default;
     SingleService(SingleService&&) = default;
     SingleService& operator=(SingleService&&) = default;
+    SingleService(const SingleService&) = delete;
+    SingleService& operator=(const SingleService&) = delete;
 
     template<typename... Args>
-    static Parent makeService(Args&&... args) {
-        return Parent {Type{std::forward<Args>(args)...}};
+    static Self makeService(Args&&... args) {
+        return Self{Type{std::forward<Args>(args)...}};
     }
 
     virtual Type& forward() {
@@ -187,15 +191,19 @@ struct SingleService<Type> : GenericService<SingleService<Type>, Type>, Single {
 
 template<typename Type, typename... Deps>
 struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>, Single {
-    using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>;
+    using typename GenericService<SingleService<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>::Self;
+	using Self::Self;
+	
     virtual ~SingleService() = default;
     SingleService() = default;
     SingleService(SingleService&&) = default;
     SingleService& operator=(SingleService&&) = default;
+    SingleService(const SingleService&) = delete;
+    SingleService& operator=(const SingleService&) = delete;
 
     template<typename... Args>
-    static Parent makeService(Args&&... args) {
-        return Parent(Type(std::forward<Args>(args)...));
+    static Self makeService(Args&&... args) {
+        return Self(Type(std::forward<Args>(args)...));
     }
 
     virtual Type& forward() {
@@ -208,11 +216,12 @@ struct Service;
 
 template<typename Type>
 struct Service<Type> : GenericService<Service<Type>, Type> {
-    using Parent = GenericService<Service<Type>, Type>;
+    using typename GenericService<Service<Type>, Type>::Self;
+	using Self::Self;
 
     template<typename... Args>
-    static Parent makeService(Args&&... args) {
-        return Parent {Type{std::forward<Args>(args)...}};
+    static Self makeService(Args&&... args) {
+        return Self{Type{std::forward<Args>(args)...}};
     }
 
     Type forward() {
@@ -222,11 +231,12 @@ struct Service<Type> : GenericService<Service<Type>, Type> {
 
 template<typename Type, typename... Deps>
 struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Dependency<Deps...>> {
-    using Parent = GenericService<Service<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>;
+    using typename GenericService<Service<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>::Self;
+	using Self::Self;
 
     template<typename... Args>
-    static Parent makeService(Args&&... args) {
-        return Parent {Type{std::forward<Args>(args)...}};
+    static Self makeService(Args&&... args) {
+        return Self{Type{std::forward<Args>(args)...}};
     }
 
     Type forward() {

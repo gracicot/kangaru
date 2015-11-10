@@ -61,7 +61,13 @@ public:
 		std::swap(other._services, _services);
 	}
 	
-	Container& operator =(Container &&) = default;
+	Container& operator =(Container&& other) {
+		std::swap(other._instances, _instances);
+		std::swap(other._services, _services);
+		
+		return *this;
+	}
+	
 	virtual ~Container() = default;
 
 	template <typename T, typename... Args, enable_if<is_base_of_container<T>> = null>
@@ -69,7 +75,7 @@ public:
 		T container{std::forward<Args>(args)...};
 		container.init();
 		
-		return std::move(container);
+		return container;
 	}
 
 	template<typename T>
@@ -77,16 +83,6 @@ public:
 		static_assert(is_single<decay<T>>::value, "instance() only accept Single Service instance.");
 		
 		save_instance(std::forward<T>(service));
-	}
-	
-	template<typename T>
-	T release() {
-		static_assert(is_single<T>::value, "release() only accept Single Service instance.");
-		
-		auto s = std::move(*static_cast<T*>(_services[detail::type_id<T>]));
-		_services.erase(detail::type_id<T>);
-		
-		return std::move(s);
 	}
 	
 	template<typename T, typename... Args>
@@ -112,7 +108,7 @@ public:
 	
 protected:
 	Container() = default;
-	void init(){}
+	void init() {}
 	
 private:
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = null>

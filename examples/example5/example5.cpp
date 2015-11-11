@@ -51,6 +51,10 @@ void Baker::makeBread(Bakery& b, Oven* o) {
 	cout << "Bread baked at the \"" << b.name << "\" bakery. " << flour->quantity << " cups of flour left." << endl;
 }
 
+/**
+ * Service Definitions
+ */
+
 // FlourBag service definition. 
 struct FlourBagService {
 	// constructor. Receives a fully constructed flour bag to contain.

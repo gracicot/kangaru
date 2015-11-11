@@ -32,7 +32,7 @@ struct seq_gen<0, S...> {
 template<typename T>
 struct has_invoke {
 private:
-	template<typename C> static std::true_type test(decltype(C::invoke)*);
+	template<typename C> static std::true_type test(typename C::invoke*);
 	template<typename C> static std::false_type test(...);
 	
 public:
@@ -43,6 +43,16 @@ template<typename T>
 struct has_overrides {
 private:
 	template<typename C> static std::true_type test(typename C::ParentTypes*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
+
+template<typename T>
+struct has_next {
+private:
+	template<typename C> static std::true_type test(typename C::Next*);
 	template<typename C> static std::false_type test(...);
 	
 public:

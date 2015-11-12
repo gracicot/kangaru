@@ -109,6 +109,26 @@ struct EquippedComputer2Service : Service<Computer, Dependency<KeyboardService>>
 	>;
 };
 
+// To which service definition do we refer when the function parameter 'Keyboard&' is found?
+template<> struct ServiceMap<Keyboard&> {
+	// It refers to the KeyboardService! 
+	using Service = KeyboardService;
+};
+
+// Same for the following...
+
+template<> struct ServiceMap<Monitor&> {
+	using Service = MonitorService;
+};
+
+template<> struct ServiceMap<Mouse&> {
+	using Service = MouseService;
+};
+
+template<> struct ServiceMap<Speakers&> {
+	using Service = SpeakersService;
+};
+
 // A funtion to wash our favourite monitor and keyboard.
 // Called with normal parameters. A service will be needed to be used with invoke.
 void washMonitorAndKeyboard1(Monitor& monitor, Keyboard& keyboard) {
@@ -130,26 +150,6 @@ double washMonitorAndKeyboard2(MonitorService& monitorService, KeyboardService& 
 		 
 	return 3.2;
 }
-
-// To which service definition do we refer when the function parameter 'Keyboard&' is found?
-template<> struct ServiceMap<Keyboard&> {
-	// It refers to the KeyboardService! 
-	using Service = KeyboardService;
-};
-
-// Same for the following...
-
-template<> struct ServiceMap<Monitor&> {
-	using Service = MonitorService;
-};
-
-template<> struct ServiceMap<Mouse&> {
-	using Service = MouseService;
-};
-
-template<> struct ServiceMap<Speakers&> {
-	using Service = SpeakersService;
-};
 
 int main()
 {

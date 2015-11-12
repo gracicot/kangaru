@@ -75,6 +75,7 @@ private:
 template<typename>
 struct ServiceMap;
 
+// service definitions
 struct KeyboardService : SingleService<Keyboard> {};
 struct MonitorService : SingleService<Monitor> {};
 struct MouseService : SingleService<Mouse> {};
@@ -87,19 +88,6 @@ struct EquippedComputer1Service : Service<Computer, Dependency<KeyboardService>>
 		INVOKE(&Self::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
 		INVOKE(&Self::autocall<METHOD(&Computer::setMonitor), MonitorService>)
 	>;
-	
-	// The line above expands into:
-	/*
-	using invoke = Invoke<
-		Method<
-			decltype(&Self::autocall<decltype(&Computer::setAccessories), &Computer::setAccessories, MouseService, SpeakersService>),
-			&Self::autocall<decltype(&Computer::setAccessories), &Computer::setAccessories, MouseService, SpeakersService>
-		>, Method<
-			decltype(&Self::autocall<decltype(&Computer::setMonitor), &Computer::setMonitor, MonitorService>),
-			&Self::autocall<decltype(&Computer::setMonitor), &Computer::setMonitor, MonitorService>
-		>
-	>;
-	*/
 };
 
 struct EquippedComputer2Service : Service<Computer, Dependency<KeyboardService>> {

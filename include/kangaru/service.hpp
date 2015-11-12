@@ -3,22 +3,10 @@
 #include <type_traits>
 
 #include "detail/utils.hpp"
+#include "container.hpp"
+#include "detail/container_service.hpp"
 
 namespace kgr {
-
-struct Single {
-	Single() = default;
-	virtual ~Single() = default;
-	Single(const Single&) = delete;
-	Single& operator=(const Single&) = delete;
-	Single(Single&&) = default;
-	Single& operator=(Single&&) = default;
-};
-
-template<typename... Types>
-struct Overrides {
-	using ParentTypes = std::tuple<Types...>;
-};
 
 template<typename... Args>
 struct Dependency {};
@@ -105,12 +93,24 @@ struct BaseGenericService {
 		(getInstance().*f)(others.forward()...);
 	}
 	
+	template<typename F, F f, template<typename> class Map>
+	void autocall(ContainerService cs) {
+		autocall<Map>(cs, f);
+	}
+	
 protected:
 	ContainedType& getInstance() {
 		return *reinterpret_cast<ContainedType*>(&_instance);
 	}
 	
 private:
+	template<template<typename> class Map, typename R, typename... Args>
+	void autocall(ContainerService cs, R(ContainedType::*f)(Args...)) {
+		cs.forward().invoke<Map>([this, &f](Args&&... args){
+			(getInstance().*f)(std::forward<Args>(args)...);
+		});
+	}
+	
 	void setInstance(ContainedType instance) {
 		new (&_instance) ContainedType(std::move(instance));
 		_initiated = true;
@@ -118,19 +118,6 @@ private:
 	
 	bool _initiated = false;
 	typename std::aligned_storage<sizeof(ContainedType), alignof(ContainedType)>::type _instance;
-};
-
-template<typename Original, typename Service>
-struct ServiceOverride : Service {
-    virtual ~ServiceOverride() {}
-    ServiceOverride(Original& service) : _service {service} {}
-
-    ServiceType<Service> forward() override {
-        return static_cast<ServiceType<Service>>(_service.forward());
-    }
-
-private:
-    Original& _service;
 };
 
 } // detail

@@ -11,14 +11,13 @@ Getting Started
 Getting started with Kangaru is easy. First of all, you need to include the
 library:
 
-    #include <kangaru.hpp>
+    #include "kangaru.hpp"
 
-Take note that you will need either to add the header to your include paths or
-to add it to your project.
+Take note that you will need to add the header to your include paths.
 
 Everything is declared in the namespace `kgr`
 
-[Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki!
+[Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
 Features
 --------
@@ -27,9 +26,12 @@ Features
  * Does not need to modify existing classes
  * Instances shared across every services (Single Services)
  * Providing your own instances
- * Providing callback to construct your services
  * Self-injection
- * Polymorphic resolution of services
+ * You tell the container how to allocate memory
+ * You tell the container how to construct your types
+ * You tell the container how to store them
+ * You tell the container how they are injected
+ * Injection by setters
  * Clean and simple API
  * Near zero runtime overhead
  * Header only library
@@ -42,7 +44,6 @@ feel free to contribute!
 
  * Testing with multiple / virtual inheritance
  * Unit tests
- * CMake
- * Named service instead of typed service
- * Value/Reference type in addition of pointer types
- * Automatic invoke setters at service construction
+ * Better messages for compile-time errors
+ * Better resource management
+ * Operation on containers

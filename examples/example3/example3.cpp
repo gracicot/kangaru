@@ -6,7 +6,7 @@
 
 /**
  * This example explains moderate use of kangaru and it's components.
- * It covers callbacks and extending the container
+ * It covers overriding the construct method and extending the container
  */
 
 using namespace std;
@@ -47,11 +47,8 @@ struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
 struct StudioService : SingleService<Studio> {};
 
 struct MyContainer : Container {
-	// This is the init function, we are initiating what we need to make the main() work.
-    void init() {
+    MyContainer() {
 		// We are making our studio with a pretty name.
-		// We are using make_service to make the right type of pointer.
-		// In this case this will be equivalent to make_shared().
 		service<StudioService>().name = "The Music Box";
     }
 };
@@ -59,7 +56,7 @@ struct MyContainer : Container {
 int main()
 {
 	// The container type will be MyContainer.
-	auto container = make_container<MyContainer>();
+	MyContainer container;
 	
 	auto guitar1 = container.service<GuitarService>();
 	auto guitar2 = container.service<GuitarService>();

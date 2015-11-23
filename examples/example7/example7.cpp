@@ -6,7 +6,7 @@
 
 /**
  * This example explains advanced use of kangaru and it's components.
- * It covers autocall (injection by setters)
+ * It covers invoke and autocall (injection by setters) through service map.
  */
 
 // These are some utility macros to workaround the lack of type inference for non-type template parameter
@@ -70,6 +70,11 @@ private:
 	Speakers* speakers = nullptr;
 };
 
+// this is a struct that associate a type with a service.
+// It will tell the container which service definition to pick when a specific type is encountered.
+template<typename>
+struct ServiceMap;
+
 // service definitions
 struct KeyboardService : SingleService<Keyboard> {};
 struct MonitorService : SingleService<Monitor> {};
@@ -80,10 +85,40 @@ struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {
 
 struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> {
 	using invoke = Invoke<
-		INVOKE(&Self::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
-		INVOKE(&Self::autocall<METHOD(&Computer::setMonitor), MonitorService>)
+		INVOKE(&Self::autocall<METHOD(&Computer::setAccessories), ServiceMap>),
+		INVOKE(&Self::autocall<METHOD(&Computer::setMonitor), ServiceMap>)
 	>;
 };
+
+// To which service definition do we refer when the function parameter 'Keyboard&' is found?
+template<> struct ServiceMap<Keyboard&> {
+	// It refers to the KeyboardService! 
+	using Service = KeyboardService;
+};
+
+// Same for the following...
+
+template<> struct ServiceMap<Monitor&> {
+	using Service = MonitorService;
+};
+
+template<> struct ServiceMap<Mouse&> {
+	using Service = MouseService;
+};
+
+template<> struct ServiceMap<Speakers&> {
+	using Service = SpeakersService;
+};
+
+// A funtion to wash our favourite monitor and keyboard.
+// A service will be needed to be used with invoke.
+double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
+	cout << "Monitor of size of " << monitor.size 
+		 << " inch and a keyboard with " << keyboard.switchColor
+		 << " switches has been washed." << endl;
+		 
+	return 9.8;
+}
 
 int main()
 {
@@ -109,6 +144,11 @@ int main()
 	computer1.printGear();
 	// computer 2 will print only about the keyboard.
 	computer2.printGear();
+	
+	// will call 'washMonitorAndKeyboard' with the right parameters.
+	double result = container.invoke<ServiceMap>(washMonitorAndKeyboard);
+	
+	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
 	
 	return 0;
 }

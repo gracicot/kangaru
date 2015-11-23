@@ -140,7 +140,7 @@ private:
 
 int main()
 {
-	auto container = make_container();
+	Container container;
 	
 	// The return type of 'service<BakeryService>' is the same as the BakeryService::forward return type.
 	Bakery bakery = container.service<BakeryService>();

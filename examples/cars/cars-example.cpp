@@ -68,7 +68,7 @@ struct HondaHRVDiesel : HondaHRV {
 };
 
 struct CarsContainer : kgr::Container {
-	auto init() -> void;
+	CarsContainer();
 };
 
 struct FuelService           : kgr::SingleService<Fuel> {};
@@ -81,14 +81,14 @@ struct NissanQuashqaiService : kgr::Service<NissanQuashqai, kgr::Dependency<Petr
 struct HondaHRVService       : kgr::Service<HondaHRV, kgr::Dependency<PremiumPetrolService>> {};
 struct HondaHRVDieselService : kgr::Service<HondaHRVDiesel, kgr::Dependency<DieselService>> {};
 
-auto CarsContainer::init() -> void {
+CarsContainer::CarsContainer() {
 	service<PetrolService>().setPrice(130.70);
 	service<PremiumPetrolService>().setPrice(144.50);
 	service<DieselService>().setPrice(135.30);
 }
 
 int main() {
-	auto garage = kgr::make_container<CarsContainer>();
+	CarsContainer garage;
 
 	auto astra1     = garage.service<OpelAstraService>();
 	auto astra2     = garage.service<OpelAstraService>();

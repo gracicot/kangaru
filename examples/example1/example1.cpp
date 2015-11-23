@@ -37,7 +37,7 @@ struct PathPrinterService : Service<PathPrinter, Dependency<PathProviderService>
 
 int main()
 {
-	auto container = make_container();
+	Container container;
 	
 	// a PathProvider is provided for every printer
 	auto printer1 = container.service<PathPrinterService>();

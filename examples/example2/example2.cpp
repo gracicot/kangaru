@@ -65,7 +65,7 @@ struct CarpenterService : Service<Carpenter, Dependency<ContainerService, WoodSt
 
 int main()
 {
-	auto container = make_container();
+	Container container;
 	
 	// We made the stack ourself and set the number of planks to 2
 	WoodStack stack{2};

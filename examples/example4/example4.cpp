@@ -76,28 +76,27 @@ struct TricksterService : Service<Trickster, Dependency<WandService>> {};
 struct WizardService : Service<Wizard, Dependency<MagicWandService>> {};
 struct FireMageService : Service<FireMage, Dependency<FireWandService>> {};
 
-struct MyContainer : Container {
-	// This is the init function, we are initiating what we need to make the container behave correctly.
-    void init() {
-		// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-		instance<MagicWandService>();
+// This is the init function, we are initiating what we need to make the container behave correctly.
+Container makeContainer() {
+	// This is the make function, we are initiating what we need to make the main() work.
+	Container container;
+	
+	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
+	container.instance<MagicWandService>();
 		
-		// FireWand is the second, because it's the second service in the hierarchy.
-		instance<FireWandService>();
+	// FireWand is the second, because it's the second service in the hierarchy.
+	container.instance<FireWandService>();
 		
-		// LavaWand is the last, because it's the last service in the hierarchy.
-		instance<LavaWandService>();
-    }
-};
-
-// Service definitions must be in the kgr namespace
-// This is our service definitions
-
+	// LavaWand is the last, because it's the last service in the hierarchy.
+	container.instance<LavaWandService>();
+	
+	return container;
+}
 
 int main()
 {
 	// The container type will be MyContainer.
-	auto container = make_container<MyContainer>();
+	auto container = makeContainer();
 	
 	auto trickster = container.service<TricksterService>();
 	auto wizard = container.service<WizardService>();

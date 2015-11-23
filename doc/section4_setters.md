@@ -3,7 +3,7 @@ Injection With Setters
 
 Few dependency injection libraries offers automatic injuction using setter. Fortunatly, this is one of those!
 
-Sadly, since [N4469](www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recomend you to declare similar macros:
+Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recomend you to declare similar macros:
 
     #define METHOD(...) decltype(__VA_ARGS__), __VA_ARGS__
     #define INVOKE(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>

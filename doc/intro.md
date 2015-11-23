@@ -5,11 +5,11 @@ Welcome to our documentation!
 
 #### First, what is kangaru?
 
-Kangaru is a simple inversion of control container for C++11 and later. Our goal is to create a container capable of automatic dependency injection that do most diagnostics at compile time, while keeping the simplest interface possible without modifying existing classes. Kangaru is a header only library because of it's extensive use of templatesThe name kangaru come from the feature of the container injecting itself into a service as a dependency.
+Kangaru is a simple inversion of control container for C++11 and later. Our goal is to create a container capable of automatic dependency injection that do most diagnostics at compile time, while keeping the simplest interface possible without modifying existing classes. Kangaru is a header only library because of it's extensive use of templates. The name kangaru come from the feature of the container injecting itself into a service as a dependency.
 
 #### Inversion of control that put you back in control
 
-Indeed, the container does not force a way to construct, allocate memory, containing or injrct your classes. You are in control of everything related to the classes of your project.
+Indeed, the container does not force a way to construct, allocate memory, containing or inject your classes. You are in control of everything related to the classes of your project.
 
 Getting Started
 ---------------

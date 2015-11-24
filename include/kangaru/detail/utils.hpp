@@ -3,13 +3,17 @@
 #include <memory>
 #include <type_traits>
 
+#include "function_traits.hpp"
+
 namespace kgr {
 namespace detail {
 
-using type_id_fn = void(*)();
-template <typename ...T> void type_id() {}
+using type_id_t = void(*)();
+template <typename T> void type_id() {}
 
 enum class enabler {};
+
+constexpr enabler null = {};
 
 template <bool b, typename T>
 using enable_if_t = typename std::enable_if<b, T>::type;
@@ -25,11 +29,39 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-template<typename T, typename ...Args>
-std::unique_ptr<T> make_unique( Args&& ...args )
-{
-	return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-}
+template<typename T>
+struct has_invoke {
+private:
+	template<typename C> static std::true_type test(typename C::invoke*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
+
+template<typename T>
+struct has_overrides {
+private:
+	template<typename C> static std::true_type test(typename C::ParentTypes*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
+
+template<typename T>
+struct has_next {
+private:
+	template<typename C> static std::true_type test(typename C::Next*);
+	template<typename C> static std::false_type test(...);
+	
+public:
+	constexpr static bool value = decltype(test<T>(nullptr))::value;
+};
 
 } // namespace detail
+
+template<typename T>
+using ServiceType = detail::function_result_t<decltype(&T::forward)>;
+
 } // namespace kgr

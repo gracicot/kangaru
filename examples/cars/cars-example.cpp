@@ -26,13 +26,13 @@ struct Car {
 		return litres * fuel_->getPrice();
 	}
 
-	auto setFuel(std::shared_ptr<Fuel> fuel) -> void {
+	auto setFuel(Fuel* fuel) -> void {
 		fuel_ = std::move(fuel);
 	}
 protected:
-	explicit Car(std::shared_ptr<Fuel> fuel) : fuel_{std::move(fuel)} {}
+	explicit Car(Fuel* fuel) : fuel_{std::move(fuel)} {}
 private:
-	std::shared_ptr<Fuel> fuel_;
+	Fuel* fuel_;
 };
 
 struct Petrol : Fuel {
@@ -48,86 +48,78 @@ struct Diesel : Fuel {
 };
 
 struct OpelAstra : Car {
-	explicit OpelAstra(std::shared_ptr<Fuel> fuel) :
-		Car{std::move(fuel)} {}
+	explicit OpelAstra(Fuel& fuel) :
+		Car{&fuel} {}
 };
 
 struct NissanQuashqai : Car {
-	explicit NissanQuashqai(std::shared_ptr<Fuel> fuel) :
-		Car{std::move(fuel)} {}
+	explicit NissanQuashqai(Fuel& fuel) :
+		Car{&fuel} {}
 };
 
 struct HondaHRV : Car {
-	explicit HondaHRV(std::shared_ptr<Fuel> fuel) :
-		Car{std::move(fuel)} {}
+	explicit HondaHRV(Fuel& fuel) :
+		Car{&fuel} {}
 };
 
 struct HondaHRVDiesel : HondaHRV {
-	explicit HondaHRVDiesel(std::shared_ptr<Fuel> fuel) :
-		HondaHRV{std::move(fuel)} {}
+	explicit HondaHRVDiesel(Fuel& fuel) :
+		HondaHRV{fuel} {}
 };
 
 struct CarsContainer : kgr::Container {
-	CarsContainer() = default;
-protected:
-	virtual auto init() -> void override final;
+	CarsContainer();
 };
 
-auto CarsContainer::init() -> void {
-	service<Petrol>()->setPrice(130.70);
-	service<PremiumPetrol>()->setPrice(144.50);
-	service<Diesel>()->setPrice(135.30);
+struct FuelService           : kgr::SingleService<Fuel> {};
+struct PetrolService         : kgr::SingleService<Petrol>, kgr::Overrides<FuelService> {};
+struct PremiumPetrolService  : kgr::SingleService<PremiumPetrol> {};
+struct DieselService         : kgr::SingleService<Diesel> {};
+
+struct OpelAstraService      : kgr::Service<OpelAstra, kgr::Dependency<PetrolService>> {};
+struct NissanQuashqaiService : kgr::Service<NissanQuashqai, kgr::Dependency<PetrolService>> {};
+struct HondaHRVService       : kgr::Service<HondaHRV, kgr::Dependency<PremiumPetrolService>> {};
+struct HondaHRVDieselService : kgr::Service<HondaHRVDiesel, kgr::Dependency<DieselService>> {};
+
+CarsContainer::CarsContainer() {
+	service<PetrolService>().setPrice(130.70);
+	service<PremiumPetrolService>().setPrice(144.50);
+	service<DieselService>().setPrice(135.30);
 }
 
-namespace kgr {
-
-template<> struct Service<Fuel>          : NoDependencies, Single {};
-template<> struct Service<Petrol>        : NoDependencies, Overrides<Fuel> {};
-template<> struct Service<PremiumPetrol> : NoDependencies, Single {};
-template<> struct Service<Diesel>        : NoDependencies, Single {};
-
-template<> struct Service<OpelAstra>      : Dependency<Petrol> {};
-template<> struct Service<NissanQuashqai> : Dependency<Petrol> {};
-template<> struct Service<HondaHRV>       : Dependency<PremiumPetrol> {};
-template<> struct Service<HondaHRVDiesel> : Dependency<Diesel> {};
-
-}  // namespace kgr
-
-
-
 int main() {
-	auto garage = kgr::make_container<CarsContainer>();
+	CarsContainer garage;
 
-	auto astra1     = garage->service<OpelAstra>();
-	auto astra2     = garage->service<OpelAstra>();
-	auto quashqai   = garage->service<NissanQuashqai>();
-	auto hrv        = garage->service<HondaHRV>();
-	auto hrv_diesel = garage->service<HondaHRVDiesel>();
-	auto premium    = garage->service<PremiumPetrol>();
+	auto astra1     = garage.service<OpelAstraService>();
+	auto astra2     = garage.service<OpelAstraService>();
+	auto quashqai   = garage.service<NissanQuashqaiService>();
+	auto hrv        = garage.service<HondaHRVService>();
+	auto hrv_diesel = garage.service<HondaHRVDieselService>();
+	auto& premium    = garage.service<PremiumPetrolService>();
 
-	astra2->setFuel(premium);
+	astra2.setFuel(&premium);
 
 	std::cout << std::boolalpha << std::fixed << std::setprecision(2);
 	std::cout << "`astra1` and `astra2` is the same auto:  " <<
-		(astra1 == astra2) <<
+		(&astra1 == &astra2) <<
 		"\n`hrv` and `hrv_diesel` is the same auto: " <<
-		(hrv == hrv_diesel) <<
+		(&hrv == &hrv_diesel) <<
 		"\npremium petrol is single:                " << 
-		(premium == garage->service<PremiumPetrol>()) <<
-		"\nPremium petrol costs " << premium->getPrice() <<
+		(&premium == &garage.service<PremiumPetrolService>()) <<
+		"\nPremium petrol costs " << premium.getPrice() <<
 		" per litre"
 		"\n\nRefuel costs:"
-		"\n\tOpel Astra(1),   50 litres: " << astra1->refuel(50) <<
-		"\n\tOpel Astra(2),   50 litres: " << astra2->refuel(50) <<
-		"\n\tNissan Quashqai, 30 litres: " << quashqai->refuel(30) <<
+		"\n\tOpel Astra(1),   50 litres: " << astra1.refuel(50) <<
+		"\n\tOpel Astra(2),   50 litres: " << astra2.refuel(50) <<
+		"\n\tNissan Quashqai, 30 litres: " << quashqai.refuel(30) <<
 		"\n\tHonda"
-		"\n\t  HR-V,          30 litres: " << hrv->refuel(30) <<
-		"\n\t  HR-V Diesel,   30 litres: " << hrv_diesel->refuel(30) <<
+		"\n\t  HR-V,          30 litres: " << hrv.refuel(30) <<
+		"\n\t  HR-V Diesel,   30 litres: " << hrv_diesel.refuel(30) <<
 		'\n';
-	premium->setPrice(147.20);
-	std::cout << "Update premium petrol price to " << premium->getPrice() <<
+	premium.setPrice(147.20);
+	std::cout << "Update premium petrol price to " << premium.getPrice() <<
 		"\nNow refuel of Honda HR-V (30 litres) costs " <<
-		hrv->refuel(30) << 
+		hrv.refuel(30) << 
 		'\n';
 }
 

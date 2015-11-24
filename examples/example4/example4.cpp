@@ -36,90 +36,87 @@ struct LavaWand : FireWand {
 
 // Every following service_ptr will be shared_ptr.
 struct Trickster {
-	Trickster(service_ptr<Wand> _wand) : wand{move(_wand)} {}
+	Trickster(Wand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	service_ptr<Wand> wand;
+	Wand& wand;
 };
 
 struct Wizard {
-	Wizard(service_ptr<MagicWand> _wand) : wand{move(_wand)} {}
+	Wizard(MagicWand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	service_ptr<MagicWand> wand;
+	MagicWand& wand;
 };
 
 struct FireMage {
-	FireMage(service_ptr<FireWand> _wand) : wand{move(_wand)} {}
+	FireMage(FireWand& _wand) : wand{_wand} {}
 	
 	void doTrick() {
-		wand->doTrick();
+		wand.doTrick();
 	}
 	
 private:
-	service_ptr<FireWand> wand;
+	FireWand& wand;
 };
 
-struct MyContainer : Container {
-	// This is the init function, we are initiating what we need to make the container behave correctly.
-    virtual void init() {
-		// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-		instance<MagicWand>();
+struct WandService : AbstractService<Wand> {};
+struct MagicWandService : SingleService<MagicWand>, Overrides<WandService> {};
+struct FireWandService : SingleService<FireWand>, Overrides<MagicWandService> {};
+struct LavaWandService : SingleService<LavaWand>, Overrides<FireWandService, MagicWandService> {};
+struct TricksterService : Service<Trickster, Dependency<WandService>> {};
+struct WizardService : Service<Wizard, Dependency<MagicWandService>> {};
+struct FireMageService : Service<FireMage, Dependency<FireWandService>> {};
+
+// This is the init function, we are initiating what we need to make the container behave correctly.
+Container makeContainer() {
+	// This is the make function, we are initiating what we need to make the main() work.
+	Container container;
+	
+	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
+	container.instance<MagicWandService>();
 		
-		// FireWand is the second, because it's the second service in the hierarchy.
-		instance<FireWand>();
+	// FireWand is the second, because it's the second service in the hierarchy.
+	container.instance<FireWandService>();
 		
-		// LavaWand is the last, because it's the last service in the hierarchy.
-		instance<LavaWand>();
-    }
-};
-
-// Service definitions must be in the kgr namespace
-namespace kgr {
-
-// This is our service definitions
-template<> struct Service<Wand> : NoDependencies, Single {};
-template<> struct Service<MagicWand> : NoDependencies, Overrides<Wand> {};
-template<> struct Service<FireWand> : NoDependencies, Overrides<MagicWand> {};
-template<> struct Service<LavaWand> : NoDependencies, Overrides<FireWand, MagicWand> {};
-template<> struct Service<Trickster> : Dependency<Wand> {};
-template<> struct Service<Wizard> : Dependency<MagicWand> {};
-template<> struct Service<FireMage> : Dependency<FireWand> {};
-
+	// LavaWand is the last, because it's the last service in the hierarchy.
+	container.instance<LavaWandService>();
+	
+	return container;
 }
 
 int main()
 {
 	// The container type will be MyContainer.
-	auto container = make_container<MyContainer>();
+	auto container = makeContainer();
 	
-	auto trickster = container->service<Trickster>();
-	auto wizard = container->service<Wizard>();
-	auto fireMage = container->service<FireMage>();
+	auto trickster = container.service<TricksterService>();
+	auto wizard = container.service<WizardService>();
+	auto fireMage = container.service<FireMageService>();
 	
 	// The trickster will show "It's doing magic tricks!"
 	// because the only service that overrides Wand is MagicWand.
 	// Even if another service is overriding MagicWand, it does not overrides Wand.
-	trickster->doTrick();
+	trickster.doTrick();
 	
 	// The trickster will show "It's doing lava tricks!"
 	// because LavaWand overrides MagicWand, which was the Wizard's dependency.
 	// Even if FireWand is overriding MagicWand, LavaWand is lower in the hierarchy,
 	// which grants it priority (see MyContainer::init() for more detail).
 	// A misconfigured hierarchy may lead to incorrect result. Invert instance calls and see by yourself.
-	wizard->doTrick();
+	wizard.doTrick();
 	
 	// The trickster will show "It's doing lava tricks!"
 	// because LavaWand is overriding FireWand.
-	fireMage->doTrick();
+	fireMage.doTrick();
 	
 	return 0;
 }

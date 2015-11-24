@@ -1,8 +1,8 @@
 Override Services
 =================
 
-What would be a DI container without being able to dispatch service polymorphically with interfaces and stuff?
-Overriding service in kangaru could not be simpler! Just extends from the `kgr::Overrides<Parents...>` class!
+What would be a DI container without the ability to dispatch services polymorphically with interfaces and stuff?
+Overriding services in kangaru could not be simpler! Just make your service definitions extend from the `kgr::Overrides<Parents...>` class!
 
     struct FileManagerService : kgr::SingleService<FileManager>, kgr::Overrides<IFileManagerService> {};
     
@@ -10,11 +10,11 @@ That's it! Now we must tell the container that `FileManagerService` exists.
 
     container.instance<FileManagerService>();
     
- If we want to use a `FileManager`, we can ask it to the container like that:
+ If we want to use a `FileManager`, we can request it from the container like that:
  
      IFileManager& fm = container.service<IFileManagerService>();
      
-As long as the overrider's service type is convertible to the parent's service type, the override will work.
+As long as the overrider's service type is convertible to the parent's service type, the service override will work.
      
 ### Order matters
 
@@ -23,10 +23,10 @@ Let's take a look at this particuliar case:
     struct FileManagerService : kgr::SingleService<FileManager>, kgr::Overrides<IFileManagerService> {};
     struct ClownMasterService : kgr::SingleService<ClownMaster>, kgr::Overrides<IFileManagerService> {};
 
-Ouch! Which one is took?
+Ouch! Which one is chosen by the container?
 It depends.
 
-In fact, the rule to know which one will be taken is **the last one registered is the one which overrides**
+In fact, the rule that defines which one will be taken is **the last one registered is the one which overrides**
 
 Yes. Look at these two cases:
 
@@ -52,8 +52,8 @@ Yes. Look at these two cases:
     
 ### Abstract Service
 
-If you want to make a service definition for an abstract type, you may extends from `kgr::AbstractService<T>`:
+If you want to make a service definition for an abstract type, you may extend from `kgr::AbstractService<T>`:
 
     struct IFileManagerService : kgr::AbstractService<IFileManager>;
 
-Simple!
+Simple, no?

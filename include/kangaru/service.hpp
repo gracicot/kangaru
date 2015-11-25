@@ -26,27 +26,19 @@ struct Injector<CRTP, Dependency<Deps...>> {
 	}
 };
 
-template<typename CRTP>
-struct Injector<CRTP> {
-	static CRTP construct() {
-		using C = typename CRTP::C;
-		return C::makeService();
-	}
-};
-
 template<typename CRTP, typename ContainedType>
 struct BaseGenericService {
 	BaseGenericService() = default;
 	
-    BaseGenericService(BaseGenericService&& other) {
+	BaseGenericService(BaseGenericService&& other) {
 		setInstance(std::move(other.getInstance()));
-    }
-    
-    BaseGenericService& operator=(BaseGenericService&& other) {
+	}
+	
+	BaseGenericService& operator=(BaseGenericService&& other) {
 		setInstance(std::move(other.getInstance()));
 		return *this;
-    }
-    
+	}
+	
 	BaseGenericService(const BaseGenericService& other) {
 		setInstance(other.getInstance());
 	}
@@ -122,118 +114,52 @@ private:
 
 } // detail
 
-template<typename...>
-struct GenericService;
-
-template<typename CRTP, typename ContainedType, typename... Deps>
-struct GenericService<CRTP, ContainedType, Dependency<Deps...>> :
-	detail::Injector<GenericService<CRTP, ContainedType, Dependency<Deps...>>, Dependency<Deps...>>,
-	detail::BaseGenericService<CRTP, ContainedType>
+template<typename CRTP, typename Type, typename Deps>
+struct GenericService :
+	detail::Injector<GenericService<CRTP, Type, Deps>, Deps>,
+	detail::BaseGenericService<CRTP, Type>
 {
-    template<typename...> friend struct detail::Injector;
-    using Self = GenericService<CRTP, ContainedType, Dependency<Deps...>>;
-    using detail::BaseGenericService<CRTP, ContainedType>::BaseGenericService;
+	template<typename...> friend struct detail::Injector;
+	using Self = GenericService<CRTP, Type, Deps>;
+	using detail::BaseGenericService<CRTP, Type>::BaseGenericService;
 
 private:
-    using C = CRTP;
+	using C = CRTP;
 };
 
-template<typename CRTP, typename ContainedType>
-struct GenericService<CRTP, ContainedType> :
-	detail::Injector<GenericService<CRTP, ContainedType>>,
-	detail::BaseGenericService<CRTP, ContainedType>
-{
-    template<typename...> friend struct detail::Injector;
-    using Self = GenericService<CRTP, ContainedType>;
-    using detail::BaseGenericService<CRTP, ContainedType>::BaseGenericService;
-
-private:
-    using C = CRTP;
-};
-
-template<typename...>
-struct SingleService;
-
-template<typename Type>
-struct SingleService<Type> : GenericService<SingleService<Type>, Type>, Single {
-    using typename GenericService<SingleService<Type>, Type>::Self;
-	using Self::Self;
-	
-    virtual ~SingleService() = default;
-    SingleService() = default;
-    SingleService(SingleService&&) = default;
-    SingleService& operator=(SingleService&&) = default;
-    SingleService(const SingleService&) = delete;
-    SingleService& operator=(const SingleService&) = delete;
-
-    template<typename... Args>
-    static Self makeService(Args&&... args) {
-        return Self{Type{std::forward<Args>(args)...}};
-    }
-
-    virtual Type& forward() {
-        return this->getInstance();
-    }
-};
-
-template<typename Type, typename... Deps>
-struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>, Single {
-    using typename GenericService<SingleService<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>::Self;
-	using Self::Self;
-	
-    virtual ~SingleService() = default;
-    SingleService() = default;
-    SingleService(SingleService&&) = default;
-    SingleService& operator=(SingleService&&) = default;
-    SingleService(const SingleService&) = delete;
-    SingleService& operator=(const SingleService&) = delete;
-
-    template<typename... Args>
-    static Self makeService(Args&&... args) {
-        return Self(Type(std::forward<Args>(args)...));
-    }
-
-    virtual Type& forward() {
-        return this->getInstance();
-    }
-};
-
-template<typename...>
-struct Service;
-
-template<typename Type>
-struct Service<Type> : GenericService<Service<Type>, Type> {
-    using typename GenericService<Service<Type>, Type>::Self;
+template<typename Type, typename Deps = Dependency<>>
+struct SingleService : GenericService<SingleService<Type, Deps>, Type, Deps>, Single {
+	using typename GenericService<SingleService<Type, Deps>, Type, Deps>::Self;
 	using Self::Self;
 
-    template<typename... Args>
-    static Self makeService(Args&&... args) {
-        return Self{Type{std::forward<Args>(args)...}};
-    }
+	template<typename... Args>
+	static Self makeService(Args&&... args) {
+		return Self{Type{std::forward<Args>(args)...}};
+	}
 
-    Type forward() {
-        return std::move(this->getInstance());
-    }
+	virtual Type& forward() {
+		return this->getInstance();
+	}
 };
 
-template<typename Type, typename... Deps>
-struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type, Dependency<Deps...>> {
-    using typename GenericService<Service<Type, Dependency<Deps...>>, Type, Dependency<Deps...>>::Self;
+template<typename Type, typename Deps = Dependency<>>
+struct Service : GenericService<Service<Type, Deps>, Type, Deps> {
+	using typename GenericService<Service<Type, Deps>, Type, Deps>::Self;
 	using Self::Self;
 
-    template<typename... Args>
-    static Self makeService(Args&&... args) {
-        return Self{Type{std::forward<Args>(args)...}};
-    }
+	template<typename... Args>
+	static Self makeService(Args&&... args) {
+		return Self{Type{std::forward<Args>(args)...}};
+	}
 
-    Type forward() {
-        return std::move(this->getInstance());
-    }
+	Type forward() {
+		return std::move(this->getInstance());
+	}
 };
 
 template<typename T>
 struct AbstractService : Single {
-    virtual T& forward() = 0;
+	virtual T& forward() = 0;
 };
 
 }

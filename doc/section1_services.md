@@ -47,6 +47,7 @@ Now that you service `FileManager` is dependent of these classes, you have to re
     };
 
 ### Single Services
+
 Single services are really useful. You can make a single service simply be making your service sevice definition extending `kgr::SingleService`. Here's an example:
 
     struct FileManagerService : kgr::SingleService<FileManager> {};

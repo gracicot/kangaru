@@ -21,40 +21,43 @@ struct Injector;
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
 	static CRTP construct(InjectType_t<Deps>... deps) {
-		using C = typename CRTP::C;
-		return C::makeService(deps.forward()...);
+		return CRTP::makeService(deps.forward()...);
 	}
 };
 
-template<typename CRTP, typename ContainedType>
-struct BaseGenericService {
-	BaseGenericService() = default;
+} // detail
+
+template<typename CRTP, typename Type, typename Deps>
+struct GenericService : detail::Injector<CRTP, Deps> {
+	template<typename...> friend struct detail::Injector;
 	
-	BaseGenericService(BaseGenericService&& other) {
+	GenericService() = default;
+	
+	GenericService(GenericService&& other) {
 		setInstance(std::move(other.getInstance()));
 	}
 	
-	BaseGenericService& operator=(BaseGenericService&& other) {
+	GenericService& operator=(GenericService&& other) {
 		setInstance(std::move(other.getInstance()));
 		return *this;
 	}
 	
-	BaseGenericService(const BaseGenericService& other) {
+	GenericService(const GenericService& other) {
 		setInstance(other.getInstance());
 	}
 	
-	BaseGenericService& operator=(const BaseGenericService& other) {
+	GenericService& operator=(const GenericService& other) {
 		setInstance(other.getInstance());
 		return *this;
 	}
 	
-	BaseGenericService(ContainedType instance) {
+	GenericService(Type instance) {
 		setInstance(std::move(instance));
 	}
 	
-	~BaseGenericService() {
+	~GenericService() {
 		if (_initiated) {
-			getInstance().~ContainedType();
+			getInstance().~Type();
 		}
 	}
 	
@@ -80,8 +83,12 @@ struct BaseGenericService {
 		return service;
 	}
 	
+	
+protected:
+	using Self = CRTP;
+	
 	template<typename F, F f, typename... T>
-	void autocall(InjectType_t<T>... others) {
+	void autocall(detail::InjectType_t<T>... others) {
 		(getInstance().*f)(others.forward()...);
 	}
 	
@@ -90,47 +97,34 @@ struct BaseGenericService {
 		autocall<Map>(cs, f);
 	}
 	
-protected:
-	ContainedType& getInstance() {
-		return *reinterpret_cast<ContainedType*>(&_instance);
+	Type& getInstance() {
+		return *reinterpret_cast<Type*>(&_instance);
 	}
 	
 private:
 	template<template<typename> class Map, typename R, typename... Args>
-	void autocall(ContainerService cs, R(ContainedType::*f)(Args...)) {
+	void autocall(ContainerService cs, R(Type::*f)(Args...)) {
 		cs.forward().invoke<Map>([this, &f](Args&&... args){
 			(getInstance().*f)(std::forward<Args>(args)...);
 		});
 	}
 	
-	void setInstance(ContainedType instance) {
-		new (&_instance) ContainedType(std::move(instance));
+	void setInstance(Type instance) {
+		new (&_instance) Type(std::move(instance));
 		_initiated = true;
 	}
 	
 	bool _initiated = false;
-	typename std::aligned_storage<sizeof(ContainedType), alignof(ContainedType)>::type _instance;
-};
-
-} // detail
-
-template<typename CRTP, typename Type, typename Deps>
-struct GenericService :
-	detail::Injector<GenericService<CRTP, Type, Deps>, Deps>,
-	detail::BaseGenericService<CRTP, Type>
-{
-	template<typename...> friend struct detail::Injector;
-	using Self = GenericService<CRTP, Type, Deps>;
-	using detail::BaseGenericService<CRTP, Type>::BaseGenericService;
-
-private:
-	using C = CRTP;
+	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
 };
 
 template<typename Type, typename Deps = Dependency<>>
 struct SingleService : GenericService<SingleService<Type, Deps>, Type, Deps>, Single {
-	using typename GenericService<SingleService<Type, Deps>, Type, Deps>::Self;
-	using Self::Self;
+	private: using Parent = GenericService<SingleService<Type, Deps>, Type, Deps>;
+	
+public:
+	using typename Parent::Self;
+	using Parent::Parent;
 
 	template<typename... Args>
 	static Self makeService(Args&&... args) {
@@ -144,8 +138,11 @@ struct SingleService : GenericService<SingleService<Type, Deps>, Type, Deps>, Si
 
 template<typename Type, typename Deps = Dependency<>>
 struct Service : GenericService<Service<Type, Deps>, Type, Deps> {
-	using typename GenericService<Service<Type, Deps>, Type, Deps>::Self;
-	using Self::Self;
+	private: using Parent = GenericService<Service<Type, Deps>, Type, Deps>;
+	
+public:
+	using typename Parent::Self;
+	using Parent::Parent;
 
 	template<typename... Args>
 	static Self makeService(Args&&... args) {

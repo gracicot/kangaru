@@ -27,11 +27,8 @@ struct Product {
 
 // This is our wood stack service definition
 struct WoodStackService : SingleService<WoodStack> {
-	// SingleService still needs a default constructor to be declared
-	WoodStackService() = default;
-	
-	// define custom constructor
-	WoodStackService(WoodStack w) : SingleService<WoodStack>{w} {}
+	// We need constructors for our use case.
+	using Self::Self;
 };
 
 // This is our product service definition

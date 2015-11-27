@@ -65,11 +65,9 @@ The function `autocall` takes at least two parameters, first the type of a funct
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE( &Self::autocall<METHOD(&ClownMaster::init)> )
+            INVOKE( &ClownMasterService::autocall<METHOD(&ClownMaster::init)> )
         >;
     };
-    
-In this example, `Self` is an alias to the parent, to the `kgr::Service<ClownMaster>` in this case.
 
 ### Injection of parameters
 
@@ -104,7 +102,7 @@ The `autocall` function as said takes _at least_ two parameters. The other param
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&Self::autocall<METHOD(&ClownMaster::setFileManager), FileManagerService>)
+            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setFileManager), FileManagerService>)
         >;
     };
     
@@ -122,7 +120,7 @@ Note that autocall cas as well receive any number of parameter:
     
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&Self::autocall<METHOD(&ClownMaster::setThings), FileManagerService, ShopService>)
+            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), FileManagerService, ShopService>)
         >;
     };
     
@@ -132,7 +130,7 @@ Instead of listing every service the called function needs, we can alternatively
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&Self::autocall<METHOD(&ClownMaster::setThings), ServiceMap>)
+            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), ServiceMap>)
         >;
     };
     

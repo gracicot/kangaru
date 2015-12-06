@@ -37,7 +37,7 @@ Note that some features of this library are easier to use with macros and we rec
 
 Index
 -----
- * [Services](section1_service.md)
+ * [Services](section1_services.md)
  * [Basic usage of the container](section2_container.md)
  * [Override](section3_override.md)
  * [Invoke](section4_invoke.md)

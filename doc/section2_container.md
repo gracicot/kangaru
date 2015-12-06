@@ -36,3 +36,5 @@ You can make the call to this function easier with the invoke function:
 
 As long as the service `Notification`, `FileManager` and `Shop` are configured correctly, the container will call the function `someOperation` with the right set of parameter.
 The next chapiter will cover `invoke` in detail.
+ 
+[Next chapiter](section3_override.md)

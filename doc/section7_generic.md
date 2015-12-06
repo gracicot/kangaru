@@ -64,3 +64,5 @@ Forward is the same forward as we know. However, `makeService` is something new.
 #### Singles
 
 If the generic definition should be single, simply make it extending from `kgr::Single` and making `forward` virtual.
+ 
+[Next chapiter](section8_structure.md)

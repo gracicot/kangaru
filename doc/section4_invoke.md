@@ -33,3 +33,5 @@ Now that our service map is defined, we can use invoke this way:
     int result = container.invoke<ServiceMap>(doThings);
     
 With `ServiceMap`, the container can even call function from third party libraries!
+ 
+[Next chapiter](section5_setters.md)

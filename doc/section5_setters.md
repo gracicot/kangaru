@@ -137,3 +137,5 @@ Instead of listing every service the called function needs, we can alternatively
 The advantage of this method is that if `setThings` parameters change, there is no refactor needed.
 
 Thats it! If you understand this, you are now officially a wizard!
+ 
+[Next chapiter](section6_definition.md)

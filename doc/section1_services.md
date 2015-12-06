@@ -64,3 +64,5 @@ Now every instances returned by the container is the same. You can test it like 
 There are two protected methods that are provided by generic services from the Kangaru library:
  * `getInstance()` which returns the contained instance of the service.
  * `autocall`, will see how to use it in the chapiter [Injection with setters](section5_setters.md)
+ 
+[Next chapiter](section2_container.md)

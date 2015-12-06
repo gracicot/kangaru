@@ -104,3 +104,5 @@ Abstract service are the simplest one to implement. It has one pure virtual meth
     }
     
 Abstract services must be single.
+ 
+[Next chapiter](section7_generic.md)

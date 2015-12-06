@@ -43,4 +43,5 @@ Index
  * [Invoke](section4_invoke.md)
  * [Injection with setters](section5_setters.md)
  * [Writing service definitions from scratch](section6_definition.md)
- * [Structure for large projects]()
+ * [Generic Services](section7_generic.md)
+ * [Structure for large projects](section8_structure.md)

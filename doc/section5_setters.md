@@ -8,6 +8,7 @@ Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n44
     #define METHOD(...) decltype(__VA_ARGS__), __VA_ARGS__
     #define INVOKE(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
+Of course, you can name them how you want.
 Now we can start.
 
 ### The invoke type
@@ -30,6 +31,8 @@ So let's say you have this service and definition:
 We would like to call `init()` when our `ClownMaster` is constructed. But calling it manually each time it's constructed would be error prone and not pretty.
 The solution is to tell the container to call some specific methods automatically.
 
+We'll start with somthing simpler, like printing something to the console when our service is constructed.
+
 To do this, you must using invoke in your service definition.
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
@@ -46,17 +49,21 @@ When the service is constructed, `called` will be printed in the terminal.
     auto cm1 = container.service<ClownMasterService>(); // prints "called"
     auto cm2 = container.service<ClownMasterService>(); // prints "called" again
     
+As we can see, the `invoke` member type tells the container to call a member function of the definition.
+    
 #### What power does this gives to us?
 
-We can now call our `init()` method!
+We can use the `callMe()` to call the `init()` method of the service!
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
-        void callInit() {
+        void callMe() {
             getInstance().init();
         }
         
         using invoke = kgr::Invoke< INVOKE(&ClownMasterService::callInit) >;
     };
+    
+Remember the `getInstance()` function? It returns the service contained in the definition.
     
 ### More automatisation
 
@@ -138,4 +145,4 @@ The advantage of this method is that if `setThings` parameters change, there is 
 
 Thats it! If you understand this, you are now officially a wizard!
  
-[Next chapiter](section6_definition.md)
+[Next chapiter](section6_definitions.md)

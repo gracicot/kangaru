@@ -19,7 +19,7 @@ All you have to do is to declare this service definition:
 
     struct FileManagerService : kgr::Service<FileManager> {};
 
-You just made it! Now the container knows that `FileManager` is a service!
+You made it! Now the container knows that `FileManager` is a service!
 
 ### Dependencies
 
@@ -54,8 +54,8 @@ Single services are really useful. You can make a single service simply be makin
 
 Now every instances returned by the container is the same. You can test it like that:
 
-    auto& fm1 = container->service<FileManagerService>();
-    auto& fm2 = container->service<FileManagerService>();
+    auto& fm1 = container.service<FileManagerService>();
+    auto& fm2 = container.service<FileManagerService>();
     
     cout << (&fm1 == &fm2 ? "true":"false") << endl; // the output will be "true"
 

@@ -16,10 +16,10 @@ Headers of your classes should not be significantly changed. The big change is i
 
 ## Including kangaru
 
-I'd recommend not including `kangaru.hpp` directly. Why? Because you must define the service map, and maybe including your own generic service.
-A include kangaru file should look like this:
+I'd recommend not including `kangaru.hpp` directly and use a proxy header file instead. Why? Because you must define the service map, and maybe including your own generic service.
+A "include kangaru" header file should look like this:
 
-    #pragma once // or header guard.
+    #pragma once // or a header guard.
 
     #include "kangaru/kangaru.hpp" // include kangaru
 

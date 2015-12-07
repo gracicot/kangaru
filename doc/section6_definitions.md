@@ -93,7 +93,7 @@ So let's change our sevice to a single:
         FileManager fm;
     };
 
-Why should it be virtual? Remember the `Override` feature? To achieve this, the container rely on polymorphic behaviour. All you have to do is to make your `forward` method virtual, and the container will be happy. Simple!
+Why should it be virtual? Remember the `Override` feature? To achieve this, the container rely on polymorphic behaviour. All you have to do is to make your `forward` method virtual, and the container will be happy.
 
 ### Abstract Services
 

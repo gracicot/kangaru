@@ -33,7 +33,7 @@ _Service Definition_ classes are a class that contain a service and tell the con
 ### Macros
 
 This library do not make use of macros and do not declare any.
-Note that some features of this library are easier to use with macros and we recomend you to follow how this documentation define them.
+Note that some features of this library are easier to use with macros and we recomend you to follow how this documentation defines them.
 
 Index
 -----
@@ -42,6 +42,6 @@ Index
  * [Override](section3_override.md)
  * [Invoke](section4_invoke.md)
  * [Injection with setters](section5_setters.md)
- * [Writing service definitions from scratch](section6_definition.md)
+ * [Writing service definitions from scratch](section6_definitions.md)
  * [Generic Services](section7_generic.md)
  * [Structure for large projects](section8_structure.md)

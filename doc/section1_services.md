@@ -19,7 +19,7 @@ All you have to do is declare the following service definition:
 
     struct FileManagerService : kgr::Service<FileManager> {};
 
-You just made it! Now the container knows that `FileManager` is a service!
+You made it! Now the container knows that `FileManager` is a service!
 
 ### Dependencies
 
@@ -54,7 +54,15 @@ Single services are really useful. You can make a single service simply by makin
 
 Now every instances returned by the container are the same. You can test it like that:
 
-    auto& fm1 = container->service<FileManagerService>();
-    auto& fm2 = container->service<FileManagerService>();
+    auto& fm1 = container.service<FileManagerService>();
+    auto& fm2 = container.service<FileManagerService>();
     
     cout << (&fm1 == &fm2 ? "true":"false") << endl; // the output will be "true"
+
+### Available methods
+
+There are two protected methods that are provided by generic services from the Kangaru library:
+ * `getInstance()` which returns the contained instance of the service.
+ * `autocall`, will see how to use it in the chapiter [Injection with setters](section5_setters.md)
+ 
+[Next chapiter](section2_container.md)

@@ -80,8 +80,8 @@ struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {
 
 struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> {
 	using invoke = Invoke<
-		INVOKE(&Self::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
-		INVOKE(&Self::autocall<METHOD(&Computer::setMonitor), MonitorService>)
+		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
+		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), MonitorService>)
 	>;
 };
 

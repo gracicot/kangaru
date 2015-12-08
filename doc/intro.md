@@ -37,10 +37,11 @@ Note that some features of this library are easier to use with macros, and we re
 
 Index
 -----
- * [Services](section1_service.md)
+ * [Services](section1_services.md)
  * [Basic usage of the container](section2_container.md)
  * [Override](section3_override.md)
  * [Invoke](section4_invoke.md)
  * [Injection with setters](section5_setters.md)
- * [Writing service definitions from scratch](section6_definition.md)
- * [Structure for large projects]()
+ * [Writing service definitions from scratch](section6_definitions.md)
+ * [Generic Services](section7_generic.md)
+ * [Structure for large projects](section8_structure.md)

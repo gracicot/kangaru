@@ -117,7 +117,7 @@ private:
 	T get_service(Args ...args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service);
-		return std::move(service);
+		return service;
 	}
 	
 	template<typename T, enable_if<is_container_service<T>> = null>

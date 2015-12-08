@@ -75,9 +75,7 @@ You have to call it that way:
 
 There are two steps required in order to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. Secondly, we also need to adapt the `forward` function by making it virtual, in order to not invalidate the contained service.
 
-Note: single services can forward copies too, but you rarely want to do that. Returning a reference or pointer is a much better idea when it comes to single service.
-
-(Why is that so? Could be interesting to explain here. -Fred)
+Note: single services can forward copies too, but you rarely want to do that. Returning a reference or pointer is a much better idea when it comes to single service, what would be the point of a single instance if you copy the service everywhere?
 
 So let's make our sevice a Single:
 
@@ -105,8 +103,6 @@ Abstract services are the simplest ones to implement. They have only one pure vi
         virtual IFileManager& forward() = 0;
     }
     
-Abstract services must be single.
+Abstract services must be single. That reason is pretty obvious: You need to override that definition to have an instance of it.
 
-(Why is that so? Could be interesting to explain here too! -Fred)
- 
 [Next chapiter](section7_generic.md)

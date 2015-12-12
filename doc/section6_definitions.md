@@ -1,19 +1,19 @@
 Writing service definitions from scratch
 ========================================
 
-By now, each time we did a service definition, we extended the `kgr::Service` or the `kgr::SingleService`. But we are not limited to that.
+Previously, each time we did a service definition, we extended the `kgr::Service` or the `kgr::SingleService` structs. But it is important to note that we are not limited to that.
 
-Writing a service definition is pretty easy. You need to define two function for it to work
+Writing a service definition is pretty easy. You only need to define two functions for it to work:
 
  * `construct`
  * `forward`
 
-The `construct` function is static and retuning the service definition itself. It's a factory method. It can take any other service definition as parameter. This is where dependencies are resolved.
-The `forward` function is taking no parameters and returing the service. The return type of this function define how your service should be injected. This function may invalidate the service definition.
+The `construct` function is static and returns the service definition itself. It's a factory method. It can take any other service definition as a parameter. This is where dependencies are resolved.
+The `forward` function takes no parameters and returns the service. The return type of this function defines how your service should be injected. Note that this function has the power to invalidate the service definition.
 
-Normally, your service definition contains your service.
+Normally, your service definition should contain your service.
 
-A tipical service definition look like this:
+A tipical service definition looks like this:
 
     struct FileManagerService {
         static FileManagerService construct() {
@@ -28,7 +28,7 @@ A tipical service definition look like this:
         FileManager fm;
     };
 
-If the class `FileManager` has dependencies, you can add them in the construct as parameters:
+If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters:
 
     struct FileManagerService {
         static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
@@ -44,12 +44,12 @@ If the class `FileManager` has dependencies, you can add them in the construct a
         FileManager fm;
     };
     
-Note that single services must be received as reference, like `NotificationService&` in this case. By definition, a Single must not be copied.
-The container will call construct with the right set of parameter.
+Note that single services must be received as references, like our `NotificationService&` in this particular case. By definition, a Single must not be copied.
+The container will call `construct` with the right set of parameters, automatically.
 
 #### Additional parameters
 
-Sometime some types require some parameters like a double or a string. The `construct` function can take as many additional parameters as you want. The only creveat is that it does not support optional paraleters, maybe in the next release ;)
+Sometimes, a type requires a parameter like a double or a string. The `construct` function can take as many additional parameters as you want. The only downside is that it does not support optional parameters, maybe in the next release ;)
 
 For this service definition:
 
@@ -73,11 +73,11 @@ You have to call it that way:
 
 ### Singles
 
-There's two steps to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. The second is to adapt the forward function to be virtual and not invalidate the contained service.
+There are two steps required in order to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. Secondly, we also need to adapt the `forward` function by making it virtual, in order to not invalidate the contained service.
 
-Note: single service can forward as copy too, but you rarely do that. Returing a reference or pointer is a much better idea when it comes to single service.
+Note: single services can forward copies too, but you rarely want to do that. Returning a reference or pointer is a much better idea when it comes to single service, what would be the point of a single instance if you copy the service everywhere?
 
-So let's change our sevice to a single:
+So let's make our sevice a Single:
 
     struct FileManagerService : Single {
         static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
@@ -93,16 +93,16 @@ So let's change our sevice to a single:
         FileManager fm;
     };
 
-Why should it be virtual? Remember the `Override` feature? To achieve this, the container rely on polymorphic behaviour. All you have to do is to make your `forward` method virtual, and the container will be happy.
+Why should it be virtual? Remember the `Override` feature? To achieve this, the container relies on polymorphic behaviour. All you have to do is make your `forward` method virtual, and the container will be happy.
 
 ### Abstract Services
 
-Abstract service are the simplest one to implement. It has one pure virtual method called `forward`:
+Abstract services are the simplest ones to implement. They have only one pure virtual method called `forward`:
 
     struct IFileManagerService : Single {
         virtual IFileManager& forward() = 0;
     }
     
-Abstract services must be single.
- 
+Abstract services must be single. That reason is pretty obvious: You need to override that definition to have an instance of it.
+
 [Next chapiter](section7_generic.md)

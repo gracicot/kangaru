@@ -3,38 +3,38 @@ The container
 
 The container is the central piece of the library, it's where the magic is done.
 
-There are three methods:
+It contains the following three methods:
 
  * `instance<T>`
  * `service<T>`
  * `invoke<T>`
 
 ## instance
-This function either register a provided instance of a service definition or explicitly instanciate a single service.
+This function either registers a provided instance of a service definition or explicitly instanciates a single service.
 
     // Will instanciate a Shop within the container
     container.instance<ShopService>();
     
-    // Gives a ClownMasterService to the container
+    // Gives a ClownMasterService intance to the container
     container.instance(ClownMasterService{42});
 
-Here we ask the container to construct and register the service ShopService. Then, we provide the container an instance of `ClownMasterService` as the instance the container should use for later.
+Here, we ask the container to construct and register the service named "ShopService". Then, we provide the container an instance of `ClownMasterService` for future use.
 
 ## service
-Service is the most crucial function of the container. It returns a service and construct it if needed. the template parameter is the service definition of the one you want.
+Service is the most crucial function of the container. It returns a service and constructs it if needed. The function's template parameter corresponds to the service definition of the service you want to retrieve.
 
         Shop myShop = container.service<ShopService>(); // I just got a fully constructed Shop!
 
 ## invoke
-The `invoke` method is here to help you call functions that need services as parameter. Let's say we have the service `Notification`, `FileManager` and `Shop` and this function:
+The `invoke` method is here to help you call functions that need services as parameters. Let's say we have the following services: `Notification`, `FileManager` and `Shop`. Also, let's say we have this function:
 
     int someOperation(Notification&, FileManager& b, Shop c);
 
-You can make the call to this function easier with the invoke function:
+You can make the call to this function easier with the invoke function, like so:
 
     int result = container.invoke<ServiceMap>(someOperation);
 
-As long as the service `Notification`, `FileManager` and `Shop` are configured correctly, the container will call the function `someOperation` with the right set of parameter.
-We will cover `invoke` in detail later.
+As long as the `Notification`, `FileManager` and `Shop` services are configured correctly, the container will call the function `someOperation` with the right set of parameters.
+We will cover the `invoke` functionnality in detail in a later chapter.
  
-[Next chapiter](section3_override.md)
+[Next chapter](section3_override.md)

@@ -4,7 +4,6 @@
 
 namespace kgr {
 
-
 template<typename... Args>
 struct Dependency {};
 
@@ -80,13 +79,12 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 		return service;
 	}
 	
-	
 protected:
 	using Self = CRTP;
 	
 	template<typename F, F f, typename... T>
 	void autocall(detail::InjectType_t<T>... others) {
-		(getInstance().*f)(others.forward()...);
+		CRTP::call(getInstance(), f, others.forward()...);
 	}
 	
 	template<typename F, F f, template<typename> class Map>
@@ -102,7 +100,7 @@ private:
 	template<template<typename> class Map, typename R, typename... Args>
 	void autocall(ContainerService cs, R(Type::*f)(Args...)) {
 		cs.forward().invoke<Map>([this, &f](Args&&... args){
-			(getInstance().*f)(std::forward<Args>(args)...);
+			CRTP::call(getInstance(), f, std::forward<Args>(args)...);
 		});
 	}
 	

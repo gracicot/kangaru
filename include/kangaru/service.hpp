@@ -26,7 +26,7 @@ public:
 	}
 	
 	template<typename R, typename... Args, typename... T>
-	static auto call(Type& instance, R (Type::*method)(Args...), T&&... args) -> decltype((std::declval<Type>().*method)(std::forward<Args>(args)...)) {
+	static R call(Type& instance, R (Type::*method)(Args...), T&&... args) {
 		return (instance.*method)(std::forward<Args>(args)...);
 	}
 };
@@ -49,7 +49,7 @@ public:
 	}
 	
 	template<typename R, typename... Args, typename... T>
-	static auto call(Type& instance, R (Type::*method)(Args...), T&&... args) -> decltype((std::declval<Type>().*method)(std::forward<Args>(args)...)) {
+	static R call(Type& instance, R (Type::*method)(Args...), T&&... args) {
 		return (instance.*method)(std::forward<Args>(args)...);
 	}
 };
@@ -72,7 +72,7 @@ public:
 	}
 	
 	template<typename R, typename... Args, typename... T>
-	static auto call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) -> decltype((std::declval<Type>().*method)(std::forward<Args>(args)...)) {
+	static R call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };
@@ -95,7 +95,7 @@ public:
 	}
 	
 	template<typename R, typename... Args, typename... T>
-	static auto call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) -> decltype((std::declval<Type>().*method)(std::forward<Args>(args)...)) {
+	static R call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };
@@ -118,7 +118,7 @@ public:
 	}
 	
 	template<typename R, typename... Args, typename... T>
-	static auto call(std::shared_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) -> decltype((std::declval<Type>().*method)(std::forward<Args>(args)...)) {
+	static R call(std::shared_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };

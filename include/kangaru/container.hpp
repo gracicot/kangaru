@@ -114,7 +114,7 @@ private:
 	
 	// get service functions
 	template<typename T, typename... Args, disable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null>
-	T get_service(Args ...args) {
+	T get_service(Args&&... args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service);
 		return service;

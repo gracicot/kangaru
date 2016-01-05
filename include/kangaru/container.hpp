@@ -9,7 +9,6 @@
 #include <type_traits>
 #include <tuple>
 #include <vector>
-#include <exception>
 
 namespace kgr {
 
@@ -106,7 +105,7 @@ private:
 	void save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		auto baseService = instance_ptr<Override>{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>};
+		instance_ptr<Override> baseService{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>};
 		_services[detail::type_id<Override>] = baseService.get();
 		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
@@ -132,13 +131,7 @@ private:
 	
 	template<typename T, enable_if<std::is_abstract<T>> = null, enable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null>
 	T& get_service() {
-		auto it = _services.find(detail::type_id<T>);
-		
-		if (it != _services.end()) {
-			return *static_cast<T*>(it->second);
-		}
-		
-		throw std::runtime_error("No service instance can be used as abstract service");
+		return *static_cast<T*>(_services.at(detail::type_id<T>));
 	}
 	
 	template<typename T, enable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null, disable_if<std::is_abstract<T>> = null>
@@ -146,11 +139,11 @@ private:
 		auto it = _services.find(detail::type_id<T>);
 		
 		if (it == _services.end()) {
-			instance(make_service_instance<T>());
+			save_instance(make_service_instance<T>());
 			
-			auto service = static_cast<T*>(_services[detail::type_id<T>]);
-			invoke_service(*service);
-			return *service;
+			auto& service = *static_cast<T*>(_services.at(detail::type_id<T>));
+			invoke_service(service);
+			return service;
 		} else {
 			return *static_cast<T*>(it->second);
 		}

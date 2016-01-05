@@ -8,6 +8,7 @@
 namespace kgr {
 namespace detail {
 
+template<typename...> using void_t = void;
 using type_id_t = void(*)();
 template <typename T> void type_id() {}
 
@@ -29,35 +30,23 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-template<typename T>
-struct has_invoke {
-private:
-	template<typename C> static std::true_type test(typename C::invoke*);
-	template<typename C> static std::false_type test(...);
-	
-public:
-	constexpr static bool value = decltype(test<T>(nullptr))::value;
-};
+template<typename T, typename = void>
+struct has_invoke : std::false_type {};
 
 template<typename T>
-struct has_overrides {
-private:
-	template<typename C> static std::true_type test(typename C::ParentTypes*);
-	template<typename C> static std::false_type test(...);
-	
-public:
-	constexpr static bool value = decltype(test<T>(nullptr))::value;
-};
+struct has_invoke<T, void_t<typename T::invoke>> : std::true_type {};
+
+template<typename T, typename = void>
+struct has_overrides : std::false_type {};
 
 template<typename T>
-struct has_next {
-private:
-	template<typename C> static std::true_type test(typename C::Next*);
-	template<typename C> static std::false_type test(...);
-	
-public:
-	constexpr static bool value = decltype(test<T>(nullptr))::value;
-};
+struct has_overrides<T, void_t<typename T::Next>> : std::true_type {};
+
+template<typename T, typename = void>
+struct has_next : std::false_type {};
+
+template<typename T>
+struct has_next<T, void_t<typename T::Next>> : std::true_type {};
 
 } // namespace detail
 

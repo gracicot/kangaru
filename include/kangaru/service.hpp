@@ -25,8 +25,8 @@ public:
 		return this->getInstance();
 	}
 	
-	template<typename R, typename... Args, typename... T>
-	static R call(Type& instance, R (Type::*method)(Args...), T&&... args) {
+	template<typename R, typename... Args, typename T>
+	static R call(Type& instance, R (T::*method)(Args...), Args&&... args) {
 		return (instance.*method)(std::forward<Args>(args)...);
 	}
 };
@@ -48,8 +48,8 @@ public:
 		return std::move(this->getInstance());
 	}
 	
-	template<typename R, typename... Args, typename... T>
-	static R call(Type& instance, R (Type::*method)(Args...), T&&... args) {
+	template<typename R, typename... Args, typename T>
+	static R call(Type& instance, R (T::*method)(Args...), Args&&... args) {
 		return (instance.*method)(std::forward<Args>(args)...);
 	}
 };
@@ -71,8 +71,8 @@ public:
 		return *this->getInstance();
 	}
 	
-	template<typename R, typename... Args, typename... T>
-	static R call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
+	template<typename R, typename... Args, typename T>
+	static R call(std::unique_ptr<Type>& instance, R (T::*method)(Args...), Args&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };
@@ -94,8 +94,8 @@ public:
 		return std::move(this->getInstance());
 	}
 	
-	template<typename R, typename... Args, typename... T>
-	static R call(std::unique_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
+	template<typename R, typename... Args, typename T>
+	static R call(std::unique_ptr<Type>& instance, R (T::*method)(Args...), Args&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };
@@ -117,8 +117,8 @@ public:
 		return this->getInstance();
 	}
 	
-	template<typename R, typename... Args, typename... T>
-	static R call(std::shared_ptr<Type>& instance, R (Type::*method)(Args...), T&&... args) {
+	template<typename R, typename... Args, typename T>
+	static R call(std::shared_ptr<Type>& instance, R (T::*method)(Args...), Args&&... args) {
 		return ((*instance).*method)(std::forward<Args>(args)...);
 	}
 };

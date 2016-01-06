@@ -8,6 +8,7 @@
 #include <memory>
 #include <type_traits>
 #include <tuple>
+#include <algorithm>
 #include <vector>
 
 namespace kgr {
@@ -71,7 +72,56 @@ public:
 		return invoke_helper<Map>(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
+	inline void clear() {
+		_instances.clear();
+		_services.clear();
+	}
+	
+	template<typename T, enable_if<detail::has_overrides<decay<T>>> = null>
+	void reset() {
+		static_assert(is_single<T>::value, "reset() only accept Single Service instance.");
+		reset_overrides<T>(tuple_seq<parent_types<T>>{});
+	}
+	
+	template<typename T, disable_if<detail::has_overrides<decay<T>>> = null>
+	void reset() {
+		static_assert(is_single<T>::value, "reset() only accept Single Service instance.");
+		reset_helper<T>();
+	}
+	
 private:
+	template<typename T, int... S>
+	void reset_overrides(detail::seq<S...>) {
+		reset_overrides_helper<T, parent_element<S, T>...>();
+	}
+	
+	template<typename T, typename Override, typename... Others>
+	void reset_overrides_helper() {
+		reset_helper<Override, detail::ServiceOverride<T, Override>>();
+		reset_overrides_helper<T, Others...>();
+	}
+	
+	template<typename T>
+	void reset_overrides_helper() {}
+	
+	template<typename Type, typename TrueType = Type>
+	void reset_helper() {
+		auto&& list = _services[detail::type_id<Type>];
+		list.erase(
+			std::remove_if(list.begin(), list.end(), [this](void*& subject) {
+				if(typeid(*static_cast<Type*>(subject)) == typeid(TrueType)) {
+					_instances.erase(
+						std::remove_if(_instances.begin(), _instances.end(), [subject](instance_ptr<void>& subject2){
+							return subject == subject2.get();
+						}), _instances.end()
+					);
+					return true;
+				}
+				return false;
+			}), list.end()
+		);
+	}
+	
 	template<typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
 		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
@@ -97,7 +147,7 @@ private:
 	
 	template<typename T>
 	void save_instance_helper(instance_ptr<T> service) {
-		_services[detail::type_id<T>] = service.get();
+		_services[detail::type_id<T>].emplace_back(service.get());
 		_instances.emplace_back(std::move(service));
 	}
 	
@@ -106,7 +156,7 @@ private:
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
 		instance_ptr<Override> baseService{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>};
-		_services[detail::type_id<Override>] = baseService.get();
+		_services[detail::type_id<Override>].emplace_back(baseService.get());
 		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
 	}
@@ -131,21 +181,25 @@ private:
 	
 	template<typename T, enable_if<std::is_abstract<T>> = null, enable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null>
 	T& get_service() {
-		return *static_cast<T*>(_services.at(detail::type_id<T>));
+		auto&& list = _services[detail::type_id<T>];
+		if (!list.size()) {
+			throw std::out_of_range{"No instance found for the requested abstract service"};
+		}
+		return *static_cast<T*>(list.back());
 	}
 	
 	template<typename T, enable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null, disable_if<std::is_abstract<T>> = null>
 	T& get_service() {
-		auto it = _services.find(detail::type_id<T>);
+		auto&& list = _services[detail::type_id<T>];
 		
-		if (it == _services.end()) {
+		if (!list.size()) {
 			save_instance(make_service_instance<T>());
 			
-			auto& service = *static_cast<T*>(_services.at(detail::type_id<T>));
+			auto& service = *static_cast<T*>(list.back());
 			invoke_service(service);
 			return service;
 		} else {
-			return *static_cast<T*>(it->second);
+			return *static_cast<T*>(list.back());
 		}
 	}
 	
@@ -194,7 +248,7 @@ private:
 	void invoke_service(T&&) {}
 	
 	std::vector<instance_ptr<void>> _instances;
-	std::unordered_map<detail::type_id_t, void*> _services;
+	std::unordered_map<detail::type_id_t, std::vector<void*>> _services;
 };
 
 }  // namespace kgr

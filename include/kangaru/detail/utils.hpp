@@ -40,7 +40,7 @@ template<typename T, typename = void>
 struct has_overrides : std::false_type {};
 
 template<typename T>
-struct has_overrides<T, void_t<typename T::Next>> : std::true_type {};
+struct has_overrides<T, void_t<typename T::ParentTypes>> : std::true_type {};
 
 template<typename T, typename = void>
 struct has_next : std::false_type {};

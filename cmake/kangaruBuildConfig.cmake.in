@@ -1,0 +1,4 @@
+set(GLM_VERSION "@KANGARU_VERSION@")
+set(GLM_INCLUDE_DIRS "@CMAKE_CURRENT_SOURCE_DIR@")
+
+include("${CMAKE_CURRENT_LIST_DIR}/kangaruTargets.cmake")

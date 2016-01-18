@@ -40,10 +40,9 @@ public:
 	Container& operator =(const Container &) = delete;
 	virtual ~Container() = default;
 	
-	Container(Container&& other) : _instances{std::move(other._instances)}, _services{std::move(other._services)} {}
+	Container(Container&& other) : _services{std::move(other._services)} {}
 	
 	Container& operator =(Container&& other) {
-		std::swap(other._instances, _instances);
 		std::swap(other._services, _services);
 		
 		return *this;
@@ -73,7 +72,6 @@ public:
 	}
 	
 	inline void clear() {
-		_instances.clear();
 		_services.clear();
 	}
 	
@@ -108,16 +106,8 @@ private:
 	void reset_helper() {
 		auto&& list = _services[detail::type_id<Type>];
 		list.erase(
-			std::remove_if(list.begin(), list.end(), [this](void*& subject) {
-				if(typeid(*static_cast<Type*>(subject)) == typeid(TrueType)) {
-					_instances.erase(
-						std::remove_if(_instances.begin(), _instances.end(), [subject](instance_ptr<void>& subject2){
-							return subject == subject2.get();
-						}), _instances.end()
-					);
-					return true;
-				}
-				return false;
+			std::remove_if(list.begin(), list.end(), [this](instance_ptr<void>& subject) {
+				return typeid(*static_cast<Type*>(subject.get())) == typeid(TrueType);
 			}), list.end()
 		);
 	}
@@ -147,17 +137,14 @@ private:
 	
 	template<typename T>
 	void save_instance_helper(instance_ptr<T> service) {
-		_services[detail::type_id<T>].emplace_back(service.get());
-		_instances.emplace_back(std::move(service));
+		_services[detail::type_id<T>].emplace_back(std::move(service));
 	}
 	
 	template<typename T, typename Override, typename... Others>
 	void save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		instance_ptr<Override> baseService{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>};
-		_services[detail::type_id<Override>].emplace_back(baseService.get());
-		_instances.emplace_back(std::move(baseService));
+		_services[detail::type_id<Override>].emplace_back(instance_ptr<Override>{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>});
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	
@@ -185,7 +172,7 @@ private:
 		if (!list.size()) {
 			throw std::out_of_range{"No instance found for the requested abstract service"};
 		}
-		return *static_cast<T*>(list.back());
+		return *static_cast<T*>(list.back().get());
 	}
 	
 	template<typename T, enable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null, disable_if<std::is_abstract<T>> = null>
@@ -195,11 +182,11 @@ private:
 		if (!list.size()) {
 			save_instance(make_service_instance<T>());
 			
-			auto& service = *static_cast<T*>(list.back());
+			auto& service = *static_cast<T*>(list.back().get());
 			invoke_service(service);
 			return service;
 		} else {
-			return *static_cast<T*>(list.back());
+			return *static_cast<T*>(list.back().get());
 		}
 	}
 	
@@ -247,8 +234,7 @@ private:
 	template<typename T, disable_if<detail::has_invoke<decay<T>>> = null>
 	void invoke_service(T&&) {}
 	
-	std::vector<instance_ptr<void>> _instances;
-	std::unordered_map<detail::type_id_t, std::vector<void*>> _services;
+	std::unordered_map<detail::type_id_t, std::vector<instance_ptr<void>>> _services;
 };
 
 }  // namespace kgr

@@ -8,13 +8,12 @@
 namespace kgr {
 namespace detail {
 
-template<typename...> using void_t = void;
+template<typename...>
+struct voider { using type = void; };
+	
+template<typename... Ts> using void_t = typename voider<Ts...>::type;
 using type_id_t = void(*)();
 template <typename T> void type_id() {}
-
-enum class enabler {};
-
-constexpr enabler null = {};
 
 template <bool b, typename T>
 using enable_if_t = typename std::enable_if<b, T>::type;

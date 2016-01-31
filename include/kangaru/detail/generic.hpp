@@ -103,7 +103,7 @@ protected:
 private:
 	template<template<typename> class Map, typename R, typename T, typename... Args>
 	void autocall(ContainerService cs, R(T::*f)(Args...)) {
-		cs.forward().invoke<Map>([this, &f](Args&&... args){
+		cs.forward().invoke<Map>([this, &f](Args... args){
 			CRTP::call(getInstance(), f, std::forward<Args>(args)...);
 		});
 	}

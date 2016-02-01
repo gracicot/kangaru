@@ -9,15 +9,27 @@ struct Dependency {};
 
 namespace detail {
 
-template<typename T> using InjectType_t = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
+
+template<typename T, typename = void>
+struct inject {
+	using type = T&;
+};
+
+template<typename T>
+struct inject<T, enable_if_t<is_service<T>::value>> {
+	using type = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
+};
+
+template<typename T>
+using inject_t = typename inject<T>::type;
 
 template<typename...>
 struct Injector;
 
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
-	static CRTP construct(InjectType_t<Deps>... deps) {
-		return CRTP::makeService(deps.forward()...);
+	static CRTP construct(inject_t<Deps>... deps) {
+		return CRTP::makeService(std::forward<inject_t<Deps>>(deps).forward()...);
 	}
 };
 
@@ -83,13 +95,13 @@ protected:
 	using Self = CRTP;
 	
 	template<typename F, F f, typename... T>
-	void autocall(detail::InjectType_t<T>... others) {
+	void autocall(detail::inject_t<T>... others) {
 		CRTP::call(getInstance(), f, others.forward()...);
 	}
 	
 	template<typename F, F f, template<typename> class Map>
 	void autocall(ContainerService cs) {
-		autocall<Map>(cs, f);
+		autocall<Map, F, f>(detail::tuple_seq<detail::function_arguments_t<F>>{}, cs);
 	}
 	
 	Type& getInstance() {
@@ -101,10 +113,10 @@ protected:
 	}
 	
 private:
-	template<template<typename> class Map, typename R, typename T, typename... Args>
-	void autocall(ContainerService cs, R(T::*f)(Args...)) {
-		cs.forward().invoke<Map>([this, &f](Args... args){
-			CRTP::call(getInstance(), f, std::forward<Args>(args)...);
+	template<template<typename> class Map, typename F, F f, int... S>
+	void autocall(detail::seq<S...>, ContainerService cs) {
+		cs.forward().invoke<Map>([this](detail::function_argument_t<S, F>... args){
+			CRTP::call(getInstance(), f, std::forward<detail::function_argument_t<S, F>>(args)...);
 		});
 	}
 	

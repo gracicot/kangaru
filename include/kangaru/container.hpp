@@ -23,7 +23,6 @@ private:
 	template<typename T> using is_base_of_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
 	template<int S, typename T> using parent_element = typename std::tuple_element<S, parent_types<T>>::type;
-	template<typename Tuple> using tuple_seq = typename detail::seq_gen<std::tuple_size<Tuple>::value>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	template<template<typename> class Map, typename T> using service_map_t = typename Map<T>::Service;
@@ -88,7 +87,7 @@ public:
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
 	void reset() {
 		static_assert(is_single<T>::value, "reset() only accept Single Service instance.");
-		reset_overrides<T>(tuple_seq<parent_types<T>>{});
+		reset_overrides<T>(detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
@@ -130,7 +129,7 @@ private:
 	// save instance functions
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
 	void save_instance(T&& service) {
-		save_instance(std::forward<T>(service), tuple_seq<parent_types<T>>{});
+		save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
@@ -225,13 +224,13 @@ private:
 	
 	template<typename Method, typename T, typename F, enable_if<detail::has_next<Method>> = 0>
 	void invoke_service_helper(T&& service, F&& function) {
-		do_invoke_service(tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
+		do_invoke_service(detail::tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
 		invoke_service_helper<typename Method::Next>(std::forward<T>(service), Method::method);
 	}
 	
 	template<typename Method, typename T, typename F, disable_if<detail::has_next<Method>> = 0>
 	void invoke_service_helper(T&& service, F&& function) {
-		do_invoke_service(tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
+		do_invoke_service(detail::tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
 	}
 	
 	template<typename T, typename F, int... S>

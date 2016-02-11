@@ -109,7 +109,7 @@ protected:
 	}
 	
 	const Type& getInstance() const {
-		return *reinterpret_cast<Type*>(&_instance);
+		return *reinterpret_cast<const Type*>(&_instance);
 	}
 	
 private:

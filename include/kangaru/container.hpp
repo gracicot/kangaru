@@ -59,7 +59,9 @@ public:
 	template<typename T, typename... Args>
 	void instance(Args&& ...args) {
 		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
-		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		auto service = make_service_instance<T>(std::forward<Args>(args)...);
+		invoke_service(service);
+		save_instance(service);
 	}
 	
 	template<typename T, typename... Args>
@@ -146,17 +148,19 @@ private:
 		
 		if (!list.size()) {
 			save_instance(make_service_instance<T>());
+			
+			auto& service = *static_cast<T*>(list.back().get());
+			invoke_service(service);
+			return service;
+		} else {
+			return *static_cast<T*>(list.back().get());
 		}
-		
-		return *static_cast<T*>(list.back().get());
 	}
 	
 	// make instance
 	template<typename T, typename... Args>
 	T make_service_instance(Args&&... args) {
-		auto service = invoke(&T::construct, std::forward<Args>(args)...);
-		invoke_service(service);
-		return service;
+		return invoke(&T::construct, std::forward<Args>(args)...);
 	}
 	
 	// invoke

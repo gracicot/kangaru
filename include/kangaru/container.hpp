@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace kgr {
-
+enum test { brsb};
 struct Container {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
@@ -50,18 +50,14 @@ public:
 	Container& operator=(Container&& other) = default;
 	virtual ~Container() = default;
 	
-	template<typename T>
+	template<typename T, enable_if<is_single<decay<T>>> = 0>
 	void instance(T&& service) {
-		static_assert(is_single<decay<T>>::value, "instance() only accept Single Service instance.");
 		save_instance(std::forward<T>(service));
 	}
 	
-	template<typename T, typename... Args>
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0>
 	void instance(Args&& ...args) {
-		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
-		auto service = make_service_instance<T>(std::forward<Args>(args)...);
-		invoke_service(service);
-		save_instance(service);
+		save_new_instance<T>(std::forward<Args>(args)...);
 	}
 	
 	template<typename T, typename... Args>
@@ -82,6 +78,16 @@ private:
 	template<typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
 		return invoke_helper(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
+	void save_new_instance(Args&&... args) {
+		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+	}
+	
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
+	void save_new_instance(Args&&... args) {
+		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	
 	// save instance functions
@@ -118,9 +124,7 @@ private:
 	// get service functions
 	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
 	T get_service(Args&&... args) {
-		auto service = make_service_instance<T>(std::forward<Args>(args)...);
-		invoke_service(service);
-		return service;
+		return make_service_instance<T>(std::forward<Args>(args)...);
 	}
 	
 	template<typename T, enable_if<is_container_service<T>> = 0>
@@ -133,34 +137,23 @@ private:
 		return T{*dynamic_cast<typename T::Type*>(this)};
 	}
 	
-	template<typename T, enable_if<std::is_abstract<T>> = 0, enable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
-	T& get_service() {
-		auto&& list = _services[detail::type_id<T>];
-		if (!list.size()) {
-			throw std::out_of_range{"No instance found for the requested abstract service"};
-		}
-		return *static_cast<T*>(list.back().get());
-	}
-	
-	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0, disable_if<std::is_abstract<T>> = 0>
+	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
 	T& get_service() {
 		auto&& list = _services[detail::type_id<T>];
 		
 		if (!list.size()) {
-			save_instance(make_service_instance<T>());
-			
-			auto& service = *static_cast<T*>(list.back().get());
-			invoke_service(service);
-			return service;
-		} else {
-			return *static_cast<T*>(list.back().get());
+			save_new_instance<T>();
 		}
+		
+		return *static_cast<T*>(list.back().get());
 	}
 	
 	// make instance
 	template<typename T, typename... Args>
 	T make_service_instance(Args&&... args) {
-		return invoke(&T::construct, std::forward<Args>(args)...);
+		T service = invoke(&T::construct, std::forward<Args>(args)...);
+		invoke_service(service);
+		return service;
 	}
 	
 	// invoke

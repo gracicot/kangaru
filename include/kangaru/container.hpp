@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace kgr {
-enum test { brsb};
+
 struct Container {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
@@ -86,7 +86,7 @@ private:
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
-	void save_new_instance(Args&&... args) {
+	void save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	

@@ -133,9 +133,4 @@ struct AbstractSharedService : Single {
 	virtual std::shared_ptr<T> forward() = 0;
 };
 
-template<typename T>
-struct AbstractUniqueService : Single {
-	virtual std::unique_ptr<T> forward() = 0;
-};
-
 }

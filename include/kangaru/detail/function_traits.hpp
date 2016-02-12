@@ -11,15 +11,7 @@ struct function_traits
 {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const> {
-	using object_type = Type;
-	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-	template<int n> using argument_type = typename std::tuple_element<n, argument_types>::type;
-};
-
-template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...)> {
+struct base_function_traits {
 	using object_type = Type;
 	using return_type = R;
 	using argument_types = std::tuple<Args...>;
@@ -27,11 +19,89 @@ struct function_traits<R(Type::*)(Args...)> {
 };
 
 template <typename R, typename... Args>
-struct function_traits<R(*)(Args...)> {
+struct base_non_member_function_traits {
 	using return_type = R;
 	using argument_types = std::tuple<Args...>;
 	template<int n> using argument_type = typename std::tuple_element<n, argument_types>::type;
 };
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...)> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...)> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile &> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile &&> : base_function_traits<Type, R, Args...> {};
+
+template <typename R, typename... Args>
+struct function_traits<R(*)(Args...)> : base_non_member_function_traits<R, Args...> {};
+
+template <typename R, typename... Args>
+struct function_traits<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
 
 template <typename F>
 using function_arguments_t = typename function_traits<F>::argument_types;

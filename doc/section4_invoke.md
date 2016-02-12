@@ -19,6 +19,11 @@ In order to make it work, we must tell the container what parameter type is asso
     
 Then, for each service in which you want to be able work with `invoke`, specialize the struct like this:
 
+    template<> struct ServiceMap<Notification> : kgr::Map<NotificationService> {};
+    template<> struct ServiceMap<FileManager&> : kgr::Map<FileManagerService> {};
+    
+Alternatively, you can make your ServiceMap using `Service` as the service it maps:
+
     template<> struct ServiceMap<Notification> { using Service = NotificationService; };
     template<> struct ServiceMap<FileManager&> { using Service = FileManagerService;  };
 
@@ -34,4 +39,4 @@ Now that our service map is defined, we can use invoke like this:
     
 With `ServiceMap`, the container can even call function from third party libraries!
  
-[Next chapiter](section5_setters.md)
+[Next chapter](section5_setters.md)

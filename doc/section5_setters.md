@@ -145,4 +145,4 @@ The advantage of this method is that, if `setThings` parameters change, there is
 
 That's it! If you understand this, you are now officially a wizard!
  
-[Next chapiter](section6_definitions.md)
+[Next chapter](section6_definitions.md)

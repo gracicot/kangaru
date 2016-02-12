@@ -56,4 +56,4 @@ If you want to make a service definition for an abstract type, you may extend fr
 
     struct IFileManagerService : kgr::AbstractService<IFileManager>;
  
-[Next chapiter](section4_invoke.md)
+[Next chapter](section4_invoke.md)

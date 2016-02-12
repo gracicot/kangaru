@@ -8,6 +8,7 @@ It contains the following three methods:
  * `instance<T>`
  * `service<T>`
  * `invoke<T>`
+ * `clear`
 
 ## instance
 This function either registers a provided instance of a service definition or explicitly instanciates a single service.
@@ -36,5 +37,17 @@ You can make the call to this function easier with the invoke function, like so:
 
 As long as the `Notification`, `FileManager` and `Shop` services are configured correctly, the container will call the function `someOperation` with the right set of parameters.
 We will cover the `invoke` functionnality in detail in a later chapter.
+
+## clear
+This function clears the container state. In other words, it deletes every single services that are contained within the container.
+
+        // FileManagerService is a single service.
+        
+        auto& fileManager = container.service<FileManagerService>();
+        
+        container.clear();
+        
+        // now fileManager is a dangling reference.
+
  
 [Next chapter](section3_override.md)

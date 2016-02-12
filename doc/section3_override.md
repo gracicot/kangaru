@@ -55,5 +55,7 @@ Yes. Look at these two cases:
 If you want to make a service definition for an abstract type, you may extend from `kgr::AbstractService<T>`:
 
     struct IFileManagerService : kgr::AbstractService<IFileManager>;
+
+Note that for shared service types there's `kgr::AbstractSharedService`.
  
 [Next chapter](section4_invoke.md)

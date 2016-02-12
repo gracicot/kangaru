@@ -1,6 +1,3 @@
-Structure for large projects
-============================
-
 Have a large codebase? Big plans? Here's some suggestions to keep your project well organised!
 
 ## Definition completeness
@@ -34,4 +31,8 @@ A "include kangaru" header file should look like this:
     // declare the service map
     template<typename>
     struct ServiceMap;
+
+    // specializing the service map for the container service.
+    template<>
+    struct ServiceMap<kgr::Container&> : Map<kgr::ContainerService> {};
 

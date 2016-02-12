@@ -65,4 +65,11 @@ There are two protected methods that are provided by generic services from the K
  * `getInstance()` which returns the contained instance of the service.
  * `autocall`, will see how to use it in the chapiter [Injection with setters](section5_setters.md)
  
-[Next chapiter](section2_container.md)
+### Other Service Types
+
+There are three other service types:
+ * `kgr::SharedService`: a single service injected as a `std::shared_ptr`.
+ * `kgr::UniqueService`: a service injected as a `std::unique_ptr`.
+ * `kgr::NoMoveService`: a single service that can hold a non-movable type.
+ 
+[Next chapter](section2_container.md)

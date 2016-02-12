@@ -65,4 +65,9 @@ struct is_service<T, void_t<decltype(&T::forward)>> : std::true_type {};
 template<typename T>
 using ServiceType = detail::function_result_t<decltype(&T::forward)>;
 
+template<typename T>
+struct Map {
+	using Service = T;
+};
+
 } // namespace kgr

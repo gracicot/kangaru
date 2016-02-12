@@ -105,4 +105,4 @@ Abstract services are the simplest ones to implement. They have only one pure vi
     
 Abstract services must be single. That reason is pretty obvious: You need to override that definition to have an instance of it.
 
-[Next chapiter](section7_generic.md)
+[Next chapter](section7_generic.md)

@@ -9,10 +9,9 @@
  * It covers invoke and autocall (injection by setters) through service map.
  */
 
-// These are some utility macros to workaround the lack of type inference for non-type template parameter
+// This is a utility macro to workaround the lack of type inference for non-type template parameter
 // Will not be needed when N4469 will be accepted
-#define METHOD(...) decltype(__VA_ARGS__), __VA_ARGS__
-#define INVOKE(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using namespace std;
 using namespace kgr;
@@ -84,31 +83,18 @@ struct SpeakersService : SingleService<Speakers> {};
 struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {};
 
 struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> {
-	using invoke = Invoke<
-		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setAccessories), ServiceMap>),
-		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), ServiceMap>)
+	using invoke = kgr::Invoke<
+		METHOD(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), MonitorService>)
 	>;
 };
 
 // To which service definition do we refer when the function parameter 'Keyboard&' is found?
-template<> struct ServiceMap<Keyboard&> {
-	// It refers to the KeyboardService! 
-	using Service = KeyboardService;
-};
+template<> struct ServiceMap<Keyboard&> : kgr::Map<KeyboardService> {};
 
 // Same for the following...
-
-template<> struct ServiceMap<Monitor&> {
-	using Service = MonitorService;
-};
-
-template<> struct ServiceMap<Mouse&> {
-	using Service = MouseService;
-};
-
-template<> struct ServiceMap<Speakers&> {
-	using Service = SpeakersService;
-};
+template<> struct ServiceMap<Monitor&> : kgr::Map<MonitorService> {};
+template<> struct ServiceMap<Mouse&> : kgr::Map<MouseService> {};
+template<> struct ServiceMap<Speakers&> : kgr::Map<SpeakersService> {};
 
 // A funtion to wash our favourite monitor and keyboard.
 // A service will be needed to be used with invoke.

@@ -9,10 +9,9 @@
  * It covers autocall (injection by setters)
  */
 
-// These are some utility macros to workaround the lack of type inference for non-type template parameter
+// This is a utility macro to workaround the lack of type inference for non-type template parameter
 // Will not be needed when N4469 will be accepted
-#define METHOD(...) decltype(__VA_ARGS__), __VA_ARGS__
-#define INVOKE(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using namespace std;
 using namespace kgr;
@@ -80,8 +79,8 @@ struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {
 
 struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> {
 	using invoke = Invoke<
-		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
-		INVOKE(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), MonitorService>)
+		METHOD(&EquippedComputerService::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
+		METHOD(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), MonitorService>)
 	>;
 };
 

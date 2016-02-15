@@ -167,16 +167,35 @@ private:
 		return std::forward<U>(function)(service<service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
-	template<typename T, int... S, enable_if<detail::has_invoke<decay<T>>> = 0>
+	template<typename T, enable_if<detail::has_invoke<decay<T>>> = 0, disable_if<detail::has_autocall<decay<T>>> = 0>
 	void invoke_service(T&& service) {
 		using U = decay<T>;
-		invoke_service_helper<typename U::invoke::Next>(std::forward<T>(service), U::invoke::method);
+		invoke_service_helper<typename U::invoke::Next>(std::forward<T>(service), U::invoke::value);
 	}
 	
-	template<typename Method, typename T, typename F, enable_if<detail::has_next<Method>> = 0>
+	template<typename T, disable_if<detail::has_invoke<decay<T>>> = 0, enable_if<detail::has_autocall<decay<T>>> = 0>
+	void invoke_service(T&& service) {
+		using U = decay<T>;
+		invoke_service_helper<typename U::AutoCallType::Next>(
+			std::forward<T>(service),
+			&U::template autocall<typename U::AutoCallType, U::template Map>
+		);
+	}
+	
+	template<typename Method, typename T, typename F, enable_if<detail::has_next<Method>> = 0, enable_if<detail::has_autocall<decay<T>>> = 0>
+	void invoke_service_helper(T&& service, F&& function) {
+		using U = decay<T>;
+		do_invoke_service(detail::tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
+		invoke_service_helper<typename Method::Next>(
+			std::forward<T>(service),
+			&U::template autocall<Method, U::template Map>
+		);
+	}
+	
+	template<typename Method, typename T, typename F, enable_if<detail::has_next<Method>> = 0, disable_if<detail::has_autocall<decay<T>>> = 0>
 	void invoke_service_helper(T&& service, F&& function) {
 		do_invoke_service(detail::tuple_seq<detail::function_arguments_t<decay<F>>>{}, std::forward<T>(service), std::forward<F>(function));
-		invoke_service_helper<typename Method::Next>(std::forward<T>(service), Method::method);
+		invoke_service_helper<typename Method::Next>(std::forward<T>(service), Method::value);
 	}
 	
 	template<typename Method, typename T, typename F, disable_if<detail::has_next<Method>> = 0>
@@ -191,7 +210,7 @@ private:
 		});
 	}
 	
-	template<typename T, disable_if<detail::has_invoke<decay<T>>> = 0>
+	template<typename T, disable_if<detail::has_invoke<decay<T>>> = 0, disable_if<detail::has_autocall<decay<T>>> = 0>
 	void invoke_service(T&&) {}
 	
 	std::unordered_map<detail::type_id_t, std::vector<instance_ptr<void>>> _services;

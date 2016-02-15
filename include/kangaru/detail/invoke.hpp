@@ -1,15 +1,11 @@
 #pragma once
 
+#include <type_traits>
+
 namespace kgr {
 
 template<typename T, T t>
-struct Method {
-	using Type = T;
-	constexpr static T method = t;
-};
-
-template<typename T, T t>
-constexpr const T Method<T, t>::method;
+using Method = std::integral_constant<T, t>;
 
 template<typename...>
 struct Invoke;
@@ -18,12 +14,16 @@ template<>
 struct Invoke<> {};
 
 template<typename Method, typename... Others>
-struct Invoke<Method, Others...> {
+struct Invoke<Method, Others...> : Method {
 	using Next = Invoke<Others...>;
-	constexpr static typename Method::Type method = Method::method;
 };
 
-template<typename Method, typename... Others>
-constexpr const typename Method::Type Invoke<Method, Others...>::method;
+template<template<typename> class M, typename... Ts>
+struct AutoCall {
+	using AutoCallType = Invoke<Ts...>;
+	
+	template<typename T>
+	using Map = M<T>;
+};
 
 }

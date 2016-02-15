@@ -43,6 +43,12 @@ template<typename T>
 struct has_invoke<T, void_t<typename T::invoke>> : std::true_type {};
 
 template<typename T, typename = void>
+struct has_autocall : std::false_type {};
+
+template<typename T>
+struct has_autocall<T, void_t<typename T::AutoCallType>> : std::true_type {};
+
+template<typename T, typename = void>
 struct has_overrides : std::false_type {};
 
 template<typename T>

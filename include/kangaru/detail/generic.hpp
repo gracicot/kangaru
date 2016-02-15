@@ -1,6 +1,9 @@
 #pragma once
 
 #include "../container.hpp"
+#include "invoke.hpp"
+
+#include <type_traits>
 
 namespace kgr {
 
@@ -8,7 +11,6 @@ template<typename... Args>
 struct Dependency {};
 
 namespace detail {
-
 
 template<typename T, typename = void>
 struct inject {
@@ -91,19 +93,30 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 		return service;
 	}
 	
-protected:
 	using Self = CRTP;
 	
+	// TODO: to remove kangaru 3
 	template<typename F, F f, typename... T>
 	void autocall(detail::inject_t<T>... others) {
 		CRTP::call(getInstance(), f, others.forward()...);
 	}
-	
-	template<typename F, F f, template<typename> class Map>
-	void autocall(ContainerService cs) {
-		autocall<Map, F, f>(detail::tuple_seq<detail::function_arguments_t<F>>{}, cs);
+	template<typename F, typename... T>
+	void autocall(detail::inject_t<T>... others) {
+		CRTP::call(getInstance(), F::value, others.forward()...);
 	}
 	
+	// TODO: to remove kangaru 3
+	template<typename F, F f, template<typename> class Map>
+	void autocall(ContainerService cs) {
+		autocall<Map, Method<F, f>>(detail::tuple_seq<detail::function_arguments_t<F>>{}, cs);
+	}
+	
+	template<typename F, template<typename> class Map>
+	void autocall(ContainerService cs) {
+		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, cs);
+	}
+	
+protected:
 	Type& getInstance() {
 		return *reinterpret_cast<Type*>(&_instance);
 	}
@@ -113,10 +126,10 @@ protected:
 	}
 	
 private:
-	template<template<typename> class Map, typename F, F f, int... S>
+	template<template<typename> class Map, typename F, int... S>
 	void autocall(detail::seq<S...>, ContainerService cs) {
-		cs.forward().invoke<Map>([this](detail::function_argument_t<S, F>... args){
-			CRTP::call(getInstance(), f, std::forward<detail::function_argument_t<S, F>>(args)...);
+		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
+			CRTP::call(getInstance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
 	

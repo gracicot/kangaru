@@ -91,24 +91,12 @@ struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> 
 };
 
 // To which service definition do we refer when the function parameter 'Keyboard&' is found?
-template<> struct ServiceMap<Keyboard&> {
-	// It refers to the KeyboardService! 
-	using Service = KeyboardService;
-};
+template<> struct ServiceMap<Keyboard&> : kgr::Map<KeyboardService> {};
 
 // Same for the following...
-
-template<> struct ServiceMap<Monitor&> {
-	using Service = MonitorService;
-};
-
-template<> struct ServiceMap<Mouse&> {
-	using Service = MouseService;
-};
-
-template<> struct ServiceMap<Speakers&> {
-	using Service = SpeakersService;
-};
+template<> struct ServiceMap<Monitor&> : kgr::Map<MonitorService> {};
+template<> struct ServiceMap<Mouse&> : kgr::Map<MouseService> {};
+template<> struct ServiceMap<Speakers&> : kgr::Map<SpeakersService> {};
 
 // A funtion to wash our favourite monitor and keyboard.
 // A service will be needed to be used with invoke.

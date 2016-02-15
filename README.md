@@ -5,19 +5,32 @@ Kangaru is a simple dependency injection container library for C++11.
 It manages multiple level of dependency. The name Kangaru came from the
 feature of injecting itself as a dependency into a service.
 
-Getting Started
----------------
-
-Getting started with Kangaru is easy. First of all, you need to include the
-library:
-
-    #include "kangaru.hpp"
-
-Take note that you will need to add the header to your include paths.
-
-Everything is declared in the namespace `kgr`
-
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
+
+Installation
+------------
+To install kangaru on a machine, you must create a build directory:
+
+    mkdir build
+    cd build
+Then use cmake to generate the makefile:
+
+    cmake ..
+    sudo make install
+
+Adding Include Path
+-------------------
+You must use the `find_package` function: 
+
+    find_package(kangaru REQUIRED)
+    
+And then add the include dirs to your target:
+
+    target_include_directories(<YOUR TARGET> PUBLIC ${KANGARU_INCLUDE_DIRS})
+    
+Then you can include the library as follow:
+
+    #include "kangaru/kangaru.hpp"
 
 Features
 --------

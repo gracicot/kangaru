@@ -101,10 +101,14 @@ protected:
 		return *reinterpret_cast<Type*>(&_instance);
 	}
 	
+	const Type& getInstance() const {
+		return *reinterpret_cast<const Type*>(&_instance);
+	}
+	
 private:
 	template<template<typename> class Map, typename R, typename... Args>
 	void autocall(ContainerService cs, R(Type::*f)(Args...)) {
-		cs.forward().invoke<Map>([this, &f](Args&&... args){
+		cs.forward().invoke<Map>([this, &f](Args... args){
 			(getInstance().*f)(std::forward<Args>(args)...);
 		});
 	}

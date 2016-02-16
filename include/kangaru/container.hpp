@@ -106,7 +106,7 @@ private:
 	void save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		auto baseService = instance_ptr<Override>{new ServiceOverride{*service}, &Container::deleter<ServiceOverride>};
+		auto baseService = instance_ptr<Override>{new ServiceOverride{*service}, &Container::deleter<Override>};
 		_services[detail::type_id<Override>] = baseService.get();
 		_instances.emplace_back(std::move(baseService));
 		save_instance_helper<T, Others...>(std::move(service));
@@ -114,7 +114,7 @@ private:
 	
 	// get service functions
 	template<typename T, typename... Args, disable_if<is_single<T>> = null, disable_if<is_base_of_container_service<T>> = null>
-	T get_service(Args ...args) {
+	T get_service(Args&& ...args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service);
 		return service;

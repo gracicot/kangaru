@@ -32,14 +32,14 @@ private:
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if<std::is_constructible<T, Args...>> = 0>
-	static instance_ptr<T> makeInstancePtr(Args&&... args) {
-		return instance_ptr<T>{new T(std::forward<Args>(args)...), &Container::deleter<T>};
+	template<typename T, typename C = T, typename... Args, enable_if<std::is_constructible<T, Args...>> = 0>
+	static instance_ptr<C> makeInstancePtr(Args&&... args) {
+		return instance_ptr<T>{new T(std::forward<Args>(args)...), &Container::deleter<C>};
 	}
 
-	template<typename T, typename... Args, disable_if<std::is_constructible<T, Args...>> = 0>
-	static instance_ptr<T> makeInstancePtr(Args&&... args) {
-		return instance_ptr<T>{new T{std::forward<Args>(args)...}, &Container::deleter<T>};
+	template<typename T, typename C = T, typename... Args, disable_if<std::is_constructible<T, Args...>> = 0>
+	static instance_ptr<C> makeInstancePtr(Args&&... args) {
+		return instance_ptr<T>{new T{std::forward<Args>(args)...}, &Container::deleter<C>};
 	}
 	
 public:
@@ -117,7 +117,7 @@ private:
 	void save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
-		_services[detail::type_id<Override>].emplace_back(static_cast<instance_ptr<Override>>(makeInstancePtr<ServiceOverride>(*service)));
+		_services[detail::type_id<Override>].emplace_back(makeInstancePtr<ServiceOverride, Override>(*service));
 		save_instance_helper<T, Others...>(std::move(service));
 	}
 	

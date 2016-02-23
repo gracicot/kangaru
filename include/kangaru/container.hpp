@@ -257,7 +257,7 @@ private:
 		do_invoke_service(
 			detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{},
 			std::forward<T>(service),
-			&U::template autocall<typename Method::Method, tuple_element_t<S, typename Method::Params>...>
+			&U::template autocall<Method, tuple_element_t<S, typename Method::Params>...>
 		);
 	}
 	

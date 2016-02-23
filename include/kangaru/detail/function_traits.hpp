@@ -2,11 +2,16 @@
 
 #include <tuple>
 
+#include "traits.hpp"
+
 namespace kgr {
 namespace detail {
+	
+template <typename T, typename = void>
+struct function_traits {};
 
 template <typename T>
-struct function_traits
+struct function_traits<T, void_t<decltype(&T::operator())>>
 	: function_traits<decltype(&T::operator())>
 {};
 

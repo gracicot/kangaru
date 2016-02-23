@@ -26,13 +26,19 @@ struct Invoke;
 template<>
 struct Invoke<> {};
 
-// This is either a list of method or a method with it's parameter types.
-// May be cleaned to not clutter the class with every typedef in every versions.
+// This class is a list of methods.
 template<typename M, typename... Others>
-struct Invoke<M, Others...> : std::conditional<std::is_base_of<detail::InvokeTag, M>::value, detail::InvokeCallTag, M>::type, detail::InvokeTag {
+struct Invoke<M, Others...> : M, detail::InvokeTag {
 	using Method = M;
 	using Next = Invoke<Others...>;
-	using Params = std::tuple<Others...>;
+};
+
+// This specialization represent a method and a list of it's parameter.
+template<typename M, typename... Others, typename... Ps>
+struct Invoke<Invoke<M, Ps...>, Others...> : detail::InvokeCallTag, detail::InvokeTag, M {
+	using Method = M;
+	using Params = std::tuple<Ps...>;
+	using Next = Invoke<Others...>;
 };
 
 template<template<typename> class M, typename... Ts>

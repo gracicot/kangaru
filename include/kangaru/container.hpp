@@ -247,7 +247,7 @@ private:
 	// This serves the purpose of handling the new autocall syntax when the parameters are explicitly listed
 	template<typename Method, typename T, enable_if<is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
-		do_invoke_service<typename Method::Method>(detail::tuple_seq<typename Method::Method::Params>{}, std::forward<T>(service));
+		do_invoke_service<Method>(detail::tuple_seq<typename Method::Params>{}, std::forward<T>(service));
 	}
 	
 	// This function is a helper for do_invoke_service when <Method> is actually the class kgr::Invoke<...>
@@ -255,7 +255,7 @@ private:
 	void do_invoke_service(detail::seq<S...>, T&& service) {
 		using U = decay<T>;
 		do_invoke_service(
-			detail::tuple_seq<detail::function_arguments_t<typename Method::Method::value_type>>{},
+			detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{},
 			std::forward<T>(service),
 			&U::template autocall<typename Method::Method, tuple_element_t<S, typename Method::Params>...>
 		);

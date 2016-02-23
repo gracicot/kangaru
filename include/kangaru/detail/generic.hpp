@@ -143,4 +143,16 @@ private:
 	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
 };
 
+// TODO: does not belong here. To move in another header.
+struct ForkService {
+	ForkService(Container& container) : _container{container.fork()} {}
+	
+	inline Container forward() {
+		return std::move(_container);
+	}
+	
+private:
+	Container _container;
+};
+
 }

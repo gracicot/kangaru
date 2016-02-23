@@ -42,7 +42,7 @@ struct Overrides {
 struct ContainerService : detail::ContainerServiceBase {
 	ContainerService(Container& instance) : _instance{instance} {}
 	
-	Container& forward() {
+	inline Container& forward() {
 		return _instance;
 	}
 	

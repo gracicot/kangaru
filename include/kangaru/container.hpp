@@ -15,13 +15,15 @@
 
 namespace kgr {
 
+struct ForkService;
+
 struct Container {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
-	template<typename T> using is_container_service = std::is_same<T, ContainerService>;
+	template<typename T> using is_container_service = std::integral_constant<bool, std::is_same<T, ContainerService>::value || std::is_same<T, ForkService>::value>;
 	template<typename T> using is_base_of_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
 	template<int S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
@@ -30,6 +32,8 @@ private:
 	template<template<typename> class Map, typename T> using service_map_t = typename Map<T>::Service;
 	template<typename T> using is_invoke_call = typename std::is_base_of<detail::InvokeCallTag, T>::type;
 	template<typename T> using has_autocall = typename std::is_base_of<detail::AutocallTag, T>::type;
+	using instance_cont = std::vector<instance_ptr<void>>;
+	using service_cont = std::unordered_map<detail::type_id_t, void*>;
 	
 	template<typename T>
 	static void deleter(void* i) {
@@ -80,10 +84,22 @@ public:
 	}
 	
 	inline void clear() {
+		_instances.clear();
 		_services.clear();
 	}
 	
+	inline Container fork() {
+		return Container{_services};
+	}
+	
+	inline void merge(Container&& other) {
+		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
+		_services.insert(other._services.begin(), other._services.end());
+	}
+	
 private:
+	Container(service_cont& services) : _services{services} {};
+	
 	template<typename U, typename ...Args, enable_if<is_invoke_call<decay<U>>> = 0>
 	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
 		using V = decay<U>;
@@ -102,44 +118,51 @@ private:
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
-	void save_new_instance(Args&&... args) {
-		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+	T& save_new_instance(Args&&... args) {
+		return save_instance(make_service_instance<T>(std::forward<Args>(args)...));
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
-	void save_new_instance(Args&&...) {
+	T& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	
 	// save instance functions
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
-	void save_instance(T&& service) {
-		save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
+	T& save_instance(T&& service) {
+		return save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
-	void save_instance(T&& service) {
+	T& save_instance(T&& service) {
 		using U = decay<T>;
-		save_instance_helper<U>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U>(makeInstancePtr<U>(std::move(service)));
 	}
 	
 	template<typename T, int... S>
-	void save_instance(T&& service, detail::seq<S...>) {
+	T& save_instance(T&& service, detail::seq<S...>) {
 		using U = decay<T>;
-		save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(makeInstancePtr<U>(std::move(service)));
 	}
 	
 	template<typename T>
-	void save_instance_helper(instance_ptr<T> service) {
-		_services[detail::type_id<T>].emplace_back(std::move(service));
+	T& save_instance_helper(instance_ptr<T> service) {
+		auto& serviceRef = *service;
+		
+		_services[detail::type_id<T>] = service.get();
+		_instances.emplace_back(std::move(service));
+		
+		return serviceRef;
 	}
 	
 	template<typename T, typename Override, typename... Others>
-	void save_instance_helper(instance_ptr<T> service) {
-		using ServiceOverride = detail::ServiceOverride<T, Override>;
+	T& save_instance_helper(instance_ptr<T> service) {
+		auto overrideService = makeInstancePtr<detail::ServiceOverride<T, Override>, Override>(*service);
 
-		_services[detail::type_id<Override>].emplace_back(makeInstancePtr<ServiceOverride, Override>(*service));
-		save_instance_helper<T, Others...>(std::move(service));
+		_services[detail::type_id<Override>] = overrideService.get();
+		_instances.emplace_back(std::move(overrideService));
+		
+		return save_instance_helper<T, Others...>(std::move(service));
 	}
 	
 	// get service functions
@@ -160,13 +183,11 @@ private:
 	
 	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
 	T& get_service() {
-		auto&& list = _services[detail::type_id<T>];
-		
-		if (!list.size()) {
-			save_new_instance<T>();
+		if (auto&& service = _services[detail::type_id<T>]) {
+			return *static_cast<T*>(service);
+		} else {
+			return save_new_instance<T>();
 		}
-		
-		return *static_cast<T*>(list.back().get());
 	}
 	
 	// make instance
@@ -248,7 +269,8 @@ private:
 	template<typename T, disable_if<detail::has_invoke<decay<T>>> = 0>
 	void invoke_service(T&&) {}
 	
-	std::unordered_map<detail::type_id_t, std::vector<instance_ptr<void>>> _services;
+	instance_cont _instances;
+	service_cont _services;
 };
 
 }  // namespace kgr

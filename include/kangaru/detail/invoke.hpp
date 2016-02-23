@@ -50,6 +50,9 @@ struct AutoCall : detail::AutocallTag {
 template<typename... Ts>
 struct AutoCallNoMap : detail::AutocallTag {
 	using invoke = Invoke<Ts...>;
+	
+	template<typename>
+	struct Map;
 };
 
 }

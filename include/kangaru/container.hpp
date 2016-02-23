@@ -243,14 +243,13 @@ private:
 	template<typename Method, typename T, disable_if<detail::has_next<Method>> = 0>
 	void invoke_service_helper(T&&) {}
 	
-	// This function is the do_invoke_service when <Method> is actually the class kgr::Invoke<...>
-	// This serves the purpose of handling the new autocall syntax when the parameters are explicitly listed
+	// This function is the do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
 	template<typename Method, typename T, enable_if<is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		do_invoke_service<Method>(detail::tuple_seq<typename Method::Params>{}, std::forward<T>(service));
 	}
 	
-	// This function is a helper for do_invoke_service when <Method> is actually the class kgr::Invoke<...>
+	// This function is a helper for do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
 	template<typename Method, typename T, int... S>
 	void do_invoke_service(detail::seq<S...>, T&& service) {
 		using U = decay<T>;

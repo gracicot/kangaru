@@ -100,6 +100,7 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 	void autocall(detail::inject_t<T>... others) {
 		CRTP::call(getInstance(), f, others.forward()...);
 	}
+	
 	template<typename F, typename... T>
 	void autocall(detail::inject_t<T>... others) {
 		CRTP::call(getInstance(), F::value, others.forward()...);

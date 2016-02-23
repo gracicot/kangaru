@@ -77,12 +77,20 @@ struct SpeakersService : SingleService<Speakers> {};
 
 struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {};
 
-struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>> {
-	using invoke = Invoke<
-		METHOD(&EquippedComputerService::autocall<METHOD(&Computer::setAccessories), MouseService, SpeakersService>),
-		METHOD(&EquippedComputerService::autocall<METHOD(&Computer::setMonitor), MonitorService>)
-	>;
-};
+struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>>, kgr::AutoCallNoMap<
+	Invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
+	Invoke<METHOD(&Computer::setMonitor), MonitorService>
+> {};
+
+// A funtion to wash our favourite monitor and keyboard.
+// A service will be needed to be used with invoke.
+double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
+	cout << "Monitor of size of " << monitor.size 
+		 << " inch and a keyboard with " << keyboard.switchColor
+		 << " switches has been washed." << endl;
+		 
+	return 9.8;
+}
 
 int main()
 {
@@ -108,6 +116,11 @@ int main()
 	computer1.printGear();
 	// computer 2 will print only about the keyboard.
 	computer2.printGear();
+	
+	// will call 'washMonitorAndKeyboard' with the right parameters.
+	double result = container.invoke<MonitorService, KeyboardService>(washMonitorAndKeyboard);
+	
+	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
 	
 	return 0;
 }

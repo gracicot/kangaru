@@ -84,7 +84,8 @@ struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {
 
 struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>>, kgr::AutoCall<ServiceMap,
 	METHOD(&Computer::setMonitor),
-	METHOD(&Computer::setAccessories)> {};
+	METHOD(&Computer::setAccessories)
+> {};
 
 // To which service definition do we refer when the function parameter 'Keyboard&' is found?
 template<> struct ServiceMap<Keyboard&> : kgr::Map<KeyboardService> {};

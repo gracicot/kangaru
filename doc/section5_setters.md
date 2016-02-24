@@ -141,7 +141,7 @@ We can use the `callMe()` method to call the `init()` method of the service!
             getInstance().init();
         }
         
-        using invoke = kgr::Invoke< INVOKE(&ClownMasterService::callInit) >;
+        using invoke = kgr::Invoke< METHOD(&ClownMasterService::callInit) >;
     };
     
 Remember the `getInstance()` function? It returns the service contained in the definition.
@@ -181,7 +181,7 @@ Wouldn't it be awesome if we could call magically `setFileManager()` at the time
             getInstance().setFileManager(fms.forward());
         }
         
-        using invoke = kgr::Invoke< INVOKE(&ClownMasterService::callSetter) >;
+        using invoke = kgr::Invoke< METHOD(&ClownMasterService::callSetter) >;
     };
     
 ### More automatisation again
@@ -190,7 +190,7 @@ The `autocall` function as said earlier takes _at least_ two parameters. The oth
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setFileManager), FileManagerService>)
+            METHOD(&ClownMasterService::autocall<METHOD(&ClownMaster::setFileManager), FileManagerService>)
         >;
     };
     
@@ -208,7 +208,7 @@ Note that `autocall` can as well receive any number of parameter:
     
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), FileManagerService, ShopService>)
+            METHOD(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), FileManagerService, ShopService>)
         >;
     };
     
@@ -218,7 +218,7 @@ Instead of listing every service the called function needs, we can alternatively
 
     struct ClownMasterService : kgr::Service<ClownMaster> {
         using invoke = kgr::Invoke<
-            INVOKE(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), ServiceMap>)
+            METHOD(&ClownMasterService::autocall<METHOD(&ClownMaster::setThings), ServiceMap>)
         >;
     };
     

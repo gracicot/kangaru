@@ -274,6 +274,7 @@ private:
 	}
 	
 	// This function is the do_invoke_service that take the method to invoke as parameter.
+	// It invokes the function sent as parameter.
 	template<typename T, typename F, int... S>
 	void do_invoke_service(detail::seq<S...>, T&& service, F&& function) {
 		invoke_raw([&service, &function](detail::function_argument_t<S, decay<F>>... args){

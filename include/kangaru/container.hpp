@@ -106,7 +106,7 @@ private:
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
 	T& save_new_instance(Args&&... args) {
-		auto service = save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		auto& service = save_instance(make_service_instance<T>(std::forward<Args>(args)...));
 		invoke_service(service);
 		return service;
 	}

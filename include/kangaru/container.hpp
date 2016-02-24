@@ -81,50 +81,56 @@ private:
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
-	void save_new_instance(Args&&... args) {
-		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+	T& save_new_instance(Args&&... args) {
+		auto&& service = save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		invoke_service(service);
+		return service;
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
-	void save_new_instance(Args&&...) {
+	T& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	
 	// save instance functions
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
-	void save_instance(T&& service) {
-		save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
+	T& save_instance(T&& service) {
+		return save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
-	void save_instance(T&& service) {
+	T& save_instance(T&& service) {
 		using U = decay<T>;
-		save_instance_helper<U>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U>(makeInstancePtr<U>(std::move(service)));
 	}
 	
 	template<typename T, int... S>
-	void save_instance(T&& service, detail::seq<S...>) {
+	T& save_instance(T&& service, detail::seq<S...>) {
 		using U = decay<T>;
-		save_instance_helper<U, parent_element<S, U>...>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U, parent_element<S, U>...>(makeInstancePtr<U>(std::move(service)));
 	}
 	
 	template<typename T>
-	void save_instance_helper(instance_ptr<T> service) {
+	T& save_instance_helper(instance_ptr<T> service) {
+		auto& serviceRef = *service;
 		_services[detail::type_id<T>].emplace_back(std::move(service));
+		return serviceRef;
 	}
 	
 	template<typename T, typename Override, typename... Others>
-	void save_instance_helper(instance_ptr<T> service) {
+	T& save_instance_helper(instance_ptr<T> service) {
 		using ServiceOverride = detail::ServiceOverride<T, Override>;
 
 		_services[detail::type_id<Override>].emplace_back(makeInstancePtr<ServiceOverride, Override>(*service));
-		save_instance_helper<T, Others...>(std::move(service));
+		return save_instance_helper<T, Others...>(std::move(service));
 	}
 	
 	// get service functions
 	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
 	T get_service(Args&&... args) {
-		return make_service_instance<T>(std::forward<Args>(args)...);
+		auto service = make_service_instance<T>(std::forward<Args>(args)...);
+		invoke_service(service);
+		return service;
 	}
 	
 	template<typename T, enable_if<is_container_service<T>> = 0>
@@ -142,7 +148,7 @@ private:
 		auto&& list = _services[detail::type_id<T>];
 		
 		if (!list.size()) {
-			save_new_instance<T>();
+			return save_new_instance<T>();
 		}
 		
 		return *static_cast<T*>(list.back().get());
@@ -151,9 +157,7 @@ private:
 	// make instance
 	template<typename T, typename... Args>
 	T make_service_instance(Args&&... args) {
-		T service = invoke(&T::construct, std::forward<Args>(args)...);
-		invoke_service(service);
-		return service;
+		return invoke(&T::construct, std::forward<Args>(args)...);
 	}
 	
 	// invoke

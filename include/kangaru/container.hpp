@@ -106,7 +106,9 @@ private:
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
 	T& save_new_instance(Args&&... args) {
-		return save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		auto& service = save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		invoke_service(service);
+		return service;
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
@@ -157,7 +159,9 @@ private:
 	
 	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
 	T get_service(Args&&... args) {
-		return make_service_instance<T>(std::forward<Args>(args)...);
+		auto service = make_service_instance<T>(std::forward<Args>(args)...);
+		invoke_service(service);
+		return service;
 	}
 	
 	template<typename T, enable_if<is_container_service<T>> = 0>
@@ -185,9 +189,7 @@ private:
 	
 	template<typename T, typename... Args>
 	T make_service_instance(Args&&... args) {
-		T service = invoke_raw(&T::construct, std::forward<Args>(args)...);
-		invoke_service(service);
-		return service;
+		return invoke_raw(&T::construct, std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

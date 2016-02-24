@@ -59,7 +59,9 @@ public:
 	template<typename T, typename... Args>
 	void instance(Args&& ...args) {
 		static_assert(is_single<T>::value, "instance() only accept Single Service instance.");
-		save_instance(make_service_instance<T>(std::forward<Args>(args)...));
+		auto&& service = make_service_instance<T>(std::forward<Args>(args)...);
+		invoke_service(service);
+		save_instance(service);
 	}
 	
 	template<typename T, typename... Args>

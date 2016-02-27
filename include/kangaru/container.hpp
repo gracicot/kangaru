@@ -196,31 +196,19 @@ private:
 	//      invoke       //
 	///////////////////////
 	
-	template<typename U, typename ...Args, int... S>
-	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
-	}
-	
 	template<template<typename> class Map, typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
-	template<typename U, typename ...Args, enable_if<is_invoke_call<decay<U>>> = 0>
-	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
-		using V = decay<U>;
-		return invoke(detail::tuple_seq<typename V::Params>{}, std::forward<U>(function), std::forward<Args>(args)...);
-	}
-	
-	template<typename U, typename ...Args, int... S, enable_if<is_invoke_call<decay<U>>> = 0>
-	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
-		using V = decay<U>;
-		return invoke<tuple_element_t<S, typename V::Params>...>(std::forward<U>(function), std::forward<Args>(args)...);
-	}
-	
-	template<typename U, typename ...Args, disable_if<is_invoke_call<decay<U>>> = 0>
+	template<typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke_raw(U&& function, Args&&... args) {
-		return invoke(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_raw(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+	}
+	
+	template<typename U, typename ...Args, int... S>
+	detail::function_result_t<decay<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
+		return std::forward<U>(function)(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

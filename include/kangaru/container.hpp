@@ -17,23 +17,23 @@ namespace kgr {
 
 struct ForkService;
 
-struct Container {
+struct Container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
-	template<typename T> using is_container_service = std::integral_constant<bool, std::is_same<T, ContainerService>::value || std::is_same<T, ForkService>::value>;
-	template<typename T> using is_base_of_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
+	template<typename T> using is_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
 	template<int S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	template<template<typename> class Map, typename T> using service_map_t = typename Map<T>::Service;
 	template<typename T> using is_invoke_call = typename std::is_base_of<detail::InvokeCallTag, T>::type;
-	template<typename T> using has_autocall = typename std::is_base_of<detail::AutocallTag, T>::type;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<detail::type_id_t, void*>;
+	template<typename T>
+	using contained_service_t = typename std::conditional<is_single<T>::value, instance_ptr<T>, T>::type;
 	
 	template<typename T>
 	static void deleter(void* i) {
@@ -56,16 +56,12 @@ public:
 	Container& operator=(const Container &) = delete;
 	Container(Container&&) = default;
 	Container& operator=(Container&&) = default;
-	virtual ~Container() = default;
-	
-	template<typename T, enable_if<is_single<decay<T>>> = 0>
-	void instance(T&& service) {
-		save_instance(std::forward<T>(service));
-	}
+	~Container() = default;
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0>
 	void instance(Args&& ...args) {
-		save_new_instance<T>(std::forward<Args>(args)...);
+		auto& service = save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
+		invoke_service(service);
 	}
 	
 	template<typename T, typename... Args>
@@ -117,20 +113,20 @@ private:
 	}
 	
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
-	T& save_instance(T&& service) {
-		return save_instance(std::forward<T>(service), detail::tuple_seq<parent_types<T>>{});
+	T& save_instance(instance_ptr<T> service) {
+		return save_instance(std::move(service), detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
-	T& save_instance(T&& service) {
+	T& save_instance(instance_ptr<T> service) {
 		using U = decay<T>;
-		return save_instance_helper<U>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U>(std::move(service));
 	}
 	
 	template<typename T, int... S>
-	T& save_instance(T&& service, detail::seq<S...>) {
+	T& save_instance(instance_ptr<T> service, detail::seq<S...>) {
 		using U = decay<T>;
-		return save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(makeInstancePtr<U>(std::move(service)));
+		return save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(std::move(service));
 	}
 	
 	template<typename T>
@@ -157,7 +153,7 @@ private:
 	//    get service    //
 	///////////////////////
 	
-	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
+	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_container_service<T>> = 0>
 	T get_service(Args&&... args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service);
@@ -169,12 +165,7 @@ private:
 		return T{*this};
 	}
 	
-	template<typename T, enable_if<is_base_of_container_service<T>> = 0, disable_if<is_container_service<T>> = 0>
-	T get_service() {
-		return T{*dynamic_cast<typename T::Type*>(this)};
-	}
-	
-	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_base_of_container_service<T>> = 0>
+	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_container_service<T>> = 0>
 	T& get_service() {
 		if (auto&& service = _services[detail::type_id<T>]) {
 			return *static_cast<T*>(service);
@@ -188,8 +179,48 @@ private:
 	///////////////////////
 	
 	template<typename T, typename... Args>
-	T make_service_instance(Args&&... args) {
-		return invoke_raw(&T::construct, std::forward<Args>(args)...);
+	contained_service_t<T> make_service_instance(Args&&... args) {
+		return make_service_instance<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::construct)>>{}, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, int... S>
+	contained_service_t<T> make_service_instance(detail::seq<S...>, Args&&... args) {
+		auto constructArgs = invoke_raw(&T::construct, std::forward<Args>(args)...);
+		static_cast<void>(constructArgs);
+		return make_contained_service<T>(std::forward<tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::integral_constant<bool, detail::is_brace_constructible<T, in_place_t, Args...>::value || std::is_constructible<T, in_place_t, Args...>::value>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		return makeInstancePtr<T>(in_place, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<detail::is_brace_constructible<T, in_place_t, Args...>> = 0, disable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		auto service = makeInstancePtr<T>();
+		
+		service->emplace(std::forward<Args>(args)...);
+		
+		return service;
+	}
+	
+	template<typename T, typename... Args, disable_if<is_single<T>> = 0, enable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		return T(in_place, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, disable_if<is_single<T>> = 0, enable_if<detail::is_brace_constructible<T, in_place_t, Args...>> = 0, disable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		return T{in_place, std::forward<Args>(args)...};
+	}
+	
+	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<detail::is_brace_constructible<T, in_place_t, Args...>> = 0, disable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		T service;
+		
+		service.emplace(std::forward<Args>(args)...);
+		
+		return service;
 	}
 	
 	///////////////////////
@@ -251,16 +282,10 @@ private:
 	}
 	
 	// This function is the do_invoke_service handling the new syntax for autocall
-	template<typename Method, typename T, disable_if<is_invoke_call<Method>> = 0, enable_if<has_autocall<decay<T>>> = 0>
+	template<typename Method, typename T, disable_if<is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		using U = decay<T>;
 		do_invoke_service(detail::tuple_seq<std::tuple<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);
-	}
-	
-	// This function is the do_invoke_service with the old syntax
-	template<typename Method, typename T, disable_if<is_invoke_call<Method>> = 0, disable_if<has_autocall<decay<T>>> = 0>
-	void do_invoke_service(T&& service) {
-		do_invoke_service(detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{}, std::forward<T>(service), Method::value);
 	}
 	
 	// This function is the do_invoke_service that take the method to invoke as parameter.

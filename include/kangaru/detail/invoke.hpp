@@ -9,7 +9,6 @@ namespace kgr {
 namespace detail {
 
 // tags for SFINAE
-struct AutocallTag {};
 struct InvokeTag {};
 struct InvokeCallTag {};
 
@@ -40,7 +39,7 @@ struct Invoke<Invoke<M, Ps...>, Others...> : detail::InvokeCallTag, detail::Invo
 };
 
 template<template<typename> class M, typename... Ts>
-struct AutoCall : detail::AutocallTag {
+struct AutoCall {
 	using invoke = Invoke<Ts...>;
 	
 	template<typename T>
@@ -48,7 +47,7 @@ struct AutoCall : detail::AutocallTag {
 };
 
 template<typename... Ts>
-struct AutoCallNoMap : detail::AutocallTag {
+struct AutoCallNoMap {
 	using invoke = Invoke<Ts...>;
 	
 	template<typename>

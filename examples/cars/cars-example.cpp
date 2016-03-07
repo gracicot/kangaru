@@ -3,8 +3,6 @@
 #include <stdexcept>
 #include "kangaru.hpp"
 
-struct CarsContainer;
-
 struct Fuel {
 	auto getPrice() const noexcept -> double {
 		return price_;
@@ -67,10 +65,6 @@ struct HondaHRVDiesel : HondaHRV {
 		HondaHRV{fuel} {}
 };
 
-struct CarsContainer : kgr::Container {
-	CarsContainer();
-};
-
 struct FuelService           : kgr::SingleService<Fuel> {};
 struct PetrolService         : kgr::SingleService<Petrol>, kgr::Overrides<FuelService> {};
 struct PremiumPetrolService  : kgr::SingleService<PremiumPetrol> {};
@@ -81,21 +75,25 @@ struct NissanQuashqaiService : kgr::Service<NissanQuashqai, kgr::Dependency<Petr
 struct HondaHRVService       : kgr::Service<HondaHRV, kgr::Dependency<PremiumPetrolService>> {};
 struct HondaHRVDieselService : kgr::Service<HondaHRVDiesel, kgr::Dependency<DieselService>> {};
 
-CarsContainer::CarsContainer() {
-	service<PetrolService>().setPrice(130.70);
-	service<PremiumPetrolService>().setPrice(144.50);
-	service<DieselService>().setPrice(135.30);
+kgr::Container makeCarsContainer() {
+	kgr::Container container;
+	
+	container.service<PetrolService>().setPrice(130.70);
+	container.service<PremiumPetrolService>().setPrice(144.50);
+	container.service<DieselService>().setPrice(135.30);
+	
+	return container;
 }
 
 int main() {
-	CarsContainer garage;
+	kgr::Container garage = makeCarsContainer();
 
 	auto astra1     = garage.service<OpelAstraService>();
 	auto astra2     = garage.service<OpelAstraService>();
 	auto quashqai   = garage.service<NissanQuashqaiService>();
 	auto hrv        = garage.service<HondaHRVService>();
 	auto hrv_diesel = garage.service<HondaHRVDieselService>();
-	auto& premium    = garage.service<PremiumPetrolService>();
+	auto& premium   = garage.service<PremiumPetrolService>();
 
 	astra2.setFuel(&premium);
 

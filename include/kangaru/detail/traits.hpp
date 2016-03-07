@@ -57,5 +57,21 @@ struct is_service : std::false_type {};
 template<typename T>
 struct is_service<T, void_t<decltype(&T::forward)>> : std::true_type {};
 
+template<typename T, typename... Args>
+struct is_brace_constructible_helper {
+private:
+	template<typename U, typename... As>
+	static decltype(void(U{std::declval<As>()...}), std::true_type{}) test(int);
+
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(0));
+};
+
+template<typename T, typename... Args>
+struct is_brace_constructible : is_brace_constructible_helper<T, Args...>::type {};
+
 } // namespace detail
 } // namespace kgr

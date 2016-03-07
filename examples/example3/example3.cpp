@@ -1,12 +1,13 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <tuple>
 
 #include "kangaru.hpp"
 
 /**
  * This example explains moderate use of kangaru and it's components.
- * It covers overriding the construct method and extending the container
+ * It covers overriding the construct method
  */
 
 using namespace std;
@@ -37,26 +38,20 @@ struct Studio {
 
 // This is our service definitions
 struct AmpService : Service<Amp> {
-	static Self construct() {
+	static auto construct() {
 		static int watts = 0;
-		return Amp{watts += 48};
+		return std::forward_as_tuple(watts += 48);
 	}
 };
 
 struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
 struct StudioService : SingleService<Studio> {};
 
-struct MyContainer : Container {
-    MyContainer() {
-		// We are making our studio with a pretty name.
-		service<StudioService>().name = "The Music Box";
-    }
-};
-
 int main()
 {
-	// The container type will be MyContainer.
-	MyContainer container;
+	Container container;
+	
+	container.service<StudioService>().name = "The Music Box";
 	
 	auto guitar1 = container.service<GuitarService>();
 	auto guitar2 = container.service<GuitarService>();

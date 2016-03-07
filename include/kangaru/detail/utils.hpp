@@ -12,4 +12,7 @@ struct Map {
 template<typename T>
 using ServiceType = detail::function_result_t<decltype(&T::forward)>;
 
+struct in_place_t{};
+constexpr in_place_t in_place{};
+
 } // namespace kgr

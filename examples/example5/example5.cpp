@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <tuple>
 
 #include "kangaru.hpp"
 
@@ -58,11 +59,12 @@ void Baker::makeBread(Bakery& b, Oven* o) {
 // FlourBag service definition. 
 struct FlourBagService {
 	// constructor. Receives a fully constructed flour bag to contain.
-	FlourBagService(unique_ptr<FlourBag> f) : flour{move(f)} {}
+	template<typename... Args>
+	FlourBagService(in_place_t, Args&&... args) : flour{std::forward<Args>(args)...} {}
 	
 	// construct method. Receives dependencies of a FlourBag. In this case none.
-	static FlourBagService construct() {
-		return unique_ptr<FlourBag>{new FlourBag};
+	static auto construct() {
+		return forward_as_tuple(unique_ptr<FlourBag>{new FlourBag});
 	}
 	
 	// forward method. This method define how the service is injected.
@@ -77,11 +79,12 @@ private:
 // Oven service definition. 
 struct OvenService : Single {
 	// constructor. Receives a fully constructed oven to contain.
-	OvenService(unique_ptr<Oven> o) : oven{move(o)} {}
+	template<typename... Args>
+	OvenService(in_place_t, Args&&... args) : oven{new Oven{std::forward<Args>(args)...}} {}
 	
 	// construct method. Receives dependencies of a Oven. In this case none.
-	static OvenService construct() {
-		return unique_ptr<Oven>{new Oven};
+	static tuple<> construct() {
+		return {};
 	}
 	
 	// forward method. This method define how the service is injected.
@@ -98,12 +101,13 @@ private:
 // Baker service definition. 
 struct BakerService : Single {
 	// constructor. Receives a fully constructed baker to contain.
-	BakerService(shared_ptr<Baker> b) : baker{move(b)} {}
+	template<typename... Args>
+	BakerService(in_place_t, Args&&... args) : baker{make_shared<Baker>(std::forward<Args>(args)...)} {}
 	
 	// construct method. Receives dependencies of a Baker.
-	static BakerService construct(FlourBagService flourBag) {
+	static auto construct(FlourBagService flourBag) {
 		// dependencies are injected with the forward method.
-		return make_shared<Baker>(flourBag.forward());
+		return forward_as_tuple(flourBag.forward());
 	}
 	
 	// forward method. This method define how the service is injected.
@@ -120,13 +124,14 @@ private:
 // Bakery service definition. 
 struct BakeryService {
 	// constructor. Receives a fully constructed bakery to contain.
-	BakeryService(Bakery b) : bakery{move(b)} {}
+	template<typename... Args>
+	BakeryService(in_place_t, Args&&... args) : bakery{std::forward<Args>(args)...} {}
 	
 	// construct method. Receives dependencies of a Baker.
 	// We have to receive the OvenService has a reference because it's single.
-	static BakeryService construct(OvenService& oven) {
+	static auto construct(OvenService& oven) {
 		// dependencies are injected with the forward method.
-		return Bakery{oven.forward()};
+		return forward_as_tuple(oven.forward());
 	}
 	
 	// forward method. This method define how the service is injected.

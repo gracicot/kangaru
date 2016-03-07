@@ -26,10 +26,7 @@ struct Product {
 };
 
 // This is our wood stack service definition
-struct WoodStackService : SingleService<WoodStack> {
-	// We need constructors for our use case.
-	using Self::Self;
-};
+struct WoodStackService : SingleService<WoodStack> {};
 
 // This is our product service definition
 struct ProductService : Service<Product, Dependency<WoodStackService>> {};
@@ -68,7 +65,7 @@ int main()
 	WoodStack stack{2};
 	
 	// We are providing our stack instance to the container.
-	container.instance(WoodStackService{stack});
+	container.instance<WoodStackService>(std::move(stack));
 	
 	
 	// It has the Container and the WoodStack injected.

@@ -12,7 +12,6 @@ struct ContainerServiceBase{};
 
 template<typename Original, typename Service>
 struct ServiceOverride : Service {
-    virtual ~ServiceOverride() {}
     ServiceOverride(Original& service) : _service{service} {}
 
     ServiceType<Service> forward() override {
@@ -48,19 +47,6 @@ struct ContainerService : detail::ContainerServiceBase {
 	
 private:
 	Container& _instance;
-};
-
-template<typename T>
-struct DerivedContainerService : detail::ContainerServiceBase {
-	using Type = T;
-	DerivedContainerService(T& instance) : _instance{instance} {}
-	
-	T& forward() {
-		return _instance;
-	}
-	
-private:
-	T& _instance;
 };
 
 }

@@ -45,6 +45,24 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 	
 	GenericService() = default;
 	
+	GenericService(GenericService&& other) {
+		emplace(std::move(other.getInstance()));
+	}
+	
+	GenericService& operator=(GenericService&& other) {
+		emplace(std::move(other.getInstance()));
+		return *this;
+	}
+	
+	GenericService(const GenericService& other) {
+		emplace(other.getInstance());
+	}
+	
+	GenericService& operator=(const GenericService& other) {
+		emplace(other.getInstance());
+		return *this;
+	}
+	
 	template<typename... Args>
 	GenericService(in_place_t, Args&&... args) {
 		emplace(std::forward<Args>(args)...);

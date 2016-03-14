@@ -23,8 +23,8 @@ private:
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
-	template<typename T> using is_container_service = std::integral_constant<bool, std::is_same<T, ContainerService>::value || std::is_same<T, ForkService>::value>;
-	template<typename T> using is_base_of_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
+	template<typename T> using is_container_service = std::is_base_of<detail::ContainerServiceTag, T>;
+	template<typename T> using is_base_of_container_service = std::is_base_of<detail::DerivedContainerServiceTag, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
 	template<int S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;

@@ -9,8 +9,10 @@
  * It covers custom service definition
  */
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
+using std::move;
 
 struct FlourBag {
 	int quantity = 99;
@@ -25,17 +27,17 @@ struct Oven {
 };
 
 struct Baker {
-	Baker(unique_ptr<FlourBag> myFlour) : flour{move(myFlour)} {}
+	Baker(std::unique_ptr<FlourBag> myFlour) : flour{move(myFlour)} {}
 	void makeBread(Bakery& b, Oven* o);
 	
 private:
-	unique_ptr<FlourBag> flour;
+	std::unique_ptr<FlourBag> flour;
 };
 
 struct Bakery {
 	Bakery(Oven* myOven) : oven{myOven} {}
 	
-	void start(shared_ptr<Baker> baker) {
+	void start(std::shared_ptr<Baker> baker) {
 		baker->makeBread(*this, oven);
 	}
 	
@@ -58,30 +60,30 @@ void Baker::makeBread(Bakery& b, Oven* o) {
 // FlourBag service definition. 
 struct FlourBagService {
 	// constructor. Receives a fully constructed flour bag to contain.
-	FlourBagService(unique_ptr<FlourBag> f) : flour{move(f)} {}
+	FlourBagService(std::unique_ptr<FlourBag> f) : flour{move(f)} {}
 	
 	// construct method. Receives dependencies of a FlourBag. In this case none.
 	static FlourBagService construct() {
-		return unique_ptr<FlourBag>{new FlourBag};
+		return std::unique_ptr<FlourBag>{new FlourBag};
 	}
 	
 	// forward method. This method define how the service is injected.
-	unique_ptr<FlourBag> forward() {
+	std::unique_ptr<FlourBag> forward() {
 		return move(flour);
 	}
 	
 private:
-	unique_ptr<FlourBag> flour;
+	std::unique_ptr<FlourBag> flour;
 };
 
 // Oven service definition. 
-struct OvenService : Single {
+struct OvenService : kgr::Single {
 	// constructor. Receives a fully constructed oven to contain.
-	OvenService(unique_ptr<Oven> o) : oven{move(o)} {}
+	OvenService(std::unique_ptr<Oven> o) : oven{move(o)} {}
 	
 	// construct method. Receives dependencies of a Oven. In this case none.
 	static OvenService construct() {
-		return unique_ptr<Oven>{new Oven};
+		return std::unique_ptr<Oven>{new Oven};
 	}
 	
 	// forward method. This method define how the service is injected.
@@ -92,29 +94,29 @@ struct OvenService : Single {
 	}
 	
 private:
-	unique_ptr<Oven> oven;
+	std::unique_ptr<Oven> oven;
 };
 
 // Baker service definition. 
-struct BakerService : Single {
+struct BakerService : kgr::Single {
 	// constructor. Receives a fully constructed baker to contain.
-	BakerService(shared_ptr<Baker> b) : baker{move(b)} {}
+	BakerService(std::shared_ptr<Baker> b) : baker{move(b)} {}
 	
 	// construct method. Receives dependencies of a Baker.
 	static BakerService construct(FlourBagService flourBag) {
 		// dependencies are injected with the forward method.
-		return make_shared<Baker>(flourBag.forward());
+		return std::make_shared<Baker>(flourBag.forward());
 	}
 	
 	// forward method. This method define how the service is injected.
 	// It's virtual because other services can override this one.
 	// See example 4 for more detail.
-	virtual shared_ptr<Baker> forward() {
+	virtual std::shared_ptr<Baker> forward() {
 		return baker;
 	}
 	
 private:
-	shared_ptr<Baker> baker;
+	std::shared_ptr<Baker> baker;
 };
 
 // Bakery service definition. 
@@ -140,14 +142,14 @@ private:
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	// The return type of 'service<BakeryService>' is the same as the BakeryService::forward return type.
 	Bakery bakery = container.service<BakeryService>();
 	bakery.name = "Le bon pain";
 	
 	// The return type of 'service<BakerService>' is the same as the BakerService::forward return type.
-	shared_ptr<Baker> baker = container.service<BakerService>();
+	std::shared_ptr<Baker> baker = container.service<BakerService>();
 	
 	bakery.start(baker);
 	

@@ -9,8 +9,9 @@
  * It covers dependencies, Single services and basic use of the container.
  */
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
 
 struct PathProvider {
 	string path;
@@ -30,14 +31,14 @@ private:
 
 // This is our service definitions
 // PathProviderService is a single service of PathProvider
-struct PathProviderService : SingleService<PathProvider> {};
+struct PathProviderService : kgr::SingleService<PathProvider> {};
 
 // PathPrinterService is a (not single) service of PathProvider and has a PathProviderService as dependency
-struct PathPrinterService : Service<PathPrinter, Dependency<PathProviderService>> {};
+struct PathPrinterService : kgr::Service<PathPrinter, kgr::Dependency<PathProviderService>> {};
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	// a PathProvider is provided for every printer
 	auto printer1 = container.service<PathPrinterService>();

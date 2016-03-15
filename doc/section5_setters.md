@@ -67,7 +67,8 @@ Now we want to add `setFileManager` to the list of method to call:
 
     struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
         METHOD(&ClownMaster::init),
-        METHOD(&ClownMaster::setFileManager)> {};
+        METHOD(&ClownMaster::setFileManager)
+    > {};
         
 The method are called in the order that are listed in `AutoCall`.
 
@@ -77,13 +78,15 @@ Alternatively, you can list needed sevices for every methods. Parameters are gro
 
     struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
         kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-        METHOD(&ClownMaster::setFileManager)> {};
+        METHOD(&ClownMaster::setFileManager)
+    > {};
 
 If you don't want to use the service map at all, you can exdends `kgr::AutoCallNoMap` instead:
     
     struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCallNoMap<
         kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-        kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>> {};
+        kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>
+    > {};
 
 
 ## How does this black magic work?

@@ -4,7 +4,6 @@
 #include "invoke.hpp"
 
 #include <type_traits>
-#include <experimental/optional>
 
 namespace kgr {
 
@@ -76,6 +75,12 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 		emplace(std::forward<Args>(args)...);
 	}
 	
+	~GenericService() {
+		if (_initiated) {
+			getInstance().~Type();
+		}
+	}
+	
 protected:
 	template<typename F, typename... T>
 	void autocall(detail::inject_t<T>... others) {
@@ -114,19 +119,7 @@ private:
 	}
 	
 	bool _initialized = false;
-	std::aligned_storage<sizeof(Type), alignof(Type)> _instance;
-};
-
-// TODO: does not belong here. To move in another header.
-struct ForkService {
-	ForkService(Container& container) : _container{container.fork()} {}
-	
-	inline Container forward() {
-		return std::move(_container);
-	}
-	
-private:
-	Container _container;
+	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
 };
 
 } // namespace kgr

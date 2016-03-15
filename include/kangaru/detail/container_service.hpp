@@ -8,10 +8,12 @@ namespace kgr {
 struct Container;
 
 namespace detail {
-struct ContainerServiceBase{};
+
+struct ContainerServiceTag {};
 
 template<typename Original, typename Service>
 struct ServiceOverride : Service {
+    virtual ~ServiceOverride() {}
     ServiceOverride(Original& service) : _service{service} {}
 
     ServiceType<Service> forward() override {
@@ -38,7 +40,7 @@ struct Overrides {
 	using ParentTypes = std::tuple<Types...>;
 };
 
-struct ContainerService : detail::ContainerServiceBase {
+struct ContainerService : detail::ContainerServiceTag {
 	ContainerService(Container& instance) : _instance{instance} {}
 	
 	inline Container& forward() {

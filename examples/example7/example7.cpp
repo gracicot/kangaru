@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 
 #include "kangaru.hpp"
 
@@ -13,8 +12,9 @@
 // Will not be needed when N4469 will be accepted
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
 
 struct Keyboard {
 	string switchColor;
@@ -75,14 +75,14 @@ template<typename>
 struct ServiceMap;
 
 // service definitions
-struct KeyboardService : SingleService<Keyboard> {};
-struct MonitorService : SingleService<Monitor> {};
-struct MouseService : SingleService<Mouse> {};
-struct SpeakersService : SingleService<Speakers> {};
+struct KeyboardService : kgr::SingleService<Keyboard> {};
+struct MonitorService : kgr::SingleService<Monitor> {};
+struct MouseService : kgr::SingleService<Mouse> {};
+struct SpeakersService : kgr::SingleService<Speakers> {};
 
-struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {};
+struct MinimalComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>> {};
 
-struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>>, kgr::AutoCall<ServiceMap,
+struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<ServiceMap,
 	METHOD(&Computer::setMonitor),
 	METHOD(&Computer::setAccessories)
 > {};
@@ -107,7 +107,7 @@ double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	// getting our four pieces of hardware
 	auto& keyboard = container.service<KeyboardService>();

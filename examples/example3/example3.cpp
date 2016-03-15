@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 #include <tuple>
 
 #include "kangaru.hpp"
@@ -10,8 +9,9 @@
  * It covers overriding the construct method
  */
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
 
 struct Amp {
 	Amp(int myWatts = 0) : watts{myWatts} {};
@@ -37,15 +37,15 @@ struct Studio {
 };
 
 // This is our service definitions
-struct AmpService : Service<Amp> {
+struct AmpService : kgr::Service<Amp> {
 	static auto construct() {
 		static int watts = 0;
 		return std::forward_as_tuple(watts += 48);
 	}
 };
 
-struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
-struct StudioService : SingleService<Studio> {};
+struct GuitarService : kgr::Service<Guitar, kgr::Dependency<AmpService>> {};
+struct StudioService : kgr::SingleService<Studio> {};
 
 int main()
 {

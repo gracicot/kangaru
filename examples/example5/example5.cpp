@@ -62,11 +62,11 @@ void Baker::makeBread(Bakery& b, Oven* o) {
 struct FlourBagService {
 	// constructor. Receives a fully constructed flour bag to contain.
 	template<typename... Args>
-	FlourBagService(in_place_t, Args&&... args) : flour{std::forward<Args>(args)...} {}
+	FlourBagService(kgr::in_place_t, Args&&... args) : flour{std::forward<Args>(args)...} {}
 	
 	// construct method. Receives dependencies of a FlourBag. In this case none.
 	static auto construct() {
-		return std::forward_as_tuple(unique_ptr<FlourBag>{new FlourBag});
+		return std::forward_as_tuple(std::unique_ptr<FlourBag>{new FlourBag});
 	}
 	
 	// forward method. This method define how the service is injected.
@@ -82,7 +82,7 @@ private:
 struct OvenService : kgr::Single {
 	// constructor. Receives a fully constructed oven to contain.
 	template<typename... Args>
-	OvenService(in_place_t, Args&&... args) : oven{new Oven{std::forward<Args>(args)...}} {}
+	OvenService(kgr::in_place_t, Args&&... args) : oven{new Oven{std::forward<Args>(args)...}} {}
 	
 	// construct method. Receives dependencies of a Oven. In this case none.
 	static std::tuple<> construct() {
@@ -104,7 +104,7 @@ private:
 struct BakerService : kgr::Single {
 	// constructor. Receives a fully constructed baker to contain.
 	template<typename... Args>
-	BakerService(in_place_t, Args&&... args) : baker{std::make_shared<Baker>(std::forward<Args>(args)...)} {}
+	BakerService(kgr::in_place_t, Args&&... args) : baker{std::make_shared<Baker>(std::forward<Args>(args)...)} {}
 	
 	// construct method. Receives dependencies of a Baker.
 	static auto construct(FlourBagService flourBag) {
@@ -127,13 +127,13 @@ private:
 struct BakeryService {
 	// constructor. Receives a fully constructed bakery to contain.
 	template<typename... Args>
-	BakeryService(in_place_t, Args&&... args) : bakery{std::forward<Args>(args)...} {}
+	BakeryService(kgr::in_place_t, Args&&... args) : bakery{std::forward<Args>(args)...} {}
 	
 	// construct method. Receives dependencies of a Baker.
 	// We have to receive the OvenService has a reference because it's single.
 	static auto construct(OvenService& oven) {
 		// dependencies are injected with the forward method.
-		return forward_as_tuple(oven.forward());
+		return std::forward_as_tuple(oven.forward());
 	}
 	
 	// forward method. This method define how the service is injected.

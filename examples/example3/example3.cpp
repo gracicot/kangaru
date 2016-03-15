@@ -49,7 +49,7 @@ struct StudioService : kgr::SingleService<Studio> {};
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	container.service<StudioService>().name = "The Music Box";
 	

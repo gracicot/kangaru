@@ -76,7 +76,7 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 	}
 	
 	~GenericService() {
-		if (_initiated) {
+		if (_initialized) {
 			getInstance().~Type();
 		}
 	}

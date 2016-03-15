@@ -59,8 +59,9 @@ A "include kangaru" header file should look like this:
     #include "kangaru/kangaru.hpp" // include kangaru
 
     // Here you can put your generic service.
-    #include "sharedservice.h"
-    #include "uniqueservice.h"
+    // Example:
+    // #include "sharedservice.h"
+    // #include "uniqueservice.h"
 
     // declare some needed macros
     #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
@@ -86,4 +87,4 @@ A "include kangaru" header file should look like this:
     
 
 This will add a common point between your project and kangaru.
-Feel free to copy this header into your project.
+Feel free to copy this header into your project. Just replace "<your-namespace>" (without the quotes) by the name of your namespace and you are ready to hack!

@@ -87,4 +87,4 @@ A "include kangaru" header file should look like this:
     
 
 This will add a common point between your project and kangaru.
-Feel free to copy this header into your project. Just replace "<your-namespace>" (without the quotes) by the name of your namespace and you are ready to hack!
+Feel free to copy this header into your project. Just replace `<your-namespace>` by the name of your namespace and you are ready to hack!

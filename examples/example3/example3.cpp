@@ -40,7 +40,7 @@ struct Studio {
 struct AmpService : kgr::Service<Amp> {
 	static auto construct() {
 		static int watts = 0;
-		return std::forward_as_tuple(watts += 48);
+		return kgr::inject(watts += 48);
 	}
 };
 

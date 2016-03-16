@@ -2,6 +2,8 @@
 
 #include "../container.hpp"
 #include "invoke.hpp"
+#include "single.hpp"
+#include "injected.hpp"
 
 #include <type_traits>
 
@@ -12,26 +14,13 @@ struct Dependency {};
 
 namespace detail {
 
-template<typename T, typename = void>
-struct inject {
-	using type = T&;
-};
-
-template<typename T>
-struct inject<T, enable_if_t<is_service<T>::value>> {
-	using type = typename std::conditional<std::is_base_of<Single, T>::value, T&, T&&>::type;
-};
-
-template<typename T>
-using inject_t = typename inject<T>::type;
-
 template<typename...>
 struct Injector;
 
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
-	static decltype(auto) construct(inject_t<Deps>... deps) {
-		return CRTP::makeService(std::forward<inject_t<Deps>>(deps).forward()...);
+	static decltype(auto) construct(Inject<Deps>... deps) {
+		return CRTP::makeService(std::forward<Inject<Deps>>(deps).forward()...);
 	}
 };
 
@@ -83,13 +72,13 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 	
 protected:
 	template<typename F, typename... T>
-	void autocall(detail::inject_t<T>... others) {
-		CRTP::call(getInstance(), F::value, others.forward()...);
+	void autocall(Inject<T>... others) {
+		CRTP::call(getInstance(), F::value, std::forward<Inject<T>>(others).forward()...);
 	}
 	
 	template<typename F, template<typename> class Map>
-	void autocall(ContainerService cs) {
-		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, cs);
+	void autocall(Inject<ContainerService> cs) {
+		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, std::move(cs));
 	}
 	
 	Type& getInstance() {
@@ -112,7 +101,7 @@ private:
 	}
 	
 	template<template<typename> class Map, typename F, int... S>
-	void autocall(detail::seq<S...>, ContainerService cs) {
+	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
 			CRTP::call(getInstance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});

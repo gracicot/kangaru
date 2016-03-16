@@ -17,11 +17,11 @@ public:
 	using Parent::Parent;
 
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(std::forward_as_tuple(std::forward<Args>(args)...)) {
-		return std::forward_as_tuple(std::forward<Args>(args)...);
+	static auto makeService(Args&&... args) -> decltype(inject(std::forward<Args>(args)...)) {
+		return inject(std::forward<Args>(args)...);
 	}
 
-	virtual Type& forward() {
+	Type& forward() {
 		return this->getInstance();
 	}
 	
@@ -40,8 +40,8 @@ public:
 	using Parent::Parent;
 
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(std::forward_as_tuple(std::forward<Args>(args)...)) {
-		return std::forward_as_tuple(std::forward<Args>(args)...);
+	static auto makeService(Args&&... args) -> decltype(inject(std::forward<Args>(args)...)) {
+		return inject(std::forward<Args>(args)...);
 	}
 
 	Type forward() {
@@ -63,8 +63,8 @@ public:
 	using Parent::Parent;
 	
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(std::forward_as_tuple(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}})) {
-		return std::forward_as_tuple(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}});
+	static auto makeService(Args&&... args) -> decltype(inject(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}})) {
+		return inject(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}});
 	}
 	
 	std::unique_ptr<Type> forward() {
@@ -86,11 +86,11 @@ public:
 	using Parent::Parent;
 
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(std::forward_as_tuple(std::make_shared<Type>(std::forward<Args>(args)...))) {
-		return std::forward_as_tuple(std::make_shared<Type>(std::forward<Args>(args)...));
+	static auto makeService(Args&&... args) -> decltype(inject(std::make_shared<Type>(std::forward<Args>(args)...))) {
+		return inject(std::make_shared<Type>(std::forward<Args>(args)...));
 	}
 	
-	virtual std::shared_ptr<Type> forward() {
+	std::shared_ptr<Type> forward() {
 		return this->getInstance();
 	}
 	

@@ -30,7 +30,13 @@ struct seq_gen<0, S...> {
 };
 
 template<typename Tuple>
-using tuple_seq = typename seq_gen<std::tuple_size<Tuple>::value>::type;
+struct TupleSeqGen : seq_gen<std::tuple_size<Tuple>::value> {};
+
+template<>
+struct TupleSeqGen<std::tuple<>> : seq_gen<0> {};
+
+template<typename Tuple>
+using tuple_seq = typename TupleSeqGen<Tuple>::type;
 
 // SFINAE utilities
 template<typename T, typename = void>
@@ -72,6 +78,12 @@ public:
 
 template<typename T, typename... Args>
 struct is_brace_constructible : is_brace_constructible_helper<T, Args...>::type {};
+
+template<typename T> struct remove_rvalue_reference { using type = T; };
+template<typename T> struct remove_rvalue_reference<T&> { using type = T&; };
+template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
+
+template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
 
 } // namespace detail
 } // namespace kgr

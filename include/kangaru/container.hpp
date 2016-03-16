@@ -5,6 +5,8 @@
 #include "detail/utils.hpp"
 #include "detail/container_service.hpp"
 #include "detail/invoke.hpp"
+#include "detail/single.hpp"
+#include "detail/injected.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -33,21 +35,27 @@ private:
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<detail::type_id_t, void*>;
 	template<typename T>
-	using contained_service_t = typename std::conditional<is_single<T>::value, instance_ptr<T>, T>::type;
+	using contained_service_t = typename std::conditional<is_single<T>::value, instance_ptr<detail::SingleInjected<T>>, detail::Injected<T>>::type;
 	
 	template<typename T>
 	static void deleter(void* i) {
 		delete static_cast<T*>(i);
 	}
-	
-	template<typename T, typename C = T, typename... Args, enable_if<std::is_constructible<T, Args...>> = 0>
-	static instance_ptr<C> makeInstancePtr(Args&&... args) {
-		return instance_ptr<T>{new T(std::forward<Args>(args)...), &Container::deleter<C>};
+
+	template<typename T, typename... Args, enable_if<std::is_constructible<detail::SingleInjected<T>, Args...>> = 0>
+	static instance_ptr<detail::SingleInjected<T>> makeInstancePtr(Args&&... args) {
+		return instance_ptr<detail::SingleInjected<T>>{
+			new detail::SingleInjected<T>{std::forward<Args>(args)...},
+			&Container::deleter<detail::BaseInjected<T>>
+		};
 	}
 
-	template<typename T, typename C = T, typename... Args, disable_if<std::is_constructible<T, Args...>> = 0>
-	static instance_ptr<C> makeInstancePtr(Args&&... args) {
-		return instance_ptr<T>{new T{std::forward<Args>(args)...}, &Container::deleter<C>};
+	template<typename T, typename C, typename... Args, enable_if<std::is_constructible<detail::ServiceOverride<T, C>, Args...>> = 0>
+	static instance_ptr<detail::BaseInjected<C>> makeOverridePtr(Args&&... args) {
+		return instance_ptr<detail::ServiceOverride<T, C>>{
+			new detail::ServiceOverride<T, C>{std::forward<Args>(args)...},
+			&Container::deleter<detail::BaseInjected<C>>
+		};
 	}
 	
 public:
@@ -101,49 +109,50 @@ private:
 	///////////////////////
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
-	T& save_new_instance(Args&&... args) {
+	detail::BaseInjected<T>& save_new_instance(Args&&... args) {
 		auto& service = save_instance(make_service_instance<T>(std::forward<Args>(args)...));
-		invoke_service(service);
+		invoke_service(service.get());
 		return service;
 	}
 	
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
-	T& save_new_instance(Args&&...) {
+	detail::BaseInjected<T>& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	
 	template<typename T, enable_if<detail::has_overrides<decay<T>>> = 0>
-	T& save_instance(instance_ptr<T> service) {
+	detail::SingleInjected<T>& save_instance(instance_ptr<detail::SingleInjected<T>> service) {
 		return save_instance(std::move(service), detail::tuple_seq<parent_types<T>>{});
 	}
 	
 	template<typename T, disable_if<detail::has_overrides<decay<T>>> = 0>
-	T& save_instance(instance_ptr<T> service) {
+	detail::SingleInjected<T>& save_instance(instance_ptr<detail::SingleInjected<T>> service) {
 		using U = decay<T>;
 		return save_instance_helper<U>(std::move(service));
 	}
 	
 	template<typename T, int... S>
-	T& save_instance(instance_ptr<T> service, detail::seq<S...>) {
+	detail::SingleInjected<T>& save_instance(instance_ptr<detail::SingleInjected<T>> service, detail::seq<S...>) {
 		using U = decay<T>;
 		return save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(std::move(service));
 	}
 	
 	template<typename T>
-	T& save_instance_helper(instance_ptr<T> service) {
+	detail::SingleInjected<T>& save_instance_helper(instance_ptr<detail::SingleInjected<T>> service) {
 		auto& serviceRef = *service;
+		instance_ptr<detail::BaseInjected<T>> injectedTypeService = std::move(service);
 		
-		_services[detail::type_id<T>] = service.get();
-		_instances.emplace_back(std::move(service));
+		_services[detail::type_id<detail::BaseInjected<T>>] = injectedTypeService.get();
+		_instances.emplace_back(std::move(injectedTypeService));
 		
 		return serviceRef;
 	}
 	
 	template<typename T, typename Override, typename... Others>
-	T& save_instance_helper(instance_ptr<T> service) {
-		auto overrideService = makeInstancePtr<detail::ServiceOverride<T, Override>, Override>(*service);
+	detail::SingleInjected<T>& save_instance_helper(instance_ptr<detail::SingleInjected<T>> service) {
+		auto overrideService = makeOverridePtr<T, Override>(service->get());
 
-		_services[detail::type_id<Override>] = overrideService.get();
+		_services[detail::type_id<detail::BaseInjected<Override>>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
 		
 		return save_instance_helper<T, Others...>(std::move(service));
@@ -154,21 +163,21 @@ private:
 	///////////////////////
 	
 	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<is_container_service<T>> = 0>
-	T get_service(Args&&... args) {
+	detail::Injected<T> get_service(Args&&... args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
-		invoke_service(service);
+		invoke_service(service.get());
 		return service;
 	}
 	
 	template<typename T, enable_if<is_container_service<T>> = 0>
-	T get_service() {
-		return T{*this};
+	detail::Injected<T> get_service() {
+		return detail::Injected<T>{T{*this}};
 	}
 	
 	template<typename T, enable_if<is_single<T>> = 0, disable_if<is_container_service<T>> = 0>
-	T& get_service() {
-		if (auto&& service = _services[detail::type_id<T>]) {
-			return *static_cast<T*>(service);
+	detail::BaseInjected<T>& get_service() {
+		if (auto&& service = _services[detail::type_id<detail::BaseInjected<T>>]) {
+			return *static_cast<detail::BaseInjected<T>*>(service);
 		} else {
 			return save_new_instance<T>();
 		}
@@ -199,26 +208,21 @@ private:
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		auto service = makeInstancePtr<T>();
 		
-		service->emplace(std::forward<Args>(args)...);
+		service->get().emplace(std::forward<Args>(args)...);
 		
 		return service;
 	}
 	
-	template<typename T, typename... Args, disable_if<is_single<T>> = 0, enable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
+	template<typename T, typename... Args, disable_if<is_single<T>> = 0, enable_if<std::integral_constant<bool, std::is_constructible<T, in_place_t, Args...>::value || detail::is_brace_constructible<T, in_place_t, Args...>::value>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		return T(in_place, std::forward<Args>(args)...);
-	}
-	
-	template<typename T, typename... Args, disable_if<is_single<T>> = 0, enable_if<detail::is_brace_constructible<T, in_place_t, Args...>> = 0, disable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
-		return T{in_place, std::forward<Args>(args)...};
+		return detail::Injected<T>{in_place, std::forward<Args>(args)...};
 	}
 	
 	template<typename T, typename... Args, disable_if<is_single<T>> = 0, disable_if<detail::is_brace_constructible<T, in_place_t, Args...>> = 0, disable_if<std::is_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		T service;
+		detail::Injected<T> service;
 		
-		service.emplace(std::forward<Args>(args)...);
+		service.get().emplace(std::forward<Args>(args)...);
 		
 		return service;
 	}
@@ -239,7 +243,7 @@ private:
 	
 	template<typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(get_service<detail::original_t<decay<detail::function_argument_t<S, decay<U>>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

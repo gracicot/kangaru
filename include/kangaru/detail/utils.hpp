@@ -10,7 +10,7 @@ struct Map {
 };
 
 template<typename T>
-using ServiceType = detail::function_result_t<decltype(&T::forward)>;
+using ServiceType = decltype(std::declval<T>().forward());
 
 struct in_place_t{};
 constexpr in_place_t in_place{};

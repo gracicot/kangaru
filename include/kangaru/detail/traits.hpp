@@ -67,7 +67,7 @@ template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:
 	template<typename U, typename... As>
-	static decltype(void(U{std::declval<As>()...}), std::true_type{}) test(int);
+	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(int);
 
 	template<typename...>
 	static std::false_type test(...);
@@ -84,6 +84,9 @@ template<typename T> struct remove_rvalue_reference<T&> { using type = T&; };
 template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 
 template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
+
+template<typename... Ts>
+using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;
 
 } // namespace detail
 } // namespace kgr

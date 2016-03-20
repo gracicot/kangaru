@@ -41,6 +41,18 @@ private:
 };
 
 template<typename T>
+struct GeneratorService : detail::ContainerServiceTag {
+	GeneratorService(Container& container) : _container{container} {}
+	
+	Generator<T> forward() {
+		return Generator<T>{_container};
+	}
+	
+private:
+	Container& _container;
+};
+
+template<typename T>
 struct LazyService : detail::ContainerServiceTag {
 	explicit LazyService(Container& container) : _container{container} {}
 	

@@ -15,6 +15,8 @@ struct InvokerBase {
 
 template<typename CRTP, typename T>
 struct GeneratorBase {
+	static_assert(!std::is_base_of<Single, T>::value, "Generator only work with non-single services.");
+	
 	template<typename... Args>
 	ServiceType<T> operator()(Args&& ...args) {
 		return static_cast<CRTP*>(this)->_container.template service<T>(std::forward<Args>(args)...);

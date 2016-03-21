@@ -30,6 +30,19 @@ private:
 	kgr::Container _container;
 };
 
+template<typename T>
+struct Generator {
+	explicit Generator(Container& container) : _container{container} {}
+	
+	template<typename... Args>
+	ServiceType<T> operator()(Args&& ...args) {
+		return _container.service<T>(std::forward<Args>(args)...);
+	}
+	
+private:
+	kgr::Container& _container;
+};
+
 namespace detail {
 
 template<typename T>

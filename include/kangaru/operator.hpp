@@ -64,33 +64,33 @@ public:
 	LazyBase() = default;
 	LazyBase(LazyBase&& other) {
 		if (other._initialized) {
-			emplace(std::move(other.get()));
+			emplace(std::move(other.data()));
 		}
 	}
 	
 	LazyBase& operator=(LazyBase&& other) {
 		if (other._initialized) {
-			emplace(std::move(other.get()));
+			emplace(std::move(other.data()));
 		}
 		return *this;
 	}
 	
 	LazyBase(const LazyBase& other) {
 		if (other._initialized) {
-			emplace(other.get());
+			emplace(other.data());
 		}
 	}
 	
 	LazyBase& operator=(const LazyBase& other) {
 		if (other._initialized) {
-			emplace(other.get());
+			emplace(other.data());
 		}
 		return *this;
 	}
 	
 	~LazyBase() {
 		if (_initialized) {
-			get().~ServiceType<T>();
+			reinterpret_cast<type*>(&_service)->~type();
 		}
 	}
 	
@@ -111,14 +111,18 @@ public:
 	}
 	
 private:
+	type data() {
+		return *reinterpret_cast<type*>(&_service);
+	}
+	
 	template<typename... Args>
 	void emplace(Args&&... args) {
 		if (_initialized) {
-			get().~ServiceType<T>();
+			reinterpret_cast<type*>(&_service)->~type();
 		}
 		
 		_initialized = true;
-		new (&_service) type{std::forward<Args>(args)...};
+		new (&_service) type(std::forward<Args>(args)...);
 	}
 	
 	bool _initialized = false;

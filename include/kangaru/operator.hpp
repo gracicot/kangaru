@@ -3,47 +3,23 @@
 #include "container.hpp"
 
 namespace kgr {
+namespace detail {
 
-template<template<typename> class Map>
-struct Invoker {
-	explicit Invoker(Container& container) : _container{container} {}
-	
+template<typename CRTP, template<typename> class Map>
+struct InvokerBase {
 	template<typename F, typename... Args>
 	detail::function_result_t<typename std::decay<F>::type> operator()(F&& f, Args&&... args) {
-		return _container.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
+		return static_cast<CRTP*>(this)->_container.template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
-	
-private:
-	kgr::Container& _container;
 };
 
-template<template<typename> class Map>
-struct ForkedInvoker {
-	explicit ForkedInvoker(Container container) : _container{std::move(container)} {}
-	
-	template<typename F, typename... Args>
-	detail::function_result_t<typename std::decay<F>::type> operator()(F&& f, Args&&... args) {
-		return _container.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
-	}
-	
-private:
-	kgr::Container _container;
-};
-
-template<typename T>
-struct Generator {
-	explicit Generator(Container& container) : _container{container} {}
-	
+template<typename CRTP, typename T>
+struct GeneratorBase {
 	template<typename... Args>
 	ServiceType<T> operator()(Args&& ...args) {
-		return _container.service<T>(std::forward<Args>(args)...);
+		return static_cast<CRTP*>(this)->_container.template service<T>(std::forward<Args>(args)...);
 	}
-	
-private:
-	kgr::Container& _container;
 };
-
-namespace detail {
 
 template<typename T>
 struct LazyHelper {
@@ -151,12 +127,39 @@ private:
 
 } // namespace detail
 
-template<typename T>
-struct ForkedLazy : detail::LazyBase<ForkedLazy<T>, T> {
-	explicit ForkedLazy(kgr::Container container) : _container{std::move(container)} {}
+template<template<typename> class Map>
+struct Invoker : detail::InvokerBase<Invoker<Map>, Map> {
+	explicit Invoker(Container& container) : _container{container} {}
 	
 private:
-	friend struct detail::LazyBase<ForkedLazy<T>, T>;
+	friend struct detail::InvokerBase<Invoker<Map>, Map>;
+	kgr::Container& _container;
+};
+
+template<template<typename> class Map>
+struct ForkedInvoker : detail::InvokerBase<ForkedInvoker<Map>, Map> {
+	explicit ForkedInvoker(Container container) : _container{std::move(container)} {}
+	
+private:
+	friend struct detail::InvokerBase<ForkedInvoker<Map>, Map>;
+	kgr::Container _container;
+};
+
+template<typename T>
+struct Generator : detail::GeneratorBase<Generator<T>, T> {
+	explicit Generator(Container& container) : _container{container} {}
+	
+private:
+	friend struct detail::GeneratorBase<Generator<T>, T>;
+	kgr::Container& _container;
+};
+
+template<typename T>
+struct ForkedGenerator : detail::GeneratorBase<ForkedGenerator<T>, T> {
+	explicit ForkedGenerator(Container container) : _container{std::move(container)} {}
+	
+private:
+	friend struct detail::GeneratorBase<ForkedGenerator<T>, T>;
 	kgr::Container _container;
 };
 
@@ -169,4 +172,13 @@ private:
 	kgr::Container& _container;
 };
 
-}
+template<typename T>
+struct ForkedLazy : detail::LazyBase<ForkedLazy<T>, T> {
+	explicit ForkedLazy(kgr::Container container) : _container{std::move(container)} {}
+	
+private:
+	friend struct detail::LazyBase<ForkedLazy<T>, T>;
+	kgr::Container _container;
+};
+
+} // namespace kgr

@@ -90,7 +90,7 @@ public:
 	
 	~LazyBase() {
 		if (_initialized) {
-			reinterpret_cast<type*>(&_service)->~type();
+			data().~type();
 		}
 	}
 	
@@ -107,18 +107,18 @@ public:
 			emplace(this->assign(static_cast<CRTP*>(this)->_container.template service<T>()));
 		}
 		
-		return this->value(*reinterpret_cast<type*>(&_service));
+		return this->value(data());
 	}
 	
 private:
-	type data() {
+	type& data() {
 		return *reinterpret_cast<type*>(&_service);
 	}
 	
 	template<typename... Args>
 	void emplace(Args&&... args) {
 		if (_initialized) {
-			reinterpret_cast<type*>(&_service)->~type();
+			data().~type();
 		}
 		
 		_initialized = true;

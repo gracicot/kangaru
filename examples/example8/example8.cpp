@@ -5,15 +5,21 @@
 
 /**
  * This example explains advanced use of kangaru and it's components.
- * It covers invoke and autocall (injection by setters) through service map.
+ * It covers invoker, lazy and generator.
  */
 
 using std::cout;
 using std::endl;
 
+struct Sugar {
+	int quantity = 100;
+};
+
 // Here we are declaring two candy types
 struct Caramel {
-	Caramel() {
+	// we need sugar
+	Caramel(Sugar& s) {
+		s.quantity -= 10;
 		cout << "Caramel made" << endl;
 	}
 	
@@ -33,7 +39,8 @@ struct GummyBear {
 };
 
 // Then, we are declaring two service definition for them
-struct CaramelService : kgr::Service<Caramel> {};
+struct SugarService : kgr::SingleService<Sugar> {};
+struct CaramelService : kgr::Service<Caramel, kgr::Dependency<SugarService>> {};
 struct GummyBearService : kgr::Service<GummyBear> {};
 
 // We will need the service map
@@ -54,15 +61,18 @@ struct CandyFactory {
 		invoker{myInvoker} {}
 	
 	kgr::Lazy<GummyBearService> makeGummyBear() {
+		// this line is making a new GummyBear with it's dependencies injected
 		return gummyBearGenerator();
 	}
 	
 	Caramel makeCaramel() {
+		// this line is making a new Caramel with it's dependencies injected
 		return caramelGenerator();
 	}
 	
 	template<typename T>
 	void mix(T function) {
+		// calls the function sent as parameter
 		invoker(function);
 	}
 	

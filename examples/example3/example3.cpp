@@ -38,7 +38,7 @@ struct Studio {
 
 // This is our service definitions
 struct AmpService : kgr::Service<Amp> {
-	static auto construct() {
+	static auto construct() -> decltype(kgr::inject(std::declval<int>())) {
 		static int watts = 0;
 		return kgr::inject(watts += 48);
 	}

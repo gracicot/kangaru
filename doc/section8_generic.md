@@ -90,4 +90,4 @@ Now let's see how they look like in `MyGeneric`!
 
 If the generic definition should be single, simply make it extend the `kgr::Single` struct and make `forward` virtual.
 
-[Next chapter](section8_structure.md)
+[Next chapter](section9_structure.md)

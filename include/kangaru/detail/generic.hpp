@@ -12,22 +12,8 @@ namespace kgr {
 template<typename... Args>
 struct Dependency {};
 
-namespace detail {
-
-template<typename...>
-struct Injector;
-
-template<typename CRTP, typename... Deps>
-struct Injector<CRTP, Dependency<Deps...>> {
-	static decltype(auto) construct(Inject<Deps>... deps) {
-		return CRTP::makeService(std::forward<Inject<Deps>>(deps).forward()...);
-	}
-};
-
-} // detail
-
-template<typename CRTP, typename Type, typename Deps>
-struct GenericService : detail::Injector<CRTP, Deps> {
+template<typename CRTP, typename Type>
+struct GenericService {
 	friend struct Container;
 	using Self = CRTP;
 	

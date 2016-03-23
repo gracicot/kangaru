@@ -227,14 +227,31 @@ private:
 	//   make instance   //
 	///////////////////////
 	
-	template<typename T, typename... Args>
+	template<typename T, typename... Args, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance(Args&&... args) {
-		return make_service_instance<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::construct)>>{}, std::forward<Args>(args)...);
+		return make_service_instance_helper<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::construct)>>{}, std::forward<Args>(args)...);
 	}
 	
-	template<typename T, typename... Args, int... S>
-	contained_service_t<T> make_service_instance(detail::seq<S...>, Args&&... args) {
+	template<typename T, typename... Args, enable_if<detail::has_template_construct<T, Args...>> = 0>
+	contained_service_t<T> make_service_instance(Args&&... args) {
+		return make_service_instance_helper<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::template construct<Args...>)>>{}, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, disable_if<detail::has_template_construct<T, Args...>> = 0, disable_if<detail::has_construct<T>> = 0>
+	void make_service_instance(Args&&...) {
+		static_assert(!std::is_same<T, T>::value, "A non-abstract service must have a static member function named construct.");
+	}
+	
+	template<typename T, typename... Args, int... S, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
+	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::construct, std::forward<Args>(args)...);
+		static_cast<void>(constructArgs);
+		return make_contained_service<T>(std::forward<tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, int... S, enable_if<detail::has_template_construct<T, Args...>> = 0>
+	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
+		auto constructArgs = invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
 		static_cast<void>(constructArgs);
 		return make_contained_service<T>(std::forward<tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
@@ -353,3 +370,29 @@ private:
 };
 
 }  // namespace kgr
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

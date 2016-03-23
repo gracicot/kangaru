@@ -63,6 +63,12 @@ struct is_service : std::false_type {};
 template<typename T>
 struct is_service<T, void_t<decltype(&T::forward)>> : std::true_type {};
 
+template<typename T, typename = void>
+struct has_construct : std::false_type {};
+
+template<typename T>
+struct has_construct<T, void_t<decltype(&T::construct)>> : std::true_type {};
+
 template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:
@@ -77,6 +83,19 @@ public:
 };
 
 template<typename T, typename... Args>
+struct has_template_construct_helper {
+private:
+	template<typename U, typename... As>
+	static std::true_type test(decltype(&U::template construct<As...>)* = nullptr);
+
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(nullptr));
+};
+
+template<typename T, typename... Args>
 struct is_brace_constructible : is_brace_constructible_helper<T, Args...>::type {};
 
 template<typename T> struct remove_rvalue_reference { using type = T; };
@@ -84,6 +103,9 @@ template<typename T> struct remove_rvalue_reference<T&> { using type = T&; };
 template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 
 template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
+
+template<typename... Ts>
+struct has_template_construct : has_template_construct_helper<Ts...>::type {};
 
 template<typename... Ts>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;

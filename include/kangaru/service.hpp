@@ -8,17 +8,20 @@
 
 namespace kgr {
 
-template<typename Type, typename Deps = Dependency<>>
-struct SingleService : GenericService<SingleService<Type, Deps>, Type, Deps>, Single {
-	private: using Parent = GenericService<SingleService<Type, Deps>, Type, Deps>;
+template<typename, typename = Dependency<>>
+struct SingleService;
+
+template<typename Type, typename... Deps>
+struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type>, Single {
+	private: using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type>;
 	
 public:
 	using typename Parent::Self;
 	using Parent::Parent;
-
+	
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(inject(std::forward<Args>(args)...)) {
-		return inject(std::forward<Args>(args)...);
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(deps.forward()..., std::forward<Args>(args)...)) {
+		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
 	Type& forward() {
@@ -31,17 +34,20 @@ public:
 	}
 };
 
-template<typename Type, typename Deps = Dependency<>>
-struct Service : GenericService<Service<Type, Deps>, Type, Deps> {
-	private: using Parent = GenericService<Service<Type, Deps>, Type, Deps>;
+template<typename, typename = Dependency<>>
+struct Service;
+
+template<typename Type, typename... Deps>
+struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type> {
+	private: using Parent = GenericService<Service<Type, Dependency<Deps...>>, Type>;
 	
 public:
 	using typename Parent::Self;
 	using Parent::Parent;
-
+	
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(inject(std::forward<Args>(args)...)) {
-		return inject(std::forward<Args>(args)...);
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(deps.forward()..., std::forward<Args>(args)...)) {
+		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
 	Type forward() {
@@ -54,17 +60,20 @@ public:
 	}
 };
 
-template<typename Type, typename Deps = Dependency<>>
-struct UniqueService : GenericService<UniqueService<Type, Deps>, std::unique_ptr<Type>, Deps> {
-	private: using Parent = GenericService<UniqueService<Type, Deps>, std::unique_ptr<Type>, Deps>;
+template<typename, typename = Dependency<>>
+struct UniqueService;
+
+template<typename Type, typename... Deps>
+struct UniqueService<Type, Dependency<Deps...>> : GenericService<UniqueService<Type, Dependency<Deps...>>, std::unique_ptr<Type>> {
+	private: using Parent = GenericService<UniqueService<Type, Dependency<Deps...>>, std::unique_ptr<Type>>;
 	
 public:
 	using typename Parent::Self;
 	using Parent::Parent;
 	
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(inject(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}})) {
-		return inject(std::unique_ptr<Type>{new Type{std::forward<Args>(args)...}});
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::forward<Args>(args)...}})) {
+		return inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::forward<Args>(args)...}});
 	}
 	
 	std::unique_ptr<Type> forward() {
@@ -77,17 +86,20 @@ public:
 	}
 };
 
-template<typename Type, typename Deps = Dependency<>>
-struct SharedService : GenericService<SharedService<Type, Deps>, std::shared_ptr<Type>, Deps>, Single {
-	private: using Parent = GenericService<SharedService<Type, Deps>, std::shared_ptr<Type>, Deps>;
+template<typename, typename = Dependency<>>
+struct SharedService;
+
+template<typename Type, typename... Deps>
+struct SharedService<Type, Dependency<Deps...>> : GenericService<SharedService<Type, Dependency<Deps...>>, std::shared_ptr<Type>>, Single {
+	private: using Parent = GenericService<SharedService<Type, Dependency<Deps...>>, std::shared_ptr<Type>>;
 	
 public:
 	using typename Parent::Self;
 	using Parent::Parent;
 
 	template<typename... Args>
-	static auto makeService(Args&&... args) -> decltype(inject(std::make_shared<Type>(std::forward<Args>(args)...))) {
-		return inject(std::make_shared<Type>(std::forward<Args>(args)...));
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::make_shared<Type>(deps.forward()..., std::forward<Args>(args)...))) {
+		return inject(std::make_shared<Type>(deps.forward()..., std::forward<Args>(args)...));
 	}
 	
 	std::shared_ptr<Type> forward() {

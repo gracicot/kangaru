@@ -97,7 +97,7 @@ int main() {
 	kgr::Container container;
 	
 	// We are making our factory
-	auto candyFactory = container.service<CandyFactoryService>();
+	auto& candyFactory = container.service<CandyFactoryService>();
 	
 	// this will print nothing, as there is no candy constructed
 	auto lazyGummyBear = candyFactory.makeGummyBear();

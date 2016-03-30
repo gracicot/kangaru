@@ -88,7 +88,6 @@ If you don't want to use the service map at all, you can exdends `kgr::AutoCallN
         kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>
     > {};
 
-
 ## How does this black magic work?
 
 The `kgr::AutoCall` class is quite magic. Fortunately, this magic behaviour can be reproduced without the need of this class.

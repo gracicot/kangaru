@@ -187,7 +187,12 @@ private:
 	//   make instance   //
 	///////////////////////
 	
-	template<typename T, typename... Args>
+	template<typename T, typename... Args, enable_if<detail::has_template_construct<T, Args...>> = 0>
+	T make_service_instance(Args&&... args) {
+		return invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	T make_service_instance(Args&&... args) {
 		return invoke_raw(&T::construct, std::forward<Args>(args)...);
 	}

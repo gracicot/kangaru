@@ -53,4 +53,4 @@ Here's an emaxple:
 
     int result = container.invoke<NotificationService, FileManagerService>(doThings, 7, 8.9);
 
-[Next chapter](section5_operation.md)
+[Next chapter](section5_operator.md)

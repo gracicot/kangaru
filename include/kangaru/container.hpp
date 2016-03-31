@@ -23,8 +23,8 @@ private:
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using decay = typename std::decay<T>::type;
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
-	template<typename T> using is_container_service = std::integral_constant<bool, std::is_same<T, ContainerService>::value || std::is_same<T, ForkService>::value>;
-	template<typename T> using is_base_of_container_service = std::is_base_of<detail::ContainerServiceBase, T>;
+	template<typename T> using is_container_service = std::is_base_of<detail::ContainerServiceTag, T>;
+	template<typename T> using is_base_of_container_service = std::is_base_of<detail::DerivedContainerServiceTag, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
 	template<int S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
@@ -187,7 +187,12 @@ private:
 	//   make instance   //
 	///////////////////////
 	
-	template<typename T, typename... Args>
+	template<typename T, typename... Args, enable_if<detail::has_template_construct<T, Args...>> = 0>
+	T make_service_instance(Args&&... args) {
+		return invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
+	}
+	
+	template<typename T, typename... Args, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	T make_service_instance(Args&&... args) {
 		return invoke_raw(&T::construct, std::forward<Args>(args)...);
 	}
@@ -196,31 +201,19 @@ private:
 	//      invoke       //
 	///////////////////////
 	
-	template<typename U, typename ...Args, int... S>
-	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
-	}
-	
 	template<template<typename> class Map, typename U, typename ...Args, int... S>
 	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
-	template<typename U, typename ...Args, enable_if<is_invoke_call<decay<U>>> = 0>
-	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
-		using V = decay<U>;
-		return invoke(detail::tuple_seq<typename V::Params>{}, std::forward<U>(function), std::forward<Args>(args)...);
-	}
-	
-	template<typename U, typename ...Args, int... S, enable_if<is_invoke_call<decay<U>>> = 0>
-	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
-		using V = decay<U>;
-		return invoke<tuple_element_t<S, typename V::Params>...>(std::forward<U>(function), std::forward<Args>(args)...);
-	}
-	
-	template<typename U, typename ...Args, disable_if<is_invoke_call<decay<U>>> = 0>
+	template<typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke_raw(U&& function, Args&&... args) {
-		return invoke(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_raw(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+	}
+	
+	template<typename U, typename ...Args, int... S>
+	detail::function_result_t<decay<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
+		return std::forward<U>(function)(get_service<decay<detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

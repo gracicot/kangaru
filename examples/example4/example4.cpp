@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 
 #include "kangaru.hpp"
 
@@ -9,8 +8,8 @@
  * It covers overriding services
  */
 
-using namespace std;
-using namespace kgr;
+using std::cout;
+using std::endl;
 
 struct Wand {
 	virtual void doTrick() = 0;
@@ -68,18 +67,18 @@ private:
 	FireWand& wand;
 };
 
-struct WandService : AbstractService<Wand> {};
-struct MagicWandService : SingleService<MagicWand>, Overrides<WandService> {};
-struct FireWandService : SingleService<FireWand>, Overrides<MagicWandService> {};
-struct LavaWandService : SingleService<LavaWand>, Overrides<FireWandService, MagicWandService> {};
-struct TricksterService : Service<Trickster, Dependency<WandService>> {};
-struct WizardService : Service<Wizard, Dependency<MagicWandService>> {};
-struct FireMageService : Service<FireMage, Dependency<FireWandService>> {};
+struct WandService : kgr::AbstractService<Wand> {};
+struct MagicWandService : kgr::SingleService<MagicWand>, kgr::Overrides<WandService> {};
+struct FireWandService : kgr::SingleService<FireWand>, kgr::Overrides<MagicWandService> {};
+struct LavaWandService : kgr::SingleService<LavaWand>, kgr::Overrides<FireWandService, MagicWandService> {};
+struct TricksterService : kgr::Service<Trickster, kgr::Dependency<WandService>> {};
+struct WizardService : kgr::Service<Wizard, kgr::Dependency<MagicWandService>> {};
+struct FireMageService : kgr::Service<FireMage, kgr::Dependency<FireWandService>> {};
 
 // This is the init function, we are initiating what we need to make the container behave correctly.
-Container makeContainer() {
+kgr::Container makeContainer() {
 	// This is the make function, we are initiating what we need to make the main() work.
-	Container container;
+	kgr::Container container;
 	
 	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
 	container.instance<MagicWandService>();

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 #include <vector>
 
 #include "kangaru.hpp"
@@ -10,8 +9,10 @@
  * It covers providing instances to the container, self-injection
  */
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
+using std::move;
 
 struct WoodStack {
 	int planks;
@@ -26,16 +27,16 @@ struct Product {
 };
 
 // This is our wood stack service definition
-struct WoodStackService : SingleService<WoodStack> {
+struct WoodStackService : kgr::SingleService<WoodStack> {
 	// We need constructors for our use case.
 	using Self::Self;
 };
 
 // This is our product service definition
-struct ProductService : Service<Product, Dependency<WoodStackService>> {};
+struct ProductService : kgr::Service<Product, kgr::Dependency<WoodStackService>> {};
 
 struct Carpenter {
-	Carpenter(Container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
+	Carpenter(kgr::Container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
 	
 	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
 	void makeProduct(string name) {
@@ -52,17 +53,17 @@ struct Carpenter {
 	}
 	
 private:
-	vector<Product> products;
-	Container& container;
+	std::vector<Product> products;
+	kgr::Container& container;
 	WoodStack& stack;
 };
 
 // This is our carpenter service definition
-struct CarpenterService : Service<Carpenter, Dependency<ContainerService, WoodStackService>> {};
+struct CarpenterService : kgr::Service<Carpenter, kgr::Dependency<kgr::ContainerService, WoodStackService>> {};
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	// We made the stack ourself and set the number of planks to 2
 	WoodStack stack{2};

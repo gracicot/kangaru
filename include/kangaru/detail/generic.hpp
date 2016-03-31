@@ -30,8 +30,9 @@ struct Injector;
 
 template<typename CRTP, typename... Deps>
 struct Injector<CRTP, Dependency<Deps...>> {
-	static CRTP construct(inject_t<Deps>... deps) {
-		return CRTP::makeService(std::forward<inject_t<Deps>>(deps).forward()...);
+	template<typename... Args>
+	static CRTP construct(inject_t<Deps>... deps, Args&&... args) {
+		return CRTP::makeService(std::forward<inject_t<Deps>>(deps).forward()..., std::forward<Args>(args)...);
 	}
 };
 
@@ -141,18 +142,6 @@ private:
 	
 	bool _initiated = false;
 	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
-};
-
-// TODO: does not belong here. To move in another header.
-struct ForkService {
-	ForkService(Container& container) : _container{container.fork()} {}
-	
-	inline Container forward() {
-		return std::move(_container);
-	}
-	
-private:
-	Container _container;
 };
 
 }

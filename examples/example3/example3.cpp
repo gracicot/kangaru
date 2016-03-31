@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 
 #include "kangaru.hpp"
 
@@ -9,8 +8,9 @@
  * It covers overriding the construct method and extending the container
  */
 
-using namespace std;
-using namespace kgr;
+using std::string;
+using std::cout;
+using std::endl;
 
 struct Amp {
 	Amp(int myWatts = 0) : watts{myWatts} {};
@@ -36,17 +36,17 @@ struct Studio {
 };
 
 // This is our service definitions
-struct AmpService : Service<Amp> {
+struct AmpService : kgr::Service<Amp> {
 	static Self construct() {
 		static int watts = 0;
 		return Amp{watts += 48};
 	}
 };
 
-struct GuitarService : Service<Guitar, Dependency<AmpService>> {};
-struct StudioService : SingleService<Studio> {};
+struct GuitarService : kgr::Service<Guitar, kgr::Dependency<AmpService>> {};
+struct StudioService : kgr::SingleService<Studio> {};
 
-struct MyContainer : Container {
+struct MyContainer : kgr::Container {
     MyContainer() {
 		// We are making our studio with a pretty name.
 		service<StudioService>().name = "The Music Box";

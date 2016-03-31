@@ -8,7 +8,9 @@ namespace kgr {
 struct Container;
 
 namespace detail {
-struct ContainerServiceBase{};
+
+struct ContainerServiceTag {};
+struct DerivedContainerServiceTag : ContainerServiceTag {};
 
 template<typename Original, typename Service>
 struct ServiceOverride : Service {
@@ -39,7 +41,7 @@ struct Overrides {
 	using ParentTypes = std::tuple<Types...>;
 };
 
-struct ContainerService : detail::ContainerServiceBase {
+struct ContainerService : detail::ContainerServiceTag {
 	ContainerService(Container& instance) : _instance{instance} {}
 	
 	inline Container& forward() {
@@ -51,7 +53,7 @@ private:
 };
 
 template<typename T>
-struct DerivedContainerService : detail::ContainerServiceBase {
+struct DerivedContainerService : detail::DerivedContainerServiceTag {
 	using Type = T;
 	DerivedContainerService(T& instance) : _instance{instance} {}
 	

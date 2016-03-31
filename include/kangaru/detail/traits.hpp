@@ -57,5 +57,21 @@ struct is_service : std::false_type {};
 template<typename T>
 struct is_service<T, void_t<decltype(&T::forward)>> : std::true_type {};
 
+template<typename T, typename... Args>
+struct has_template_construct_helper {
+private:
+	template<typename U, typename... As>
+	static std::true_type test(decltype(&U::template construct<As...>)* = nullptr);
+
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(nullptr));
+};
+
+template<typename... Ts>
+struct has_template_construct : has_template_construct_helper<Ts...>::type {};
+
 } // namespace detail
 } // namespace kgr

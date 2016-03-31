@@ -1,6 +1,5 @@
 #include <iostream>
 #include <string>
-#include <memory>
 
 #include "kangaru.hpp"
 
@@ -14,7 +13,6 @@
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using namespace std;
-using namespace kgr;
 
 struct Keyboard {
 	string switchColor;
@@ -70,16 +68,16 @@ private:
 };
 
 // service definitions
-struct KeyboardService : SingleService<Keyboard> {};
-struct MonitorService : SingleService<Monitor> {};
-struct MouseService : SingleService<Mouse> {};
-struct SpeakersService : SingleService<Speakers> {};
+struct KeyboardService : kgr::SingleService<Keyboard> {};
+struct MonitorService : kgr::SingleService<Monitor> {};
+struct MouseService : kgr::SingleService<Mouse> {};
+struct SpeakersService : kgr::SingleService<Speakers> {};
 
-struct MinimalComputerService : Service<Computer, Dependency<KeyboardService>> {};
+struct MinimalComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>> {};
 
-struct EquippedComputerService : Service<Computer, Dependency<KeyboardService>>, kgr::AutoCallNoMap<
-	Invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
-	Invoke<METHOD(&Computer::setMonitor), MonitorService>
+struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCallNoMap<
+	kgr::Invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
+	kgr::Invoke<METHOD(&Computer::setMonitor), MonitorService>
 > {};
 
 // A funtion to wash our favourite monitor and keyboard.
@@ -94,7 +92,7 @@ double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
 
 int main()
 {
-	Container container;
+	kgr::Container container;
 	
 	// getting our four pieces of hardware
 	auto& keyboard = container.service<KeyboardService>();

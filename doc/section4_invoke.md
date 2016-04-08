@@ -43,5 +43,14 @@ Now that our service map is defined, we can use invoke like this:
     int result = container.invoke<ServiceMap>(doThings);
     
 With `ServiceMap`, the container can even call function from third party libraries!
- 
-[Next chapter](section5_setters.md)
+
+## Additional parameters
+
+Just like the `service()` function, `invoke()` can receive additional parameters to be sent after dependencies.
+Here's an emaxple:
+
+    int doThings(Notification n, FileManager& fm, int a, double b);
+
+    int result = container.invoke<NotificationService, FileManagerService>(doThings, 7, 8.9);
+
+[Next chapter](section5_operator.md)

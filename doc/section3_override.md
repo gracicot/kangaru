@@ -33,8 +33,8 @@ Yes. Look at these two cases:
     {
         Container c;
         
-        c.instance<ClownMasterService>();
-        c.instance<FileManagerService>();
+        c.service<ClownMasterService>();
+        c.service<FileManagerService>();
         
         // auto is a FileManager
         auto& fm = c.service<IFileManagerService>();
@@ -43,8 +43,8 @@ Yes. Look at these two cases:
     {
         Container c;
         
-        c.instance<FileManagerService>();
-        c.instance<ClownMasterService>();
+        c.service<FileManagerService>();
+        c.service<ClownMasterService>();
         
         // auto is a ClownMaster
         auto& fm = c.service<IFileManagerService>();

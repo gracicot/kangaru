@@ -47,7 +47,8 @@ Here's a include graph of this project:
     ------------     --------------
     
 As we can see, the files of `ClassA` and `ClassB` are unchanged and are not dependent of kangaru. The only thing changed is the addition of `ClassAService.h` and `ClassBService.h`.
-This has the effect of reducing coupling considerably: only code that uses kangaru will depend on it. If we were to remove kangaru from this project, the only changed thing would be to reimplement the desired logic in `ClassC`.
+This has the effect of reducing coupling considerably: only code that uses kangaru will depend on it.
+If we were to remove kangaru from this project, the only changed thing would be to reimplement the desired logic in `ClassC`.
 
 ## Including kangaru
 
@@ -77,11 +78,25 @@ A "include kangaru" header file should look like this:
     template<> struct ServiceMap<kgr::Container&> : kgr::Map<kgr::ContainerService> {};
     template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::ForkService> {};
     
+    // specializing the service map for operator services.
+    
     template<template<typename> class Map>
     struct ServiceMap<kgr::Invoker<Map>> : kgr::Map<kgr::InvokerService<Map>> {};
     
     template<template<typename> class Map>
     struct ServiceMap<kgr::ForkedInvoker<Map>> : kgr::Map<kgr::ForkedInvokerService<Map>> {};
+    
+    template<typename T>
+    struct ServiceMap<kgr::Generator<T>> : kgr::Map<kgr::GeneratorService<T>> {};
+    
+    template<typename T>
+    struct ServiceMap<kgr::ForkedGenerator<T>> : kgr::Map<kgr::ForkedGeneratorService<T>> {};
+    
+    template<typename T>
+    struct ServiceMap<kgr::Lazy<T>> : kgr::Map<kgr::LazyService<T>> {};
+    
+    template<typename T>
+    struct ServiceMap<kgr::ForkedLazy<T>> : kgr::Map<kgr::ForkedLazyService<T>> {};
     
     } // <your-namespace>
     

@@ -2,7 +2,7 @@
 #include <string>
 #include <memory>
 
-#include "kangaru.hpp"
+#include "kangaru/kangaru.hpp"
 
 /**
  * This example explains advanced use of kangaru and it's components.

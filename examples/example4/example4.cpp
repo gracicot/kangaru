@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include "kangaru.hpp"
+#include "kangaru/kangaru.hpp"
 
 /**
  * This example explains advanced use of kangaru and it's components.

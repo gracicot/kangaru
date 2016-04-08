@@ -20,28 +20,20 @@ struct GenericService {
 	GenericService() = default;
 	
 	GenericService(GenericService&& other) {
-		if (other._initialized) {
-			emplace(std::move(other.getInstance()));
-		}
+		emplace(std::move(other.getInstance()));
 	}
 	
 	GenericService& operator=(GenericService&& other) {
-		if (other._initialized) {
-			emplace(std::move(other.getInstance()));
-		}
+		emplace(std::move(other.getInstance()));
 		return *this;
 	}
 	
 	GenericService(const GenericService& other) {
-		if (other._initialized) {
-			emplace(other.getInstance());
-		}
+		emplace(other.getInstance());
 	}
 	
 	GenericService& operator=(const GenericService& other) {
-		if (other._initialized) {
-			emplace(other.getInstance());
-		}
+		emplace(other.getInstance());
 		return *this;
 	}
 	
@@ -51,9 +43,7 @@ struct GenericService {
 	}
 	
 	~GenericService() {
-		if (_initialized) {
-			getInstance().~Type();
-		}
+		getInstance().~Type();
 	}
 	
 protected:
@@ -78,11 +68,6 @@ protected:
 private:
 	template<typename... Args>
 	void emplace(Args&&... args) {
-		if (_initialized) {
-			getInstance().~Type();
-		}
-		
-		_initialized = true;
 		new (&_instance) Type(std::forward<Args>(args)...);
 	}
 	
@@ -93,7 +78,6 @@ private:
 		});
 	}
 	
-	bool _initialized = false;
 	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
 };
 

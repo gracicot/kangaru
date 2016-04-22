@@ -8,6 +8,9 @@
 
 namespace kgr {
 
+template<typename... Args>
+struct Dependency {};
+
 template<typename, typename = Dependency<>>
 struct SingleService;
 

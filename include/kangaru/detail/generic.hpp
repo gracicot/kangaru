@@ -9,9 +9,6 @@
 
 namespace kgr {
 
-template<typename... Args>
-struct Dependency {};
-
 template<typename CRTP, typename Type>
 struct GenericService {
 	friend struct Container;

@@ -18,13 +18,13 @@ template <typename T> void type_id() {}
 template <bool b, typename T = void>
 using enable_if_t = typename std::enable_if<b, T>::type;
 
-template<int ...>
+template<std::size_t ...>
 struct seq {};
 
-template<int n, int ...S>
+template<std::size_t n, std::size_t ...S>
 struct seq_gen : seq_gen<n-1, n-1, S...> {};
 
-template<int ...S>
+template<std::size_t ...S>
 struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };

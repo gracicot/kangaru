@@ -20,14 +20,14 @@ struct base_function_traits {
 	using object_type = Type;
 	using return_type = R;
 	using argument_types = std::tuple<Args...>;
-	template<int n> using argument_type = typename std::tuple_element<n, argument_types>::type;
+	template<std::size_t n> using argument_type = typename std::tuple_element<n, argument_types>::type;
 };
 
 template <typename R, typename... Args>
 struct base_non_member_function_traits {
 	using return_type = R;
 	using argument_types = std::tuple<Args...>;
-	template<int n> using argument_type = typename std::tuple_element<n, argument_types>::type;
+	template<std::size_t n> using argument_type = typename std::tuple_element<n, argument_types>::type;
 };
 
 template <typename Type, typename R, typename... Args>
@@ -117,7 +117,7 @@ using function_result_t = typename function_traits<F>::return_type;
 template <typename F>
 using object_type_t = typename function_traits<F>::object_type;
 
-template <int n, typename F>
+template <std::size_t n, typename F>
 using function_argument_t = typename function_traits<F>::template argument_type<n>;
 
 } // namespace detail

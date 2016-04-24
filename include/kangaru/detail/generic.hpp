@@ -68,7 +68,7 @@ private:
 		new (&_instance) Type(std::forward<Args>(args)...);
 	}
 	
-	template<template<typename> class Map, typename F, int... S>
+	template<template<typename> class Map, typename F, std::size_t... S>
 	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
 			CRTP::call(getInstance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);

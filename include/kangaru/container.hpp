@@ -30,7 +30,7 @@ private:
 	template<typename T> using is_single = std::is_base_of<Single, decay<T>>;
 	template<typename T> using is_container_service = std::is_base_of<detail::ContainerServiceTag, T>;
 	template<typename T> using parent_types = typename decay<T>::ParentTypes;
-	template<int S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
+	template<std::size_t S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	template<template<typename> class Map, typename T> using service_map_t = typename Map<T>::Service;
@@ -181,7 +181,7 @@ private:
 		return save_instance_helper<U>(std::move(service));
 	}
 	
-	template<typename T, int... S>
+	template<typename T, std::size_t... S>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service, detail::seq<S...>) {
 		using U = decay<T>;
 		return save_instance_helper<U, tuple_element_t<S, parent_types<U>>...>(std::move(service));
@@ -257,14 +257,14 @@ private:
 		static_assert(!std::is_same<T, T>::value, "A non-abstract service must have a static member function named construct.");
 	}
 	
-	template<typename T, typename... Args, int... S, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
+	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::construct, std::forward<Args>(args)...);
 		static_cast<void>(constructArgs);
 		return make_contained_service<T>(std::forward<tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
 	
-	template<typename T, typename... Args, int... S, enable_if<detail::has_template_construct<T, Args...>> = 0>
+	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
 		static_cast<void>(constructArgs);
@@ -303,7 +303,7 @@ private:
 	//      invoke       //
 	///////////////////////
 	
-	template<template<typename> class Map, typename U, typename ...Args, int... S>
+	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
@@ -313,7 +313,7 @@ private:
 		return invoke_raw(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
-	template<typename U, typename ...Args, int... S>
+	template<typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<decay<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(get_service<detail::original_t<decay<detail::function_argument_t<S, decay<U>>>>>()..., std::forward<Args>(args)...);
 	}
@@ -347,7 +347,7 @@ private:
 	}
 	
 	// This function is a helper for do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
-	template<typename Method, typename T, int... S>
+	template<typename Method, typename T, std::size_t... S>
 	void do_invoke_service(detail::seq<S...>, T&& service) {
 		using U = decay<T>;
 		do_invoke_service(
@@ -366,7 +366,7 @@ private:
 	
 	// This function is the do_invoke_service that take the method to invoke as parameter.
 	// It invokes the function sent as parameter.
-	template<typename T, typename F, int... S>
+	template<typename T, typename F, std::size_t... S>
 	void do_invoke_service(detail::seq<S...>, T&& service, F&& function) {
 		invoke_raw([&service, &function](detail::function_argument_t<S, decay<F>>... args){
 			(std::forward<T>(service).*std::forward<F>(function))(std::forward<detail::function_argument_t<S, decay<F>>>(args)...);

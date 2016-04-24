@@ -19,6 +19,9 @@ namespace kgr {
 
 struct ForkService;
 
+struct no_autocall_t {};
+constexpr no_autocall_t no_autocall{};
+
 struct Container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
@@ -71,11 +74,23 @@ public:
 	 * It also saves it in the container.
 	 * It returns void.
 	 * This function only works with single services.
+	 * This version of the function will call functions in autocall.
 	 */
 	template<typename T, typename... Args, enable_if<is_single<T>> = 0>
 	void instance(Args&& ...args) {
-		auto& service = save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
-		invoke_service(service.get()); // should we call invoke_service on this case?
+		invoke_service(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)).get());
+	}
+	
+	/*
+	 * This function construct a service definition with the provided arguments.
+	 * It also saves it in the container.
+	 * It returns void.
+	 * This function only works with single services.
+	 * This version of the function will not call functions in autocall.
+	 */
+	template<typename T, typename... Args, enable_if<is_single<T>> = 0>
+	void instance(no_autocall_t, Args&& ...args) {
+		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
 	
 	/*

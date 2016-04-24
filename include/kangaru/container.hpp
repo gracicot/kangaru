@@ -30,7 +30,7 @@ private:
 	template<std::size_t S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
-	template<template<typename> class Map, typename T> using service_map_t = typename Map<T>::Service;
+	template<template<typename> class Map, typename T> using service_map_t = detail::SafeMap<Map, T>;
 	template<typename T> using is_invoke_call = typename std::is_base_of<detail::InvokeCallTag, T>::type;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<detail::type_id_t, void*>;
@@ -107,6 +107,11 @@ public:
 	 */
 	template<template<typename> class Map, typename U, typename ...Args>
 	detail::function_result_t<decay<U>> invoke(U&& function, Args&&... args) {
+		static_assert(
+			static_cast<std::int64_t>(std::tuple_size<detail::function_arguments_t<decay<U>>>::value) - static_cast<std::int64_t>(sizeof...(Args)) >= 0,
+			"Too many arguments are sent to the function."
+		);
+		
 		return invoke<Map>(tuple_seq_minus<detail::function_arguments_t<decay<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	

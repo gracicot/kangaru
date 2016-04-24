@@ -19,9 +19,6 @@ namespace kgr {
 
 struct ForkService;
 
-struct no_autocall_t {};
-constexpr no_autocall_t no_autocall{};
-
 struct Container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;

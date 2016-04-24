@@ -28,6 +28,7 @@ struct LazyHelper {
 protected:
 	using type = T;
 	using ref = T&;
+	using rref = T&&;
 	using ptr = T*;
 	
 	T&& assign(T&& service) {
@@ -44,6 +45,7 @@ struct LazyHelper<T&> {
 protected:
 	using type = T*;
 	using ref = T&;
+	using rref = T&&;
 	using ptr = T*;
 	
 	T* assign(T& service) {
@@ -60,6 +62,7 @@ struct LazyBase : LazyHelper<ServiceType<T>> {
 private:
 	using typename detail::LazyHelper<ServiceType<T>>::type;
 	using typename detail::LazyHelper<ServiceType<T>>::ref;
+	using typename detail::LazyHelper<ServiceType<T>>::rref;
 	using typename detail::LazyHelper<ServiceType<T>>::ptr;
 	
 public:
@@ -96,12 +99,16 @@ public:
 		}
 	}
 	
-	ref operator*() {
+	ref operator*() & {
 		return get();
 	}
 	
 	ptr operator->() {
 		return &get();
+	}
+	
+	rref operator*() && {
+		return std::move(get());
 	}
 	
 	ref get() {

@@ -117,6 +117,10 @@ private:
 		return *reinterpret_cast<type*>(&_service);
 	}
 	
+	const type& data() const {
+		return *reinterpret_cast<const type*>(&_service);
+	}
+	
 	template<typename... Args>
 	void emplace(Args&&... args) {
 		if (_initialized) {

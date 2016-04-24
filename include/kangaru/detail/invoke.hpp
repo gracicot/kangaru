@@ -9,7 +9,6 @@ namespace kgr {
 namespace detail {
 
 // tags for SFINAE
-struct InvokeTag {};
 struct InvokeCallTag {};
 
 }
@@ -27,13 +26,13 @@ struct Invoke<> {};
 
 // This class is a list of methods.
 template<typename M, typename... Others>
-struct Invoke<M, Others...> : M, detail::InvokeTag {
+struct Invoke<M, Others...> : M {
 	using Next = Invoke<Others...>;
 };
 
 // This specialization represent a method and a list of it's parameter.
 template<typename M, typename... Others, typename... Ps>
-struct Invoke<Invoke<M, Ps...>, Others...> : detail::InvokeCallTag, detail::InvokeTag, M {
+struct Invoke<Invoke<M, Ps...>, Others...> : detail::InvokeCallTag, M {
 	using Params = std::tuple<Ps...>;
 	using Next = Invoke<Others...>;
 };

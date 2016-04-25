@@ -31,7 +31,6 @@ private:
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	template<template<typename> class Map, typename T> using service_map_t = detail::SafeMap<Map, T>;
-	template<typename T> using is_invoke_call = typename std::is_base_of<detail::InvokeCallTag, T>::type;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<detail::type_id_t, void*>;
 	template<typename T>
@@ -340,10 +339,12 @@ private:
 	
 	// This function ends the iteration of invoke_service
 	template<typename Method, typename T, disable_if<detail::has_next<Method>> = 0>
-	void invoke_service_helper(T&&) {}
+	void invoke_service_helper(T&& service) {
+		do_invoke_service<Method>(std::forward<T>(service));
+	}
 	
 	// This function is the do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
-	template<typename Method, typename T, enable_if<is_invoke_call<Method>> = 0>
+	template<typename Method, typename T, enable_if<detail::is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		do_invoke_service<Method>(detail::tuple_seq<typename Method::Params>{}, std::forward<T>(service));
 	}
@@ -360,7 +361,7 @@ private:
 	}
 	
 	// This function is the do_invoke_service handling the new syntax for autocall
-	template<typename Method, typename T, disable_if<is_invoke_call<Method>> = 0>
+	template<typename Method, typename T, disable_if<detail::is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		using U = decay<T>;
 		do_invoke_service(detail::tuple_seq<std::tuple<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);

@@ -6,13 +6,6 @@
 
 namespace kgr {
 
-namespace detail {
-
-// tags for SFINAE
-struct InvokeCallTag {};
-
-}
-
 template<typename T, T t>
 using Method = std::integral_constant<T, t>;
 
@@ -21,20 +14,19 @@ template<typename...>
 struct Invoke;
 
 // This class is the last node of the invoke list
-template<>
-struct Invoke<> {};
+template<typename T, T t>
+struct Invoke<Method<T, t>> : Method<T, t> {};
 
 // This class is a list of methods.
 template<typename M, typename... Others>
-struct Invoke<M, Others...> : M {
+struct Invoke<M, Others...> : Invoke<M> {
 	using Next = Invoke<Others...>;
 };
 
 // This specialization represent a method and a list of it's parameter.
 template<typename M, typename... Others, typename... Ps>
-struct Invoke<Invoke<M, Ps...>, Others...> : detail::InvokeCallTag, M {
+struct Invoke<Invoke<M, Ps...>, Others...> : Invoke<M, Others...> {
 	using Params = std::tuple<Ps...>;
-	using Next = Invoke<Others...>;
 };
 
 template<template<typename> class M, typename... Ts>

@@ -69,6 +69,12 @@ struct has_construct : std::false_type {};
 template<typename T>
 struct has_construct<T, void_t<decltype(&T::construct)>> : std::true_type {};
 
+template<typename T, typename = void>
+struct is_invoke_call : std::false_type {};
+
+template<typename T>
+struct is_invoke_call<T, void_t<typename T::Params>> : std::true_type {};
+
 template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:

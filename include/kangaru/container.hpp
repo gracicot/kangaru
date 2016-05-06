@@ -163,21 +163,19 @@ private:
 		throw std::out_of_range{"No instance found for the requested abstract service"}; // should we call std::terminate instead?
 	}
 	
-	template<typename T, enable_if<detail::has_overrides<detail::decay_t<T>>> = 0>
+	template<typename T, enable_if<detail::has_overrides<T>> = 0>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
-		return save_instance<T>(std::move(service), detail::tuple_seq<detail::parent_types<T>>{});
+		return save_instance<T>(detail::tuple_seq<detail::parent_types<T>>{}, std::move(service));
 	}
 	
-	template<typename T, disable_if<detail::has_overrides<detail::decay_t<T>>> = 0>
+	template<typename T, disable_if<detail::has_overrides<T>> = 0>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
-		using U = detail::decay_t<T>;
-		return save_instance_helper<U>(std::move(service));
+		return save_instance_helper<T>(std::move(service));
 	}
 	
 	template<typename T, std::size_t... S>
-	detail::SingleInjected<T>& save_instance(contained_service_t<T> service, detail::seq<S...>) {
-		using U = detail::decay_t<T>;
-		return save_instance_helper<U, detail::tuple_element_t<S, detail::parent_types<U>>...>(std::move(service));
+	detail::SingleInjected<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
+		return save_instance_helper<T, detail::tuple_element_t<S, detail::parent_types<T>>...>(std::move(service));
 	}
 	
 	template<typename T>

@@ -45,20 +45,4 @@ struct AutoCallNoMap {
 	struct Map;
 };
 
-namespace detail {
-
-template<template<typename> class Map, typename T, typename = void>
-struct SafeMapHelper {
-	static_assert(!std::is_same<T, T>::value, "The service sent to the service map is imcomplete. Have you forgot to include your service definition?");
-};
-
-template<template<typename> class Map, typename T>
-struct SafeMapHelper<Map, T, void_t<typename Map<T>::Service>> {
-	using Service = typename Map<T>::Service;
-};
-
-template<template<typename> class Map, typename T>
-using SafeMap = typename SafeMapHelper<Map, T>::Service;
-
-} // namespace detail
 } // namespace kgr

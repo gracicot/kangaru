@@ -28,7 +28,6 @@ private:
 	template<std::size_t S, typename T> using tuple_element_t = typename std::tuple_element<S, T>::type;
 	template<typename Tuple, int n> using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
-	template<template<typename> class Map, typename T> using service_map_t = detail::SafeMap<Map, T>;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<detail::type_id_t, void*>;
 	template<typename T>
@@ -304,7 +303,7 @@ private:
 	
 	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<decay<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(service<service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(service<detail::service_map_t<Map, detail::function_argument_t<S, decay<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	template<typename U, typename ...Args>

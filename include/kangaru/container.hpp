@@ -313,33 +313,44 @@ private:
 	//     autocall      //
 	///////////////////////
 	
-	// This function starts the iteration (invoke_service_helper)
+	/*
+	 * This function starts the iteration (invoke_service_helper).
+     */
 	template<typename T, enable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
 	void invoke_service(T&& service) {
 		using U = detail::decay_t<T>;
 		invoke_service_helper<typename U::invoke>(std::forward<T>(service));
 	}
 	
-	// This function is the iteration for invoke_service
+	/*
+     * This function is the iteration for invoke_service.
+     */
 	template<typename Method, typename T, enable_if<detail::has_next<Method>> = 0>
 	void invoke_service_helper(T&& service) {
 		do_invoke_service<Method>(std::forward<T>(service));
 		invoke_service_helper<typename Method::Next>(std::forward<T>(service));
 	}
 	
-	// This function ends the iteration of invoke_service
+	/*
+     * This function ends the iteration of invoke_service.
+     */
 	template<typename Method, typename T, disable_if<detail::has_next<Method>> = 0>
 	void invoke_service_helper(T&& service) {
 		do_invoke_service<Method>(std::forward<T>(service));
 	}
 	
-	// This function is the do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
+	/*
+     * This function is the do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
+     */
 	template<typename Method, typename T, enable_if<detail::is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		do_invoke_service<Method>(detail::tuple_seq<typename Method::Params>{}, std::forward<T>(service));
 	}
 	
-	// This function is a helper for do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
+	/* 
+     * This function is a helper for do_invoke_service when <Method> is kgr::Invoke with parameters explicitly listed.
+     * It receive a sequence of integers for unpacking parameters.
+     */
 	template<typename Method, typename T, std::size_t... S>
 	void do_invoke_service(detail::seq<S...>, T&& service) {
 		using U = detail::decay_t<T>;
@@ -350,15 +361,19 @@ private:
 		);
 	}
 	
-	// This function is the do_invoke_service handling the new syntax for autocall
+	/*
+     * This function is the do_invoke_service when Method is an integral constant of a pointer to method.
+     */
 	template<typename Method, typename T, disable_if<detail::is_invoke_call<Method>> = 0>
 	void do_invoke_service(T&& service) {
 		using U = detail::decay_t<T>;
 		do_invoke_service(detail::tuple_seq<std::tuple<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);
 	}
 	
-	// This function is the do_invoke_service that take the method to invoke as parameter.
-	// It invokes the function sent as parameter.
+	/*
+     * This function is the do_invoke_service that take the method to invoke as parameter.
+	 * It invokes the function sent as parameter.
+     */
 	template<typename T, typename F, std::size_t... S>
 	void do_invoke_service(detail::seq<S...>, T&& service, F&& function) {
 		invoke_raw([&service, &function](detail::function_argument_t<S, detail::decay_t<F>>... args){

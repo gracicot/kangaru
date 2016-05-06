@@ -151,6 +151,10 @@ private:
 	//   save instance   //
 	///////////////////////
 	
+    /*
+     * This function will create a new instance and save it.
+     * It also returns a reference to the constructed service.
+     */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
@@ -158,26 +162,48 @@ private:
 		return service;
 	}
 	
+	/*
+     * This function is a specialization of save_new_instance for abstract classes.
+     * Since you cannot construct an abstract class, this function always throw.
+     */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"}; // should we call std::terminate instead?
 	}
 	
+	/*
+     * This function will save the instance sent as arguments.
+	 * It receive a service that overrides.
+	 * It will save the instance and will save overrides.
+     */
 	template<typename T, enable_if<detail::has_overrides<T>> = 0>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
 		return save_instance<T>(detail::tuple_seq<detail::parent_types<T>>{}, std::move(service));
 	}
 	
+	/*
+	 * This function will save the instance sent as arguments.
+	 * The service sent is a service that doesn't override.
+	 * It will forward the work to save_instance_helper.
+	 */
 	template<typename T, disable_if<detail::has_overrides<T>> = 0>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
 		return save_instance_helper<T>(std::move(service));
 	}
 	
+	/*
+	 * This function saves the instance and it's overrides.
+	 * It starts the iteration that save each overrides.
+	 */
 	template<typename T, std::size_t... S>
 	detail::SingleInjected<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
 		return save_instance_helper<T, detail::tuple_element_t<S, detail::parent_types<T>>...>(std::move(service));
 	}
 	
+	/*
+	 * This function save the instance into the container.
+	 * It also returns a reference to the instance inside the container.
+	 */
 	template<typename T>
 	detail::SingleInjected<T>& save_instance_helper(contained_service_t<T> service) {
 		auto& serviceRef = *service;
@@ -189,6 +215,11 @@ private:
 		return serviceRef;
 	}
 	
+	/*
+	 * This function is the iteration that saves overrides to the container.
+	 * It will call itself until there is no override left.
+	 * It will class save_instance_helper with one template argument as it's last iteration.
+	 */
 	template<typename T, typename Override, typename... Others>
 	detail::SingleInjected<T>& save_instance_helper(contained_service_t<T> service) {
 		auto overrideService = makeOverridePtr<T, Override>(service->get());

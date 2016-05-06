@@ -11,6 +11,9 @@ namespace detail {
 
 struct ContainerServiceTag {};
 
+template<typename T>
+using is_container_service = std::is_base_of<detail::ContainerServiceTag, T>;
+
 template<typename Original, typename Service>
 struct ServiceOverride final : BaseInjected<Service> {
     explicit ServiceOverride(Original& service) : _service{service} {}
@@ -23,7 +26,7 @@ private:
     Original& _service;
 };
 
-}
+} // namespace detail
 
 struct ContainerService : detail::ContainerServiceTag {
 	explicit ContainerService(Container& instance) : _instance{instance} {}
@@ -36,4 +39,4 @@ private:
 	Container& _instance;
 };
 
-}
+} // namespace kgr

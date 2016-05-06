@@ -14,9 +14,15 @@ template<typename... Ts> using void_t = typename voider<Ts...>::type;
 using type_id_t = void(*)();
 template <typename T> void type_id() {}
 
-// thing missing from c++11 (to be removed when switching to c++14)
+// things missing from c++11 (to be removed when switching to c++14)
 template <bool b, typename T = void>
 using enable_if_t = typename std::enable_if<b, T>::type;
+
+template<typename T>
+using decay_t = typename std::decay<T>::type;
+
+template<std::size_t S, typename T>
+using tuple_element_t = typename std::tuple_element<S, T>::type;
 
 template<std::size_t ...>
 struct seq {};
@@ -37,6 +43,9 @@ struct TupleSeqGen<std::tuple<>> : seq_gen<0> {};
 
 template<typename Tuple>
 using tuple_seq = typename TupleSeqGen<Tuple>::type;
+
+template<typename Tuple, int n>
+using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 
 // SFINAE utilities
 template<typename T, typename = void>

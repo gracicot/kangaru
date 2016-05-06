@@ -88,7 +88,7 @@ public:
 	 */
 	template<typename T, typename... Args>
 	ServiceType<T> service(Args&& ...args) {
-		return get_service<T>(std::forward<Args>(args)...).forward();
+		return definition<T>(std::forward<Args>(args)...).forward();
 	}
 	
 	/*
@@ -236,23 +236,35 @@ private:
 	}
 	
 	///////////////////////
-	//    get service    //
+	//    definition     //
 	///////////////////////
 	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function create the service each time it is called.
+	 */
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
-	detail::Injected<T> get_service(Args&&... args) {
+	detail::Injected<T> definition(Args&&... args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		invoke_service(service.get());
 		return service;
 	}
 	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function is specific to a container service.
+	 */
 	template<typename T, enable_if<detail::is_container_service<T>> = 0>
-	detail::Injected<T> get_service() {
+	detail::Injected<T> definition() {
 		return detail::Injected<T>{T{*this}};
 	}
 	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function create the service if it was not created before.
+	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
-	detail::BaseInjected<T>& get_service() {
+	detail::BaseInjected<T>& definition() {
 		if (auto&& service = _services[detail::type_id<detail::BaseInjected<T>>]) {
 			return *static_cast<detail::BaseInjected<T>*>(service);
 		} else {
@@ -337,7 +349,7 @@ private:
 	
 	template<typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(get_service<detail::original_t<detail::decay_t<detail::function_argument_t<S, detail::decay_t<U>>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(definition<detail::original_t<detail::decay_t<detail::function_argument_t<S, detail::decay_t<U>>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

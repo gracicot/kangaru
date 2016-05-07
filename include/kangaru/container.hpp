@@ -7,6 +7,7 @@
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
 #include "detail/injected.hpp"
+#include "detail/predicate.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -131,8 +132,36 @@ public:
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
 	 */
-	inline Container fork() {
-		return Container{_services};
+	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
+	Container fork(Predicate p = Predicate{}) const {
+		Container c;
+		
+		c._services.reserve(_services.size());
+		
+		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, c._services.begin()), [&p](service_cont::const_reference i){
+			return p(i.first);
+		});
+		
+		return c;
+	}
+	
+	/*
+	 * This function fork the centainer into a new container.
+	 * The new container will have the copied state of the first container.
+	 * Construction of new services within the new container will not affect the original one.
+	 * The new container must exist within the lifetime of the original container.
+	 */
+	template<typename Predicate, disable_if<std::is_default_constructible<Predicate>> = 0>
+	Container fork(Predicate p) const {
+		Container c;
+		
+		c._services.reserve(_services.size());
+		
+		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, _services.begin()), [&p](service_cont::const_reference i){
+			return p(i.first);
+		});
+		
+		return c;
 	}
 	
 	/*
@@ -145,8 +174,6 @@ public:
 	}
 	
 private:
-	Container(service_cont& services) : _services{services} {};
-	
 	///////////////////////
 	//   save instance   //
 	///////////////////////

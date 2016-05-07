@@ -11,8 +11,6 @@ template<typename...>
 struct voider { using type = void; };
 
 template<typename... Ts> using void_t = typename voider<Ts...>::type;
-using type_id_t = void(*)();
-template <typename T> void type_id() {}
 
 // things missing from c++11 (to be removed when switching to c++14)
 template <bool b, typename T = void>

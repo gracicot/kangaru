@@ -33,6 +33,9 @@ struct service_map<Map, T, void_t<typename Map<T>::Service>> {
 template<template<typename> class Map, typename T>
 using service_map_t = typename service_map<Map, T>::Service;
 
+using type_id_t = void(*)();
+template <typename T> void type_id() {}
+
 } // namespace detail
 
 } // namespace kgr

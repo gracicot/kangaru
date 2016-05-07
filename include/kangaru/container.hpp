@@ -266,21 +266,38 @@ private:
 	//   make instance   //
 	///////////////////////
 	
+	/*
+	 * This function creates an instance of a service if the construct function is not a template function.
+	 * It forward the work to make_service_instance_helper with an integer sequence.
+	 */
 	template<typename T, typename... Args, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance(Args&&... args) {
 		return make_service_instance_helper<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::construct)>>{}, std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function creates an instance of a service when the construct function is templated.
+	 * It also forward it's work to make_service_instance_helper with an integer sequence.
+	 */
 	template<typename T, typename... Args, enable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance(Args&&... args) {
 		return make_service_instance_helper<T>(detail::tuple_seq<detail::function_result_t<decltype(&T::template construct<Args...>)>>{}, std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function is called when the service has no construct function.
+	 * It result in a compile time error, since the container needs a contruct function to make a service.
+	 */
 	template<typename T, typename... Args, disable_if<detail::has_template_construct<T, Args...>> = 0, disable_if<detail::has_construct<T>> = 0>
 	void make_service_instance(Args&&...) {
 		static_assert(!std::is_same<T, T>::value, "A non-abstract service must have a static member function named construct.");
 	}
 	
+	/*
+	 * This function is the helper for make_service_instance when the definition has a non templated construct function.
+	 * It construct the service using the values returned by construct.
+	 * It forward it's work to make_contained_service.
+	 */
 	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::construct, std::forward<Args>(args)...);
@@ -288,6 +305,11 @@ private:
 		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function is the helper for make_service_instance when the definition has a templated construct function.
+	 * It construct the service using the values returned by construct.
+	 * It forward it's work to make_contained_service.
+	 */
 	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
@@ -295,11 +317,21 @@ private:
 		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container to contain it in it's container.
+	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		return makeInstancePtr<T>(in_place, std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container to contain it in it's container.
+	 * This version of the function is called when the service definition has no valid constructor.
+	 * It will try to call an emplace function that construct the service in a lazy way.
+	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		auto service = makeInstancePtr<T>();
@@ -309,11 +341,21 @@ private:
 		return service;
 	}
 	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container return it and inject it without overhead.
+	 */
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		return detail::Injected<T>{in_place, std::forward<Args>(args)...};
 	}
 	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container return it and inject it without overhead.
+	 * This version of the function is called when the service definition has no valid constructor.
+	 * It will try to call an emplace function that construct the service in a lazy way.
+	 */
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		detail::Injected<T> service;

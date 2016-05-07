@@ -174,26 +174,16 @@ private:
 	/*
 	 * This function will save the instance sent as arguments.
 	 * It receive a service that overrides.
-	 * It will save the instance and will save overrides.
+	 * It will save the instance and will save overrides if any.
 	 */
-	template<typename T, enable_if<detail::has_overrides<T>> = 0>
+	template<typename T>
 	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
 		return save_instance<T>(detail::tuple_seq<detail::parent_types<T>>{}, std::move(service));
 	}
 	
 	/*
-	 * This function will save the instance sent as arguments.
-	 * The service sent is a service that doesn't override.
-	 * It will forward the work to save_instance_helper.
-	 */
-	template<typename T, disable_if<detail::has_overrides<T>> = 0>
-	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
-		return save_instance_helper<T>(std::move(service));
-	}
-	
-	/*
-	 * This function saves the instance and it's overrides.
-	 * It starts the iteration that save each overrides.
+	 * This function saves the instance and it's overrides if any.
+	 * It starts the iteration that save each overrides and the service itself.
 	 */
 	template<typename T, std::size_t... S>
 	detail::SingleInjected<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {

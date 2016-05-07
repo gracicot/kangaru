@@ -369,16 +369,28 @@ private:
 	//      invoke       //
 	///////////////////////
 	
+	/*
+	 * This function is an helper for the public invoke function.
+	 * It unpacks arguments of the function with an integer sequence.
+	 */
 	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<detail::service_map_t<Map, detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function is the same as invoke but it sends service definitions instead of the service itself.
+	 * It is called with some autocall function and the make_service_instance function.
+	 */
 	template<typename U, typename ...Args>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(U&& function, Args&&... args) {
 		return invoke_raw(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
+	/*
+	 * This function is an helper of the invoke_raw function.
+	 * It unpacks arguments of the function U with an integer sequence.
+	 */
 	template<typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(definition<detail::original_t<detail::decay_t<detail::function_argument_t<S, detail::decay_t<U>>>>>()..., std::forward<Args>(args)...);
@@ -456,6 +468,9 @@ private:
 		});
 	}
 	
+	/*
+	 * This function is called when there is no autocall to do.
+	 */
 	template<typename T, disable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
 	void autocall(T&&) {}
 	

@@ -42,7 +42,7 @@ private:
 
 template<typename T>
 struct GeneratorService : detail::ContainerServiceTag {
-	GeneratorService(Container& container) : _container{container} {}
+	explicit GeneratorService(Container& container) : _container{container} {}
 	
 	Generator<T> forward() {
 		return Generator<T>{_container};
@@ -50,6 +50,18 @@ struct GeneratorService : detail::ContainerServiceTag {
 	
 private:
 	Container& _container;
+};
+
+template<typename T>
+struct ForkedGeneratorService : detail::ContainerServiceTag {
+	explicit ForkedGeneratorService(Container& container) : _container{container.fork()} {}
+	
+	ForkedGenerator<T> forward() {
+		return ForkedGenerator<T>{std::move(_container)};
+	}
+	
+private:
+	Container _container;
 };
 
 template<typename T>

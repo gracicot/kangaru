@@ -18,8 +18,6 @@
 
 namespace kgr {
 
-struct ForkService;
-
 struct Container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;

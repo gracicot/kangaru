@@ -5,8 +5,9 @@
 
 namespace kgr {
 
+template<typename Predicate = All>
 struct ForkService : detail::ContainerServiceTag {
-	explicit ForkService(Container& container) : _container{container.fork()} {}
+	explicit ForkService(Container& container) : _container{container.fork<Predicate>()} {}
 	
 	inline Container forward() {
 		return std::move(_container);
@@ -28,9 +29,9 @@ private:
 	Container& _container;
 };
 
-template<template<typename> class Map>
+template<template<typename> class Map, typename Predicate = All>
 struct ForkedInvokerService : detail::ContainerServiceTag {
-	explicit ForkedInvokerService(Container& container) : _container{container.fork()} {}
+	explicit ForkedInvokerService(Container& container) : _container{container.fork<Predicate>()} {}
 	
 	ForkedInvoker<Map> forward() {
 		return ForkedInvoker<Map>{std::move(_container)};
@@ -64,9 +65,9 @@ private:
 	Container& _container;
 };
 
-template<typename T>
+template<typename T, typename Predicate = All>
 struct ForkedLazyService : detail::ContainerServiceTag {
-	explicit ForkedLazyService(Container& container) : _container{container.fork()} {}
+	explicit ForkedLazyService(Container& container) : _container{container.fork<Predicate>()} {}
 	
 	ForkedLazy<T> forward() {
 		return ForkedLazy<T>{std::move(_container)};

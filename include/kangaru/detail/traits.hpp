@@ -55,12 +55,6 @@ template<typename T>
 struct has_invoke<T, void_t<typename T::invoke>> : std::true_type {};
 
 template<typename T, typename = void>
-struct has_overrides : std::false_type {};
-
-template<typename T>
-struct has_overrides<T, void_t<typename T::ParentTypes>> : std::true_type {};
-
-template<typename T, typename = void>
 struct has_next : std::false_type {};
 
 template<typename T>

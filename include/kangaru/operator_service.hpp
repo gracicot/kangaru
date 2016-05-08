@@ -53,9 +53,9 @@ private:
 	Container& _container;
 };
 
-template<typename T>
+template<typename T, typename Predicate = All>
 struct ForkedGeneratorService : detail::ContainerServiceTag {
-	explicit ForkedGeneratorService(Container& container) : _container{container.fork()} {}
+	explicit ForkedGeneratorService(Container& container) : _container{container.fork<Predicate>()} {}
 	
 	ForkedGenerator<T> forward() {
 		return ForkedGenerator<T>{std::move(_container)};

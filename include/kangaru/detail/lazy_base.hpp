@@ -178,9 +178,7 @@ public:
 	LazyBase(const LazyBase&) = default;
 	
 	~LazyBase() {
-		if (_initialized) {
-			data().~type();
-		}
+		destroy();
 	}
 	
 	ref operator*() & {
@@ -214,9 +212,7 @@ private:
 	
 	template<typename... Args>
 	void emplace(Args&&... args) {
-		if (_initialized) {
-			data().~type();
-		}
+		destroy();
 		
 		_initialized = true;
 		new (&_service) type(std::forward<Args>(args)...);

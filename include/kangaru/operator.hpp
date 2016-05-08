@@ -64,11 +64,19 @@ private:
 
 template<typename T>
 struct Lazy : detail::LazyBase<Lazy<T>, T> {
-	explicit Lazy(kgr::Container& container) : _container{container} {}
+	explicit Lazy(kgr::Container& container) : _container{&container} {}
 	
 private:
+	kgr::Container& container() {
+		return *_container;
+	}
+	
+	const kgr::Container& container() const {
+		return *_container;
+	}
+	
 	friend struct detail::LazyBase<Lazy<T>, T>;
-	kgr::Container& _container;
+	kgr::Container* _container;
 };
 
 template<typename T>
@@ -76,6 +84,14 @@ struct ForkedLazy : detail::LazyBase<ForkedLazy<T>, T> {
 	explicit ForkedLazy(kgr::Container container) : _container{std::move(container)} {}
 	
 private:
+	kgr::Container& container() {
+		return _container;
+	}
+	
+	const kgr::Container& container() const {
+		return _container;
+	}
+	
 	friend struct detail::LazyBase<ForkedLazy<T>, T>;
 	kgr::Container _container;
 };

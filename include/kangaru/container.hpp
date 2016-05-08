@@ -430,8 +430,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
 	void autocall(T&& service) {
-		using U = detail::decay_t<T>;
-		autocall_helper<typename U::invoke>(std::forward<T>(service));
+		autocall_helper<typename detail::decay_t<T>::invoke>(std::forward<T>(service));
 	}
 	
 	/*
@@ -465,11 +464,10 @@ private:
 	 */
 	template<typename Method, typename T, std::size_t... S>
 	void invoke_autocall(detail::seq<S...>, T&& service) {
-		using U = detail::decay_t<T>;
 		invoke_autocall(
 			detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{},
 			std::forward<T>(service),
-			&U::template autocall<Method, detail::tuple_element_t<S, typename Method::Params>...>
+			&detail::decay_t<T>::template autocall<Method, detail::tuple_element_t<S, typename Method::Params>...>
 		);
 	}
 	

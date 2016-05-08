@@ -1,6 +1,7 @@
 #pragma once
 
 #include "container.hpp"
+#include "detail/lazy_base.hpp"
 
 namespace kgr {
 namespace detail {
@@ -21,125 +22,6 @@ struct GeneratorBase {
 	ServiceType<T> operator()(Args&& ...args) {
 		return static_cast<CRTP*>(this)->_container.template service<T>(std::forward<Args>(args)...);
 	}
-};
-
-template<typename T>
-struct LazyHelper {
-protected:
-	using type = T;
-	using ref = T&;
-	using rref = T&&;
-	using ptr = T*;
-	
-	T&& assign(T&& service) {
-		return std::move(service);
-	}
-	
-	T& value(T& service) {
-		return service;
-	}
-};
-
-template<typename T>
-struct LazyHelper<T&> {
-protected:
-	using type = T*;
-	using ref = T&;
-	using rref = T&&;
-	using ptr = T*;
-	
-	T* assign(T& service) {
-		return &service;
-	}
-	
-	T& value(T* service) {
-		return *service;
-	}
-};
-
-template<typename CRTP, typename T>
-struct LazyBase : LazyHelper<ServiceType<T>> {
-private:
-	using typename detail::LazyHelper<ServiceType<T>>::type;
-	using typename detail::LazyHelper<ServiceType<T>>::ref;
-	using typename detail::LazyHelper<ServiceType<T>>::rref;
-	using typename detail::LazyHelper<ServiceType<T>>::ptr;
-	
-public:
-	LazyBase() = default;
-	LazyBase(LazyBase&& other) {
-		if (other._initialized) {
-			emplace(std::move(other.data()));
-		}
-	}
-	
-	LazyBase& operator=(LazyBase&& other) {
-		if (other._initialized) {
-			emplace(std::move(other.data()));
-		}
-		return *this;
-	}
-	
-	LazyBase(const LazyBase& other) {
-		if (other._initialized) {
-			emplace(other.data());
-		}
-	}
-	
-	LazyBase& operator=(const LazyBase& other) {
-		if (other._initialized) {
-			emplace(other.data());
-		}
-		return *this;
-	}
-	
-	~LazyBase() {
-		if (_initialized) {
-			data().~type();
-		}
-	}
-	
-	ref operator*() & {
-		return get();
-	}
-	
-	ptr operator->() {
-		return &get();
-	}
-	
-	rref operator*() && {
-		return std::move(get());
-	}
-	
-	ref get() {
-		if (!_initialized) {
-			emplace(this->assign(static_cast<CRTP*>(this)->_container.template service<T>()));
-		}
-		
-		return this->value(data());
-	}
-	
-private:
-	type& data() {
-		return *reinterpret_cast<type*>(&_service);
-	}
-	
-	const type& data() const {
-		return *reinterpret_cast<const type*>(&_service);
-	}
-	
-	template<typename... Args>
-	void emplace(Args&&... args) {
-		if (_initialized) {
-			data().~type();
-		}
-		
-		_initialized = true;
-		new (&_service) type(std::forward<Args>(args)...);
-	}
-	
-	bool _initialized = false;
-	typename std::aligned_storage<sizeof(type), alignof(type)>::type _service;
 };
 
 } // namespace detail

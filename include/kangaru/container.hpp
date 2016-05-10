@@ -64,7 +64,7 @@ public:
 	 * This version of the function will call functions in autocall.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0>
-	void instance(Args&& ...args) {
+	void instance(Args&&... args) {
 		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)).get());
 	}
 	
@@ -76,7 +76,7 @@ public:
 	 * This version of the function will not call functions in autocall.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0>
-	void instance(no_autocall_t, Args&& ...args) {
+	void instance(no_autocall_t, Args&&... args) {
 		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
 	
@@ -130,13 +130,14 @@ public:
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
 	 */
-	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
-	Container fork(Predicate p = Predicate{}) const {
+	template<typename Predicate = All&&, enable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
+	Container fork(Predicate&& p = detail::decay_t<Predicate>{}) const {
 		Container c;
 		
 		c._services.reserve(_services.size());
 		
 		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, c._services.begin()), [&p](service_cont::const_reference i){
+			// We don't forward the predicate here, we use it many times.
 			return p(i.first);
 		});
 		
@@ -149,13 +150,14 @@ public:
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
 	 */
-	template<typename Predicate, disable_if<std::is_default_constructible<Predicate>> = 0>
-	Container fork(Predicate p) const {
+	template<typename Predicate, disable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
+	Container fork(Predicate&& p) const {
 		Container c;
 		
 		c._services.reserve(_services.size());
 		
 		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, _services.begin()), [&p](service_cont::const_reference i){
+			// We don't forward the predicate here, we use it many times.
 			return p(i.first);
 		});
 		
@@ -280,7 +282,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
 	detail::BaseInjected<T>& definition() {
-		if (auto&& service = _services[detail::type_id<detail::BaseInjected<T>>]) {
+		if (auto service = _services[detail::type_id<detail::BaseInjected<T>>]) {
 			return *static_cast<detail::BaseInjected<T>*>(service);
 		} else {
 			return save_new_instance<T>();
@@ -326,7 +328,10 @@ private:
 	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_construct<T>> = 0, disable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::construct, std::forward<Args>(args)...);
-		static_cast<void>(constructArgs); // This line is used to shut unused-variable warning, since S can be empty.
+		
+		// This line is used to shut unused-variable warning, since S can be empty.
+		static_cast<void>(constructArgs);
+		
 		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
 	
@@ -338,7 +343,10 @@ private:
 	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_template_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(&T::template construct<Args...>, std::forward<Args>(args)...);
-		static_cast<void>(constructArgs); // This line is used to shut unused-variable warning, since S can be empty.
+		
+		// This line is used to shut unused-variable warning, since S can be empty.
+		static_cast<void>(constructArgs);
+		
 		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
 	}
 	

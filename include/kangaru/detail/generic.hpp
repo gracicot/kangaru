@@ -59,8 +59,9 @@ struct GenericService : detail::Injector<CRTP, Deps> {
 		return *this;
 	}
 	
-	GenericService(Type instance) {
-		setInstance(std::move(instance));
+	template<typename T, detail::enable_if_t<std::is_same<Type, typename std::decay<T>::type>::value, int> = 0>
+	GenericService(T&& instance) {
+		setInstance(std::forward<T>(instance));
 	}
 	
 	~GenericService() {
@@ -120,8 +121,9 @@ private:
 		});
 	}
 	
-	void setInstance(Type instance) {
-		new (&_instance) Type(std::move(instance));
+	template<typename T>
+	void setInstance(T&& instance) {
+		new (&_instance) Type(std::forward<T>(instance));
 		_initiated = true;
 	}
 	

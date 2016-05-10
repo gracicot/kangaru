@@ -86,7 +86,7 @@ public:
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 */
 	template<typename T, typename... Args>
-	ServiceType<T> service(Args&& ...args) {
+	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
 	
@@ -110,7 +110,7 @@ public:
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
-	template<typename... Services, typename U, typename ...Args>
+	template<typename... Services, typename U, typename... Args>
 	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}
@@ -129,6 +129,13 @@ public:
 	 * The new container will have the copied state of the first container.
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
+	 * 
+	 * It takes a predicate as argument.
+	 * The predicate can either be All, NoneOf<Ts...> or AnyOf<Ts...>
+	 * The default predicate is All.
+	 * 
+	 * This version of the function takes a predicate that is default constructible.
+	 * The default value of the predicate is a default-constructed predicate.
 	 */
 	template<typename Predicate = All&&, enable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
 	Container fork(Predicate&& p = detail::decay_t<Predicate>{}) const {
@@ -149,6 +156,12 @@ public:
 	 * The new container will have the copied state of the first container.
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
+	 * 
+	 * It takes a predicate as argument.
+	 * The predicate can either be All, NoneOf<Ts...> or AnyOf<Ts...>
+	 * The default predicate is All.
+	 * 
+	 * This version of the function takes a predicate that is not default constructible.
 	 */
 	template<typename Predicate, disable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
 	Container fork(Predicate&& p) const {

@@ -6,7 +6,7 @@
 
 namespace kgr {
 
-template<typename Predicate = All>
+template<typename Predicate>
 struct ForkService {
 	explicit ForkService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
 	
@@ -21,6 +21,8 @@ struct ForkService {
 private:
 	Container _container;
 };
+
+using DefaultForkService = ForkService<All>;
 
 template<template<typename> class Map>
 struct InvokerService {

@@ -24,7 +24,7 @@ private:
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	using instance_cont = std::vector<instance_ptr<void>>;
-	using service_cont = std::unordered_map<detail::type_id_t, void*>;
+	using service_cont = std::unordered_map<type_id_t, void*>;
 	template<typename T> using contained_service_t = typename std::conditional<detail::is_single<T>::value, instance_ptr<detail::SingleInjected<T>>, detail::Injected<T>>::type;
 	
 	template<typename T>
@@ -131,8 +131,7 @@ public:
 	 * The new container must exist within the lifetime of the original container.
 	 * 
 	 * It takes a predicate as argument.
-	 * The predicate can either be All, NoneOf<Ts...> or AnyOf<Ts...>
-	 * The default predicate is All.
+	 * The default predicate is kgr::All.
 	 * 
 	 * This version of the function takes a predicate that is default constructible.
 	 * The default value of the predicate is a default-constructed predicate.
@@ -158,8 +157,7 @@ public:
 	 * The new container must exist within the lifetime of the original container.
 	 * 
 	 * It takes a predicate as argument.
-	 * The predicate can either be All, NoneOf<Ts...> or AnyOf<Ts...>
-	 * The default predicate is All.
+	 * The default predicate is kgr::All.
 	 * 
 	 * This version of the function takes a predicate that is not default constructible.
 	 */
@@ -239,7 +237,7 @@ private:
 		auto& serviceRef = *service;
 		instance_ptr<detail::BaseInjected<T>> injectedTypeService = std::move(service);
 		
-		_services[detail::type_id<detail::BaseInjected<T>>] = injectedTypeService.get();
+		_services[type_id<detail::BaseInjected<T>>] = injectedTypeService.get();
 		_instances.emplace_back(std::move(injectedTypeService));
 		
 		return serviceRef;
@@ -259,7 +257,7 @@ private:
 			"the override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
-		_services[detail::type_id<detail::BaseInjected<Override>>] = overrideService.get();
+		_services[type_id<detail::BaseInjected<Override>>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
 		
 		return save_instance_helper<T, Others...>(std::move(service));
@@ -295,7 +293,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
 	detail::BaseInjected<T>& definition() {
-		if (auto service = _services[detail::type_id<detail::BaseInjected<T>>]) {
+		if (auto service = _services[type_id<detail::BaseInjected<T>>]) {
 			return *static_cast<detail::BaseInjected<T>*>(service);
 		} else {
 			return save_new_instance<T>();

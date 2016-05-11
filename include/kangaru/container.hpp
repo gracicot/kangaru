@@ -158,7 +158,6 @@ public:
 	 * The new container must exist within the lifetime of the original container.
 	 * 
 	 * It takes a predicate as argument.
-	 * The default predicate is kgr::All.
 	 * 
 	 * This version of the function takes a predicate that is not default constructible.
 	 */

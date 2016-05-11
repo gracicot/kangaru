@@ -30,17 +30,17 @@ struct Invoke<Invoke<M, Ps...>, Others...> : Invoke<M, Others...> {
 	using Params = std::tuple<Ps...>;
 };
 
-template<template<typename> class M, typename... Ts>
+template<template<typename> class M, typename First, typename... Ts>
 struct AutoCall {
-	using invoke = Invoke<Ts...>;
+	using invoke = Invoke<First, Ts...>;
 	
 	template<typename T>
 	using Map = M<T>;
 };
 
-template<typename... Ts>
+template<typename First, typename... Ts>
 struct AutoCallNoMap {
-	using invoke = Invoke<Ts...>;
+	using invoke = Invoke<First, Ts...>;
 	
 	template<typename>
 	struct Map;

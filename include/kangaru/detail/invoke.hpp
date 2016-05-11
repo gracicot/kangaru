@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_INVOKE
+#define KGR_INCLUDE_KANGARU_DETAIL_INVOKE
 
 #include <type_traits>
 #include <tuple>
@@ -46,3 +47,5 @@ struct AutoCallNoMap {
 };
 
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_INVOKE

@@ -1,49 +1,52 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_PREDICATE
+#define KGR_INCLUDE_KANGARU_PREDICATE
 
-#include "utils.hpp"
+#include "type_id.hpp"
 
 namespace kgr {
 
 struct All {
-	inline bool operator()(type_id_t) {
+	constexpr inline bool operator()(type_id_t) const {
 		return true;
 	}
 };
 
 template<typename First, typename... Ts>
 struct NoneOf {
-	bool operator()(type_id_t id) {
+	constexpr bool operator()(type_id_t id) const {
 		return !compare<type_id<First>, type_id<Ts>...>(id);
 	}
 	
 private:
 	template<type_id_t comp, type_id_t second, type_id_t... others>
-	bool compare(type_id_t id) {
+	constexpr bool compare(type_id_t id) const {
 		return id == comp && compare<second, others...>(id);
 	}
 	
 	template<type_id_t comp>
-	bool compare(type_id_t id) {
+	constexpr bool compare(type_id_t id) const {
 		return id == comp;
 	}
 };
 
 template<typename First, typename... Ts>
 struct AnyOf {
-	bool operator()(type_id_t id) {
+	constexpr bool operator()(type_id_t id) const {
 		return compare<type_id<First>, type_id<Ts>...>(id);
 	}
 	
 private:
 	template<type_id_t comp, type_id_t second, type_id_t... others>
-	bool compare(type_id_t id) {
+	constexpr bool compare(type_id_t id) const {
 		return id == comp && compare<second, others...>(id);
 	}
 	
 	template<type_id_t comp>
-	bool compare(type_id_t id) {
+	constexpr bool compare(type_id_t id) const {
 		return id == comp;
 	}
 };
 
-}
+} // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_PREDICATE

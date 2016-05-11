@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_INJECTED
+#define KGR_INCLUDE_KANGARU_DETAIL_INJECTED
 
 #include "utils.hpp"
 #include "single.hpp"
@@ -107,3 +108,5 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
 }
 
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_INJECTED

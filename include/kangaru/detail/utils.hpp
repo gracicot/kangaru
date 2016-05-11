@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_UTILS
+#define KGR_INCLUDE_KANGARU_DETAIL_UTILS
 
 #include "function_traits.hpp"
 
@@ -34,8 +35,6 @@ template<template<typename> class Map, typename T>
 using service_map_t = typename service_map<Map, T>::Service;
 
 } // namespace detail
-
-using type_id_t = void(*)();
-template <typename T> void type_id() {}
-
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_UTILS

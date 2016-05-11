@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_CONTAINER
+#define KGR_INCLUDE_KANGARU_CONTAINER
 
 #include "detail/function_traits.hpp"
 #include "detail/traits.hpp"
@@ -7,7 +8,7 @@
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
 #include "detail/injected.hpp"
-#include "detail/predicate.hpp"
+#include "predicate.hpp"
 
 #include <unordered_map>
 #include <memory>
@@ -525,3 +526,5 @@ private:
 };
 
 }  // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_CONTAINER

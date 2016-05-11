@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE
+#define KGR_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE
 
 #include "utils.hpp"
 #include "injected.hpp"
@@ -28,3 +29,5 @@ private:
 };
 
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE

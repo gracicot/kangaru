@@ -1,11 +1,9 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_GENERIC
+#define KGR_INCLUDE_KANGARU_GENERIC
 
-#include "../container.hpp"
-#include "invoke.hpp"
-#include "single.hpp"
-#include "injected.hpp"
-
-#include <type_traits>
+#include "container.hpp"
+#include "detail/injected.hpp"
+#include "detail/function_traits.hpp"
 
 namespace kgr {
 
@@ -79,3 +77,5 @@ private:
 };
 
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_GENERIC

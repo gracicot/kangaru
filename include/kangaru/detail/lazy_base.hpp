@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_LAZY_BASE
+#define KGR_INCLUDE_KANGARU_DETAIL_LAZY_BASE
 
 #include "../container.hpp"
 
@@ -240,3 +241,5 @@ private:
 
 } // namespace detail
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_LAZY_BASE

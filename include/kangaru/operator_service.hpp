@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_OPERATOR_SERVICE
+#define KGR_INCLUDE_KANGARU_OPERATOR_SERVICE
 
 #include "container.hpp"
 #include "operator.hpp"
@@ -117,4 +118,6 @@ private:
 	Container _container;
 };
 
-}
+} // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_OPERATOR_SERVICE

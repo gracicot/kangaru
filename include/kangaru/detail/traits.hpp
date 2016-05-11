@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_TRAITS
+#define KGR_INCLUDE_KANGARU_DETAIL_TRAITS
 
 #include <type_traits>
 #include <tuple>
@@ -119,3 +120,5 @@ using is_someway_constructible = std::integral_constant<bool, is_brace_construct
 
 } // namespace detail
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_TRAITS

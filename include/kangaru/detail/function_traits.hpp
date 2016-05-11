@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS
+#define KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS
 
 #include <tuple>
 
@@ -122,3 +123,5 @@ using function_argument_t = typename function_traits<F>::template argument_type<
 
 } // namespace detail
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS

@@ -1,10 +1,11 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_SERVICE
+#define KGR_INCLUDE_KANGARU_SERVICE
 
 #include <type_traits>
 
 #include "detail/utils.hpp"
-#include "detail/generic.hpp"
-#include "detail/container_service.hpp"
+#include "detail/single.hpp"
+#include "generic.hpp"
 
 namespace kgr {
 
@@ -125,4 +126,6 @@ struct AbstractSharedService : Single {
 	virtual std::shared_ptr<T> forward() = 0;
 };
 
-}
+} // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_SERVICE

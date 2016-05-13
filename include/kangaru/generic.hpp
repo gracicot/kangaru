@@ -42,9 +42,9 @@ struct GenericService {
 	}
 	
 protected:
-	template<typename F, typename... T>
-	void autocall(Inject<T>... others) {
-		CRTP::call(getInstance(), F::value, std::forward<Inject<T>>(others).forward()...);
+	template<typename F, typename... Ts>
+	void autocall(Inject<Ts>... others) {
+		CRTP::call(getInstance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
 	}
 	
 	template<typename F, template<typename> class Map>

@@ -32,7 +32,7 @@ struct GenericService {
 		return *this;
 	}
 	
-	template<typename... Args>
+	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>, int> = 0>
 	GenericService(in_place_t, Args&&... args) {
 		emplace(std::forward<Args>(args)...);
 	}
@@ -61,9 +61,14 @@ protected:
 	}
 	
 private:
-	template<typename... Args>
+	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
 		new (&_instance) Type(std::forward<Args>(args)...);
+	}
+	
+	template<typename... Args, detail::enable_if_t<!std::is_constructible<Type, Args...>::value && detail::is_brace_constructible<Type, Args...>::value, int> = 0>
+	void emplace(Args&&... args) {
+		new (&_instance) Type{std::forward<Args>(args)...};
 	}
 	
 	template<template<typename> class Map, typename F, std::size_t... S>

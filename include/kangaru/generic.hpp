@@ -42,16 +42,6 @@ struct GenericService {
 	}
 	
 protected:
-	template<typename F, typename... Ts>
-	void autocall(Inject<Ts>... others) {
-		CRTP::call(getInstance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
-	}
-	
-	template<typename F, template<typename> class Map>
-	void autocall(Inject<ContainerService> cs) {
-		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, std::move(cs));
-	}
-	
 	Type& getInstance() {
 		return *reinterpret_cast<Type*>(&_instance);
 	}
@@ -69,6 +59,16 @@ private:
 	template<typename... Args, detail::enable_if_t<!std::is_constructible<Type, Args...>::value && detail::is_brace_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
 		new (&_instance) Type{std::forward<Args>(args)...};
+	}
+	
+	template<typename F, typename... Ts>
+	void autocall(Inject<Ts>... others) {
+		CRTP::call(getInstance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
+	}
+	
+	template<typename F, template<typename> class Map>
+	void autocall(Inject<ContainerService> cs) {
+		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, std::move(cs));
 	}
 	
 	template<template<typename> class Map, typename F, std::size_t... S>

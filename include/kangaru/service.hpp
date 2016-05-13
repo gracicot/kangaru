@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_SERVICE
-#define KGR_INCLUDE_KANGARU_SERVICE
+#ifndef KGR_INCLUDE_KANGARU_SERVICE_HPP
+#define KGR_INCLUDE_KANGARU_SERVICE_HPP
 
 #include <type_traits>
 
@@ -128,4 +128,4 @@ struct AbstractSharedService : Single {
 
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_SERVICE
+#endif // KGR_INCLUDE_KANGARU_SERVICE_HPP

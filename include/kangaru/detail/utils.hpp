@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_UTILS
-#define KGR_INCLUDE_KANGARU_DETAIL_UTILS
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_UTILS_HPP
+#define KGR_INCLUDE_KANGARU_DETAIL_UTILS_HPP
 
 #include "function_traits.hpp"
 
@@ -37,4 +37,4 @@ using service_map_t = typename service_map<Map, T>::Service;
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_UTILS
+#endif // KGR_INCLUDE_KANGARU_DETAIL_UTILS_HPP

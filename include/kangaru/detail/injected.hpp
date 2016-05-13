@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_INJECTED
-#define KGR_INCLUDE_KANGARU_DETAIL_INJECTED
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_INJECTED_HPP
+#define KGR_INCLUDE_KANGARU_DETAIL_INJECTED_HPP
 
 #include "utils.hpp"
 #include "single.hpp"
@@ -109,4 +109,4 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
 
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_INJECTED
+#endif // KGR_INCLUDE_KANGARU_DETAIL_INJECTED_HPP

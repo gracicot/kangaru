@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_KANGARU
-#define KGR_INCLUDE_KANGARU_KANGARU
+#ifndef KGR_INCLUDE_KANGARU_KANGARU_HPP
+#define KGR_INCLUDE_KANGARU_KANGARU_HPP
 
 #include "container.hpp"
 #include "generic.hpp"
@@ -9,4 +9,4 @@
 #include "service.hpp"
 #include "type_id.hpp"
 
-#endif // KGR_INCLUDE_KANGARU_KANGARU
+#endif // KGR_INCLUDE_KANGARU_KANGARU_HPP

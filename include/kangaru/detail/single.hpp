@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_SINGLE
-#define KGR_INCLUDE_KANGARU_DETAIL_SINGLE
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
+#define KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
 
 #include "traits.hpp"
 
@@ -40,4 +40,4 @@ template<typename T> using parent_types = typename parent_type_helper<T>::Parent
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_SINGLE
+#endif // KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP

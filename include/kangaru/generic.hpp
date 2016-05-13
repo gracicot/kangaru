@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_GENERIC
-#define KGR_INCLUDE_KANGARU_GENERIC
+#ifndef KGR_INCLUDE_KANGARU_GENERIC_HPP
+#define KGR_INCLUDE_KANGARU_GENERIC_HPP
 
 #include "container.hpp"
 #include "detail/injected.hpp"
@@ -78,4 +78,4 @@ private:
 
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_GENERIC
+#endif // KGR_INCLUDE_KANGARU_GENERIC_HPP

@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_TYPE_ID
-#define KGR_INCLUDE_KANGARU_TYPE_ID
+#ifndef KGR_INCLUDE_KANGARU_TYPE_ID_HPP
+#define KGR_INCLUDE_KANGARU_TYPE_ID_HPP
 
 namespace kgr {
 
@@ -8,4 +8,4 @@ template <typename T> void type_id() {}
 
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_TYPE_ID
+#endif // KGR_INCLUDE_KANGARU_TYPE_ID_HPP

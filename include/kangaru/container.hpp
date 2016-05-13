@@ -184,6 +184,15 @@ public:
 		_services.insert(other._services.begin(), other._services.end());
 	}
 	
+	/*
+	 * This function return true if the container contains the service T.
+	 * T nust be a single service.
+	 */
+	template<typename T, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_single<T>> = 0>
+	bool contains() {
+		return _services.find(type_id<T>) != _services.end();
+	}
+	
 private:
 	///////////////////////
 	//   save instance   //

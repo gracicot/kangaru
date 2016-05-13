@@ -8,20 +8,18 @@ It contains the following six methods:
  * `instance<T>`
  * `service<T>`
  * `invoke<T>`
+ * `contains<T>`
  * `clear`
  * `fork`
  * `merge`
 
 ## instance
-This function either registers a provided instance of a service definition or explicitly instanciates a single service.
+This function will instanciate the service definition in the template parameter with the sended arguments.
 
-    // Will instanciate a Shop within the container
-    container.instance<ShopService>();
-    
-    // Gives a ClownMasterService intance to the container
-    container.instance(ClownMasterService{42});
+    // Will instanciate a ShopService within the container with a shop as arguments.
+    container.instance<ShopService>(Shop{items...});
 
-Here, we ask the container to construct and register the service named "ShopService". Then, we provide the container an instance of `ClownMasterService` for future use.
+Here, we ask the container to construct the service named `ShopService` with `Shop{items...}` as arguments.
 
 ## service
 Service is the most crucial function of the container. It returns a service and constructs it if needed.
@@ -52,6 +50,21 @@ You can make the call to this function easier with the invoke function, like so:
 
 As long as the `Notification`, `FileManager` and `Shop` service definitions are configured correctly, the container will call the function `someOperation` with the right set of parameters.
 We will cover the `invoke` functionnality in detail in a later chapter.
+
+## contains
+
+This function is used to check if the container currently contains a specific service.
+This function take a single service type as template parameter and returns a boolean.
+
+    kgr::Container c;
+
+    cout << boolalpha << c.contains<NotificationService>() << ", ";
+
+    c.service<NotificationService>();
+
+    cout << c.contains<NotificationService>() << endl;
+
+    // outputs the following: false, true
 
 ## clear
 This function clears the container state. In other words, it deletes every single services that are contained within the container.
@@ -96,8 +109,43 @@ Here's a code snippet that shows it's usage:
 You can as well inject the container into a service as a fork. There's the class `ForkService` that do just that.
 Here's a usage of this service definition:
 
-    kgr::Container fork = container.service<ForkService>(); // another way to fork
-    
+    kgr::Container fork = container.service<DefaultForkService>(); // another way to fork
+
+### Fork with some instances
+
+Alternatively, you can fork the container but keeping reference only to some service that was in the original container.
+The `fork()` function takes a template parameter that is the predicate to pick.
+
+#### All
+
+By default, `kgr::All` is used as the predicate. It returns true for all service.
+
+#### AnyOf
+
+The predicate `kgr::AnyOf<Ts...>` will make that only the specified services get to be known to the new container. It a sort of a whitelist for services.
+
+    auto fork = container.fork<kgr::AnyOf<ShopService, FileManagerService>>();
+
+    cout << boolalpha << fork.contains<NotificationService>() << endl; // prints false, even if `container` had one.
+
+#### NoneOf
+
+The predicate `kgr::NoneOf<Ts...>` is the contrary of `kgr::AnyOf<Ts...>`. It will take every services except those specified. It's like a blacklist.
+
+    auto fork = container.fork<kgr::NoneOf<ShopService>>();
+
+    // fork has every services contained in `container` except `ShopService`
+
+#### lambda
+
+If neither of those provided by kangaru suits your needs, you can send a lambda as predicate.
+The lambda must receive a `kgr::type_id_t` as parameter and return a boolean. You can get the `type_id_t` for a type using `kgr::type_id<T>`.
+The implementation of those two construct are considered implementation defined.
+
+    auto fork = container.fork([](kgr::type_id_t id){
+        return id == &kgr::type_id<NotificationService>;
+    });
+
 ## merge
 You can as well merge containers. One container is merge into another. In case of collisions, the merger keep it's own instances.
 

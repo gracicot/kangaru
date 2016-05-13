@@ -72,6 +72,7 @@ There are two protected methods that are provided by generic services from the K
 There are three other service types:
  * `kgr::SharedService`: a single service injected as a `std::shared_ptr`.
  * `kgr::UniqueService`: a service injected as a `std::unique_ptr`.
- * `kgr::NoMoveService`: a single service that can hold a non-movable type.
+
+`kgr::Service` and `kgr::SingleService` require that your classes are destructible.
  
 [Next chapter](section2_container.md)

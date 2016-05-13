@@ -73,7 +73,7 @@ You have to call it that way:
 
 ### Singles
 
-There are two steps required in order to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. Secondly, we also need to adapt the `forward` function by making it virtual, in order to not invalidate the contained service.
+There are two steps required in order to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. Secondly, we also need to adapt the `forward` function by returning a reference or a copy in order to not invalidate the contained service.
 
 Note: single services can forward copies too, but you rarely want to do that. Returning a reference or pointer is a much better idea when it comes to single service, what would be the point of a single instance if you copy the service everywhere?
 
@@ -84,16 +84,14 @@ So let's make our sevice a Single:
             return { FileManager{ns.forward(), cms.forward()} };
         }
         
-        // return as pointer, must not invalidate the service. Must be virtual.
-        virtual FileManager* forward() {
+        // return as pointer, must not invalidate the service.
+        FileManager* forward() {
             return &fm;
         }
         
     private:
         FileManager fm;
     };
-
-Why should it be virtual? Remember the `Override` feature? To achieve this, the container relies on polymorphic behaviour. All you have to do is make your `forward` method virtual, and the container will be happy.
 
 ### Abstract Services
 

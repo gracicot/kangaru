@@ -16,9 +16,9 @@ Getting Started
 
 Getting started with Kangaru is easy. First of all, you need to include the library:
 
-    #include "kangaru.hpp"
+    #include "kangaru/kangaru.hpp"
 
-Take note that you will need to add the header to your include paths.
+Take note that you will need to add the library to your include paths.
 
 All declarations are made in the namespace `kgr`. Additionnaly, the namespace `kgr` contains the namespace `detail`, which itself contains implementation details.
 Note that the `detail` namespace is not considered as a part of the API and its content might be subject to changes.
@@ -32,7 +32,8 @@ _Service Definitions_ are classes that contain a service and tell the container 
 
 ### Macros
 
-This library does not make use of macros and does not declare any.
+This library does not make use of macros of macros to prevent multiple inclusion.
+Every macros that starts with `KGR_` is considered reserved.
 Note that some features of this library are easier to use with macros, and we recommend you to use those that are defined in the documentation.
 
 Index

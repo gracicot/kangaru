@@ -32,7 +32,7 @@ struct GenericService {
 		return *this;
 	}
 	
-	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>, int> = 0>
+	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>::value, int> = 0>
 	GenericService(in_place_t, Args&&... args) {
 		emplace(std::forward<Args>(args)...);
 	}

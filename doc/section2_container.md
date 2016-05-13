@@ -3,7 +3,7 @@ The container
 
 The container is the central piece of the library, it's where the magic is done.
 
-It contains the following six methods:
+It offers the following seven methods:
 
  * `instance<T>`
  * `service<T>`

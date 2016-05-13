@@ -26,6 +26,7 @@ All you have to do is declare the following service definition:
 You made it! Now the container knows that `FileManager` is a service!
 
 ### Dependencies
+
 In order to make a service dependent of another service, you have to add the `kgr::Dependency` parameter to the `kgr::Service` class.
 `kgr::Dependency` is a variadic template that has every dependency as a template argument. It is used in this way:
 
@@ -50,8 +51,11 @@ Now that your service `FileManager` is dependent of these other services, you ha
         Notification n;
         ClownMaster cm;
     };
+    
+Take note that the order of parameter in the constructor must match the order in the dependencies declaration.
 
-### Single Services
+### Single Services'
+
 Single services are really useful. You can make a single service simply by making the corresponding service definition extend `kgr::SingleService`. Here's an example:
 
     struct FileManagerService : kgr::SingleService<FileManager> {};
@@ -64,11 +68,13 @@ Now every instances returned by the container are the same. You can test it like
     cout << (&fm1 == &fm2 ? "true":"false") << endl; // the output will be "true"
 
 ### Available methods
+
 There are two protected methods that are provided by generic services from the Kangaru library:
  * `getInstance()` which returns the contained instance of the service.
- * `autocall`, will see how to use it in the chapiter [Injection with setters](section5_setters.md)
+ * `autocall`, will see how to use it in the chapiter [Autocall](section6_autocall.md)
 
 ### Other Service Types
+
 There are three other service types:
  * `kgr::SharedService`: a single service injected as a `std::shared_ptr`.
  * `kgr::UniqueService`: a service injected as a `std::unique_ptr`.

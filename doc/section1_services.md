@@ -54,7 +54,7 @@ Now that your service `FileManager` is dependent of these other services, you ha
     
 Take note that the order of parameter in the constructor must match the order in the dependencies declaration.
 
-### Single Services'
+### Single Services
 
 Single services are really useful. You can make a single service simply by making the corresponding service definition extend `kgr::SingleService`. Here's an example:
 
@@ -69,9 +69,8 @@ Now every instances returned by the container are the same. You can test it like
 
 ### Available methods
 
-There are two protected methods that are provided by generic services from the Kangaru library:
+There are one protected method that are provided by generic services from the Kangaru library:
  * `getInstance()` which returns the contained instance of the service.
- * `autocall`, will see how to use it in the chapiter [Autocall](section6_autocall.md)
 
 ### Other Service Types
 

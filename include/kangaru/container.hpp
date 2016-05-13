@@ -50,7 +50,7 @@ private:
 	}
 	
 public:
-	Container() = default;
+	explicit Container() = default;
 	Container(const Container &) = delete;
 	Container& operator=(const Container &) = delete;
 	Container(Container&&) = default;

@@ -101,6 +101,6 @@ Abstract services are the simplest ones to implement. They have only one pure vi
         virtual IFileManager& forward() = 0;
     }
     
-Abstract services must be single. That reason is pretty obvious: You need to override that definition to have an instance of it.
+Abstract services must be single. That reason is pretty obvious: The container needs to access to an existing instance of a service that overrides it.
 
 [Next chapter](section8_generic.md)

@@ -156,7 +156,7 @@ public:
 		
 		c._services.reserve(_services.size());
 		
-		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, _services.begin()), [&predicate](service_cont::const_reference i){
+		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, c._services.begin()), [&predicate](service_cont::const_reference i){
 			// We don't forward the predicate here, we use it many times.
 			return predicate(i.first);
 		});

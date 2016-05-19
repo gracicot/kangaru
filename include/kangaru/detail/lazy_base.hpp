@@ -53,6 +53,36 @@ struct LazyCopyConstruct {
 	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
 };
 
+template<typename CRTP, typename T, typename = void>
+struct LazyMoveAssign {
+	LazyMoveAssign& operator=(LazyMoveAssign&&) = delete;
+	
+	LazyMoveAssign() = default;
+	LazyMoveAssign(const LazyMoveAssign&) = default;
+	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
+	LazyMoveAssign(LazyMoveAssign&&) = default;
+};
+
+template<typename CRTP, typename T, typename = void>
+struct LazyCopyAssign {
+	LazyCopyAssign& operator=(const LazyCopyAssign&) = delete;
+	
+	LazyCopyAssign() = default;
+	LazyCopyAssign(const LazyCopyAssign&) = default;
+	LazyCopyAssign(LazyCopyAssign&&) = default;
+	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
+};
+
+template<typename CRTP, typename T, typename = void>
+struct LazyMoveConstruct {
+	LazyMoveConstruct(LazyMoveConstruct&&) = delete;
+	
+	LazyMoveConstruct() = default;
+	LazyMoveConstruct(const LazyMoveConstruct&) = default;
+	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
+	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
+};
+
 template<typename CRTP, typename T>
 struct LazyCopyConstruct<CRTP, T, detail::enable_if_t<std::is_copy_constructible<T>::value>> {
 	LazyCopyConstruct(const LazyCopyConstruct& other) {
@@ -66,16 +96,6 @@ struct LazyCopyConstruct<CRTP, T, detail::enable_if_t<std::is_copy_constructible
 	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
 	LazyCopyConstruct(LazyCopyConstruct&&) = default;
 	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
-};
-
-template<typename CRTP, typename T, typename = void>
-struct LazyCopyAssign {
-	LazyCopyAssign& operator=(const LazyCopyAssign&) = delete;
-	
-	LazyCopyAssign() = default;
-	LazyCopyAssign(LazyCopyAssign&&) = default;
-	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
-	LazyCopyAssign(const LazyCopyAssign&) = default;
 };
 
 template<typename CRTP, typename T>
@@ -94,19 +114,9 @@ struct LazyCopyAssign<CRTP, T, detail::enable_if_t<std::is_copy_assignable<T>::v
 	}
 	
 	LazyCopyAssign() = default;
+	LazyCopyAssign(const LazyCopyAssign&) = default;
 	LazyCopyAssign(LazyCopyAssign&&) = default;
 	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
-	LazyCopyAssign(const LazyCopyAssign&) = default;
-};
-
-template<typename CRTP, typename T, typename = void>
-struct LazyMoveConstruct {
-	LazyMoveConstruct(LazyMoveConstruct&&) = delete;
-	
-	LazyMoveConstruct() = default;
-	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
-	LazyMoveConstruct(const LazyMoveConstruct&) = default;
 };
 
 template<typename CRTP, typename T>
@@ -119,19 +129,9 @@ struct LazyMoveConstruct<CRTP, T, detail::enable_if_t<std::is_move_constructible
 	}
 	
 	LazyMoveConstruct() = default;
-	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
 	LazyMoveConstruct(const LazyMoveConstruct&) = default;
-};
-
-template<typename CRTP, typename T, typename = void>
-struct LazyMoveAssign {
-	LazyMoveAssign& operator=(LazyMoveAssign&&) = delete;
-	
-	LazyMoveAssign() = default;
-	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
-	LazyMoveAssign(LazyMoveAssign&&) = default;
-	LazyMoveAssign(const LazyMoveAssign&) = default;
+	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
+	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
 };
 
 template<typename CRTP, typename T>
@@ -150,9 +150,9 @@ struct LazyMoveAssign<CRTP, T, detail::enable_if_t<std::is_move_assignable<T>::v
 	}
 	
 	LazyMoveAssign() = default;
+	LazyMoveAssign(const LazyMoveAssign&) = default;
 	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
 	LazyMoveAssign(LazyMoveAssign&&) = default;
-	LazyMoveAssign(const LazyMoveAssign&) = default;
 };
 
 template<typename CRTP, typename T>

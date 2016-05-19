@@ -131,24 +131,15 @@ public:
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
 	 * 
-	 * It takes a predicate as argument.
+	 * It takes a predicate type as template argument.
 	 * The default predicate is kgr::All.
 	 * 
 	 * This version of the function takes a predicate that is default constructible.
-	 * The default value of the predicate is a default-constructed predicate.
+	 * It will call fork() with a predicate as parameter.
 	 */
-	template<typename Predicate = All&&, enable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
-	Container fork(Predicate&& p = detail::decay_t<Predicate>{}) const {
-		Container c;
-		
-		c._services.reserve(_services.size());
-		
-		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, c._services.begin()), [&p](service_cont::const_reference i){
-			// We don't forward the predicate here, we use it many times.
-			return p(i.first);
-		});
-		
-		return c;
+	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
+	Container fork() const {
+		return fork(Predicate{});
 	}
 	
 	/*
@@ -158,18 +149,16 @@ public:
 	 * The new container must exist within the lifetime of the original container.
 	 * 
 	 * It takes a predicate as argument.
-	 * 
-	 * This version of the function takes a predicate that is not default constructible.
 	 */
-	template<typename Predicate, disable_if<std::is_default_constructible<detail::decay_t<Predicate>>> = 0>
-	Container fork(Predicate&& p) const {
+	template<typename Predicate>
+	Container fork(Predicate&& predicate) const {
 		Container c;
 		
 		c._services.reserve(_services.size());
 		
-		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, _services.begin()), [&p](service_cont::const_reference i){
+		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, _services.begin()), [&predicate](service_cont::const_reference i){
 			// We don't forward the predicate here, we use it many times.
-			return p(i.first);
+			return predicate(i.first);
 		});
 		
 		return c;

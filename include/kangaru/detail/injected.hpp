@@ -85,12 +85,12 @@ template<typename>
 struct original;
 
 template<typename T>
-struct original<BaseInjected<T>> {
+struct original<BaseInjected<T>&> {
 	using type = T;
 };
 
 template<typename T>
-struct original<Injected<T>> {
+struct original<Injected<T>&&> {
 	using type = T;
 };
 

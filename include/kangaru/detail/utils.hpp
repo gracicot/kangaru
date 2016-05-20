@@ -7,7 +7,6 @@ namespace kgr {
 namespace detail {
 
 struct no_autocall_t {};
-struct drop_unused_t {};
 
 } // namespace detail
 
@@ -23,7 +22,6 @@ struct in_place_t{};
 
 constexpr in_place_t in_place{};
 constexpr detail::no_autocall_t no_autocall{};
-constexpr detail::drop_unused_t drop_unused{};
 
 namespace detail {
 

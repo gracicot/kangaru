@@ -4,6 +4,12 @@
 #include "function_traits.hpp"
 
 namespace kgr {
+namespace detail {
+
+struct no_autocall_t {};
+struct drop_unused_t {};
+
+} // namespace detail
 
 template<typename T>
 struct Map {
@@ -14,10 +20,10 @@ template<typename T>
 using ServiceType = decltype(std::declval<T>().forward());
 
 struct in_place_t{};
-constexpr in_place_t in_place{};
 
-struct no_autocall_t {};
-constexpr no_autocall_t no_autocall{};
+constexpr in_place_t in_place{};
+constexpr detail::no_autocall_t no_autocall{};
+constexpr detail::drop_unused_t drop_unused{};
 
 namespace detail {
 

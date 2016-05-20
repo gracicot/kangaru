@@ -77,7 +77,7 @@ public:
 	 * This version of the function will not call functions in autocall.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0>
-	void instance(no_autocall_t, Args&&... args) {
+	void instance(detail::no_autocall_t, Args&&... args) {
 		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
 	
@@ -178,7 +178,7 @@ public:
 	 * T nust be a single service.
 	 */
 	template<typename T, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_single<T>> = 0>
-	bool contains() {
+	bool contains() const {
 		return _services.find(type_id<T>) != _services.end();
 	}
 	

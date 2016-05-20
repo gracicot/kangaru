@@ -325,8 +325,13 @@ private:
 	 * It result in a compile time error, since the container needs a contruct function to make a service.
 	 */
 	template<typename T, typename... Args, disable_if<detail::has_template_construct<T, Args...>> = 0, disable_if<detail::has_construct<T>> = 0>
-	void make_service_instance(Args&&...) {
+	contained_service_t<T> make_service_instance(Args&&...) {
 		static_assert(!std::is_same<T, T>::value, "A non-abstract service must have a static member function named construct.");
+		
+		// This line is used to return an actual value.
+		// Since this line will never be executed, declval is a good alternative.
+		// This will prevent further compilation errors, we want the error to be as clear as we can get.
+		return std::declval<contained_service_t<T>>();
 	}
 	
 	/*
@@ -435,7 +440,7 @@ private:
 	 */
 	template<typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(definition<detail::original_t<detail::decay_t<detail::function_argument_t<S, detail::decay_t<U>>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(definition<detail::original_t<detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////
@@ -504,7 +509,7 @@ private:
 	template<typename T, typename F, std::size_t... S>
 	void invoke_autocall(detail::seq<S...>, T&& service, F&& function) {
 		invoke_raw([&service, &function](detail::function_argument_t<S, detail::decay_t<F>>... args){
-			(std::forward<T>(service).*std::forward<F>(function))(std::forward<detail::function_argument_t<S, detail::decay_t<F>>>(args)...);
+			(std::forward<T>(service).*std::forward<F>(function))(std::forward<decltype(args)>(args)...);
 		});
 	}
 	

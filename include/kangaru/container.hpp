@@ -174,6 +174,24 @@ public:
 	}
 	
 	/*
+	 * This function merges a container with another.
+	 * The receiving container will prefer it's own instances in a case of conflicts.
+	 */
+	inline void merge(detail::drop_unused_t, Container&& other) {
+		_services.insert(other._services.begin(), other._services.end());
+		std::copy_if(
+			std::make_move_iterator(other._instances.begin()),
+			std::make_move_iterator(other._instances.end()),
+			std::back_inserter(_instances),
+			[this](instance_cont::const_reference instance){
+				return std::find_if(_services.begin(), _services.end(), [&instance](service_cont::const_reference service){
+					return service.second == instance.get();
+				}) != _services.end();
+			}
+		);
+	}
+	
+	/*
 	 * This function return true if the container contains the service T.
 	 * T nust be a single service.
 	 */

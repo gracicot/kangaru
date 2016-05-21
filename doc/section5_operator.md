@@ -17,7 +17,7 @@ It has one member function: `operator()`. This function is equivalent to calling
 
 Here's an example:
 
-    
+```c++
     // NotificationService is a non-single service.
     auto notificationGenerator = container.service<GeneratorService<NotificationService>>();
     
@@ -37,6 +37,7 @@ Instead of sending the map every time the `invoke` function is called, the map i
 
 Here's a code snippet using the `Invoker`:
 
+```c++
     int sendRequest(ClownMaster&, Notification, double timeout);
     
     auto invoker = container.service<InvokerService<ServiceMap>>();
@@ -59,14 +60,16 @@ Lazy is provided with a service definition named `LazyService<T>` where `T` is a
 
 You can use it like this:
 
-    // The contained 'ClownMaster' is not constructed yet.
-    auto lazyClownMaster = container.service<LazyService<ClownMasterService>>();
-    
-    // ClownMaster is constructed here, the operator* is used.
-    cout << *lazyClownMaster;
-    
-    // The same instance is reused again and returned by operator->
-    lazyClownMaster->print();
+```c++
+// The contained 'ClownMaster' is not constructed yet.
+auto lazyClownMaster = container.service<LazyService<ClownMasterService>>();
+
+// ClownMaster is constructed here, the operator* is used.
+cout << *lazyClownMaster;
+
+// The same instance is reused again and returned by operator->
+lazyClownMaster->print();
+```
 
 And again, there's the equivalent of lazy with a forked container, named `ForkedLazy<T>` and `ForkedLazyService<T>`
 

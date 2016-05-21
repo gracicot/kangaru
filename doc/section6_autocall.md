@@ -5,6 +5,7 @@ Few dependency injection libraries offers automatic injection using setters. For
 
 Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recommend you to declare macros similar to these:
 
+```c++
     #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 Of course, you are free to name them as you want.
@@ -18,6 +19,7 @@ The `kgr::AutoCall` struct has the service map as it's first parameter, and has 
 
 Let's see an example of it's usage. So we have this class:
 
+```c++
     struct ClownMaster {
         void init() {
             n = 42;
@@ -29,6 +31,7 @@ Let's see an example of it's usage. So we have this class:
     
 If we want `init()` to be called at the service's construction, we need our definition to extends autocall:
 
+```c++
     struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap, METHOD(&ClownMaster::init)> {};
     
 But wait, there's more!
@@ -37,6 +40,7 @@ What if the needed value of `n` comes from another service?
 
 Here comes the fancy thing. Method called by `kgr::AutoCall` can receive dependencies. So here's our class according to the new need:
 
+```c++
     struct ClownMaster {
         void init(Shop& s) {
             n = s.countItems();
@@ -49,6 +53,7 @@ Here comes the fancy thing. Method called by `kgr::AutoCall` can receive depende
 That's it! You can add any number of parameter as you wish, the definition will stay the same and the method will receive what you ask for.
 We can have multiple method call with multiple parameter:
 
+```c++
     struct ClownMaster {
         void init(Shop& s, FileManager& theFm) {
              n = s.countItems() + fm.countFiles();
@@ -65,6 +70,7 @@ We can have multiple method call with multiple parameter:
     
 Now we want to add `setFileManager` to the list of method to call:
 
+```c++
     struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
         METHOD(&ClownMaster::init),
         METHOD(&ClownMaster::setFileManager)
@@ -76,16 +82,20 @@ The method are called in the order that are listed in `AutoCall`.
 
 Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::Invoke` class:
 
-    struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
-        kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-        METHOD(&ClownMaster::setFileManager)
-    > {};
+```c++
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
+    kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
+    METHOD(&ClownMaster::setFileManager)
+> {};
+```
 
 If you don't want to use the service map at all, you can exdends `kgr::AutoCallNoMap` instead:
-    
-    struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCallNoMap<
-        kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-        kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>
-    > {};
+
+```c++
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCallNoMap<
+    kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
+    kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>
+> {};
+```
 
 [Next chapter](section7_definitions.md)

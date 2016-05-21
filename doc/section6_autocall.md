@@ -34,7 +34,8 @@ private:
 If we want `init()` to be called at the service's construction, we need our definition to extends autocall:
 
 ```c++
-    struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap, METHOD(&ClownMaster::init)> {};
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap, METHOD(&ClownMaster::init)> {};
+```
     
 But wait, there's more!
 

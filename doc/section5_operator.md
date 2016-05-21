@@ -18,12 +18,13 @@ It has one member function: `operator()`. This function is equivalent to calling
 Here's an example:
 
 ```c++
-    // NotificationService is a non-single service.
-    auto notificationGenerator = container.service<GeneratorService<NotificationService>>();
-    
-    auto notification1 = notificationGenerator();
-    auto notification2 = notificationGenerator();
-    auto notification3 = notificationGenerator();
+// NotificationService is a non-single service.
+auto notificationGenerator = container.service<GeneratorService<NotificationService>>();
+
+auto notification1 = notificationGenerator();
+auto notification2 = notificationGenerator();
+auto notification3 = notificationGenerator();
+```
     
     
 There's another version of the generator for a forked container. It's called `ForkedGenerator`, and it's definition `ForkedGeneratorService`.
@@ -38,11 +39,12 @@ Instead of sending the map every time the `invoke` function is called, the map i
 Here's a code snippet using the `Invoker`:
 
 ```c++
-    int sendRequest(ClownMaster&, Notification, double timeout);
-    
-    auto invoker = container.service<InvokerService<ServiceMap>>();
-    
-    invoker(sendRequest, 10); // calls sendRequest with 10 as it's timeout
+int sendRequest(ClownMaster&, Notification, double timeout);
+
+auto invoker = container.service<InvokerService<ServiceMap>>();
+
+invoker(sendRequest, 10); // calls sendRequest with 10 as it's timeout
+```
     
 Just like `Generator`, another version of the invoker for a forked container is provided. It's called `ForkedInvoker`, and it's definition `ForkedInvokerService`.
     

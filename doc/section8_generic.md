@@ -74,6 +74,14 @@ struct MyUniqueService<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyU
 };
 ```
 
+### Using the class
+
+You can now use your class as the following:
+
+```c++
+struct MyClassService : MyUniqueService<MyClass, kgr::Dependency<MyDependencyService>> {};
+```
+
 #### Singles
 
 If the generic definition should be single, simply make it extend from the `kgr::Single` struct.

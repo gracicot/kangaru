@@ -3,21 +3,29 @@ Writing service definitions from scratch
 
 Previously, each time we did a service definition, we extended the `kgr::Service` or the `kgr::SingleService` structs. But it is important to note that we are not limited to that.
 
-Writing a service definition is pretty easy. You only need to define two functions for it to work:
+Writing a service definition is pretty easy. You only need to define three functions for it to work:
 
  * `construct`
  * `forward`
+ * a constructor that takes at least `kgr::in_place_t` as parameter.
 
-The `construct` function is static and returns the service definition itself. It's a factory method. It can take any other service definition as a parameter. This is where dependencies are resolved.
-The `forward` function takes no parameters and returns the service. The return type of this function defines how your service should be injected. Note that this function has the power to invalidate the service definition.
+The `construct` function is static and returns the arguments that should be used to construct your service definition. It can take any other service definition as a parameter.
+This is where dependencies are resolved. This function must return values using the `kgr::inject` function. The return type is a special tuple made for the container to handle your arguments correctly.
+
+The `forward` function takes no parameters and returns the service. The return type of this function defines how your service should be injected. Note that this function can invalidate the service definition in the case of a non single service.
+
+The container will instanciate your struct given these tools. However, it must call a constructor. The container will call a constructor that takes a `kgr::in_place_t` and the variables returned by `construct`.
 
 Normally, your service definition should contain your service.
 
-A tipical service definition looks like this:
+A typical service definition looks like this:
 
     struct FileManagerService {
-        static FileManagerService construct() {
-            return {};
+        template<typename... Args>
+        FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    
+        static auto construct() -> decltype(kgr::inject()) {
+            return kgr::inject();
         }
         
         FileManager forward() {
@@ -28,11 +36,11 @@ A tipical service definition looks like this:
         FileManager fm;
     };
 
-If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters:
+If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters. To add a parameter that must be injected, you must use the wrapper class `kgr::Inject<Definition>`:
 
     struct FileManagerService {
-        static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
-            return { FileManager{ns.forward(), cms.forward()} };
+        static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
+            return kgr::inject(ns.forward(), cms.forward());
         }
         
         // return as move, invalidating the service definition is okay.

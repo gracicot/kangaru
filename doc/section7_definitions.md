@@ -20,37 +20,41 @@ Normally, your service definition should contain your service.
 
 A typical service definition looks like this:
 
-    struct FileManagerService {
-        template<typename... Args>
-        FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+```c++
+struct FileManagerService {
+    template<typename... Args>
+    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+
+    static auto construct() -> decltype(kgr::inject()) {
+        return kgr::inject();
+    }
     
-        static auto construct() -> decltype(kgr::inject()) {
-            return kgr::inject();
-        }
-        
-        FileManager forward() {
-            return std::move(fm);
-        }
-        
-    private:
-        FileManager fm;
-    };
+    FileManager forward() {
+        return std::move(fm);
+    }
+    
+private:
+    FileManager fm;
+};
+```
 
 If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters. To add a parameter that must be injected, you must use the wrapper class `kgr::Inject<Definition>`:
 
-    struct FileManagerService {
-        static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
-            return kgr::inject(ns.forward(), cms.forward());
-        }
-        
-        // return as move, invalidating the service definition is okay.
-        FileManager forward() {
-            return std::move(fm);
-        }
-        
-    private:
-        FileManager fm;
-    };
+```c++
+struct FileManagerService {
+    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
+        return kgr::inject(ns.forward(), cms.forward());
+    }
+    
+    // return as move, invalidating the service definition is okay.
+    FileManager forward() {
+        return std::move(fm);
+    }
+    
+private:
+    FileManager fm;
+};
+```
     
 Note that single services must be received as references, like our `NotificationService&` in this particular case. By definition, a Single must not be copied.
 The container will call `construct` with the right set of parameters, automatically.
@@ -61,23 +65,27 @@ Sometimes, a type requires a parameter like a double or a string. The `construct
 
 For this service definition:
 
-    struct FileManagerService {
-        static FileManagerService construct(NotificationService& ns, ClownMasterService cms, std::string s, int n) {
-            return { FileManager{ns.forward(), cms.forward(), s, n} };
-        }
-        
-        // return as move, invalidating the service definition is okay.
-        FileManager forward() {
-            return std::move(fm);
-        }
-        
-    private:
-        FileManager fm;
-    };
+```c++
+struct FileManagerService {
+    static FileManagerService construct(NotificationService& ns, ClownMasterService cms, std::string s, int n) {
+        return { FileManager{ns.forward(), cms.forward(), s, n} };
+    }
+    
+    // return as move, invalidating the service definition is okay.
+    FileManager forward() {
+        return std::move(fm);
+    }
+    
+private:
+    FileManager fm;
+};
+```
 
 You have to call it that way:
 
-    auto fm = container.service<FileManagerService>("potatos", 34);
+```c++
+auto fm = container.service<FileManagerService>("potatos", 34);
+```
 
 ### Singles
 
@@ -87,27 +95,31 @@ Note: single services can forward copies too, but you rarely want to do that. Re
 
 So let's make our sevice a Single:
 
-    struct FileManagerService : Single {
-        static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
-            return { FileManager{ns.forward(), cms.forward()} };
-        }
-        
-        // return as pointer, must not invalidate the service.
-        FileManager* forward() {
-            return &fm;
-        }
-        
-    private:
-        FileManager fm;
-    };
+```c++
+struct FileManagerService : Single {
+    static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
+        return { FileManager{ns.forward(), cms.forward()} };
+    }
+    
+    // return as pointer, must not invalidate the service.
+    FileManager* forward() {
+        return &fm;
+    }
+    
+private:
+    FileManager fm;
+};
+```
 
 ### Abstract Services
 
 Abstract services are the simplest ones to implement. They have only one pure virtual method called `forward`:
 
-    struct IFileManagerService : Single {
-        virtual IFileManager& forward() = 0;
-    }
+```c++
+struct IFileManagerService : Single {
+    virtual IFileManager& forward() = 0;
+}
+```
     
 Abstract services must be single. That reason is pretty obvious: The container needs to access to an existing instance of a service that overrides it.
 

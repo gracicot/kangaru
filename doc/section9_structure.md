@@ -55,51 +55,52 @@ If we were to remove kangaru from this project, the only changed thing would be 
 We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because you must define the service map, and maybe include your own generic services.
 A "include kangaru" header file should look like this:
 
-    #pragma once // or a header guard.
+```c++
+#pragma once // or a header guard.
 
-    #include "kangaru/kangaru.hpp" // include kangaru
+#include "kangaru/kangaru.hpp" // include kangaru
 
-    // Here you can put your generic service.
-    // Example:
-    // #include "sharedservice.h"
-    // #include "uniqueservice.h"
+// Here you can put your generic service.
+// Example:
+// #include "sharedservice.h"
+// #include "uniqueservice.h"
 
-    // declare some needed macros
-    #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
-    
-    namespace <your-namespace> {
+// declare some needed macros
+#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
-    // declare the service map
-    template<typename>
-    struct ServiceMap;
+namespace <your-namespace> {
 
-    // specializing the service map for container services.
-    
-    template<> struct ServiceMap<kgr::Container&> : kgr::Map<kgr::ContainerService> {};
-    template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::ForkService> {};
-    
-    // specializing the service map for operator services.
-    
-    template<template<typename> class Map>
-    struct ServiceMap<kgr::Invoker<Map>> : kgr::Map<kgr::InvokerService<Map>> {};
-    
-    template<template<typename> class Map>
-    struct ServiceMap<kgr::ForkedInvoker<Map>> : kgr::Map<kgr::ForkedInvokerService<Map>> {};
-    
-    template<typename T>
-    struct ServiceMap<kgr::Generator<T>> : kgr::Map<kgr::GeneratorService<T>> {};
-    
-    template<typename T>
-    struct ServiceMap<kgr::ForkedGenerator<T>> : kgr::Map<kgr::ForkedGeneratorService<T>> {};
-    
-    template<typename T>
-    struct ServiceMap<kgr::Lazy<T>> : kgr::Map<kgr::LazyService<T>> {};
-    
-    template<typename T>
-    struct ServiceMap<kgr::ForkedLazy<T>> : kgr::Map<kgr::ForkedLazyService<T>> {};
-    
-    } // <your-namespace>
-    
+// declare the service map
+template<typename>
+struct ServiceMap;
+
+// specializing the service map for container services.
+
+template<> struct ServiceMap<kgr::Container&> : kgr::Map<kgr::ContainerService> {};
+template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::ForkService> {};
+
+// specializing the service map for operator services.
+
+template<template<typename> class Map>
+struct ServiceMap<kgr::Invoker<Map>> : kgr::Map<kgr::InvokerService<Map>> {};
+
+template<template<typename> class Map>
+struct ServiceMap<kgr::ForkedInvoker<Map>> : kgr::Map<kgr::ForkedInvokerService<Map>> {};
+
+template<typename T>
+struct ServiceMap<kgr::Generator<T>> : kgr::Map<kgr::GeneratorService<T>> {};
+
+template<typename T>
+struct ServiceMap<kgr::ForkedGenerator<T>> : kgr::Map<kgr::ForkedGeneratorService<T>> {};
+
+template<typename T>
+struct ServiceMap<kgr::Lazy<T>> : kgr::Map<kgr::LazyService<T>> {};
+
+template<typename T>
+struct ServiceMap<kgr::ForkedLazy<T>> : kgr::Map<kgr::ForkedLazyService<T>> {};
+
+} // <your-namespace>
+```
 
 This will add a common point between your project and kangaru.
 Feel free to copy this header into your project. Just replace `<your-namespace>` by the name of your namespace and you are ready to hack!

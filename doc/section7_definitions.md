@@ -18,12 +18,11 @@ The container will instanciate your struct given these tools. However, it must c
 
 Normally, your service definition should contain your service.
 
-A typical service definition looks like this:
+A basic service definition looks like this:
 
 ```c++
 struct FileManagerService {
-    template<typename... Args>
-    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    FileManagerService(kgr::in_place_t) : fm{} {}
 
     static auto construct() -> decltype(kgr::inject()) {
         return kgr::inject();
@@ -38,10 +37,14 @@ private:
 };
 ```
 
+In this case, `construct` injects nothing to our constructor.
+
 If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters. To add a parameter that must be injected, you must use the wrapper class `kgr::Inject<Definition>`:
 
 ```c++
 struct FileManagerService {
+    FileManagerService(kgr::in_place_t, Notification& n, ClownManster cm) : fm{n, std::move(cm)} {}
+    
     static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
         return kgr::inject(ns.forward(), cms.forward());
     }
@@ -56,19 +59,25 @@ private:
 };
 ```
     
-Note that single services must be received as references, like our `NotificationService&` in this particular case. By definition, a Single must not be copied.
+The `kgr::Inject<Definition>` will not only tell the container that this arguments must be injected, but ensure that singles are not copied and overrides are working correctly.
 The container will call `construct` with the right set of parameters, automatically.
+The `kgr::inject` function will forward the arguments to be sent to your constructor that receive a `kgr::in_place_t`.
 
 #### Additional parameters
 
-Sometimes, a type requires a parameter like a double or a string. The `construct` function can take as many additional parameters as you want. The only downside is that it does not support optional parameters, maybe in the next release ;)
+Sometimes, a type requires a parameter like a double or a string. The `construct` function can take as many additional parameters as you want. Just make the construct function a template instead:
 
 For this service definition:
 
 ```c++
 struct FileManagerService {
-    static FileManagerService construct(NotificationService& ns, ClownMasterService cms, std::string s, int n) {
-        return { FileManager{ns.forward(), cms.forward(), s, n} };
+    template<typename... Args>
+    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    
+    template<typename... Args>
+    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args)
+            -> decltype(kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...)) {
+        return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
     }
     
     // return as move, invalidating the service definition is okay.
@@ -97,11 +106,16 @@ So let's make our sevice a Single:
 
 ```c++
 struct FileManagerService : Single {
-    static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
-        return { FileManager{ns.forward(), cms.forward()} };
+    template<typename... Args>
+    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    
+    template<typename... Args>
+    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args)
+            -> decltype(kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...)) {
+        return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
     }
     
-    // return as pointer, must not invalidate the service.
+    // return as pointer because we want. Must not invalidate the service because it's a single.
     FileManager* forward() {
         return &fm;
     }

@@ -77,7 +77,7 @@ struct ServiceMap;
 // specializing the service map for container services.
 
 template<> struct ServiceMap<kgr::Container&> : kgr::Map<kgr::ContainerService> {};
-template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::ForkService> {};
+template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::DefaultForkService> {};
 
 // specializing the service map for operator services.
 

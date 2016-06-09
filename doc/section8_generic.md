@@ -13,50 +13,27 @@ template<typename Type, typename Deps = Dependency<>>
 
 ## Option 1: 100% custom implementation
 
-There's nothing that prevents you from reinventing the wheel, as long as the generic definition implements `forward` and `construct` correctly. Good luck.
+There's nothing that prevents you from reinventing the wheel, as long as the generic definition implements `forward` and `construct` correctly.
 Please note that some feature like `autocall` will not work with custom implementation unless implemented in a similar way.
 
 ## Option 2: Extend `kgr::GenericService`
 
 How to use `kgr::GenericService`?
-We need to pass it three parameters:
+We need to pass it two parameters:
 
  * The first one is the struct itself. Yes, it's the [CRTP](https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern).
  * The second one is what type the generic service should contain. It can be the service, or a pointer to the service or anything you want.
- * The third one are the dependencies.
  
 ```c++
-template<typename Type, typename Deps = kgr::Dependency<>>
-struct MyGeneric : kgr::GenericService<Service<Type, Deps>, Type, Deps> {
+template<typename Type, typename Deps>
+struct MyGeneric : kgr::GenericService<MyGeneric<Type, Deps>, Type> {
     
 };
 ```
 
-Next, we need to use the alias `Self` inside the `GenericService` and use the constructor: 
- 
-```c++
-template<typename Type, typename Deps = kgr::Dependency<>>
-struct MyGeneric : GenericService<Service<Type, Deps>, std::unique_ptr<Type>, Deps> {
-    private: using Parent = GenericService<Service<Type, Deps>, std::unique_ptr<Type>, Deps>;
+Then, we must implement three methods: `construct`, `forward` and `call`.
 
-public:
-    using typename Parent::Self;
-    using Parent::Parent;
-};
-```
-    
-Then, we must implement three methods: `makeService`, `forward` and `call`.
-Forward is the same forward as we know. However, `makeService` is something new. What is it? It's a static function that takes anything as parameter and returns a fully constructed definition. The parent class `GenericService` will use this method to construct the service.
-It usually looks like this:
-
-```c++
-template<typename... Args>
-static Self makeService(Args&&... args) {
-    return Self{ Type{std::forward<Args>(args)...} };
-}
-```
-
-There's Another function we haven't seen before. What is this mysterious `call` function? It's a function to call a method from a given instance.
+There's a function we haven't seen before. What is this mysterious `call` function? It's a function to call a method from a given instance.
 It must receive for the first parameter is a reference to the instance as it is contained within the `GenericService`. The second parameter is a pointer to the method to be called. Then the other parameters are the parameter pack to forward to the method.
 The most basic implementation:
 
@@ -74,17 +51,15 @@ Now let's see how they look like in `MyGeneric`!
 ### Full example
  
 ```c++
-template<typename Type, typename Deps = kgr::Dependency<>>
-struct MyGeneric : GenericService<Service<Type, Deps>, std::unique_ptr<Type>, Deps> {
-    private: using Parent = GenericService<Service<Type, Deps>, std::unique_ptr<Type>, Deps>;
+template<typename, typename>
+struct MyGeneric;
 
-public:
-    using typename Parent::Self;
-    using Parent::Parent;
-    
+template<typename Type, typename... Deps>
+struct MyGeneric<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyGeneric<Type, kgr::Dependency<Deps...>>, std::unique_ptr<Type>> {
     template<typename... Args>
-    static Self makeService(Args&&... args) {
-        return Self{ new Type{std::forward<Args>(args)...} };
+    static auto construct(kgr::Inject<Deps>... deps, Args&&... args)
+            -> decltype(kgr::inject(std::make_unique<Type>(deps.forward()..., std::forward<Args>(args)...))) {
+        return kgr::inject(std::make_unique<Type>(deps.forward()..., std::forward<Args>(args)...));
     }
 
     std::unique_ptr<Type> forward() {
@@ -100,6 +75,7 @@ public:
 
 #### Singles
 
-If the generic definition should be single, simply make it extend the `kgr::Single` struct and make `forward` virtual.
+If the generic definition should be single, simply make it extend from the `kgr::Single` struct.
+Take note that you don't need any virtual function. The override behaviour is completely implemented inside the container.
 
 [Next chapter](section9_structure.md)

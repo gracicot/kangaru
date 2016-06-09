@@ -8,7 +8,8 @@ Well... Let's dive into it, shall we?
 First, our generic service usually have two template parameter: The sevice class and a dependency class.
 
 ```c++
-template<typename Type, typename Deps = Dependency<>>
+template<typename, typename>
+struct MyUniqueService;
 ```
 
 ## Option 1: 100% custom implementation
@@ -26,7 +27,7 @@ We need to pass it two parameters:
  
 ```c++
 template<typename Type, typename Deps>
-struct MyGeneric : kgr::GenericService<MyGeneric<Type, Deps>, Type> {
+struct MyUniqueService : kgr::GenericService<MyUniqueService<Type, Deps>, Type> {
     
 };
 ```
@@ -46,16 +47,16 @@ static decltype(auto) call(Type& instance, T method, Args&&... args) {
     
 _`decltype(auto)` is a c++14 feature even if only c++11 is required. It is used for the sake of simplicity and is not required._
 
-Now let's see how they look like in `MyGeneric`!
+Now let's see how they look like in `MyUniqueService`!
 
 ### Full example
  
 ```c++
 template<typename, typename>
-struct MyGeneric;
+struct MyUniqueService;
 
 template<typename Type, typename... Deps>
-struct MyGeneric<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyGeneric<Type, kgr::Dependency<Deps...>>, std::unique_ptr<Type>> {
+struct MyUniqueService<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyUniqueService<Type, kgr::Dependency<Deps...>>, std::unique_ptr<Type>> {
     template<typename... Args>
     static auto construct(kgr::Inject<Deps>... deps, Args&&... args)
             -> decltype(kgr::inject(std::make_unique<Type>(deps.forward()..., std::forward<Args>(args)...))) {

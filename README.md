@@ -55,5 +55,3 @@ feel free to contribute!
  * Testing with multiple / virtual inheritance
  * Unit tests
  * Better messages for compile-time errors
- * Better resource management
- * Operation on containers

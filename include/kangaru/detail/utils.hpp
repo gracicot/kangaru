@@ -27,7 +27,7 @@ namespace detail {
 
 template<template<typename> class Map, typename T, typename = void>
 struct service_map {
-	static_assert(!std::is_same<T, T>::value, "The service sent to the service map is imcomplete. Have you forgot to include your service definition?");
+	static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
 };
 
 template<template<typename> class Map, typename T>

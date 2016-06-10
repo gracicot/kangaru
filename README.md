@@ -26,11 +26,11 @@ You must use the `find_package` function:
     
 And then add the include dirs to your target:
 
-    target_include_directories(<YOUR TARGET> PUBLIC ${KANGARU_INCLUDE_DIRS})
+    target_link_libraries(<YOUR TARGET> PUBLIC kangaru)
     
 Then you can include the library as follow:
 
-    #include "kangaru/kangaru.hpp"
+    #include <kangaru/kangaru.hpp>
 
 Features
 --------
@@ -38,7 +38,6 @@ Features
  * Recursive dependency resolution
  * Does not need to modify existing classes
  * Instances shared across every services (Single Services)
- * You tell the container how to allocate memory
  * You tell the container how to construct your types
  * You tell the container how to store them
  * You tell the container how they are injected

@@ -26,8 +26,11 @@ We need to pass it two parameters:
  * The second one is what type the generic service should contain. It can be the service, or a pointer to the service or anything you want.
  
 ```c++
-template<typename Type, typename Deps>
-struct MyUniqueService : kgr::GenericService<MyUniqueService<Type, Deps>, Type> {
+template<typename, typename>
+struct MyUniqueService;
+
+template<typename Type, typename... Deps>
+struct MyUniqueService<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyUniqueService<Type, kgr::Dependency<Deps...>>, std::unique_ptr<Type>> {
     
 };
 ```

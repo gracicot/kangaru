@@ -1,9 +1,9 @@
-Injection With Setters (autocall)
-=================================
+AutoCall
+========
 
-Few dependency injection libraries offers automatic injection using setters. Fortunatly, this is one of those!
+AutoCall is a way to automatically call a function of the constructed service right after the construction. This feature can also be used to perform injection using setters.
 
-Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recommend you to declare macros similar to these:
+Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recommend you to declare a macros similar to this one:
 
 ```c++
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>

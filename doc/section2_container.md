@@ -129,7 +129,7 @@ You can as well inject the container into a service as a fork. There's the class
 Here's a usage of this service definition:
 
 ```c++
-kgr::Container fork = container.service<DefaultForkService>(); // another way to fork
+kgr::Container fork = container.service<ForkService>(); // another way to fork
 ```
 
 ### Fork with some instances
@@ -162,6 +162,9 @@ auto fork = container.fork<kgr::NoneOf<ShopService>>();
 
 // fork has every services contained in `container` except `ShopService`
 ```
+### Inject the fork with some instance
+
+You can use your predicates with for service using the `kgr::FilteredForkService<Predicate>`. The usage is pretty much the same as `kgr::ForkService`, but with a predicate as an argument.
 
 #### lambda
 

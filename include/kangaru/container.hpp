@@ -34,7 +34,7 @@ private:
 	}
 	
 	template<typename T, typename... Args>
-	static instance_ptr<detail::SingleInjected<T>> makeInstancePtr(Args&&... args) {
+	static instance_ptr<detail::SingleInjected<T>> make_instance_ptr(Args&&... args) {
 		return instance_ptr<detail::SingleInjected<T>>{
 			new detail::SingleInjected<T>{std::forward<Args>(args)...},
 			&Container::deleter<detail::BaseInjected<T>>
@@ -42,7 +42,7 @@ private:
 	}
 	
 	template<typename T, typename C, typename... Args>
-	static instance_ptr<detail::BaseInjected<C>> makeOverridePtr(Args&&... args) {
+	static instance_ptr<detail::BaseInjected<C>> make_override_ptr(Args&&... args) {
 		return instance_ptr<detail::ServiceOverride<T, C>>{
 			new detail::ServiceOverride<T, C>{std::forward<Args>(args)...},
 			&Container::deleter<detail::BaseInjected<C>>
@@ -248,7 +248,7 @@ private:
 	 */
 	template<typename T, typename Override, typename... Others>
 	detail::SingleInjected<T>& save_instance_helper(contained_service_t<T> service) {
-		auto overrideService = makeOverridePtr<T, Override>(service->get());
+		auto overrideService = make_override_ptr<T, Override>(service->get());
 		
 		static_assert(
 			std::is_same<instance_ptr<detail::BaseInjected<Override>>, decltype(overrideService)>::value,
@@ -370,7 +370,7 @@ private:
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		return makeInstancePtr<T>(in_place, std::forward<Args>(args)...);
+		return make_instance_ptr<T>(in_place, std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -381,7 +381,7 @@ private:
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		auto service = makeInstancePtr<T>();
+		auto service = make_instance_ptr<T>();
 		
 		service->get().emplace(std::forward<Args>(args)...);
 		

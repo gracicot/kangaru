@@ -7,8 +7,8 @@
 namespace kgr {
 
 template<typename Predicate>
-struct ForkService {
-	explicit ForkService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+struct FilteredForkService {
+	explicit FilteredForkService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
 	
 	inline Container forward() {
 		return std::move(_container);
@@ -22,7 +22,7 @@ private:
 	Container _container;
 };
 
-using DefaultForkService = ForkService<All>;
+using ForkService = FilteredForkService<All>;
 
 template<template<typename> class Map>
 struct InvokerService {

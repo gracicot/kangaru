@@ -25,7 +25,7 @@ template<typename>
 struct ServiceMap;
 ```
     
-The service map is a template class that has the parameter type as template parameter and is using the `Service` type, which equal to which service the ;arameter should be associated.
+The service map is a template class that has the parameter type as template parameter and is using the `Service` type, which equal to which service the parameter should be associated.
 
 For each service in which you want to be able work with `invoke` without explicitely listing every services, specialize the struct like this:
 

@@ -1,7 +1,7 @@
 Invoke
 ======
 
-Invoke is one pretty cool feature. It calls a function that receives services with the right set of parameters.
+Invoke is one handy feature. It calls a function that receives services with the right set of parameters.
 
 Let's say we have this function:
 

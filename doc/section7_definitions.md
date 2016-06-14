@@ -17,8 +17,10 @@ A tipical service definition looks like this:
 
 ```c++
 struct FileManagerService {
-    static FileManagerService construct() {
-        return {};
+    FileManagerService(kgr::in_place_t) {}
+
+    static auto construct() -> decltype(kgr::inject()) {
+        return kgr::inject();
     }
     
     FileManager forward() {
@@ -34,8 +36,11 @@ If the class `FileManager` has dependencies, you can add them in the `construct`
 
 ```c++
 struct FileManagerService {
-    static FileManagerService construct(NotificationService& ns, ClownMasterService cms) {
-        return { FileManager{ns.forward(), cms.forward()} };
+    template<typename... Args>
+    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+
+    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
+        return kgr::inject(ns.forward(), cms.forward());
     }
     
     // return as move, invalidating the service definition is okay.
@@ -59,8 +64,11 @@ For this service definition:
 
 ```c++
 struct FileManagerService {
-    static FileManagerService construct(NotificationService& ns, ClownMasterService cms, std::string s, int n) {
-        return { FileManager{ns.forward(), cms.forward(), s, n} };
+    template<typename... Args>
+    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+
+    static auto construct(NotificationService& ns, ClownMasterService cms, std::string s, int n) -> decltype(kgr::inject(ns.forward(), cms.forward(), s, n)) {
+        return kgr::inject(ns.forward(), cms.forward(), s, n);
     }
     
     // return as move, invalidating the service definition is okay.
@@ -93,7 +101,7 @@ struct FileManagerService : Single {
         return { FileManager{ns.forward(), cms.forward()} };
     }
     
-    // return as pointer, must not invalidate the service.
+    // return as pointer, does not invalidate the service.
     FileManager* forward() {
         return &fm;
     }

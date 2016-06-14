@@ -196,7 +196,7 @@ public:
 	
 	ref get() {
 		if (!_initialized) {
-			emplace(this->assign_value(static_cast<CRTP*>(this)->_container.template service<T>()));
+			emplace(this->assign_value(static_cast<CRTP*>(this)->container().template service<T>()));
 		}
 		
 		return this->value(data());

@@ -103,7 +103,7 @@ public:
 			"Too many arguments are sent to the function."
 		);
 		
-		return invoke<Map>(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_helper<Map>(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -421,7 +421,7 @@ private:
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
 	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
-	detail::function_result_t<detail::decay_t<U>> invoke(detail::seq<S...>, U&& function, Args&&... args) {
+	detail::function_result_t<detail::decay_t<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<detail::service_map_t<Map, detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
 	}
 	
@@ -431,7 +431,7 @@ private:
 	 */
 	template<typename U, typename ...Args>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(U&& function, Args&&... args) {
-		return invoke_raw(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_raw_helper(detail::tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -439,7 +439,7 @@ private:
 	 * It unpacks arguments of the function U with an integer sequence.
 	 */
 	template<typename U, typename ...Args, std::size_t... S>
-	detail::function_result_t<detail::decay_t<U>> invoke_raw(detail::seq<S...>, U&& function, Args&&... args) {
+	detail::function_result_t<detail::decay_t<U>> invoke_raw_helper(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(definition<detail::original_t<detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
 	}
 	

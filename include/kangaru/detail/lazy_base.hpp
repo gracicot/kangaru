@@ -220,9 +220,10 @@ private:
 	}
 	
 	void destroy() {
+		using DestructingType = type;
 		if (_initialized) {
 			_initialized = false;
-			data().~type();
+			data().~DestructingType();
 		}
 	}
 	

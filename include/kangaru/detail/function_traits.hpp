@@ -7,12 +7,9 @@
 
 namespace kgr {
 namespace detail {
-	
-template <typename T, typename = void>
-struct function_traits {};
 
 template <typename T>
-struct function_traits<T, void_t<decltype(&T::operator())>>
+struct function_traits
 	: function_traits<decltype(&T::operator())>
 {};
 

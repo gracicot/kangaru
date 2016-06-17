@@ -11,8 +11,9 @@ Non-Single services are just services that are constructed every time they are i
 In those cases, the container will behave as a fancy factory.
 
 ## Declaring a service
-In order to transform a class into a service, you wont need to modify your class. All you have to do, is to create a new _service definition_.
-The service definition will tell the container how your service should behave. This is an example of the simplest service definition possible.
+In order to transform a class into a service, you wont need to modify your class. All you have to do, is to declare a new _service definition_.
+The service definition will tell the container how your service should behave. It should be a non-polymorphic class, except for abstract services.
+This is an example of the simplest service definition possible.
 Let's say you have this class and you want it to become a service:
 
 ```c++
@@ -32,7 +33,7 @@ You made it! Now the container knows that `FileManager` is a service!
 ### Dependencies
 
 In order to make a service dependent of another service, you have to add the `kgr::Dependency` parameter to the `kgr::Service` class.
-`kgr::Dependency` is a variadic template that has every dependency as a template argument. It is used in this way:
+`kgr::Dependency` is a variadic template that has every dependency as a template argument. It is used like this:
 
 ```c++
 struct FileManagerService : kgr::Service<FileManager, kgr::Dependency<FileSystemService>> {};
@@ -49,7 +50,7 @@ struct FileManagerService : kgr::Service<FileManager, kgr::Dependency<
 ```
 
 Now that your service `FileManager` is dependent of these other services, you have to receive them in your service's constructor:
-    
+
 ```c++
 struct FileManager {
     // FileManager needs FileSystem, Notification and ClownMaster.
@@ -61,7 +62,7 @@ struct FileManager {
     ClownMaster cm;
 };
 ```
-    
+
 Take note that the order of parameter in the constructor must match the order in the dependencies declaration.
 
 ### Single Services
@@ -83,8 +84,7 @@ cout << (&fm1 == &fm2 ? "true":"false") << endl; // the output will be "true"
 
 ### Available methods
 
-There are one protected method that are provided by generic services from the Kangaru library:
- * `getInstance()` which returns the contained instance of the service.
+There is one protected method that is provided by generic services from the Kangaru library: `instance()` which returns the contained instance of the service.
 
 ### Other Service Types
 

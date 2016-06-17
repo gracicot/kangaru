@@ -67,7 +67,7 @@ struct MyUniqueService<Type, kgr::Dependency<Deps...>> : kgr::GenericService<MyU
     }
 
     std::unique_ptr<Type> forward() {
-        return std::move(this->getInstance());
+        return std::move(this->instance());
     }
     
     template<typename T, typename... Args>

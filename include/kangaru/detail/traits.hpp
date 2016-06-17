@@ -63,7 +63,7 @@ template<typename T, typename = void>
 struct is_service : std::false_type {};
 
 template<typename T>
-struct is_service<T, void_t<decltype(&T::forward)>> : std::true_type {};
+struct is_service<T, void_t<enable_if_t<!std::is_polymorphic<T>::value || std::is_abstract<T>::value>, decltype(&T::forward)>> : std::true_type {};
 
 template<typename T, typename = void>
 struct has_construct : std::false_type {};

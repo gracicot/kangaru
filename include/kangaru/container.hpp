@@ -262,6 +262,22 @@ private:
 	}
 	
 	///////////////////////
+	//      service      //
+	///////////////////////
+	
+	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
+	T service() {
+		return service<detail::service_map_t<Map, T>>();
+	}
+	
+	template<template<typename> class Map, typename T, disable_if<detail::is_complete_map<Map, T>> = 0>
+	T service() {
+		static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
+		
+		return std::declval<T>();
+	}
+	
+	///////////////////////
 	//    definition     //
 	///////////////////////
 	
@@ -422,7 +438,7 @@ private:
 	 */
 	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(service<detail::service_map_t<Map, detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(service<Map, detail::function_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
 	}
 	
 	/*

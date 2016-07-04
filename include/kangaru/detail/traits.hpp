@@ -118,6 +118,12 @@ struct has_template_construct : has_template_construct_helper<Ts...>::type {};
 template<typename... Ts>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;
 
+template<template<typename> class Map, typename T, typename = void>
+struct is_complete_map : std::false_type {};
+
+template<template<typename> class Map, typename T>
+struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
+
 } // namespace detail
 } // namespace kgr
 

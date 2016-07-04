@@ -25,18 +25,8 @@ constexpr detail::no_autocall_t no_autocall{};
 
 namespace detail {
 
-template<template<typename> class Map, typename T, typename = void>
-struct service_map {
-	static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
-};
-
 template<template<typename> class Map, typename T>
-struct service_map<Map, T, void_t<typename Map<T>::Service>> {
-	using Service = typename Map<T>::Service;
-};
-
-template<template<typename> class Map, typename T>
-using service_map_t = typename service_map<Map, T>::Service;
+using service_map_t = typename Map<T>::Service;
 
 } // namespace detail
 } // namespace kgr

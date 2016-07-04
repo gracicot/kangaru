@@ -90,9 +90,7 @@ struct OvenService : kgr::Single {
 	}
 	
 	// forward method. This method define how the service is injected.
-	// It's virtual because other services can override this one.
-	// See example 4 for more detail.
-	virtual Oven* forward() {
+	Oven* forward() {
 		return oven.get();
 	}
 	
@@ -113,9 +111,7 @@ struct BakerService : kgr::Single {
 	}
 	
 	// forward method. This method define how the service is injected.
-	// It's virtual because other services can override this one.
-	// See example 4 for more detail.
-	virtual std::shared_ptr<Baker> forward() {
+	std::shared_ptr<Baker> forward() {
 		return baker;
 	}
 	

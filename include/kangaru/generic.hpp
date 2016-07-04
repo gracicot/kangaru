@@ -15,20 +15,20 @@ struct GenericService {
 	GenericService() = default;
 	
 	GenericService(GenericService&& other) {
-		emplace(std::move(other.getInstance()));
+		emplace(std::move(other.instance()));
 	}
 	
 	GenericService& operator=(GenericService&& other) {
-		emplace(std::move(other.getInstance()));
+		emplace(std::move(other.instance()));
 		return *this;
 	}
 	
 	GenericService(const GenericService& other) {
-		emplace(other.getInstance());
+		emplace(other.instance());
 	}
 	
 	GenericService& operator=(const GenericService& other) {
-		emplace(other.getInstance());
+		emplace(other.instance());
 		return *this;
 	}
 	
@@ -38,15 +38,15 @@ struct GenericService {
 	}
 	
 	~GenericService() {
-		getInstance().~Type();
+		instance().~Type();
 	}
 	
 protected:
-	Type& getInstance() {
+	Type& instance() {
 		return *reinterpret_cast<Type*>(&_instance);
 	}
 	
-	const Type& getInstance() const {
+	const Type& instance() const {
 		return *reinterpret_cast<const Type*>(&_instance);
 	}
 	
@@ -63,7 +63,7 @@ private:
 	
 	template<typename F, typename... Ts>
 	void autocall(Inject<Ts>... others) {
-		CRTP::call(getInstance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
+		CRTP::call(instance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
 	}
 	
 	template<typename F, template<typename> class Map>
@@ -74,7 +74,7 @@ private:
 	template<template<typename> class Map, typename F, std::size_t... S>
 	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
-			CRTP::call(getInstance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
+			CRTP::call(instance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
 	

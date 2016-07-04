@@ -265,11 +265,20 @@ private:
 	//      service      //
 	///////////////////////
 	
+	/*
+	 * This function call service using the service map.
+	 * This function is called when the service map `Map` is valid for a given `T`
+	 */
 	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
 	auto service() -> decltype(service<detail::service_map_t<Map, T>>()) {
 		return service<detail::service_map_t<Map, T>>();
 	}
 	
+	/*
+	 * This function call service using the service map.
+	 * This function is called when the service map `Map` is invalid for a given `T`
+	 * It will fail the static_assert to provide some useful error message
+	 */
 	template<template<typename> class Map, typename T, disable_if<detail::is_complete_map<Map, T>> = 0>
 	T service() {
 		static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");

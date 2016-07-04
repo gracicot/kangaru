@@ -266,7 +266,7 @@ private:
 	///////////////////////
 	
 	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
-	T service() {
+	auto service() -> decltype(service<detail::service_map_t<Map, T>>()) {
 		return service<detail::service_map_t<Map, T>>();
 	}
 	

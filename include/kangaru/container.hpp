@@ -85,6 +85,7 @@ public:
 	 * This function returns the service given by serivce definition T.
 	 * T must have a function forward callable this way: std::declval<T>.forward()
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
+	 * T must not be a polymorphic type.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0>
 	ServiceType<T> service(Args&&... args) {
@@ -92,9 +93,8 @@ public:
 	}
 	
 	/*
-	 * This function returns the service given by serivce definition T.
-	 * T must have a function forward callable this way: std::declval<T>.forward()
-	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
+	 * This function returns the service given by service definition T.
+	 * This version is called when T is polymorphic. A static assert is thrown.
 	 */
 	template<typename T, typename... Args, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
 	ServiceType<T> service(Args&&... args) {

@@ -51,6 +51,8 @@ protected:
 	}
 	
 private:
+	template<typename, typename...> friend struct detail::has_emplace_helper;
+	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
 		new (&_instance) Type(std::forward<Args>(args)...);

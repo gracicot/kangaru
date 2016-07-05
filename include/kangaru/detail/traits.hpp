@@ -60,10 +60,16 @@ template<typename T>
 struct has_next<T, void_t<typename T::Next>> : std::true_type {};
 
 template<typename T, typename = void>
+struct has_forward : std::false_type {};
+
+template<typename T>
+struct has_forward<T, void_t<decltype(std::declval<T>().forward())>> : std::true_type {};
+
+template<typename T, typename = void>
 struct is_service : std::false_type {};
 
 template<typename T>
-struct is_service<T, void_t<enable_if_t<!std::is_polymorphic<T>::value || std::is_abstract<T>::value>, decltype(&T::forward)>> : std::true_type {};
+struct is_service<T, enable_if_t<(!std::is_polymorphic<T>::value || std::is_abstract<T>::value) && has_forward<T>::value>> : std::true_type {};
 
 template<typename T, typename = void>
 struct has_construct : std::false_type {};
@@ -104,6 +110,22 @@ public:
 };
 
 template<typename T, typename... Args>
+struct has_emplace_helper {
+private:
+	template<typename U, typename... As>
+	static decltype(static_cast<void>(std::declval<U>().emplace(std::declval<As>()...)), std::true_type{}) test(int);
+	
+	template<typename U, typename... As>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(0));
+};
+
+template<typename T, typename... Args>
+struct has_emplace : has_emplace_helper<T, Args...>::type {};
+
+template<typename T, typename... Args>
 struct is_brace_constructible : is_brace_constructible_helper<T, Args...>::type {};
 
 template<typename T> struct remove_rvalue_reference { using type = T; };
@@ -123,6 +145,9 @@ struct is_complete_map : std::false_type {};
 
 template<template<typename> class Map, typename T>
 struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
+
+template<typename T, typename... Args>
+using is_emplaceable = typename std::conditional<std::is_default_constructible<T>::value && has_emplace<T, Args...>::value, std::true_type, std::false_type>::type;
 
 } // namespace detail
 } // namespace kgr

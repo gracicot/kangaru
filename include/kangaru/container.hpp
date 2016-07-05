@@ -86,9 +86,21 @@ public:
 	 * T must have a function forward callable this way: std::declval<T>.forward()
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 */
-	template<typename T, typename... Args>
+	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0>
 	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
+	}
+	
+	/*
+	 * This function returns the service given by serivce definition T.
+	 * T must have a function forward callable this way: std::declval<T>.forward()
+	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
+	 */
+	template<typename T, typename... Args, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
+	ServiceType<T> service(Args&&... args) {
+		static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
+		
+		return std::declval<ServiceType<T>>();
 	}
 	
 	/*
@@ -283,6 +295,9 @@ private:
 	T service() {
 		static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
 		
+		// This line is used to return an actual value.
+		// Since this line will never be executed, declval is a good alternative.
+		// This will prevent further compilation errors, we want the error to be as clear as we can get.
 		return std::declval<T>();
 	}
 	
@@ -297,7 +312,9 @@ private:
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
 	detail::Injected<T> definition(Args&&... args) {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
+		
 		autocall(service.get());
+		
 		return service;
 	}
 	
@@ -404,13 +421,32 @@ private:
 	 * This version of the function is called when the service definition has no valid constructor.
 	 * It will try to call an emplace function that construct the service in a lazy way.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
+		enable_if<detail::is_emplaceable<T, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		auto service = make_instance_ptr<T>();
 		
 		service->get().emplace(std::forward<Args>(args)...);
 		
 		return service;
+	}
+	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container to contain it in it's container.
+	 * This version of the function is called when the service definition has no valid constructor.
+	 * It will try to call an emplace function that construct the service in a lazy way.
+	 */
+	template<typename T, typename... Args, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0, disable_if<detail::is_emplaceable<T, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		static_assert(!std::is_same<T, T>::value, "The service T is not constructible form Args... Dependencies may not be configured correctly.");
+		
+		// This line is used to return an actual value.
+		// Since this line will never be executed, declval is a good alternative.
+		// This will prevent further compilation errors, we want the error to be as clear as we can get.
+		return std::declval<contained_service_t<T>>();
 	}
 	
 	/*
@@ -428,7 +464,10 @@ private:
 	 * This version of the function is called when the service definition has no valid constructor.
 	 * It will try to call an emplace function that construct the service in a lazy way.
 	 */
-	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
+	template<typename T, typename... Args,
+		disable_if<detail::is_single<T>> = 0,
+		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
+		enable_if<detail::is_emplaceable<T, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		detail::Injected<T> service;
 		

@@ -3,8 +3,6 @@
 
 #include <tuple>
 
-#include "traits.hpp"
-
 namespace kgr {
 namespace detail {
 

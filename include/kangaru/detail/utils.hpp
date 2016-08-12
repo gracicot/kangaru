@@ -1,7 +1,7 @@
 #ifndef KGR_INCLUDE_KANGARU_DETAIL_UTILS_HPP
 #define KGR_INCLUDE_KANGARU_DETAIL_UTILS_HPP
 
-#include "function_traits.hpp"
+#include <type_traits>
 
 namespace kgr {
 namespace detail {

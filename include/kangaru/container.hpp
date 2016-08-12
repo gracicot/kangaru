@@ -49,6 +49,20 @@ private:
 		};
 	}
 	
+	struct NotInvokableError {
+		template<typename T = void>
+		NotInvokableError(...) {
+			static_assert(!std::is_same<T, T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and recieve required paramters.");
+		};
+	};
+	
+	struct NotAbstracPolymorphicError {
+		template<typename T = void>
+		NotAbstracPolymorphicError(...) {
+			static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
+		};
+	};
+	
 public:
 	explicit Container() = default;
 	Container(const Container &) = delete;
@@ -97,11 +111,7 @@ public:
 	 * This version is called when T is polymorphic. A static assert is thrown.
 	 */
 	template<typename T, typename... Args, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
-	ServiceType<T> service(Args&&... args) {
-		static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
-		
-		return std::declval<ServiceType<T>>();
-	}
+	ServiceType<T> service(Args&&... args, NotAbstracPolymorphicError = {}) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -118,7 +128,7 @@ public:
 	 * This version of the function is a reverse matching to provide diagnostic when `function` is not invokable.
 	 */
 	template<template<typename> class Map, typename U, typename ...Args, disable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
-	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) = delete;
+	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args, NotInvokableError = {}) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -208,7 +218,9 @@ private:
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+		
 		autocall(service.get());
+		
 		return service;
 	}
 	

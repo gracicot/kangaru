@@ -139,7 +139,7 @@ struct is_invokable_helper<Map, T, seq<S...>, Args...> {
 private:
 	template<typename U, typename... As>
 	static decltype(
-		static_cast<void>(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, decay_t<U>>>>>()..., std::declval<As>()...)),
+		static_cast<void>(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...)),
 		std::true_type{}
 	) test(int);
 	

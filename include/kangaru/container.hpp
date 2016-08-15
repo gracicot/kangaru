@@ -52,7 +52,7 @@ private:
 	struct NotInvokableError {
 		template<typename T = void>
 		NotInvokableError(...) {
-			static_assert(!std::is_same<T, T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and recieve required paramters.");
+			static_assert(!std::is_same<T, T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and that received parameters are correct.");
 		};
 	};
 	
@@ -110,8 +110,8 @@ public:
 	 * This function returns the service given by service definition T.
 	 * This version is called when T is polymorphic. A static assert is thrown.
 	 */
-	template<typename T, typename... Args, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
-	ServiceType<T> service(Args&&... args, NotAbstracPolymorphicError = {}) = delete;
+	template<typename T, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
+	ServiceType<T> service(NotAbstracPolymorphicError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -125,10 +125,10 @@ public:
 	
 	/*
 	 * This function returns the result of the callable object of type U.
-	 * This version of the function is a reverse matching to provide diagnostic when `function` is not invokable.
+	 * This version of the function is called when `function` is not invokable to provide diagnostic.
 	 */
-	template<template<typename> class Map, typename U, typename ...Args, disable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
-	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args, NotInvokableError = {}) = delete;
+	template<template<typename> class Map>
+	void invoke(NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.

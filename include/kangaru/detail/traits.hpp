@@ -57,12 +57,6 @@ template<typename T>
 struct has_invoke<T, void_t<typename T::invoke>> : std::true_type {};
 
 template<typename T, typename = void>
-struct has_next : std::false_type {};
-
-template<typename T>
-struct has_next<T, void_t<typename T::Next>> : std::true_type {};
-
-template<typename T, typename = void>
 struct has_forward : std::false_type {};
 
 template<typename T>
@@ -84,7 +78,7 @@ template<typename T, typename = void>
 struct is_invoke_call : std::false_type {};
 
 template<typename T>
-struct is_invoke_call<T, void_t<typename T::Params>> : std::true_type {};
+struct is_invoke_call<T, void_t<typename T::Parameters>> : std::true_type {};
 
 template<template<typename> class Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};

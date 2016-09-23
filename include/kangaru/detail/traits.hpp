@@ -113,7 +113,7 @@ public:
 };
 
 template<typename... Ts>
-using has_template_construct = has_template_construct_helper<Ts...>::type;
+using has_template_construct = typename has_template_construct_helper<Ts...>::type;
 
 template<typename T, typename... Args>
 struct has_emplace_helper {
@@ -167,10 +167,10 @@ template<typename... Ts>
 using construct_function_t = typename construct_function<Ts...>::value_type;
 
 template<typename T, typename... Args>
-using has_emplace = has_emplace_helper<T, Args...>::type;
+using has_emplace = typename has_emplace_helper<T, Args...>::type;
 
 template<typename T, typename... Args>
-using is_brace_constructible = is_brace_constructible_helper<T, Args...>::type;
+using is_brace_constructible = typename is_brace_constructible_helper<T, Args...>::type;
 
 template<typename T> struct remove_rvalue_reference { using type = T; };
 template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
@@ -180,14 +180,14 @@ template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_re
 template<typename T, typename... Args>
 using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
 
-template<typename... Ts>
-using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;
+template<typename T, typename... Args>
+using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<T, Args...>::value || std::is_constructible<T, Args...>::value>;
 
 template<typename T, typename... Args>
 using is_emplaceable = typename std::conditional<std::is_default_constructible<T>::value && has_emplace<T, Args...>::value, std::true_type, std::false_type>::type;
 
 template<template<typename> class Map, typename U, typename... Args>
-using is_invokable = is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type;
+using is_invokable = typename is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type;
 
 } // namespace detail
 } // namespace kgr

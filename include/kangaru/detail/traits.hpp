@@ -112,6 +112,9 @@ public:
 	using type = decltype(test<T, Args...>(nullptr));
 };
 
+template<typename... Ts>
+struct has_template_construct : has_template_construct_helper<Ts...>::type {};
+
 template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
@@ -145,6 +148,25 @@ public:
 };
 
 template<typename T, typename... Args>
+struct construct_function_helper {
+private:
+	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
+	static std::integral_constant<decltype(&U::construct), &U::construct> test();
+	
+	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
+	static std::integral_constant<decltype(&U::template construct<As...>), &U::template construct<As...>> test();
+	
+public:
+	using type = decltype(test<T, Args...>());
+};
+
+template<typename... Ts>
+using construct_function = typename construct_function_helper<Ts...>::type;
+
+template<typename... Ts>
+using construct_function_t = typename construct_function<Ts...>::value_type;
+
+template<typename T, typename... Args>
 struct has_emplace : has_emplace_helper<T, Args...>::type {};
 
 template<typename T, typename... Args>
@@ -156,8 +178,8 @@ template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 
 template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
 
-template<typename... Ts>
-struct has_template_construct : has_template_construct_helper<Ts...>::type {};
+template<typename T, typename... Args>
+using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
 
 template<typename... Ts>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;

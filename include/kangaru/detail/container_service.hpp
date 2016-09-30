@@ -12,9 +12,6 @@ namespace detail {
 
 struct ContainerServiceTag {};
 
-template<typename T>
-using is_container_service = std::is_base_of<detail::ContainerServiceTag, T>;
-
 } // namespace detail
 
 struct ContainerService : detail::ContainerServiceTag {

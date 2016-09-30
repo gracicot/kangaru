@@ -91,7 +91,7 @@ struct is_brace_constructible_helper {
 private:
 	template<typename U, typename... As>
 	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(int);
-
+	
 	template<typename...>
 	static std::false_type test(...);
 	
@@ -147,7 +147,7 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<typename T, typename... Args>
+template<bool, typename T, typename... Args>
 struct construct_function_helper {
 private:
 	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
@@ -160,11 +160,17 @@ public:
 	using type = decltype(test<T, Args...>());
 };
 
-template<typename... Ts>
-using construct_function = typename construct_function_helper<Ts...>::type;
+template<typename T, typename... Args>
+struct construct_function_helper<false, T, Args...> {};
 
-template<typename... Ts>
-using construct_function_t = typename construct_function<Ts...>::value_type;
+template<typename T, typename... Args>
+using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
+
+template<typename T, typename... Args>
+using construct_function = typename construct_function_helper<has_any_construct<T, Args...>::value, T, Args...>::type;
+
+template<typename T, typename... Args>
+using construct_function_t = typename construct_function<T, Args...>::value_type;
 
 template<typename T, typename... Args>
 using has_emplace = typename has_emplace_helper<T, Args...>::type;
@@ -178,13 +184,10 @@ template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
 
 template<typename T, typename... Args>
-using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
-
-template<typename T, typename... Args>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<T, Args...>::value || std::is_constructible<T, Args...>::value>;
 
 template<typename T, typename... Args>
-using is_emplaceable = typename std::conditional<std::is_default_constructible<T>::value && has_emplace<T, Args...>::value, std::true_type, std::false_type>::type;
+using is_emplaceable = std::integral_constant<bool, std::is_default_constructible<T>::value && has_emplace<T, Args...>::value>;
 
 template<template<typename> class Map, typename U, typename... Args>
 using is_invokable = typename is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type;

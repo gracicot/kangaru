@@ -1,8 +1,8 @@
 #ifndef KGR_INCLUDE_KANGARU_CONTAINER_HPP
 #define KGR_INCLUDE_KANGARU_CONTAINER_HPP
 
-#include "detail/function_traits.hpp"
 #include "detail/traits.hpp"
+#include "detail/service_traits.hpp"
 #include "detail/utils.hpp"
 #include "detail/container_service.hpp"
 #include "detail/invoke.hpp"
@@ -101,7 +101,7 @@ public:
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_dependencies_services<T, Args...>> = 0>
 	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}

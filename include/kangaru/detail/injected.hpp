@@ -81,22 +81,6 @@ private:
 	T _service;
 };
 
-template<typename>
-struct original;
-
-template<typename T>
-struct original<BaseInjected<T>&> {
-	using type = T;
-};
-
-template<typename T>
-struct original<Injected<T>&&> {
-	using type = T;
-};
-
-template<typename T>
-using original_t = typename original<T>::type;
-
 } // namespace detail
 
 template<typename T>

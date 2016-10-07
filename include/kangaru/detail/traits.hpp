@@ -189,6 +189,9 @@ using is_someway_constructible = std::integral_constant<bool, is_brace_construct
 template<typename T, typename... Args>
 using is_emplaceable = std::integral_constant<bool, std::is_default_constructible<T>::value && has_emplace<T, Args...>::value>;
 
+template<typename T, typename... Args>
+using is_service_instantiable = std::integral_constant<bool, is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
+
 template<template<typename> class Map, typename U, typename... Args>
 using is_invokable = typename is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type;
 

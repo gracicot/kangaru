@@ -33,7 +33,6 @@ struct LavaWand : FireWand {
 	}
 };
 
-// Every following service_ptr will be shared_ptr.
 struct Trickster {
 	Trickster(Wand& _wand) : wand{_wand} {}
 	
@@ -75,27 +74,18 @@ struct TricksterService : kgr::Service<Trickster, kgr::Dependency<WandService>> 
 struct WizardService : kgr::Service<Wizard, kgr::Dependency<MagicWandService>> {};
 struct FireMageService : kgr::Service<FireMage, kgr::Dependency<FireWandService>> {};
 
-// This is the init function, we are initiating what we need to make the container behave correctly.
-kgr::Container makeContainer() {
-	// This is the make function, we are initiating what we need to make the main() work.
+int main()
+{
 	kgr::Container container;
 	
 	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-	container.instance<MagicWandService>();
+	container.service<MagicWandService>();
 		
 	// FireWand is the second, because it's the second service in the hierarchy.
-	container.instance<FireWandService>();
+	container.service<FireWandService>();
 		
 	// LavaWand is the last, because it's the last service in the hierarchy.
-	container.instance<LavaWandService>();
-	
-	return container;
-}
-
-int main()
-{
-	// The container type will be MyContainer.
-	auto container = makeContainer();
+	container.service<LavaWandService>();
 	
 	auto trickster = container.service<TricksterService>();
 	auto wizard = container.service<WizardService>();
@@ -109,7 +99,7 @@ int main()
 	// The trickster will show "It's doing lava tricks!"
 	// because LavaWand overrides MagicWand, which was the Wizard's dependency.
 	// Even if FireWand is overriding MagicWand, LavaWand is lower in the hierarchy,
-	// which grants it priority (see MyContainer::init() for more detail).
+	// which grants it priority (see makeContainer() for more detail).
 	// A misconfigured hierarchy may lead to incorrect result. Invert instance calls and see by yourself.
 	wizard.doTrick();
 	

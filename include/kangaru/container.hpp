@@ -101,7 +101,7 @@ public:
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_dependencies_services<T, Args...>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0/*, enable_if<detail::is_dependencies_services<T, Args...>> = 0*/, enable_if<detail::is_service_constructible<T, Args...>> = 0>
 	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
@@ -364,7 +364,7 @@ private:
 		// This line is used to shut unused-variable warning, since S can be empty.
 		static_cast<void>(constructArgs);
 		
-		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
+		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))...);
 	}
 	
 	/*

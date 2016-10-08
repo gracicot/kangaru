@@ -173,6 +173,9 @@ template<typename T, typename... Args>
 using construct_function_t = typename construct_function<T, Args...>::value_type;
 
 template<typename T, typename... Args>
+using construct_result_seq = tuple_seq<function_result_t<construct_function_t<T, Args...>>>;
+
+template<typename T, typename... Args>
 using has_emplace = typename has_emplace_helper<T, Args...>::type;
 
 template<typename T, typename... Args>

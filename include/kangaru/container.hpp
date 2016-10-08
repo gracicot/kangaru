@@ -101,7 +101,7 @@ public:
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_service<T>> = 0/*, enable_if<detail::is_dependencies_services<T, Args...>> = 0*/, enable_if<detail::is_service_constructible<T, Args...>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_service_valid<T>> = 0>
 	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
@@ -486,7 +486,7 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
-		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::invoke>>(std::forward<T>(service)), 0)...};
+		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::invoke>>(std::forward<T>(service)), 0)..., 0};
 		
 		static_cast<void>(unpack);
 	}

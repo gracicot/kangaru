@@ -39,7 +39,7 @@ private:
 	)) test(seq<S...>);
 	
 	template<typename U, typename...>
-	static enable_if_t<is_container_service<U>::value, std::true_type> test_helper(int);
+	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -85,6 +85,43 @@ public:
 
 template<typename T, typename... Args>
 using is_service_constructible = typename is_service_constructible_helper<T, Args...>::type;
+
+template<typename T, typename... Args>
+struct is_dependencies_constructible_helper {
+private:
+	static std::true_type sink(...);
+	
+	template<typename U, typename... As, std::size_t... S>
+	static decltype(sink(
+		std::declval<enable_if_t<is_service_constructible<original_t<function_argument_t<S, construct_function_t<U, As...>>>>::type::value, int>>()...
+	)) test(seq<S...>);
+	
+	template<typename U, typename...>
+	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+	template<typename...>
+	static std::false_type test_helper(...);
+	
+	template<typename U, typename... As>
+	static decltype(test<U, As...>(tuple_seq_minus<function_arguments_t<construct_function_t<U, As...>>, sizeof...(As)>{})) test_helper(int);
+	
+public:
+	using type = decltype(test_helper<T, Args...>(0));
+};
+
+template<typename T, typename... Args>
+using is_dependencies_constructible = typename is_dependencies_constructible_helper<T, Args...>::type;
+
+template<typename T, typename... Args>
+using is_service_valid = std::integral_constant<bool, 
+	is_service<T>::value &&
+	is_dependencies_services<T, Args...>::value &&
+	is_service_constructible<T, Args...>::value &&
+	is_dependencies_constructible<T, Args...>::value
+>;
 
 } // namespace detail
 } // namespace kgr

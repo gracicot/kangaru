@@ -16,12 +16,21 @@ struct voider { using type = void; };
 
 template<typename... Ts> using void_t = typename voider<Ts...>::type;
 
+template<typename...>
+struct to_false {
+	using type = std::false_type;
+};
+
+template<typename... Ts>
+using false_t = typename to_false<Ts...>::type;
+
 // things missing from c++11 (to be removed when switching to c++14)
 template <bool b, typename T = void>
 using enable_if_t = typename std::enable_if<b, T>::type;
 
 template<typename T>
 using decay_t = typename std::decay<T>::type;
+
 
 template<std::size_t S, typename T>
 using tuple_element_t = typename std::tuple_element<S, T>::type;

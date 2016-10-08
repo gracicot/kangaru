@@ -8,6 +8,7 @@
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
 #include "detail/injected.hpp"
+#include "detail/error.hpp"
 #include "predicate.hpp"
 
 #include <unordered_map>
@@ -48,20 +49,6 @@ private:
 			&Container::deleter<detail::BaseInjected<C>>
 		};
 	}
-	
-	struct NotInvokableError {
-		template<typename T = void>
-		NotInvokableError(...) {
-			static_assert(!std::is_same<T, T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and that received parameters are correct.");
-		};
-	};
-	
-	struct NotAbstracPolymorphicError {
-		template<typename T = void>
-		NotAbstracPolymorphicError(...) {
-			static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
-		};
-	};
 	
 public:
 	explicit Container() = default;
@@ -111,7 +98,7 @@ public:
 	 * This version is called when T is polymorphic. A static assert is thrown.
 	 */
 	template<typename T, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
-	ServiceType<T> service(NotAbstracPolymorphicError = {}, ...) = delete;
+	ServiceType<T> service(detail::NotAbstracPolymorphicError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -128,7 +115,7 @@ public:
 	 * This version of the function is called when `function` is not invokable to provide diagnostic.
 	 */
 	template<template<typename> class Map>
-	void invoke(NotInvokableError = {}, ...) = delete;
+	void invoke(detail::NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.

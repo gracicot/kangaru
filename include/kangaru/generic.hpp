@@ -58,7 +58,7 @@ private:
 		new (&_instance) Type(std::forward<Args>(args)...);
 	}
 	
-	template<typename... Args, detail::enable_if_t<!std::is_constructible<Type, Args...>::value && detail::is_brace_constructible<Type, Args...>::value, int> = 0>
+	template<typename... Args, detail::enable_if_t<detail::is_only_brace_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
 		new (&_instance) Type{std::forward<Args>(args)...};
 	}

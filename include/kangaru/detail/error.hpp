@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
+#define KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
 
 namespace kgr {
 namespace detail {
@@ -50,3 +51,5 @@ struct DependencyNotConstructibleError {
 
 } // namespace detail
 } // namespace kgr
+
+#endif // KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP

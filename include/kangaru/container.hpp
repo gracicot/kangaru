@@ -65,7 +65,7 @@ public:
 	 * This function only works with single services.
 	 * This version of the function will call functions in autocall.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_service_instantiable<T, Args...>> = 0>
 	void instance(Args&&... args) {
 		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)).get());
 	}
@@ -77,7 +77,7 @@ public:
 	 * This function only works with single services.
 	 * This version of the function will not call functions in autocall.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_service_instantiable<T, Args...>> = 0>
 	void instance(detail::no_autocall_t, Args&&... args) {
 		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
@@ -107,7 +107,11 @@ public:
 	 */
 	template<template<typename> class Map, typename U, typename... Args, enable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
 	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) {
-		return invoke_helper<Map>(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_helper<Map>(
+			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
+			std::forward<U>(function),
+			std::forward<Args>(args)...
+		);
 	}
 	
 	/*
@@ -383,22 +387,6 @@ private:
 	
 	/*
 	 * This function create a service with the received arguments.
-	 * It creating it in the right type for the container to contain it in it's container.
-	 * This version of the function is called when the service definition has no valid constructor.
-	 * It will try to call an emplace function that construct the service in a lazy way.
-	 */
-	template<typename T, typename... Args, disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0, disable_if<detail::is_emplaceable<T, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
-		static_assert(!std::is_same<T, T>::value, "The service T is not constructible form Args... Dependencies may not be configured correctly.");
-		
-		// This line is used to return an actual value.
-		// Since this line will never be executed, declval is a good alternative.
-		// This will prevent further compilation errors, we want the error to be as clear as we can get.
-		return std::declval<contained_service_t<T>>();
-	}
-	
-	/*
-	 * This function create a service with the received arguments.
 	 * It creating it in the right type for the container return it and inject it without overhead.
 	 */
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
@@ -444,7 +432,11 @@ private:
 	 */
 	template<typename U, typename... Args>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw(U&& function, Args&&... args) {
-		return invoke_raw_helper(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
+		return invoke_raw_helper(
+			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
+			std::forward<U>(function),
+			std::forward<Args>(args)...
+		);
 	}
 	
 	/*

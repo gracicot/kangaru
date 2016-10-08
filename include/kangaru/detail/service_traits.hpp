@@ -37,8 +37,8 @@ private:
 	
 	template<typename U, typename... As, std::size_t... S>
 	static decltype(sink(
-		std::declval<enable_if_t<is_dependencies_services_helper<original_t<function_argument_t<S, construct_function_t<U, As...>>>>::type::value, int>>()...,
-		std::declval<enable_if_t<is_service<original_t<function_argument_t<S, construct_function_t<U, As...>>>>::value, int>>()...
+		std::declval<enable_if_t<is_dependencies_services_helper<injected_argument_t<S, construct_function_t<U, As...>>>::type::value, int>>()...,
+		std::declval<enable_if_t<is_service<injected_argument_t<S, construct_function_t<U, As...>>>::value, int>>()...
 	)) test(seq<S...>);
 	
 	template<typename U, typename...>
@@ -96,7 +96,7 @@ private:
 	
 	template<typename U, typename... As, std::size_t... S>
 	static decltype(sink(
-		std::declval<enable_if_t<is_service_constructible<original_t<function_argument_t<S, construct_function_t<U, As...>>>>::type::value, int>>()...
+		std::declval<enable_if_t<is_service_constructible<injected_argument_t<S, construct_function_t<U, As...>>>::type::value, int>>()...
 	)) test(seq<S...>);
 	
 	template<typename U, typename...>

@@ -10,7 +10,10 @@ struct false_t { constexpr static bool value = false; };
 struct NotInvokableError {
 	template<typename T = void>
 	NotInvokableError(...) {
-		static_assert(false_t<T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and that received parameters are correct.");
+		static_assert(false_t<T>::value,
+			"The function sent is not invokable. Ensure to include all services definitions "
+			"you need and that received parameters are correct."
+		);
 	};
 };
 
@@ -45,7 +48,10 @@ struct ServiceNotConstructibleError {
 struct DependencyNotConstructibleError {
 	template<typename T = void>
 	DependencyNotConstructibleError(...) {
-		static_assert(false_t<T>::value, "One dependency is not constructible with it's dependencies as constructor argument. Please revise that dependency's constructor and dependencies.");
+		static_assert(false_t<T>::value,
+			"One dependency is not constructible with it's dependencies as constructor argument."
+			"Please revise that dependency's constructor and dependencies."
+		);
 	};
 };
 

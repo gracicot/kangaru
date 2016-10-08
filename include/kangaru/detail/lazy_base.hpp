@@ -158,7 +158,10 @@ struct LazyMoveAssign<CRTP, T, detail::enable_if_t<std::is_move_assignable<T>::v
 template<typename CRTP, typename T>
 struct LazyBase :
 	LazyHelper<ServiceType<T>>,
-	LazyCrtpHelper<LazyBase<CRTP, T>, typename detail::LazyHelper<ServiceType<T>>::type, LazyCopyConstruct, LazyCopyAssign, LazyMoveAssign, LazyMoveConstruct> {
+	LazyCrtpHelper<
+		LazyBase<CRTP, T>, typename detail::LazyHelper<ServiceType<T>>::type,
+		LazyCopyConstruct, LazyCopyAssign, LazyMoveAssign, LazyMoveConstruct
+	> {
 private:
 	using typename detail::LazyHelper<ServiceType<T>>::type;
 	using typename detail::LazyHelper<ServiceType<T>>::ref;

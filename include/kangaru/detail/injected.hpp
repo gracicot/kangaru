@@ -21,10 +21,10 @@ template<typename T>
 struct SingleInjected final : BaseInjected<T> {
 	friend struct kgr::Container;
 	
-	template<typename... Args, typename std::enable_if<is_brace_constructible<T, Args...>::value, int>::type = 0>
+	template<typename... Args, enable_if_t<is_brace_constructible<T, Args...>::value, int> = 0>
 	explicit SingleInjected(Args&&... args) : _service{std::forward<Args>(args)...} {}
 	
-	template<typename... Args, typename std::enable_if<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int>::type = 0>
+	template<typename... Args, enable_if_t<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int> = 0>
 	explicit SingleInjected(Args&&... args) : _service(std::forward<Args>(args)...) {}
 	
 	ServiceType<T> forward() override {
@@ -59,10 +59,10 @@ template<typename T>
 struct Injected final {
 	friend struct kgr::Container;
 	
-	template<typename... Args, typename std::enable_if<is_brace_constructible<T, Args...>::value, int>::type = 0>
+	template<typename... Args, enable_if_t<is_brace_constructible<T, Args...>::value, int> = 0>
 	explicit Injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
 	
-	template<typename... Args, typename std::enable_if<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int>::type = 0>
+	template<typename... Args, enable_if_t<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int> = 0>
 	explicit Injected(Args&&... args) : _service(std::forward<Args>(args)...) {}
 	
 	ServiceType<T> forward() {
@@ -84,7 +84,9 @@ private:
 } // namespace detail
 
 template<typename T>
-using Inject = typename std::conditional<!detail::is_service<T>::value || std::is_base_of<Single, T>::value, detail::BaseInjected<T>&, detail::Injected<T>&&>::type;
+using Inject = typename std::conditional<!detail::is_service<T>::value || std::is_base_of<Single, T>::value,
+	detail::BaseInjected<T>&,
+	detail::Injected<T>&&>::type;
 
 template<typename... Args>
 std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {

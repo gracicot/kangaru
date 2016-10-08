@@ -181,6 +181,9 @@ using has_emplace = typename has_emplace_helper<T, Args...>::type;
 template<typename T, typename... Args>
 using is_brace_constructible = typename is_brace_constructible_helper<T, Args...>::type;
 
+template<typename T, typename... Args>
+using is_only_brace_constructible = std::integral_constant<bool, is_brace_constructible<T, Args...>::value && !std::is_constructible<T, Args...>::value>;
+
 template<typename T> struct remove_rvalue_reference { using type = T; };
 template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 

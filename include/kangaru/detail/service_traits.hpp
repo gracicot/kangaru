@@ -27,6 +27,9 @@ struct original<Injected<T>&&> {
 template<typename T>
 using original_t = typename original<T>::type;
 
+template<std::size_t n, typename F>
+using injected_argument_t = original_t<function_argument_t<n, F>>;
+
 template<typename T, typename... Args>
 struct is_dependencies_services_helper {
 private:

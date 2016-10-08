@@ -27,7 +27,10 @@ private:
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, void*>;
-	template<typename T> using contained_service_t = typename std::conditional<detail::is_single<T>::value, instance_ptr<detail::SingleInjected<T>>, detail::Injected<T>>::type;
+	template<typename T> using contained_service_t = typename std::conditional<
+		detail::is_single<T>::value,
+		instance_ptr<detail::SingleInjected<T>>,
+		detail::Injected<T>>::type;
 	
 	template<typename T>
 	static void deleter(void* i) {
@@ -65,7 +68,10 @@ public:
 	 * This function only works with single services.
 	 * This version of the function will call functions in autocall.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_service_instantiable<T, Args...>> = 0>
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_service<T>> = 0,
+		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
 	void instance(Args&&... args) {
 		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)).get());
 	}
@@ -77,7 +83,10 @@ public:
 	 * This function only works with single services.
 	 * This version of the function will not call functions in autocall.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_service_instantiable<T, Args...>> = 0>
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_service<T>> = 0,
+		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
 	void instance(detail::no_autocall_t, Args&&... args) {
 		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
@@ -171,10 +180,14 @@ public:
 		
 		c._services.reserve(_services.size());
 		
-		std::copy_if(_services.begin(), _services.end(), std::inserter(c._services, c._services.begin()), [&predicate](service_cont::const_reference i){
-			// We don't forward the predicate here, we use it many times.
-			return predicate(i.first);
-		});
+		std::copy_if(
+			_services.begin(), _services.end(),
+			std::inserter(c._services, c._services.begin()),
+			[&predicate](service_cont::const_reference i){
+				// We don't forward the predicate here, we use it many times.
+				return predicate(i.first);
+			}
+		);
 		
 		return c;
 	}
@@ -340,7 +353,7 @@ private:
 	 */
 	template<typename T, typename... Args, enable_if<detail::has_any_construct<T, Args...>> = 0>
 	contained_service_t<T> make_service_instance(Args&&... args) {
-		return make_service_instance_helper<T>(detail::tuple_seq<detail::function_result_t<detail::construct_function_t<T, Args...>>>{}, std::forward<Args>(args)...);
+		return make_service_instance_helper<T>(detail::construct_result_seq<T, Args...>{}, std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -362,9 +375,22 @@ private:
 	 * This function create a service with the received arguments.
 	 * It creating it in the right type for the container to contain it in it's container.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
 		return make_instance_ptr<T>(in_place, std::forward<Args>(args)...);
+	}
+	
+	/*
+	 * This function create a service with the received arguments.
+	 * It creating it in the right type for the container return it and inject it without overhead.
+	 */
+	template<typename T, typename... Args,
+		disable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
+	contained_service_t<T> make_contained_service(Args&&... args) {
+		return detail::Injected<T>{in_place, std::forward<Args>(args)...};
 	}
 	
 	/*
@@ -383,15 +409,6 @@ private:
 		service->get().emplace(std::forward<Args>(args)...);
 		
 		return service;
-	}
-	
-	/*
-	 * This function create a service with the received arguments.
-	 * It creating it in the right type for the container return it and inject it without overhead.
-	 */
-	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
-		return detail::Injected<T>{in_place, std::forward<Args>(args)...};
 	}
 	
 	/*
@@ -444,7 +461,7 @@ private:
 	 */
 	template<typename U, typename... Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_raw_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(definition<detail::original_t<detail::function_argument_t<S, detail::decay_t<U>>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(definition<detail::injected_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

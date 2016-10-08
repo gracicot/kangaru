@@ -471,17 +471,17 @@ private:
 	/*
 	 * This function starts the iteration (autocall_helper).
 	 */
-	template<typename T, enable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
+	template<typename T, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(T&& service) {
-		autocall(detail::tuple_seq<typename detail::decay_t<T>::invoke>{}, std::forward<T>(service));
+		autocall(detail::tuple_seq<typename detail::decay_t<T>::autocall>{}, std::forward<T>(service));
 	}
 	
 	/*
 	 * This function is the iteration for autocall.
 	 */
-	template<typename T, std::size_t... S, enable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
+	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
-		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::invoke>>(std::forward<T>(service)), 0)..., 0};
+		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::autocall>>(std::forward<T>(service)), 0)..., 0};
 		
 		static_cast<void>(unpack);
 	}
@@ -530,7 +530,7 @@ private:
 	/*
 	 * This function is called when there is no autocall to do.
 	 */
-	template<typename T, disable_if<detail::has_invoke<detail::decay_t<T>>> = 0>
+	template<typename T, disable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(T&&) {}
 	
 	///////////////////////

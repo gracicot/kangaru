@@ -51,10 +51,10 @@ using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value -
 
 // SFINAE utilities
 template<typename T, typename = void>
-struct has_invoke : std::false_type {};
+struct has_autocall : std::false_type {};
 
 template<typename T>
-struct has_invoke<T, void_t<typename T::invoke>> : std::true_type {};
+struct has_autocall<T, void_t<typename T::autocall>> : std::true_type {};
 
 template<typename T, typename = void>
 struct has_forward : std::false_type {};

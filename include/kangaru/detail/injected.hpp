@@ -45,14 +45,14 @@ private:
 
 template<typename Original, typename Service>
 struct ServiceOverride final : BaseInjected<Service> {
-    explicit ServiceOverride(Original& service) : _service{service} {}
-
-    ServiceType<Service> forward() override {
-        return static_cast<ServiceType<Service>>(_service.forward());
-    }
-
+	explicit ServiceOverride(Original& service) : _service{service} {}
+	
+	ServiceType<Service> forward() override {
+		return static_cast<ServiceType<Service>>(_service.forward());
+	}
+	
 private:
-    Original& _service;
+	Original& _service;
 };
 
 template<typename T>

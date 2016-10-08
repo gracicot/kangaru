@@ -1,11 +1,10 @@
 #ifndef KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
 #define KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
 
+#include "traits.hpp"
+
 namespace kgr {
 namespace detail {
-
-template<typename...>
-struct false_t { constexpr static bool value = false; };
 
 struct NotInvokableError {
 	template<typename T = void>

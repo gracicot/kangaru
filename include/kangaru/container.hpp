@@ -97,17 +97,28 @@ public:
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_service_valid<T>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_service_valid<T, Args...>> = 0>
 	ServiceType<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
 	
 	/*
-	 * This function returns the service given by service definition T.
-	 * This version is called when T is polymorphic. A static assert is thrown.
+	 * This function returns the service given by serivce definition T.
+	 * T must have a function forward callable this way: std::declval<T>.forward()
+	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
+	 * T must not be a polymorphic type.
 	 */
-	template<typename T, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
-	ServiceType<T> service(detail::NotAbstracPolymorphicError = {}, ...) = delete;
+	template<typename T, typename... Args, enable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
+	void service(detail::ServiceError<T, detail::identity_t<Args>...> = {}, Args&&...) = delete;
+	
+	/*
+	 * This function returns the service given by serivce definition T.
+	 * T must have a function forward callable this way: std::declval<T>.forward()
+	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
+	 * T must not be a polymorphic type.
+	 */
+	template<typename T, typename... Args, disable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
+	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -135,10 +146,18 @@ public:
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
-	template<typename... Services, typename U, typename... Args>
+	template<typename... Services, typename U, typename... Args, typename = detail::void_t<enable_if<detail::is_service_valid<Services>>...>>
 	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}
+	
+	/*
+	 * This function returns the result of the callable object of type U.
+	 * It will call the function with the sevices listed in the `Services` parameter pack.
+	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
+	 */
+	template<typename... Services, typename U, typename... Args, typename = detail::void_t<disable_if<detail::is_service_valid<Services>>...>>
+	void invoke(U&& function, Args&&... args) = delete;
 	
 	/*
 	 * This function clears this container.
@@ -150,7 +169,7 @@ public:
 	}
 	
 	/*
-	 * This function fork the centainer into a new container.
+	 * This function fork the container into a new container.
 	 * The new container will have the copied state of the first container.
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.
@@ -167,7 +186,7 @@ public:
 	}
 	
 	/*
-	 * This function fork the centainer into a new container.
+	 * This function fork the container into a new container.
 	 * The new container will have the copied state of the first container.
 	 * Construction of new services within the new container will not affect the original one.
 	 * The new container must exist within the lifetime of the original container.

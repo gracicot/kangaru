@@ -21,6 +21,12 @@ struct to_false {
 	using type = std::false_type;
 };
 
+template<typename T>
+struct identity { using type = T; };
+
+template<typename T>
+using identity_t = typename identity<T>::type;
+
 template<typename... Ts>
 using false_t = typename to_false<Ts...>::type;
 

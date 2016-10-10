@@ -93,7 +93,7 @@ public:
 	
 	/*
 	 * This function returns the service given by serivce definition T.
-	 * T must have a function forward callable this way: std::declval<T>.forward()
+	 * T must be a valid service and must be constructible with arguments passed as parameters
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
 	 */
@@ -103,20 +103,13 @@ public:
 	}
 	
 	/*
-	 * This function returns the service given by serivce definition T.
-	 * T must have a function forward callable this way: std::declval<T>.forward()
-	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
-	 * T must not be a polymorphic type.
+	 * The following two overloads are called in a case where the service is invalid,
+	 * or is called when provided arguments don't match the constructor.
+	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, typename... Args, enable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
 	void service(detail::ServiceError<T, detail::identity_t<Args>...> = {}, Args&&...) = delete;
 	
-	/*
-	 * This function returns the service given by serivce definition T.
-	 * T must have a function forward callable this way: std::declval<T>.forward()
-	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
-	 * T must not be a polymorphic type.
-	 */
 	template<typename T, typename... Args, disable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
 	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
@@ -152,9 +145,7 @@ public:
 	}
 	
 	/*
-	 * This function returns the result of the callable object of type U.
-	 * It will call the function with the sevices listed in the `Services` parameter pack.
-	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
+	 * This oveload is called when one of the services to be injected is invalid.
 	 */
 	template<typename... Services, typename U, typename... Args, typename = detail::void_t<disable_if<detail::is_service_valid<Services>>...>>
 	void invoke(U&& function, Args&&... args) = delete;

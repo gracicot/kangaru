@@ -69,9 +69,11 @@ private:
 struct MagicWandService;
 
 struct WandService : kgr::AbstractService<Wand>, kgr::Default<MagicWandService> {};
+
 struct MagicWandService : kgr::SingleService<MagicWand>, kgr::Overrides<WandService> {};
 struct FireWandService : kgr::SingleService<FireWand>, kgr::Overrides<MagicWandService> {};
 struct LavaWandService : kgr::SingleService<LavaWand>, kgr::Overrides<FireWandService, MagicWandService> {};
+
 struct TricksterService : kgr::Service<Trickster, kgr::Dependency<WandService>> {};
 struct WizardService : kgr::Service<Wizard, kgr::Dependency<MagicWandService>> {};
 struct FireMageService : kgr::Service<FireMage, kgr::Dependency<FireWandService>> {};
@@ -84,10 +86,10 @@ int main()
 	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
 	// If WandService didn't had that default service type, it would be a runtime error.
 	container.service<WandService>();
-		
+	
 	// FireWand is the second, because it's the second service in the hierarchy.
 	container.service<FireWandService>();
-		
+	
 	// LavaWand is the last, because it's the last service in the hierarchy.
 	container.service<LavaWandService>();
 	

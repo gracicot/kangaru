@@ -242,9 +242,29 @@ private:
 	 * This function is a specialization of save_new_instance for abstract classes.
 	 * Since you cannot construct an abstract class, this function always throw.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, enable_if<std::is_abstract<T>> = 0>
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<std::is_abstract<T>> = 0,
+		disable_if<detail::has_default<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&...) {
-		throw std::out_of_range{"No instance found for the requested abstract service"}; // should we call std::terminate instead?
+		throw std::out_of_range{"No instance found for the requested abstract service"};
+	}
+	
+	/*
+	 * This function is a specialization of save_new_instance for abstract classes.
+	 * Since that abstract service has a default service specified, we can contruct that one.
+	 */
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<std::is_abstract<T>> = 0,
+		enable_if<detail::has_default<T>> = 0>
+	detail::BaseInjected<T>& save_new_instance(Args&&...) {
+		save_new_instance<detail::default_type<T>>();
+		
+		static_assert(detail::is_overriden_by<T, detail::default_type<T>>::value, "The default service type of an abstract service must override that abstract serivce.");
+		
+		// This could be faster if we had access to instance of override services.
+		return *static_cast<detail::BaseInjected<T>*>(_services[type_id<detail::BaseInjected<T>>]);
 	}
 	
 	/*

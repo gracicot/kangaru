@@ -40,7 +40,7 @@ Yes. Look at these two cases:
 
 ```c++
 {
-    Container c;
+    kgr::Container c;
     
     c.service<ClownMasterService>();
     c.service<FileManagerService>();
@@ -50,7 +50,7 @@ Yes. Look at these two cases:
 }
 
 {
-    Container c;
+    kgr::Container c;
     
     c.service<FileManagerService>();
     c.service<ClownMasterService>();
@@ -59,7 +59,7 @@ Yes. Look at these two cases:
     auto& fm = c.service<IFileManagerService>();
 }
 ```
-    
+
 ### Abstract Service
 
 If you want to make a service definition for an abstract type, you may extend from `kgr::AbstractService<T>`:
@@ -69,5 +69,20 @@ struct IFileManagerService : kgr::AbstractService<IFileManager>;
 ```
 
 Note that for shared service types there's `kgr::AbstractSharedService`.
+
+#### Default Service Type
+
+If you ask the container for an abstract service and the container has no instance that could be used for that abstract service, the container dill throw.
+
+If that's not the correct behaviour, you can also specify a default service to instantiate instead of throwing.
+
+```c++
+struct IFileManagerService : kgr::AbstractService<IFileManager>, kgr::Default<TreeFileManagerService>;
+
+kgr::Container c;
+
+// Will instantiate a TreeFileManager and return a IFileManager.
+auto&& fileManager = c.service<IFileManagerService>();
+```
  
 [Next chapter](section4_invoke.md)

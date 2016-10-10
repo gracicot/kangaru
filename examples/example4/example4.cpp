@@ -66,7 +66,9 @@ private:
 	FireWand& wand;
 };
 
-struct WandService : kgr::AbstractService<Wand> {};
+struct MagicWandService;
+
+struct WandService : kgr::AbstractService<Wand>, kgr::Default<MagicWandService> {};
 struct MagicWandService : kgr::SingleService<MagicWand>, kgr::Overrides<WandService> {};
 struct FireWandService : kgr::SingleService<FireWand>, kgr::Overrides<MagicWandService> {};
 struct LavaWandService : kgr::SingleService<LavaWand>, kgr::Overrides<FireWandService, MagicWandService> {};
@@ -78,8 +80,10 @@ int main()
 {
 	kgr::Container container;
 	
+	// Here, because of the default service type of WandService, MagicWandService is chosen.
 	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-	container.service<MagicWandService>();
+	// If WandService didn't had that default service type, it would be a runtime error.
+	container.service<WandService>();
 		
 	// FireWand is the second, because it's the second service in the hierarchy.
 	container.service<FireWandService>();
@@ -99,7 +103,7 @@ int main()
 	// The trickster will show "It's doing lava tricks!"
 	// because LavaWand overrides MagicWand, which was the Wizard's dependency.
 	// Even if FireWand is overriding MagicWand, LavaWand is lower in the hierarchy,
-	// which grants it priority (see makeContainer() for more detail).
+	// which grants it priority.
 	// A misconfigured hierarchy may lead to incorrect result. Invert instance calls and see by yourself.
 	wizard.doTrick();
 	

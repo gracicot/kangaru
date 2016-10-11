@@ -21,14 +21,22 @@ struct to_false {
 	using type = std::false_type;
 };
 
+template<typename... Ts>
+using false_t = typename to_false<Ts...>::type;
+
+template<typename...>
+struct to_int {
+	using type = int;
+};
+
+template<typename... Ts>
+using int_t = typename to_int<Ts...>::type;
+
 template<typename T>
 struct identity { using type = T; };
 
 template<typename T>
 using identity_t = typename identity<T>::type;
-
-template<typename... Ts>
-using false_t = typename to_false<Ts...>::type;
 
 // things missing from c++11 (to be removed when switching to c++14)
 template <bool b, typename T = void>
@@ -36,7 +44,6 @@ using enable_if_t = typename std::enable_if<b, T>::type;
 
 template<typename T>
 using decay_t = typename std::decay<T>::type;
-
 
 template<std::size_t S, typename T>
 using tuple_element_t = typename std::tuple_element<S, T>::type;
@@ -100,6 +107,13 @@ struct is_complete_map : std::false_type {};
 
 template<template<typename> class Map, typename T>
 struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
+
+struct Sink {
+	constexpr Sink() = default;
+	
+	template<typename T>
+	constexpr operator T&& () const;
+};
 
 template<typename T, typename... Args>
 struct is_brace_constructible_helper {
@@ -165,14 +179,26 @@ public:
 template<bool, typename T, typename... Args>
 struct construct_function_helper {
 private:
+	template<typename U, typename... As>
+	struct get_template_construct {
+		using type = std::integral_constant<decltype(&U::template construct<As...>), &U::template construct<As...>>;
+	};
+	
+	template<typename U>
+	struct get_construct {
+		using type = std::integral_constant<decltype(&U::construct), &U::construct>;
+	};
+	
 	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
-	static std::integral_constant<decltype(&U::construct), &U::construct> test();
+	static get_construct<U> test();
 	
 	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
-	static std::integral_constant<decltype(&U::template construct<As...>), &U::template construct<As...>> test();
+	static get_template_construct<U, Args...> test();
+	
+	using inner_type = decltype(test<T, Args...>());
 	
 public:
-	using type = decltype(test<T, Args...>());
+	using type = typename inner_type::type;
 };
 
 template<typename T, typename... Args>

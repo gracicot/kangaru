@@ -132,14 +132,14 @@ public:
 	 * This version of the function is called when `function` is not invokable to provide diagnostic.
 	 */
 	template<template<typename> class Map>
-	void invoke(detail::NotInvokableError = {}, ...) = delete;
+	detail::Sink invoke(detail::NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
-	template<typename... Services, typename U, typename... Args, typename = detail::void_t<enable_if<detail::is_service_valid<Services>>...>>
+	template<typename... Services, typename U, typename... Args, detail::int_t<enable_if<detail::is_service_valid<Services>>...> = 0>
 	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}
@@ -147,8 +147,8 @@ public:
 	/*
 	 * This oveload is called when one of the services to be injected is invalid.
 	 */
-	template<typename... Services, typename U, typename... Args, typename = detail::void_t<disable_if<detail::is_service_valid<Services>>...>>
-	void invoke(U&& function, Args&&... args) = delete;
+	template<typename... Services>
+	detail::Sink invoke(...) = delete;
 	
 	/*
 	 * This function clears this container.

@@ -85,8 +85,8 @@ private:
 	template<typename T>
 	static std::false_type test_helper(seq<>);
 	
-	template<typename T, std::size_t first, std::size_t... tail>
-	static std::integral_constant<bool, decltype(element_test<T, first>())::value || decltype(test_helper<T>(seq<tail...>{}))::value> test_helper(seq<first, tail...>);
+	template<typename T, std::size_t first, std::size_t... tail, typename Element = decltype(element_test<T, first>()), typename Next = decltype(test_helper<T>(seq<tail...>{}))>
+	static std::integral_constant<bool, (Element::value || Next::value)> test_helper(seq<first, tail...>);
 	
 	template<typename T>
 	static auto test(int) -> decltype(test_helper<T>(tuple_seq<parent_types<Overrider>>{}));

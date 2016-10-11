@@ -108,10 +108,10 @@ public:
 	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, typename... Args, enable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
-	void service(detail::ServiceError<T, detail::identity_t<Args>...> = {}, Args&&...) = delete;
+	detail::Sink service(detail::ServiceError<T, detail::identity_t<Args>...> = {}, Args&&...) = delete;
 	
 	template<typename T, typename... Args, disable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
-	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	detail::Sink service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.

@@ -28,8 +28,6 @@ struct default_type_helper;
 
 template<typename T>
 struct Default {
-private:
-	template<typename, typename> friend struct detail::default_type_helper;
 	using DefaultService = T;
 };
 
@@ -56,7 +54,7 @@ template<typename T>
 using parent_types = typename parent_type_helper<T>::ParentTypes;
 
 template<typename, typename>
-struct default_type_helper : std::false_type {
+struct default_type_helper {
 	using has_default = std::false_type;
 };
 

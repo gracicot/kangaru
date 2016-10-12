@@ -157,23 +157,25 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class, typename, typename, typename...>
+template<template<typename> class, typename, typename...>
 struct is_invokable_helper;
 
-template<template<typename> class Map, typename T, typename... Args, std::size_t... S>
-struct is_invokable_helper<Map, T, seq<S...>, Args...> {
+template<template<typename> class Map, typename T, typename... Args>
+struct is_invokable_helper<Map, T, Args...> {
 private:
-	template<typename U, typename... As>
-	static decltype(
-		static_cast<void>(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...)),
-		std::true_type{}
-	) test(int);
+	template<typename U, typename... As, std::size_t... S>
+	static std::true_type test(seq<S...>, decltype(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...))*);
 	
-	template<typename U, typename... As>
+	template<typename...>
 	static std::false_type test(...);
 	
 public:
-	using type = decltype(test<T, Args...>(0));
+	using type = decltype(test<T, Args...>(tuple_seq_minus<function_arguments_t<T>, sizeof...(Args)>{}, nullptr));
+};
+
+template<template<typename> class Map, typename T, typename... Args>
+struct defer_is_invokable_helper {
+	static constexpr bool value = is_invokable_helper<Map, T, Args...>::type::value;
 };
 
 template<bool, typename T, typename... Args>
@@ -240,7 +242,7 @@ template<typename T, typename... Args>
 using is_service_instantiable = std::integral_constant<bool, is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
 template<template<typename> class Map, typename U, typename... Args>
-using is_invokable = typename is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type;
+using is_invokable = std::integral_constant<bool, defer_is_invokable_helper<Map, U, Args...>::value>;
 
 } // namespace detail
 } // namespace kgr

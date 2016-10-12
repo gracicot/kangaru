@@ -157,11 +157,8 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class, typename, typename...>
-struct is_invokable_helper;
-
 template<template<typename> class Map, typename T, typename... Args>
-struct is_invokable_helper<Map, T, Args...> {
+struct is_invokable_helper {
 private:
 	template<typename U, typename... As, std::size_t... S>
 	static std::true_type test(seq<S...>, decltype(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...))*);

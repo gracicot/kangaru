@@ -132,8 +132,8 @@ template<typename T, typename... Args>
 struct has_template_construct_helper {
 private:
 	template<typename U, typename... As>
-	static std::true_type test(decltype(&U::template construct<As...>)* = nullptr);
-
+	static std::true_type test(decltype(&U::template construct<As...>)*);
+	
 	template<typename...>
 	static std::false_type test(...);
 	
@@ -141,8 +141,8 @@ public:
 	using type = decltype(test<T, Args...>(nullptr));
 };
 
-template<typename... Ts>
-using has_template_construct = typename has_template_construct_helper<Ts...>::type;
+template<typename T, typename... Args>
+using has_template_construct = typename has_template_construct_helper<T, Args...>::type;
 
 template<typename T, typename... Args>
 struct has_emplace_helper {
@@ -192,7 +192,7 @@ private:
 	static get_construct<U> test();
 	
 	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
-	static get_template_construct<U, Args...> test();
+	static get_template_construct<U, As...> test();
 	
 	using inner_type = decltype(test<T, Args...>());
 	

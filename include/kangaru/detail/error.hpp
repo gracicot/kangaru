@@ -9,63 +9,63 @@ namespace detail {
 
 template<typename T, typename... Args>
 struct ServiceError {
-	template<typename U, enable_if_t<
-		is_service<U>::value &&
-		!is_dependencies_constructible<T, U, Args...>::value &&
-		is_service_constructible<T, U, Args...>::value, int> = 0>
-	ServiceError(U&&, ...) {
-		static_assert(false_t<U>::value,
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Arg>::value &&
+		!is_dependencies_constructible<Service, Arg, Args...>::value &&
+		is_service_constructible<Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Arg>::value,
 			"One or more dependencies are not constructible with it's dependencies as constructor argument. "
 			"Please check that dependency's constructor and it's dependencies."
 		);
 	}
 	
-	template<typename U = T, enable_if_t<
-		is_service<U>::value &&
-		!is_dependencies_constructible<U>::value &&
-		is_service_constructible<U>::value, int> = 0>
-	ServiceError(...) {
-		static_assert(false_t<U>::value,
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_dependencies_constructible<Service>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
 			"One or more dependencies are not constructible with it's dependencies as constructor argument. "
 			"Please check that dependency's constructor and dependencies."
 		);
 	}
 	
-	template<typename U, enable_if_t<
-		is_service<U>::value &&
-		!is_service_constructible<T, U, Args...>::value &&
-		!is_service_constructible<T>::value, int> = 0>
-	ServiceError(U&&, ...) {
-		static_assert(false_t<U>::value,
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_service_constructible<Service, Arg, Args...>::value &&
+		!is_service_constructible<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Arg>::value,
 			"The service type is not constructible given it's dependencies and passed arguments. "
 			"Ensure that dependencies are correctly configured and you pass the right set of parameters."
 		);
 	}
 	
-	template<typename U, enable_if_t<
-		is_service<U>::value &&
-		!is_service_constructible<T, U, Args...>::value &&
-		is_service_constructible<T>::value, int> = 0>
-	ServiceError(U&&, ...) {
-		static_assert(false_t<U>::value, "The service type is not constructible given passed arguments to kgr::Container::service(...).");
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_service_constructible<Service, Arg, Args...>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Arg>::value, "The service type is not constructible given passed arguments to kgr::Container::service(...).");
 	}
 	
-	template<typename U = T, enable_if_t<is_service<U>::value && !is_service_constructible<U>::value, int> = 0>
-	ServiceError(...) {
-		static_assert(false_t<U>::value,
-			"The service type is not constructible given it's dependencies."
+	template<typename Service = T, enable_if_t<is_service<Service>::value && !is_service_constructible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The service type is not constructible given it's dependencies. "
 			"Check if dependencies are configured correctly and if the service has the required constructor."
 		);
 	}
 	
-	template<typename U = T, enable_if_t<!is_service<U>::value && !has_forward<U>::value, int> = 0>
-	ServiceError(...) {
-		static_assert(false_t<U>::value, "The type sent to kgr::Container::service(...) is not a service.");
+	template<typename Service = T, enable_if_t<!is_service<Service>::value && !has_forward<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value, "The type sent to kgr::Container::service(...) is not a service.");
 	}
 	
-	template<typename U = T, enable_if_t<!is_service<U>::value && has_forward<U>::value, int> = 0>
-	ServiceError(...) {
-		static_assert(false_t<U>::value, "The service type must not not contain any virtual function or must be abstract.");
+	template<typename Service = T, enable_if_t<!is_service<Service>::value && has_forward<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value, "The service type must not not contain any virtual function or must be abstract.");
 	}
 };
 

@@ -6,6 +6,7 @@
 #include "operator.hpp"
 #include "operator_service.hpp"
 #include "predicate.hpp"
+#include "debug.hpp"
 #include "service.hpp"
 #include "type_id.hpp"
 

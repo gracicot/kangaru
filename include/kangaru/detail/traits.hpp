@@ -1,9 +1,6 @@
 #ifndef KGR_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
 #define KGR_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
 
-#include "function_traits.hpp"
-#include "utils.hpp"
-
 #include <type_traits>
 #include <tuple>
 
@@ -47,7 +44,7 @@ template<typename Tuple>
 using tuple_seq = typename TupleSeqGen<Tuple>::type;
 
 template<typename Tuple, int n>
-using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - (n > std::tuple_size<Tuple>::value ? std::tuple_size<Tuple>::value : n)>::type;
+using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - n>::type;
 
 // SFINAE utilities
 template<typename T, typename = void>
@@ -85,12 +82,6 @@ struct is_invoke_call : std::false_type {};
 
 template<typename T>
 struct is_invoke_call<T, void_t<typename T::Params>> : std::true_type {};
-
-template<template<typename> class Map, typename T, typename = void>
-struct is_complete_map : std::false_type {};
-
-template<template<typename> class Map, typename T>
-struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
 
 template<typename T, typename... Args>
 struct is_brace_constructible_helper {
@@ -131,25 +122,6 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class, typename, typename, typename...>
-struct is_invokable_helper;
-
-template<template<typename> class Map, typename T, typename... Args, std::size_t... S>
-struct is_invokable_helper<Map, T, seq<S...>, Args...> {
-private:
-	template<typename U, typename... As>
-	static decltype(
-		static_cast<void>(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, decay_t<U>>>>>()..., std::declval<As>()...)),
-		std::true_type{}
-	) test(int);
-	
-	template<typename U, typename... As>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(0));
-};
-
 template<typename T, typename... Args>
 struct has_emplace : has_emplace_helper<T, Args...>::type {};
 
@@ -168,11 +140,14 @@ struct has_template_construct : has_template_construct_helper<Ts...>::type {};
 template<typename... Ts>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<Ts...>::value || std::is_constructible<Ts...>::value>;
 
+template<template<typename> class Map, typename T, typename = void>
+struct is_complete_map : std::false_type {};
+
+template<template<typename> class Map, typename T>
+struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
+
 template<typename T, typename... Args>
 using is_emplaceable = typename std::conditional<std::is_default_constructible<T>::value && has_emplace<T, Args...>::value, std::true_type, std::false_type>::type;
-
-template<template<typename> class Map, typename U, typename... Args>
-struct is_invokable : is_invokable_helper<Map, U, tuple_seq_minus<function_arguments_t<U>, sizeof...(Args)>, Args...>::type {};
 
 } // namespace detail
 } // namespace kgr

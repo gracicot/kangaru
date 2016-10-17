@@ -16,16 +16,6 @@ struct Single {
 	Single& operator=(Single&&) = default;
 };
 
-namespace detail {
-
-template<typename, typename = void>
-struct parent_type_helper;
-
-template<typename, typename = void>
-struct default_type_helper;
-
-}
-
 template<typename T>
 struct Default {
 	using DefaultService = T;
@@ -38,7 +28,7 @@ struct Overrides {
 
 namespace detail {
 
-template<typename, typename>
+template<typename, typename = void>
 struct parent_type_helper {
 	using ParentTypes = std::tuple<>;
 };
@@ -51,7 +41,7 @@ struct parent_type_helper<T, void_t<typename T::ParentTypes>> {
 template<typename T>
 using parent_types = typename parent_type_helper<T>::ParentTypes;
 
-template<typename, typename>
+template<typename, typename = void>
 struct default_type_helper {
 	using has_default = std::false_type;
 };

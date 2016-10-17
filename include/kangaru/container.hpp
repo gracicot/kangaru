@@ -503,7 +503,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(T&& service) {
-		autocall(detail::tuple_seq<typename detail::decay_t<T>::autocall>{}, std::forward<T>(service));
+		autocall(detail::tuple_seq<typename detail::decay_t<T>::Autocall>{}, std::forward<T>(service));
 	}
 	
 	/*
@@ -511,7 +511,7 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
-		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::autocall>>(std::forward<T>(service)), 0)..., 0};
+		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::Autocall>>(std::forward<T>(service)), 0)..., 0};
 		
 		static_cast<void>(unpack);
 	}

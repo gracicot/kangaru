@@ -76,7 +76,7 @@ template<typename T, typename = void>
 struct has_autocall : std::false_type {};
 
 template<typename T>
-struct has_autocall<T, void_t<typename T::autocall>> : std::true_type {};
+struct has_autocall<T, void_t<typename T::Autocall>> : std::true_type {};
 
 template<typename T, typename = void>
 struct has_forward : std::false_type {};

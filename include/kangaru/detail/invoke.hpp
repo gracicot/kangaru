@@ -19,10 +19,6 @@ struct Invoke : M {
 
 template<template<typename> class M, typename... Ts>
 struct AutoCall {
-private:
-	friend struct Container;
-	template<typename, typename> friend struct kgr::detail::has_autocall;
-	
 	using Autocall = std::tuple<Ts...>;
 	
 	template<typename T>
@@ -31,10 +27,6 @@ private:
 
 template<typename... Ts>
 struct AutoCallNoMap {
-private:
-	friend struct Container;
-	template<typename, typename> friend struct kgr::detail::has_autocall;
-	
 	using Autocall = std::tuple<Ts...>;
 };
 

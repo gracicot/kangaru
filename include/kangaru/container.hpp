@@ -146,9 +146,10 @@ public:
 	
 	/*
 	 * This oveload is called when one of the services to be injected is invalid.
+	 * It will provide diagnostic on GCC.
 	 */
 	template<typename... Services>
-	detail::Sink invoke(...) = delete;
+	detail::Sink invoke(detail::NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function clears this container.

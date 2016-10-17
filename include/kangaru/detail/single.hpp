@@ -33,8 +33,6 @@ struct Default {
 
 template<typename... Types>
 struct Overrides {
-private:
-	template<typename, typename> friend struct detail::parent_type_helper;
 	using ParentTypes = std::tuple<Types...>;
 };
 

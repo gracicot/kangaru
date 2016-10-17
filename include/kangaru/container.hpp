@@ -402,7 +402,7 @@ private:
 		// This line is used to shut unused-variable warning, since S can be empty.
 		static_cast<void>(constructArgs);
 		
-		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))..., std::forward<Args>(args)...);
+		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))...);
 	}
 	
 	/*

@@ -118,17 +118,15 @@ public:
 	 * Args are additional arguments to be sent to the function after services arguments.
 	 * This function will deduce arguments from the function signature.
 	 */
-	template<template<typename> class Map, typename U, typename ...Args, enable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
+	template<template<typename> class Map, typename U, typename ...Args>
 	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) {
+		static_assert(
+			static_cast<std::int64_t>(std::tuple_size<detail::function_arguments_t<detail::decay_t<U>>>::value) - static_cast<std::int64_t>(sizeof...(Args)) >= 0,
+			"Too many arguments are sent to the function."
+		);
+		
 		return invoke_helper<Map>(detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{}, std::forward<U>(function), std::forward<Args>(args)...);
 	}
-	
-	/*
-	 * This function returns the result of the callable object of type U.
-	 * This version of the function is a reverse matching to provide diagnostic when `function` is not invokable.
-	 */
-	template<template<typename> class Map>
-	void invoke(NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -298,6 +296,21 @@ private:
 	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
 	auto service() -> decltype(service<detail::service_map_t<Map, T>>()) {
 		return service<detail::service_map_t<Map, T>>();
+	}
+	
+	/*
+	 * This function call service using the service map.
+	 * This function is called when the service map `Map` is invalid for a given `T`
+	 * It will fail the static_assert to provide some useful error message
+	 */
+	template<template<typename> class Map, typename T, disable_if<detail::is_complete_map<Map, T>> = 0>
+	T service() {
+		static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
+		
+		// This line is used to return an actual value.
+		// Since this line will never be executed, declval is a good alternative.
+		// This will prevent further compilation errors, we want the error to be as clear as we can get.
+		return std::declval<T>();
 	}
 	
 	///////////////////////
@@ -484,8 +497,7 @@ private:
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
 	template<template<typename> class Map, typename U, typename ...Args, std::size_t... S>
-	auto invoke_helper(detail::seq<S...>, U&& function, Args&&... args)
-	-> decltype(std::declval<U>()(std::declval<ServiceType<detail::service_map_t<Map, detail::function_argument_t<S, detail::decay_t<U>>>>>()..., std::declval<Args>()...)) {
+	detail::function_result_t<detail::decay_t<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(service<Map, detail::function_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
 	}
 	

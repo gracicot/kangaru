@@ -7,6 +7,9 @@
 namespace kgr {
 namespace detail {
 
+template<typename T>
+T&& returnValue();
+
 // void_t implementation
 template<typename...>
 struct voider { using type = void; };

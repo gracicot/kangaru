@@ -49,20 +49,6 @@ private:
 		};
 	}
 	
-	struct NotInvokableError {
-		template<typename T = void>
-		NotInvokableError(...) {
-			static_assert(!std::is_same<T, T>::value, "The function sent is not invokable. Ensure to include all services definitions you need and recieve required paramters.");
-		};
-	};
-	
-	struct NotAbstracPolymorphicError {
-		template<typename T = void>
-		NotAbstracPolymorphicError(...) {
-			static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
-		};
-	};
-	
 public:
 	explicit Container() = default;
 	Container(const Container &) = delete;
@@ -111,7 +97,14 @@ public:
 	 * This version is called when T is polymorphic. A static assert is thrown.
 	 */
 	template<typename T, disable_if<detail::is_service<T>> = 0, enable_if<detail::has_forward<T>> = 0>
-	ServiceType<T> service(NotAbstracPolymorphicError = {}, ...) = delete;
+	ServiceType<T> service(...) {
+		static_assert(!std::is_same<T, T>::value, "The service T must not be polymorphic or must be abstract.");
+		
+		// This line is used to return an actual value.
+		// Since this line will never be executed, returnValue is a good alternative, even if never defined.
+		// This will prevent further compilation errors, we want the error to be as clear as we can get.
+		return detail::returnValue<ServiceType<T>>();
+	}
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -308,9 +301,9 @@ private:
 		static_assert(!std::is_same<T, T>::value, "No definition found for type T in the service map. Have you forgot to include your service definition?");
 		
 		// This line is used to return an actual value.
-		// Since this line will never be executed, declval is a good alternative.
+		// Since this line will never be executed, returnValue is a good alternative, even if never defined.
 		// This will prevent further compilation errors, we want the error to be as clear as we can get.
-		return std::declval<T>();
+		return detail::returnValue<T>();
 	}
 	
 	///////////////////////
@@ -383,9 +376,9 @@ private:
 		static_assert(!std::is_same<T, T>::value, "A non-abstract service must have a static member function named construct.");
 		
 		// This line is used to return an actual value.
-		// Since this line will never be executed, declval is a good alternative.
+		// Since this line will never be executed, returnValue is a good alternative, even if never defined.
 		// This will prevent further compilation errors, we want the error to be as clear as we can get.
-		return std::declval<contained_service_t<T>>();
+		return detail::returnValue<contained_service_t<T>>();
 	}
 	
 	/*
@@ -456,9 +449,9 @@ private:
 		static_assert(!std::is_same<T, T>::value, "The service T is not constructible form Args... Dependencies may not be configured correctly.");
 		
 		// This line is used to return an actual value.
-		// Since this line will never be executed, declval is a good alternative.
+		// Since this line will never be executed, returnValue is a good alternative, even if never defined.
 		// This will prevent further compilation errors, we want the error to be as clear as we can get.
-		return std::declval<contained_service_t<T>>();
+		return detail::returnValue<contained_service_t<T>>();
 	}
 	
 	/*

@@ -1,5 +1,5 @@
-Writing service definitions from scratch
-========================================
+Custom Service Definitions
+==========================
 
 Previously, each time we did a service definition, we extended the `kgr::Service` or the `kgr::SingleService` structs. But it is important to note that we are not limited to that.
 
@@ -7,7 +7,7 @@ Writing a service definition is pretty easy. You only need to define three funct
 
  * `construct`
  * `forward`
- * a constructor that takes at least `kgr::in_place_t` as parameter.
+ * A constructor that takes at least `kgr::in_place_t` as parameter.
 
 The `construct` function is static and returns the arguments that should be used to construct your service definition. It can take any other service definition as a parameter.
 This is where dependencies are resolved. This function must return values using the `kgr::inject` function. The return type is a special tuple made for the container to handle your arguments correctly.
@@ -18,13 +18,14 @@ The container will instanciate your struct given these tools. However, it must c
 
 Normally, your service definition should contain your service.
 
+Please note that the following example will use C++14 for the sake of simplicity and readability. Kangaru only require C++11 to work.
 A basic service definition looks like this:
 
 ```c++
 struct FileManagerService {
     FileManagerService(kgr::in_place_t) : fm{} {}
 
-    static auto construct() -> decltype(kgr::inject()) {
+    static decltype(auto) construct() {
         return kgr::inject();
     }
     
@@ -45,7 +46,7 @@ If the class `FileManager` has dependencies, you can add them in the `construct`
 struct FileManagerService {
     FileManagerService(kgr::in_place_t, Notification& n, ClownManster cm) : fm{n, std::move(cm)} {}
     
-    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) -> decltype(kgr::inject(ns.forward(), cms.forward())) {
+    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) {
         return kgr::inject(ns.forward(), cms.forward());
     }
     
@@ -75,8 +76,7 @@ struct FileManagerService {
     FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
     
     template<typename... Args>
-    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args)
-            -> decltype(kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...)) {
+    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args) {
         return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
     }
     
@@ -110,8 +110,7 @@ struct FileManagerService : Single {
     FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
     
     template<typename... Args>
-    static auto construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args)
-            -> decltype(kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...)) {
+    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args) {
         return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
     }
     
@@ -135,6 +134,6 @@ struct IFileManagerService : Single {
 }
 ```
     
-Abstract services must be single. That reason is pretty obvious: The container needs to access to an existing instance of a service that overrides it.
+Abstract services are implicitly single.
 
 [Next chapter](section8_generic.md)

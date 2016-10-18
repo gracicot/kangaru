@@ -116,12 +116,12 @@ public:
 };
 
 template<typename T>
-struct AbstractService : Single {
+struct AbstractService {
 	virtual T& forward() = 0;
 };
 
 template<typename T>
-struct AbstractSharedService : Single {
+struct AbstractSharedService {
 	virtual std::shared_ptr<T> forward() = 0;
 };
 

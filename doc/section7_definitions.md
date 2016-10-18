@@ -129,7 +129,7 @@ private:
 Abstract services are the simplest ones to implement. They have only one pure virtual method called `forward`:
 
 ```c++
-struct IFileManagerService : Single {
+struct IFileManagerService {
     virtual IFileManager& forward() = 0;
 }
 ```

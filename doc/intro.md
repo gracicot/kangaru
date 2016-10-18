@@ -43,7 +43,7 @@ Index
  * [Override](section3_override.md)
  * [Invoke](section4_invoke.md)
  * [Operator services](section5_operator.md)
- * [Injection with setters](section6_setters.md)
+ * [Autocall](section6_setters.md)
  * [Custom service definitions](section7_definitions.md)
  * [Debugging](section8_debug.md)
  * [Generic Services](section9_generic.md)

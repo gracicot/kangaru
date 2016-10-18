@@ -104,4 +104,4 @@ struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCallNoMap<
 > {};
 ```
 
-[Next chapter](section7_definitions.md)
+[Next chapter: Custom service definitions](section7_definitions.md)

@@ -85,4 +85,4 @@ kgr::Container c;
 auto& fileManager = c.service<IFileManagerService>();
 ```
  
-[Next chapter](section4_invoke.md)
+[Next chapter: Invoke](section4_invoke.md)

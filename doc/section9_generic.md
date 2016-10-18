@@ -91,4 +91,4 @@ struct MyClassService : MyUniqueService<MyClass, kgr::Dependency<MyDependencySer
 If the generic definition should be single, simply make it extend from the `kgr::Single` struct.
 Take note that you don't need any virtual function. The override behaviour is completely implemented inside the container.
 
-[Next chapter](section9_structure.md)
+[Next chapter: Structure for large projects](section10_structure.md)

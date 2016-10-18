@@ -67,4 +67,4 @@ int doThings(Notification n, FileManager& fm, int a, double b);
 int result = container.invoke<NotificationService, FileManagerService>(doThings, 7, 8.9);
 ```
 
-[Next chapter](section5_operator.md)
+[Next chapter: Operator services](section5_operator.md)

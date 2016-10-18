@@ -58,3 +58,5 @@ This is the compiler output (Clang):
 As you can see, the compiler is effectively stating that the service is not constructible given passed arguments.
 
 If `kgr::debug::service<T>(Args...)` resolve to a deleted function, it means that there is no error detected with that service.
+
+[Next chapter: Generic Services](section9_generic.md)

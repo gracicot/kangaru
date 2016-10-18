@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
 
 #include "traits.hpp"
 #include "injected.hpp"
@@ -130,4 +130,4 @@ using is_service_valid = std::integral_constant<bool,
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP

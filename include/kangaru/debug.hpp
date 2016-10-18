@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_DEBUG_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_DEBUG_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEBUG_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEBUG_HPP
 
 #include "detail/error.hpp"
 
@@ -29,4 +29,4 @@ auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::Ser
 }
 }
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_DEBUG_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEBUG_HPP

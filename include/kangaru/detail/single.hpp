@@ -59,7 +59,7 @@ template<typename T>
 using has_default = typename default_type_helper<T>::has_default;
 
 template<typename T>
-using is_single = std::is_base_of<Single, T>;
+using is_single = std::integral_constant<bool, std::is_base_of<Single, T>::value || std::is_abstract<T>::value>;
 
 template<typename Service, typename Overrider>
 struct is_overriden_by_helper {

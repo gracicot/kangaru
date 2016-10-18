@@ -84,7 +84,7 @@ private:
 } // namespace detail
 
 template<typename T>
-using Inject = typename std::conditional<!detail::is_service<T>::value || std::is_base_of<Single, T>::value,
+using Inject = typename std::conditional<!detail::is_service<T>::value || detail::is_single<T>::value,
 	detail::BaseInjected<T>&,
 	detail::Injected<T>&&>::type;
 

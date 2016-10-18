@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
 
 #include "function_traits.hpp"
 #include "utils.hpp"
@@ -244,4 +244,4 @@ using is_invokable = std::integral_constant<bool, defer_is_invokable_helper<Map,
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_TRAITS_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_TRAITS_HPP

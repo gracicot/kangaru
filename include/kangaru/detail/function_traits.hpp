@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
 
 #include <tuple>
 
@@ -119,4 +119,4 @@ using function_argument_t = typename function_traits<F>::template argument_type<
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP

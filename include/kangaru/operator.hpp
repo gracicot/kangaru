@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_OPERATOR_HPP
-#define KGR_INCLUDE_KANGARU_OPERATOR_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_OPERATOR_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_OPERATOR_HPP
 
 #include "container.hpp"
 #include "detail/lazy_base.hpp"
@@ -99,4 +99,4 @@ private:
 
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_OPERATOR_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_OPERATOR_HPP

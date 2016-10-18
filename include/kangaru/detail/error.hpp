@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_ERROR_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_ERROR_HPP
 
 #include "traits.hpp"
 #include "service_traits.hpp"
@@ -82,4 +82,4 @@ struct NotInvokableError {
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_ERROR_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_ERROR_HPP

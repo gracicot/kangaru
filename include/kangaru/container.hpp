@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_CONTAINER_HPP
-#define KGR_INCLUDE_KANGARU_CONTAINER_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP
 
 #include "detail/traits.hpp"
 #include "detail/service_traits.hpp"
@@ -577,4 +577,4 @@ private:
 
 }  // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_CONTAINER_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP

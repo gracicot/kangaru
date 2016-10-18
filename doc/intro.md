@@ -28,6 +28,7 @@ Note that the `detail` namespace is not considered as a part of the API and its 
 In this documentation, many classes will be refered as services or service definitions.
 
 _Services_ are classes that are either injected by the container or have other classes as dependencies.
+
 _Service Definitions_ are classes that contain a service and tell the container how this particular service should behave within the container.
 
 ### Macros

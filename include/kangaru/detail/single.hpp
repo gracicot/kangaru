@@ -1,5 +1,5 @@
-#ifndef KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
-#define KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
 
 #include "traits.hpp"
 
@@ -90,4 +90,4 @@ using is_overriden_by = typename is_overriden_by_helper<Service, Overrider>::typ
 } // namespace detail
 } // namespace kgr
 
-#endif // KGR_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SINGLE_HPP

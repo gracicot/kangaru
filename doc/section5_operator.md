@@ -71,4 +71,4 @@ And again, there's the equivalent of lazy with a forked container, named `Forked
 
 You can see extended examples of operator services in example8.
 
-[Next chapter](section6_autocall.md)
+[Next chapter: Autocall](section6_autocall.md)

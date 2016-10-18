@@ -95,4 +95,4 @@ There are three other service types:
 
 `kgr::Service` and `kgr::SingleService` require that your classes are destructible.
  
-[Next chapter](section2_container.md)
+[Next chapter: Basic usage of the container](section2_container.md)

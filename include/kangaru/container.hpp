@@ -331,7 +331,7 @@ private:
 	 * This function is called when the service map `Map` is valid for a given `T`
 	 */
 	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
-	auto service() -> decltype(service<detail::service_map_t<Map, T>>()) {
+	auto mapped_service() -> decltype(service<detail::service_map_t<Map, T>>()) {
 		return service<detail::service_map_t<Map, T>>();
 	}
 	
@@ -470,7 +470,7 @@ private:
 	 */
 	template<template<typename> class Map, typename U, typename... Args, std::size_t... S>
 	detail::function_result_t<detail::decay_t<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(service<Map, detail::function_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(mapped_service<Map, detail::function_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
 	}
 	
 	/*

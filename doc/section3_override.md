@@ -77,12 +77,12 @@ If you ask the container for an abstract service and the container has no instan
 If that's not the correct behaviour, you can also specify a default service to instantiate instead of throwing.
 
 ```c++
-struct IFileManagerService : kgr::AbstractService<IFileManager>, kgr::Default<TreeFileManagerService>;
+struct IFileManagerService : kgr::AbstractService<IFileManager>, kgr::Default<TreeFileManagerService> {};
 
 kgr::Container c;
 
 // Will instantiate a TreeFileManager and return a IFileManager.
-auto&& fileManager = c.service<IFileManagerService>();
+auto& fileManager = c.service<IFileManagerService>();
 ```
  
 [Next chapter](section4_invoke.md)

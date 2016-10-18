@@ -189,5 +189,5 @@ c1.merge(std::move(c2));
 ```
     
 After the container is merged, no services are invalidated. Any change to this behaviour are considered breaking.
- 
+
 [Next chapter](section3_override.md)

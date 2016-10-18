@@ -14,9 +14,9 @@ Indeed, the container does not impose a way to construct, allocate memory, conta
 Getting Started
 ---------------
 
-Getting started with Kangaru is easy. First of all, you need to include the library:
+Getting started with kangaru is easy. First of all, you need to include the library:
 
-    #include "kangaru/kangaru.hpp"
+    #include <kangaru/kangaru.hpp>
 
 Take note that you will need to add the library to your include paths.
 
@@ -45,5 +45,6 @@ Index
  * [Operator services](section5_operator.md)
  * [Injection with setters](section6_setters.md)
  * [Writing service definitions from scratch](section7_definitions.md)
- * [Generic Services](section8_generic.md)
- * [Structure for large projects](section9_structure.md)
+ * [Debugging](section8_debug.md)
+ * [Generic Services](section9_generic.md)
+ * [Structure for large projects](section10_structure.md)

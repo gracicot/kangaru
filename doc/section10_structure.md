@@ -1,3 +1,6 @@
+Structure for large projects
+============================
+
 Have a large codebase? Big plans? Here's some suggestions to keep your project well organised!
 
 ## Definition completeness
@@ -9,7 +12,8 @@ When you use a service definition, it must be complete. For a sevice definition 
 For services in your own project, keep one definition in each header. Multiple definitions per header file will prevent you from including only what you need.
 Also, in a service definition, other definitions used should be complete too.
 
-Headers of your classes should not be significantly changed. The big change is in the cpp file. If you need to deal with the container, you must include the definition instead of the class you want to use.
+Headers of your classes should not be significantly changed when integrating kangaru to your project. The big change is in the cpp file.
+If you need to deal with the container, you must include the definition instead of the class you want to use.
 
 Let's say we have a project that has the classes `ClassA` and `ClassB`. We want to add `ClassC` that will use kangaru.
 Here's a include graph of this project:
@@ -58,7 +62,7 @@ A "include kangaru" header file should look like this:
 ```c++
 #pragma once // or a header guard.
 
-#include "kangaru/kangaru.hpp" // include kangaru
+#include <kangaru/kangaru.hpp> // include kangaru
 
 // Here you can put your generic service.
 // Example:

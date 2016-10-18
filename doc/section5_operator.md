@@ -1,5 +1,5 @@
-Operation Services
-==================
+Operator Services
+=================
 
 In kangaru, there are built-in services that their purpose is to make specific operations on the container.
 They help encapsulate which jobs on the container a class is able to do.

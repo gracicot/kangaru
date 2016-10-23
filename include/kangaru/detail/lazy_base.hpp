@@ -13,12 +13,13 @@ protected:
 	using ref = T&;
 	using rref = T&&;
 	using ptr = T*;
+	using assign_value_type = T&&;
 	
-	T&& assign_value(T&& service) {
+	T&& assign_value(T&& service) noexcept {
 		return std::move(service);
 	}
 	
-	T& value(T& service) {
+	T& value(T& service) noexcept {
 		return service;
 	}
 };
@@ -30,12 +31,13 @@ protected:
 	using ref = T&;
 	using rref = T&&;
 	using ptr = T*;
+	using assign_value_type = T*;
 	
-	T* assign_value(T& service) {
+	T* assign_value(T& service) noexcept {
 		return &service;
 	}
 	
-	T& value(T* service) {
+	T& value(T* service) noexcept {
 		return *service;
 	}
 };
@@ -45,48 +47,44 @@ struct LazyCrtpHelper : Bases<CRTP, T>... {};
 
 template<typename CRTP, typename T, typename = void>
 struct LazyCopyConstruct {
-	LazyCopyConstruct(const LazyCopyConstruct&) = delete;
-	
 	LazyCopyConstruct() = default;
-	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
+	LazyCopyConstruct(const LazyCopyConstruct&) = delete;
 	LazyCopyConstruct(LazyCopyConstruct&&) = default;
+	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
 	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
 };
 
 template<typename CRTP, typename T, typename = void>
 struct LazyMoveAssign {
-	LazyMoveAssign& operator=(LazyMoveAssign&&) = delete;
-	
 	LazyMoveAssign() = default;
 	LazyMoveAssign(const LazyMoveAssign&) = default;
-	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
 	LazyMoveAssign(LazyMoveAssign&&) = default;
+	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
+	LazyMoveAssign& operator=(LazyMoveAssign&&) = delete;
 };
 
 template<typename CRTP, typename T, typename = void>
 struct LazyCopyAssign {
-	LazyCopyAssign& operator=(const LazyCopyAssign&) = delete;
-	
 	LazyCopyAssign() = default;
 	LazyCopyAssign(const LazyCopyAssign&) = default;
 	LazyCopyAssign(LazyCopyAssign&&) = default;
+	LazyCopyAssign& operator=(const LazyCopyAssign&) = delete;
 	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
 };
 
 template<typename CRTP, typename T, typename = void>
 struct LazyMoveConstruct {
-	LazyMoveConstruct(LazyMoveConstruct&&) = delete;
-	
 	LazyMoveConstruct() = default;
 	LazyMoveConstruct(const LazyMoveConstruct&) = default;
+	LazyMoveConstruct(LazyMoveConstruct&&) = delete;
 	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
 	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
 };
 
 template<typename CRTP, typename T>
-struct LazyCopyConstruct<CRTP, T, detail::enable_if_t<std::is_copy_constructible<T>::value>> {
-	LazyCopyConstruct(const LazyCopyConstruct& other) {
-		auto& o = static_cast<const CRTP&>(other);
+struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::value && !std::is_trivially_copy_constructible<T>::value>> {
+	LazyCopyConstruct(const LazyCopyConstruct& other) noexcept(std::is_nothrow_copy_constructible<T>::value){
+		auto&& o = static_cast<const CRTP&>(other);
 		if (o._initialized) {
 			static_cast<CRTP&>(*this).emplace(o.data());
 		}
@@ -99,10 +97,20 @@ struct LazyCopyConstruct<CRTP, T, detail::enable_if_t<std::is_copy_constructible
 };
 
 template<typename CRTP, typename T>
-struct LazyCopyAssign<CRTP, T, detail::enable_if_t<std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value>> {
-	LazyCopyAssign& operator=(const LazyCopyAssign& other) {
-		auto& o = static_cast<const CRTP&>(other);
-		auto& self = static_cast<CRTP&>(*this);
+struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {
+	LazyCopyConstruct() = default;
+	LazyCopyConstruct(const LazyCopyConstruct& other) = default;
+	LazyCopyConstruct(LazyCopyConstruct&&) = default;
+	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
+	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
+};
+
+template<typename CRTP, typename T>
+struct LazyCopyAssign<CRTP, T, enable_if_t<std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value>> {
+	LazyCopyAssign& operator=(const LazyCopyAssign& other)
+			noexcept(std::is_nothrow_copy_assignable<T>::value && std::is_nothrow_copy_assignable<T>::value) {
+		auto&& o = static_cast<const CRTP&>(other);
+		auto&& self = static_cast<CRTP&>(*this);
 		
 		if (o._initialized) {
 			self.assign(o.data());
@@ -120,9 +128,9 @@ struct LazyCopyAssign<CRTP, T, detail::enable_if_t<std::is_copy_assignable<T>::v
 };
 
 template<typename CRTP, typename T>
-struct LazyMoveConstruct<CRTP, T, detail::enable_if_t<std::is_move_constructible<T>::value>> {
-	LazyMoveConstruct(LazyMoveConstruct&& other) {
-		auto& o = static_cast<CRTP&>(other);
+struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !std::is_trivially_move_constructible<T>::value>> {
+	LazyMoveConstruct(LazyMoveConstruct&& other) noexcept(std::is_nothrow_move_constructible<T>::value) {
+		auto&& o = static_cast<CRTP&>(other);
 		if (o._initialized) {
 			static_cast<CRTP&>(*this).emplace(std::move(o.data()));
 		}
@@ -135,10 +143,20 @@ struct LazyMoveConstruct<CRTP, T, detail::enable_if_t<std::is_move_constructible
 };
 
 template<typename CRTP, typename T>
-struct LazyMoveAssign<CRTP, T, detail::enable_if_t<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>> {
-	LazyMoveAssign& operator=(LazyMoveAssign&& other) {
-		auto& o = static_cast<CRTP&>(other);
-		auto& self = static_cast<CRTP&>(*this);
+struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {
+	LazyMoveConstruct() = default;
+	LazyMoveConstruct(const LazyMoveConstruct&) = default;
+	LazyMoveConstruct(LazyMoveConstruct&& other) = default;
+	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
+	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
+};
+
+template<typename CRTP, typename T>
+struct LazyMoveAssign<CRTP, T, enable_if_t<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>> {
+	LazyMoveAssign& operator=(LazyMoveAssign&& other)
+			noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_move_constructible<T>::value) {
+		auto&& o = static_cast<CRTP&>(other);
+		auto&& self = static_cast<CRTP&>(*this);
 		
 		if (o._initialized) {
 			self.assign(std::move(o.data()));
@@ -151,27 +169,66 @@ struct LazyMoveAssign<CRTP, T, detail::enable_if_t<std::is_move_assignable<T>::v
 	
 	LazyMoveAssign() = default;
 	LazyMoveAssign(const LazyMoveAssign&) = default;
-	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
 	LazyMoveAssign(LazyMoveAssign&&) = default;
+	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
+};
+
+template<typename CRTP, typename T, typename = void>
+struct LazyDestruction {
+	~LazyDestruction() noexcept(std::is_nothrow_destructible<T>::value) {
+		destroy();
+	}
+	
+protected:
+	void destroy() noexcept(std::is_nothrow_destructible<T>::value) {
+		auto&& self = static_cast<CRTP&>(*this);
+		
+		using DestructingType = typename CRTP::type;
+		
+		if (self._initialized) {
+			self._initialized = false;
+			self.data().~DestructingType();
+		}
+	}
+};
+
+template<typename CRTP, typename T>
+struct LazyDestruction<CRTP, T, enable_if_t<std::is_trivially_destructible<T>::value>> {
+	~LazyDestruction() = default;
+	
+protected:
+	void destroy() noexcept {}
 };
 
 template<typename CRTP, typename T>
 struct LazyBase :
 	LazyHelper<ServiceType<T>>,
 	LazyCrtpHelper<
-		LazyBase<CRTP, T>, typename detail::LazyHelper<ServiceType<T>>::type,
-		LazyCopyConstruct, LazyCopyAssign, LazyMoveAssign, LazyMoveConstruct
+		LazyBase<CRTP, T>, typename LazyHelper<ServiceType<T>>::type,
+		LazyCopyConstruct, LazyCopyAssign, LazyMoveAssign, LazyMoveConstruct, LazyDestruction
 	> {
 private:
-	using typename detail::LazyHelper<ServiceType<T>>::type;
-	using typename detail::LazyHelper<ServiceType<T>>::ref;
-	using typename detail::LazyHelper<ServiceType<T>>::rref;
-	using typename detail::LazyHelper<ServiceType<T>>::ptr;
+	using Helper = LazyHelper<ServiceType<T>>;
+	
+	using typename Helper::type;
+	using typename Helper::ref;
+	using typename Helper::rref;
+	using typename Helper::ptr;
+	using typename Helper::assign_value_type;
 	
 	template<typename, typename, typename> friend struct LazyCopyConstruct;
+	template<typename, typename, typename> friend struct LazyMoveConstruct;
 	template<typename, typename, typename> friend struct LazyCopyAssign;
 	template<typename, typename, typename> friend struct LazyMoveAssign;
-	template<typename, typename, typename> friend struct LazyMoveConstruct;
+	template<typename, typename, typename> friend struct LazyDestruction;
+	
+	using Helper::assign_value;
+	using Helper::value;
+	using LazyDestruction<LazyBase<CRTP, T>, typename LazyHelper<ServiceType<T>>::type>::destroy;
+	
+	static constexpr bool nothrow_get = 
+		noexcept(std::declval<Container>().service<T>()) &&
+		std::is_nothrow_constructible<type, assign_value_type>::value;
 	
 public:
 	LazyBase() = default;
@@ -181,61 +238,51 @@ public:
 	LazyBase(LazyBase&&) = default;
 	LazyBase(const LazyBase&) = default;
 	
-	~LazyBase() {
-		destroy();
+	~LazyBase() = default;
+	
+	ref get() noexcept(nothrow_get) {
+		if (!_initialized) {
+			emplace(assign_value(static_cast<CRTP*>(this)->container().template service<T>()));
+		}
+		
+		return value(data());
 	}
 	
-	ref operator*() & {
+	ref operator*() & noexcept(nothrow_get) {
 		return get();
 	}
 	
-	ptr operator->() {
+	ptr operator->() noexcept(nothrow_get) {
 		return &get();
 	}
 	
-	rref operator*() && {
+	rref operator*() && noexcept(nothrow_get) {
 		return std::move(get());
 	}
 	
-	ref get() {
-		if (!_initialized) {
-			emplace(this->assign_value(static_cast<CRTP*>(this)->container().template service<T>()));
-		}
-		
-		return this->value(data());
-	}
-	
 private:
-	type& data() {
+	type& data() noexcept {
 		return *reinterpret_cast<type*>(&_service);
 	}
 	
-	const type& data() const {
+	const type& data() const noexcept {
 		return *reinterpret_cast<const type*>(&_service);
 	}
 	
 	template<typename... Args>
-	void emplace(Args&&... args) {
+	void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<type, Args...>::value) {
 		destroy();
 		
 		_initialized = true;
 		new (&_service) type(std::forward<Args>(args)...);
 	}
 	
-	void destroy() {
-		using DestructingType = type;
-		if (_initialized) {
-			_initialized = false;
-			data().~DestructingType();
-		}
-	}
-	
 	template<typename Arg>
-	void assign(Arg&& arg) {
-		if (!_initialized) {
-			emplace(std::forward<Arg>(arg));
-		} else {
+	void assign(Arg&& arg) noexcept(std::is_nothrow_constructible<type, Arg>::value && std::is_nothrow_assignable<type, Arg>::value) {
+		if (_initialized) {
 			data() = std::forward<Arg>(arg);
+		} else {
+			emplace(std::forward<Arg>(arg));
 		}
 	}
 	

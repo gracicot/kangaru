@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SINGLE_HPP
 
 #include "traits.hpp"
+#include "meta_list.hpp"
 
 #include <tuple>
 
@@ -23,14 +24,14 @@ struct Default {
 
 template<typename... Types>
 struct Overrides {
-	using ParentTypes = std::tuple<Types...>;
+	using ParentTypes = detail::meta_list<Types...>;
 };
 
 namespace detail {
 
 template<typename, typename = void>
 struct parent_type_helper {
-	using ParentTypes = std::tuple<>;
+	using ParentTypes = meta_list<>;
 };
 
 template<typename T>
@@ -62,30 +63,7 @@ template<typename T>
 using is_single = std::integral_constant<bool, std::is_base_of<Single, T>::value || std::is_abstract<T>::value>;
 
 template<typename Service, typename Overrider>
-struct is_overriden_by_helper {
-private:
-	
-	template<typename T, std::size_t I>
-	static std::is_same<T, typename std::tuple_element<I, parent_types<Overrider>>::type> element_test();
-	
-	template<typename T>
-	static std::false_type test_helper(seq<>);
-	
-	template<typename T, std::size_t first, std::size_t... tail, typename Element = decltype(element_test<T, first>()), typename Next = decltype(test_helper<T>(seq<tail...>{}))>
-	static std::integral_constant<bool, (Element::value || Next::value)> test_helper(seq<first, tail...>);
-	
-	template<typename T>
-	static auto test(int) -> decltype(test_helper<T>(tuple_seq<parent_types<Overrider>>{}));
-	
-	template<typename T>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<Service>(0));
-};
-
-template<typename Service, typename Overrider>
-using is_overriden_by = typename is_overriden_by_helper<Service, Overrider>::type;
+using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;
 
 } // namespace detail
 } // namespace kgr

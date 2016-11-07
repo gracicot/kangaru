@@ -3,9 +3,22 @@
 
 #include "container.hpp"
 #include "detail/injected.hpp"
-#include "detail/function_traits.hpp"
+#include "detail/traits.hpp"
 
 namespace kgr {
+namespace detail {
+
+template<typename Generic, typename Type, typename = void>
+struct GenericServiceDestruction {
+	~GenericServiceDestruction() {
+		static_cast<Generic&>(*this).instance().~Type();
+	}
+};
+
+template<typename Generic, typename Type>
+struct GenericServiceDestruction<Generic, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
+
+} // namespace detail
 
 template<typename CRTP, typename Type>
 struct GenericService {
@@ -35,10 +48,6 @@ struct GenericService {
 	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>::value, int> = 0>
 	GenericService(in_place_t, Args&&... args) {
 		emplace(std::forward<Args>(args)...);
-	}
-	
-	~GenericService() {
-		instance().~Type();
 	}
 	
 protected:

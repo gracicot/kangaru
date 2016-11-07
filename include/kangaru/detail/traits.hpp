@@ -79,6 +79,9 @@ template<typename Tuple, int n>
 using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - (n > std::tuple_size<Tuple>::value ? std::tuple_size<Tuple>::value : n)>::type;
 
 // SFINAE utilities
+template<typename From, typename To>
+using is_explicitly_convertible = std::is_constructible<To, From>;
+
 template<typename T, typename = void>
 struct has_autocall : std::false_type {};
 

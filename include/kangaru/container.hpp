@@ -107,10 +107,10 @@ public:
 	 * or is called when provided arguments don't match the constructor.
 	 * In GCC, a diagnostic is provided.
 	 */
-	template<typename T, typename... Args, enable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
-	detail::Sink service(detail::ServiceError<T, detail::identity_t<Args>...> = {}, Args&&...) = delete;
+	template<typename T, typename = decltype(detail::ServiceError<T>{})>
+	detail::Sink service(detail::ServiceError<T> = {}) = delete;
 	
-	template<typename T, typename... Args, disable_if<std::is_default_constructible<detail::ServiceError<T, Args...>>> = 0>
+	template<typename T, typename... Args>
 	detail::Sink service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*

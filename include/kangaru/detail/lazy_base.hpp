@@ -97,18 +97,19 @@ struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::val
 };
 
 template<typename CRTP, typename T>
-struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {
-	LazyCopyConstruct() = default;
-	LazyCopyConstruct(const LazyCopyConstruct& other) = default;
-	LazyCopyConstruct(LazyCopyConstruct&&) = default;
-	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
-	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
-};
+struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {};
 
 template<typename CRTP, typename T>
-struct LazyCopyAssign<CRTP, T, enable_if_t<std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value>> {
+struct LazyCopyAssign<CRTP, T, enable_if_t<
+	std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value &&
+	!(std::is_trivially_copy_assignable<T>::value && std::is_trivially_copy_constructible<T>::value && std::is_trivially_destructible<T>::value)
+>> {
 	LazyCopyAssign& operator=(const LazyCopyAssign& other)
-			noexcept(std::is_nothrow_copy_assignable<T>::value && std::is_nothrow_copy_assignable<T>::value) {
+	noexcept(
+		std::is_nothrow_copy_assignable<T>::value &&
+		std::is_nothrow_copy_constructible<T>::value &&
+		std::is_nothrow_destructible<T>::value
+	) {
 		auto&& o = static_cast<const CRTP&>(other);
 		auto&& self = static_cast<CRTP&>(*this);
 		
@@ -128,6 +129,13 @@ struct LazyCopyAssign<CRTP, T, enable_if_t<std::is_copy_assignable<T>::value && 
 };
 
 template<typename CRTP, typename T>
+struct LazyCopyAssign<CRTP, T, enable_if_t<
+	std::is_trivially_copy_assignable<T>::value &&
+	std::is_trivially_copy_constructible<T>::value &&
+	std::is_trivially_destructible<T>::value
+>> {};
+
+template<typename CRTP, typename T>
 struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !std::is_trivially_move_constructible<T>::value>> {
 	LazyMoveConstruct(LazyMoveConstruct&& other) noexcept(std::is_nothrow_move_constructible<T>::value) {
 		auto&& o = static_cast<CRTP&>(other);
@@ -143,18 +151,19 @@ struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_move_constructible<T>::val
 };
 
 template<typename CRTP, typename T>
-struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {
-	LazyMoveConstruct() = default;
-	LazyMoveConstruct(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct(LazyMoveConstruct&& other) = default;
-	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
-	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
-};
+struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {};
 
 template<typename CRTP, typename T>
-struct LazyMoveAssign<CRTP, T, enable_if_t<std::is_move_assignable<T>::value && std::is_move_constructible<T>::value>> {
+struct LazyMoveAssign<CRTP, T, enable_if_t<
+	std::is_move_assignable<T>::value && std::is_move_constructible<T>::value &&
+	!(std::is_trivially_move_assignable<T>::value && std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)
+>> {
 	LazyMoveAssign& operator=(LazyMoveAssign&& other)
-			noexcept(std::is_nothrow_move_assignable<T>::value && std::is_nothrow_move_constructible<T>::value) {
+	noexcept(
+		std::is_nothrow_move_assignable<T>::value &&
+		std::is_nothrow_move_constructible<T>::value && 
+		std::is_nothrow_destructible<T>::value
+	) {
 		auto&& o = static_cast<CRTP&>(other);
 		auto&& self = static_cast<CRTP&>(*this);
 		
@@ -172,6 +181,13 @@ struct LazyMoveAssign<CRTP, T, enable_if_t<std::is_move_assignable<T>::value && 
 	LazyMoveAssign(LazyMoveAssign&&) = default;
 	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
 };
+
+template<typename CRTP, typename T>
+struct LazyMoveAssign<CRTP, T, enable_if_t<
+	std::is_trivially_move_assignable<T>::value &&
+	std::is_trivially_move_constructible<T>::value &&
+	std::is_trivially_destructible<T>::value
+>> {};
 
 template<typename CRTP, typename T, typename = void>
 struct LazyDestruction {
@@ -194,8 +210,6 @@ protected:
 
 template<typename CRTP, typename T>
 struct LazyDestruction<CRTP, T, enable_if_t<std::is_trivially_destructible<T>::value>> {
-	~LazyDestruction() = default;
-	
 protected:
 	void destroy() noexcept {}
 };

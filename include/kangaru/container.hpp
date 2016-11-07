@@ -287,7 +287,7 @@ private:
 	 */
 	template<typename T, std::size_t... S>
 	detail::SingleInjected<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
-		return save_instance_helper<T, detail::tuple_element_t<S, detail::parent_types<T>>...>(std::move(service));
+		return save_instance_helper<T, detail::meta_list_element_t<S, detail::parent_types<T>>...>(std::move(service));
 	}
 	
 	/*

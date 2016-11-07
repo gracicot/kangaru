@@ -3,6 +3,7 @@
 
 #include "function_traits.hpp"
 #include "utils.hpp"
+#include "meta_list.hpp"
 
 #include <type_traits>
 #include <tuple>
@@ -59,8 +60,14 @@ struct seq_gen<0, S...> {
 	using type = seq<S...>;
 };
 
-template<typename Tuple>
-struct TupleSeqGen : seq_gen<std::tuple_size<Tuple>::value> {};
+template<typename>
+struct TupleSeqGen;
+
+template<typename... Types>
+struct TupleSeqGen<std::tuple<Types...>> : seq_gen<sizeof...(Types)> {};
+
+template<typename... Types>
+struct TupleSeqGen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
 
 template<>
 struct TupleSeqGen<std::tuple<>> : seq_gen<0> {};

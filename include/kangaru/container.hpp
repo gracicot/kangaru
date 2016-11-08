@@ -118,7 +118,7 @@ public:
 	 * Args are additional arguments to be sent to the function after services arguments.
 	 * This function will deduce arguments from the function signature.
 	 */
-	template<template<typename> class Map, typename U, typename... Args, enable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
+	template<template<typename> class Map = AdlMap, typename U, typename... Args, enable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
 	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) {
 		return invoke_helper<Map>(
 			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},

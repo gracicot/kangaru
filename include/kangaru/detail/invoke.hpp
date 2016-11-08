@@ -30,6 +30,11 @@ struct AutoCallNoMap {
 	using Autocall = std::tuple<Ts...>;
 };
 
+template<typename Parameter>
+struct AdlMap {
+	using Service = decltype(service_map(std::declval<Parameter>()));
+};
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_HPP

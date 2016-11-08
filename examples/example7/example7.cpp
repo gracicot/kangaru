@@ -69,11 +69,6 @@ private:
 	Speakers* speakers = nullptr;
 };
 
-// this is a struct that associate a type with a service.
-// It will tell the container which service definition to pick when a specific type is encountered.
-template<typename>
-struct ServiceMap;
-
 // service definitions
 struct KeyboardService : kgr::SingleService<Keyboard> {};
 struct MonitorService : kgr::SingleService<Monitor> {};
@@ -82,18 +77,18 @@ struct SpeakersService : kgr::SingleService<Speakers> {};
 
 struct MinimalComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>> {};
 
-struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<ServiceMap,
+struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<kgr::AdlMap,
 	METHOD(&Computer::setMonitor),
 	METHOD(&Computer::setAccessories)
 > {};
 
-// To which service definition do we refer when the function parameter 'Keyboard&' is found?
-template<> struct ServiceMap<Keyboard&> : kgr::Map<KeyboardService> {};
+// To which service definition do we refer when the function parameter 'Keyboard' is found?
+auto service_map(Keyboard) -> KeyboardService;
 
-// Same for the following...
-template<> struct ServiceMap<Monitor&> : kgr::Map<MonitorService> {};
-template<> struct ServiceMap<Mouse&> : kgr::Map<MouseService> {};
-template<> struct ServiceMap<Speakers&> : kgr::Map<SpeakersService> {};
+// The same for other definitions
+auto service_map(Monitor) -> MonitorService;
+auto service_map(Mouse) -> MouseService;
+auto service_map(Speakers) -> SpeakersService;
 
 // A funtion to wash our favourite monitor and keyboard.
 // A service will be needed to be used with invoke.
@@ -131,7 +126,7 @@ int main()
 	computer2.printGear();
 	
 	// will call 'washMonitorAndKeyboard' with the right parameters.
-	double result = container.invoke<ServiceMap>(washMonitorAndKeyboard);
+	double result = container.invoke(washMonitorAndKeyboard);
 	
 	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
 	

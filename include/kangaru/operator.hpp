@@ -36,6 +36,8 @@ private:
 	kgr::Container& _container;
 };
 
+using DefaultInvoker = Invoker<kgr::AdlMap>;
+
 template<template<typename> class Map>
 struct ForkedInvoker : detail::InvokerBase<ForkedInvoker<Map>, Map> {
 	explicit ForkedInvoker(Container container) : _container{std::move(container)} {}
@@ -44,6 +46,8 @@ private:
 	friend struct detail::InvokerBase<ForkedInvoker<Map>, Map>;
 	kgr::Container _container;
 };
+
+using DefaultForkedInvoker = ForkedInvoker<kgr::AdlMap>;
 
 template<typename T>
 struct Generator : detail::GeneratorBase<Generator<T>, T> {

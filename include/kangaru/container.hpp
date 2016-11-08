@@ -262,6 +262,8 @@ private:
 	detail::BaseInjected<T>& save_new_instance(Args&&...) {
 		save_new_instance<detail::default_type<T>>();
 		
+		// The static assert is still required here, if other checks fails and allow
+		// a call to this function where the default service don't overrides T, it would be UB.
 		static_assert(
 			detail::is_overriden_by<T, detail::default_type<T>>::value,
 			"The default service type of an abstract service must override that abstract serivce."

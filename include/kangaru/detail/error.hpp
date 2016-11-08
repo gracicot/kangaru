@@ -11,7 +11,7 @@ template<typename T, typename... Args>
 struct ServiceError {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&
-		!is_dependencies_constructible<Service, Arg, Args...>::value &&
+		!dependency_trait<is_service_constructible, Service, Arg, Args...>::value &&
 		is_service_constructible<Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Arg>::value,
@@ -22,7 +22,7 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!is_dependencies_constructible<Service>::value &&
+		!dependency_trait<is_service_constructible, Service>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,

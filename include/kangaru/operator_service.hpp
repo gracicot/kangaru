@@ -40,6 +40,8 @@ private:
 	Container& _container;
 };
 
+using DefaultInvokerService = InvokerService<kgr::AdlMap>;
+
 template<template<typename> class Map, typename Predicate = All>
 struct ForkedInvokerService {
 	explicit ForkedInvokerService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
@@ -55,6 +57,8 @@ struct ForkedInvokerService {
 private:
 	Container _container;
 };
+
+using DefaultForkedInvokerService = ForkedInvokerService<kgr::AdlMap>;
 
 template<typename T>
 struct GeneratorService {

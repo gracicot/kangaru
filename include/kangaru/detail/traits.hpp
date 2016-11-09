@@ -75,8 +75,8 @@ struct TupleSeqGen<std::tuple<>> : seq_gen<0> {};
 template<typename Tuple>
 using tuple_seq = typename TupleSeqGen<Tuple>::type;
 
-template<typename Tuple, int n>
-using tuple_seq_minus = typename detail::seq_gen<std::tuple_size<Tuple>::value - (n > std::tuple_size<Tuple>::value ? std::tuple_size<Tuple>::value : n)>::type;
+template<typename List, int n>
+using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (n > meta_list_size<List>::value ? meta_list_size<List>::value : n)>::type;
 
 // SFINAE utilities
 template<typename From, typename To>

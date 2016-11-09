@@ -35,6 +35,14 @@ struct meta_list_contains<T, meta_list<Head, Tail...>> : meta_list_contains<T, m
 template <typename T, typename... Tail>
 struct meta_list_contains<T, meta_list<T, Tail...>> : std::true_type {};
 
+template <typename>
+struct meta_list_size;
+
+template <typename... Types>
+struct meta_list_size<meta_list<Types...>> {
+	static constexpr std::size_t value = sizeof...(Types);
+};
+
 template<std::size_t I, typename List>
 using meta_list_element_t = typename meta_list_element<I, List>::type;
 

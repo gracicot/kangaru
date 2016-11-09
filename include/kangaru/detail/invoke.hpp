@@ -2,7 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_HPP
 
 #include <type_traits>
-#include <tuple>
+#include "meta_list.hpp"
 #include "utils.hpp"
 
 namespace kgr {
@@ -14,12 +14,12 @@ using Method = std::integral_constant<T, t>;
 
 template<typename M, typename... Ps>
 struct Invoke : M {
-	using Parameters = std::tuple<Ps...>;
+	using Parameters = detail::meta_list<Ps...>;
 };
 
 template<template<typename> class M, typename... Ts>
 struct AutoCall {
-	using Autocall = std::tuple<Ts...>;
+	using Autocall = detail::meta_list<Ts...>;
 	
 	template<typename T>
 	using Map = M<T>;
@@ -27,7 +27,7 @@ struct AutoCall {
 
 template<typename... Ts>
 struct AutoCallNoMap {
-	using Autocall = std::tuple<Ts...>;
+	using Autocall = detail::meta_list<Ts...>;
 };
 
 template<typename Parameter>

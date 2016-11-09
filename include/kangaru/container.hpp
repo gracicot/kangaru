@@ -517,7 +517,7 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
-		int unpack[] = {(invoke_autocall<detail::tuple_element_t<S, typename detail::decay_t<T>::Autocall>>(std::forward<T>(service)), 0)..., 0};
+		int unpack[] = {(invoke_autocall<detail::meta_list_element_t<S, typename detail::decay_t<T>::Autocall>>(std::forward<T>(service)), 0)..., 0};
 		
 		static_cast<void>(unpack);
 	}
@@ -539,7 +539,7 @@ private:
 		invoke_autocall(
 			detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{},
 			std::forward<T>(service),
-			&detail::decay_t<T>::template autocall<Method, detail::tuple_element_t<S, typename Method::Parameters>...>
+			&detail::decay_t<T>::template autocall<Method, detail::meta_list_element_t<S, typename Method::Parameters>...>
 		);
 	}
 	
@@ -549,7 +549,7 @@ private:
 	template<typename Method, typename T, disable_if<detail::is_invoke_call<Method>> = 0>
 	void invoke_autocall(T&& service) {
 		using U = detail::decay_t<T>;
-		invoke_autocall(detail::tuple_seq<std::tuple<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);
+		invoke_autocall(detail::tuple_seq<detail::meta_list<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);
 	}
 	
 	/*

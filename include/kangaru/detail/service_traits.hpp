@@ -181,7 +181,7 @@ using is_service_valid = std::integral_constant<bool,
 	dependency_trait<is_service_constructible, T, Args...>::value &&
 	is_default_service_valid<T>::value &&
 	dependency_trait<is_override_convertible, T, Args...>::value &&
-	is_override_convertible<T>::value 
+	is_override_convertible<T>::value
 >;
 
 } // namespace detail

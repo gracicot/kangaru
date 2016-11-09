@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
 
 #include <tuple>
+#include "meta_list.hpp"
 
 namespace kgr {
 namespace detail {
@@ -15,15 +16,15 @@ template <typename Type, typename R, typename... Args>
 struct base_function_traits {
 	using object_type = Type;
 	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-	template<std::size_t n> using argument_type = typename std::tuple_element<n, argument_types>::type;
+	using argument_types = meta_list<Args...>;
+	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
 template <typename R, typename... Args>
 struct base_non_member_function_traits {
 	using return_type = R;
-	using argument_types = std::tuple<Args...>;
-	template<std::size_t n> using argument_type = typename std::tuple_element<n, argument_types>::type;
+	using argument_types = meta_list<Args...>;
+	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
 template <typename Type, typename R, typename... Args>

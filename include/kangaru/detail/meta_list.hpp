@@ -46,6 +46,12 @@ struct meta_list_size<meta_list<Types...>> {
 template<std::size_t I, typename List>
 using meta_list_element_t = typename meta_list_element<I, List>::type;
 
+template<typename>
+struct meta_list_empty;
+
+template<typename... Types>
+struct meta_list_empty<meta_list<Types...>> : std::integral_constant<bool, sizeof...(Types) == 0> {};
+
 } // namespace detail
 } // namespace kgr
 

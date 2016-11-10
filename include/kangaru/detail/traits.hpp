@@ -69,9 +69,6 @@ struct TupleSeqGen<std::tuple<Types...>> : seq_gen<sizeof...(Types)> {};
 template<typename... Types>
 struct TupleSeqGen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
 
-template<>
-struct TupleSeqGen<std::tuple<>> : seq_gen<0> {};
-
 template<typename Tuple>
 using tuple_seq = typename TupleSeqGen<Tuple>::type;
 

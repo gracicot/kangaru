@@ -63,10 +63,15 @@ using dependency_trait = typename dependency_trait_helper<Trait, T, Args...>::ty
 template<typename T, typename... Args>
 struct is_service_constructible_helper {
 private:
-	static std::true_type sink(...);
-	
-	template<typename U, typename... As, std::size_t... S>
-	static is_service_instantiable<T, tuple_element_t<S, function_result_t<construct_function_t<U, As...>>>...> test(seq<S...>);
+	template<typename U, typename... As, std::size_t F, std::size_t... S>
+	static is_service_instantiable<T,
+		tuple_element_t<F, function_result_t<construct_function_t<U, As...>>>,
+		tuple_element_t<S, function_result_t<construct_function_t<U, As...>>>...> test(seq<F, S...>);
+
+	// This overload is needed for msvc.
+	// Or else it will try to call the one just above with a 0 as S for strange reason.
+	template<typename U, typename... As>
+	static std::true_type test(seq<>);
 	
 	template<typename U, typename...>
 	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);

@@ -66,9 +66,7 @@ private:
 	static std::true_type sink(...);
 	
 	template<typename U, typename... As, std::size_t... S>
-	static decltype(sink(
-		std::declval<enable_if_t<is_service_instantiable<T, tuple_element_t<S, function_result_t<construct_function_t<U, As...>>>...>::value, int>>()
-	)) test(seq<S...>);
+	static is_service_instantiable<T, tuple_element_t<S, function_result_t<construct_function_t<U, As...>>>...> test(seq<S...>);
 	
 	template<typename U, typename...>
 	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
@@ -108,10 +106,17 @@ using is_override_service = typename is_override_service_helper<T>::type;
 template<typename T>
 struct is_override_convertible_helper {
 private:
+	// This is a workaround for msvc. Expansion in very complex expression
+	// leaves the compiler without clues about what's going on.
+	template<std::size_t I, typename U>
+	struct expander {
+		using type = is_explicitly_convertible<ServiceType<U>, ServiceType<meta_list_element_t<I, parent_types<U>>>>;
+	};
+
 	template<typename...>
 	static std::false_type test(...);
 	
-	template<typename U, std::size_t... S, int_t<enable_if_t<is_explicitly_convertible<ServiceType<U>, ServiceType<meta_list_element_t<S, parent_types<U>>>>::value>...> = 0>
+	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0 >
 	static std::true_type test(seq<S...>);
 	
 public:
@@ -123,7 +128,7 @@ using is_override_convertible = typename is_override_convertible_helper<T>::type
 
 template<typename T, typename... Args>
 using is_single_no_args = std::integral_constant<bool,
-	!is_single<T>::value || sizeof...(Args) == 0
+	!is_single<T>::value || meta_list_empty<meta_list<Args...>>::value
 >;
 
 template<typename T>
@@ -180,7 +185,7 @@ using is_service_valid = std::integral_constant<bool,
 	is_service_constructible<T, Args...>::value &&
 	dependency_trait<is_service_constructible, T, Args...>::value &&
 	is_default_service_valid<T>::value &&
-	dependency_trait<is_override_convertible, T, Args...>::value &&
+	dependency_trait<is_override_convertible, T, Args...>::value && 
 	is_override_convertible<T>::value
 >;
 

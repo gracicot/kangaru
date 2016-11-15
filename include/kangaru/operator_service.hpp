@@ -24,6 +24,8 @@ private:
 
 using ForkService = FilteredForkService<All>;
 
+auto service_map(Container&&) -> ForkService;
+
 template<template<typename> class Map>
 struct InvokerService {
 	explicit InvokerService(in_place_t, Container& container) : _container{container} {}
@@ -41,6 +43,9 @@ private:
 };
 
 using DefaultInvokerService = InvokerService<kgr::AdlMap>;
+
+template<template<typename> class Map>
+auto service_map(const Invoker<Map>&) -> InvokerService<Map>;
 
 template<template<typename> class Map, typename Predicate = All>
 struct ForkedInvokerService {
@@ -60,6 +65,9 @@ private:
 
 using DefaultForkedInvokerService = ForkedInvokerService<kgr::AdlMap>;
 
+template<template<typename> class Map>
+auto service_map(const ForkedInvoker<Map>&) -> ForkedInvokerService<Map>;
+
 template<typename T>
 struct GeneratorService {
 	explicit GeneratorService(in_place_t, Container& container) : _container{container} {}
@@ -75,6 +83,9 @@ struct GeneratorService {
 private:
 	Container& _container;
 };
+
+template<typename T>
+auto service_map(const Generator<T>&) -> GeneratorService<T>;
 
 template<typename T, typename Predicate = All>
 struct ForkedGeneratorService {
@@ -93,6 +104,9 @@ private:
 };
 
 template<typename T>
+auto service_map(const ForkedGenerator<T>&) -> ForkedGeneratorService<T>;
+
+template<typename T>
 struct LazyService {
 	explicit LazyService(in_place_t, Container& container) : _container{container} {}
 	
@@ -107,6 +121,9 @@ struct LazyService {
 private:
 	Container& _container;
 };
+
+template<typename T>
+auto service_map(const Lazy<T>&) -> LazyService<T>;
 
 template<typename T, typename Predicate = All>
 struct ForkedLazyService {
@@ -123,6 +140,9 @@ struct ForkedLazyService {
 private:
 	Container _container;
 };
+
+template<typename T>
+auto service_map(const ForkedLazy<T>&) -> ForkedLazyService<T>;
 
 } // namespace kgr
 

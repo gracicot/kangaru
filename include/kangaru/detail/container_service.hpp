@@ -25,6 +25,8 @@ private:
 	Container& _instance;
 };
 
+auto service_map(const Container&) -> ContainerService;
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE_HPP

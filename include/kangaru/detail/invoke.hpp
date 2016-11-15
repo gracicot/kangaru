@@ -30,9 +30,26 @@ struct AutoCallNoMap {
 	using Autocall = detail::meta_list<Ts...>;
 };
 
+namespace detail {
+
+template<typename Parameter>
+struct AdlMapPart {
+	using Service = decltype(service_map(std::declval<Parameter>()));
+};
+
+}
+
 template<typename Parameter>
 struct AdlMap {
-	using Service = decltype(service_map(std::declval<Parameter>()));
+private:
+	template<typename P>
+	static auto map(int) -> decltype(service_map(std::declval<P>(), std::declval<kgr::Map<>>()));
+	
+	template<typename P>
+	static auto map(...) -> decltype(service_map(std::declval<P>()));
+	
+public:
+	using Service = decltype(map<Parameter>(0));
 };
 
 } // namespace kgr

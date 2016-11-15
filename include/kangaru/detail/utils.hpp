@@ -10,8 +10,14 @@ struct no_autocall_t {};
 
 } // namespace detail
 
+template<typename...>
+struct Map;
+
+template<>
+struct Map<> {};
+
 template<typename T>
-struct Map {
+struct Map<T> {
 	using Service = T;
 };
 

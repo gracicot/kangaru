@@ -387,7 +387,7 @@ private:
 	 * This function creates an instance of a service.
 	 * It forward the work to make_service_instance_helper with an integer sequence.
 	 */
-	template<typename T, typename... Args, enable_if<detail::has_any_construct<T, Args...>> = 0>
+	template<typename T, typename... Args>
 	contained_service_t<T> make_service_instance(Args&&... args) {
 		return make_service_instance_helper<T>(detail::construct_result_seq<T, Args...>{}, std::forward<Args>(args)...);
 	}
@@ -397,7 +397,7 @@ private:
 	 * It construct the service using the values returned by construct.
 	 * It forward it's work to make_contained_service.
 	 */
-	template<typename T, typename... Args, std::size_t... S, enable_if<detail::has_any_construct<T, Args...>> = 0>
+	template<typename T, typename... Args, std::size_t... S>
 	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
 		auto constructArgs = invoke_raw(detail::construct_function<T, Args...>::value, std::forward<Args>(args)...);
 		

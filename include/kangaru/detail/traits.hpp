@@ -136,22 +136,6 @@ public:
 };
 
 template<typename T, typename... Args>
-struct has_template_construct_helper {
-private:
-	template<typename U, typename... As>
-	static std::true_type test(decltype(&U::template construct<As...>)*);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(nullptr));
-};
-
-template<typename T, typename... Args>
-using has_template_construct = typename has_template_construct_helper<T, Args...>::type;
-
-template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
 	template<typename U, typename... As>
@@ -181,46 +165,6 @@ template<template<typename> class Map, typename T, typename... Args>
 struct defer_is_invokable_helper {
 	static constexpr bool value = is_invokable_helper<Map, T, Args...>::type::value;
 };
-
-template<bool, typename T, typename... Args>
-struct construct_function_helper {
-private:
-	template<typename U, typename... As>
-	struct get_template_construct {
-		using type = std::integral_constant<decltype(&U::template construct<As...>), &U::template construct<As...>>;
-	};
-	
-	template<typename U>
-	struct get_construct {
-		using type = std::integral_constant<decltype(&U::construct), &U::construct>;
-	};
-	
-	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
-	static get_construct<U> test();
-	
-	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
-	static get_template_construct<U, As...> test();
-	
-	using inner_type = decltype(test<T, Args...>());
-	
-public:
-	using type = typename inner_type::type;
-};
-
-template<typename T, typename... Args>
-struct construct_function_helper<false, T, Args...> {};
-
-template<typename T, typename... Args>
-using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
-
-template<typename T, typename... Args>
-using construct_function = typename construct_function_helper<has_any_construct<T, Args...>::value, T, Args...>::type;
-
-template<typename T, typename... Args>
-using construct_function_t = typename construct_function<T, Args...>::value_type;
-
-template<typename T, typename... Args>
-using construct_result_seq = tuple_seq<function_result_t<construct_function_t<T, Args...>>>;
 
 template<typename T, typename... Args>
 using has_emplace = typename has_emplace_helper<T, Args...>::type;

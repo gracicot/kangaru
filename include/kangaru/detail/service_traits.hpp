@@ -31,6 +31,95 @@ using original_t = typename original<T>::type;
 template<std::size_t n, typename F>
 using injected_argument_t = original_t<function_argument_t<n, F>>;
 
+template<typename F, typename... Args>
+struct is_construct_callable_helper {
+private:
+	template<typename...>
+	static std::false_type test_helper(...);
+	
+	template<typename C, typename... As, std::size_t... S, int_t<
+		decltype(std::declval<C>()(std::declval<function_argument_t<S, C>>()..., std::declval<As>()...)),
+		enable_if_t<is_service<injected_argument_t<S, C>>::value>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename C, typename... As>
+	static decltype(test_helper<C, As...>(tuple_seq_minus<function_arguments_t<C>, sizeof...(As)>{})) test(int);
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<F, Args...>(0));
+};
+
+template<typename F, typename... Args>
+using is_construct_callable = typename is_construct_callable_helper<F, Args...>::type;
+
+template<typename, typename, typename, typename = void>
+struct has_callable_construct : std::false_type {};
+
+template<typename T, typename... TArgs, typename... Args>
+struct has_callable_construct<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<is_construct_callable<decltype(&T::template construct<TArgs...>), Args...>::value>> : std::true_type {};
+
+template<typename, typename, typename, typename = void>
+struct get_template_construct_helper;
+
+template<typename T, typename... Args>
+struct get_template_construct_helper<T, meta_list<>, meta_list<Args...>, enable_if_t<!has_callable_construct<T, meta_list<>, meta_list<Args...>>::value>> {};
+
+template<typename T, typename Head, typename... Tail, typename... Args>
+struct get_template_construct_helper<T, meta_list<Head, Tail...>, meta_list<Args...>, enable_if_t<!has_callable_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>> : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
+
+template<typename T, typename... TArgs, typename... Args>
+struct get_template_construct_helper<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<has_callable_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
+
+template<typename T, typename... Args>
+using get_template_construct = get_template_construct_helper<T, meta_list<Args...>, meta_list<Args...>>;
+
+template<typename, typename, typename = void>
+struct has_template_construct_helper : std::false_type {};
+
+template<typename T, typename... Args>
+struct has_template_construct_helper<T, meta_list<Args...>, void_t<typename get_template_construct<T, Args...>::value_type>> : std::true_type {};
+
+template<typename T, typename... Args>
+using has_template_construct = has_template_construct_helper<T, meta_list<Args...>>;
+
+template<bool, typename T, typename... Args>
+struct construct_function_helper {
+private:
+	template<typename U>
+	struct get_construct {
+		using type = std::integral_constant<decltype(&U::construct), &U::construct>;
+	};
+	
+	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
+	static get_construct<U> test();
+	
+	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
+	static get_template_construct<U, As...> test();
+	
+	using inner_type = decltype(test<T, Args...>());
+	
+public:
+	using type = typename inner_type::type;
+};
+
+template<typename T, typename... Args>
+struct construct_function_helper<false, T, Args...> {};
+
+template<typename T, typename... Args>
+using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
+
+template<typename T, typename... Args>
+using construct_function = typename construct_function_helper<has_any_construct<T, Args...>::value, T, Args...>::type;
+
+template<typename T, typename... Args>
+using construct_function_t = typename construct_function<T, Args...>::value_type;
+
+template<typename T, typename... Args>
+using construct_result_seq = tuple_seq<function_result_t<construct_function_t<T, Args...>>>;
+
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {
 	static std::true_type sink(...);

@@ -32,7 +32,7 @@ template<std::size_t n, typename F>
 using injected_argument_t = original_t<function_argument_t<n, F>>;
 
 template<typename F, typename... Args>
-struct is_construct_callable_helper {
+struct is_construct_invokable_helper {
 private:
 	template<typename...>
 	static std::false_type test_helper(...);
@@ -53,25 +53,31 @@ public:
 };
 
 template<typename F, typename... Args>
-using is_construct_callable = typename is_construct_callable_helper<F, Args...>::type;
+using is_construct_invokable = typename is_construct_invokable_helper<F, Args...>::type;
 
 template<typename, typename, typename, typename = void>
-struct has_callable_construct : std::false_type {};
+struct has_callable_template_construct : std::false_type {};
 
 template<typename T, typename... TArgs, typename... Args>
-struct has_callable_construct<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<is_construct_callable<decltype(&T::template construct<TArgs...>), Args...>::value>> : std::true_type {};
+struct has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<is_construct_invokable<decltype(&T::template construct<TArgs...>), Args...>::value>> : std::true_type {};
+
+template<typename, typename, typename = void>
+struct has_callable_construct : std::false_type {};
+
+template<typename T, typename... Args>
+struct has_callable_construct<T, meta_list<Args...>, enable_if_t<is_construct_invokable<decltype(&T::construct), Args...>::value>> : std::true_type {};
 
 template<typename, typename, typename, typename = void>
 struct get_template_construct_helper;
 
 template<typename T, typename... Args>
-struct get_template_construct_helper<T, meta_list<>, meta_list<Args...>, enable_if_t<!has_callable_construct<T, meta_list<>, meta_list<Args...>>::value>> {};
+struct get_template_construct_helper<T, meta_list<>, meta_list<Args...>, enable_if_t<!has_callable_template_construct<T, meta_list<>, meta_list<Args...>>::value>> {};
 
 template<typename T, typename Head, typename... Tail, typename... Args>
-struct get_template_construct_helper<T, meta_list<Head, Tail...>, meta_list<Args...>, enable_if_t<!has_callable_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>> : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
+struct get_template_construct_helper<T, meta_list<Head, Tail...>, meta_list<Args...>, enable_if_t<!has_callable_template_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>> : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
 
 template<typename T, typename... TArgs, typename... Args>
-struct get_template_construct_helper<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<has_callable_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
+struct get_template_construct_helper<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
 
 template<typename T, typename... Args>
 using get_template_construct = get_template_construct_helper<T, meta_list<Args...>, meta_list<Args...>>;
@@ -93,7 +99,9 @@ private:
 		using type = std::integral_constant<decltype(&U::construct), &U::construct>;
 	};
 	
-	template<typename U, typename... As, enable_if_t<has_construct<U>::value, int> = 0, enable_if_t<!has_template_construct<U, As...>::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<
+		has_construct<U>::value &&
+		!has_template_construct<U, As...>::value, int> = 0>
 	static get_construct<U> test();
 	
 	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
@@ -119,6 +127,18 @@ using construct_function_t = typename construct_function<T, Args...>::value_type
 
 template<typename T, typename... Args>
 using construct_result_seq = tuple_seq<function_result_t<construct_function_t<T, Args...>>>;
+
+template<typename, typename, typename = void>
+struct is_construct_function_callable_helper : std::false_type {};
+
+template<typename T, typename... Args>
+struct is_construct_function_callable_helper<T, meta_list<Args...>, enable_if_t<is_construct_invokable<construct_function_t<T, Args...>, Args...>::value>> : std::true_type {};
+
+template<typename T, typename... Args>
+struct is_construct_function_callable_helper<T, meta_list<Args...>, enable_if_t<is_container_service<T>::value || std::is_abstract<T>::value>> : std::true_type {};
+
+template<typename T, typename... Args>
+using is_construct_function_callable = is_construct_function_callable_helper<T, meta_list<Args...>>;
 
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {

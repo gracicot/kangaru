@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_ERROR_HPP
 
 #include "traits.hpp"
+#include "single.hpp"
 #include "service_traits.hpp"
 
 namespace kgr {
@@ -11,6 +12,7 @@ template<typename T, typename... Args>
 struct ServiceError {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&
+		dependency_trait<is_construct_function_callable, Service, Arg, Args...>::value &&
 		!dependency_trait<is_service_constructible, Service, Arg, Args...>::value &&
 		is_service_constructible<Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
@@ -22,12 +24,37 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_construct_function_callable, Service>::value &&
 		!dependency_trait<is_service_constructible, Service>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies are not constructible with it's dependencies as constructor argument. "
 			"Please check that dependency's constructor and dependencies."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Arg>::value &&
+		!dependency_trait<is_construct_function_callable, Service, Arg, Args...>::value &&
+		is_construct_function_callable<Service, Arg, Args...>::value &&
+		is_service_constructible<Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Arg>::value,
+			"One or more dependencies construct function cannot be called when calling kgr::Container::service<Dependency>(). "
+			"Please check that dependency's construct function and ensure that is well formed."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!dependency_trait<is_construct_function_callable, Service>::value &&
+		is_construct_function_callable<Service>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies construct function cannot be called when calling kgr::Container::service<Dependency>(). "
+			"Please check that dependency's construct function and ensure that is well formed."
 		);
 	}
 	
@@ -50,11 +77,47 @@ struct ServiceError {
 		static_assert(false_t<Arg>::value, "The service type is not constructible given passed arguments to kgr::Container::service(...).");
 	}
 	
-	template<typename Service = T, enable_if_t<is_service<Service>::value && !is_service_constructible<Service>::value, int> = 0>
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_construct_function_callable<Service>::value &&
+		!is_service_constructible<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
 			"The service type is not constructible given it's dependencies. "
 			"Check if dependencies are configured correctly and if the service has the required constructor."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_single<Service>::value &&
+		!is_construct_function_callable<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The service construct function cannot be called. "
+			"Check if the construct function is well formed, receive injected arguments first and additional parameters at the end."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_single<Service>::value &&
+		!is_construct_function_callable<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The service construct function cannot be called without arguments, or is not well formed. "
+			"Check if the construct function is well formed, receive injected arguments first and additional parameters at the end."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_single<Service>::value &&
+		!is_construct_function_callable<Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The service construct function cannot be called. "
+			"Check if the construct function is well formed, receive injected arguments first and additional parameters at the end."
 		);
 	}
 	

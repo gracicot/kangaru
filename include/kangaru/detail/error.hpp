@@ -52,6 +52,104 @@ struct ServiceError {
 		);
 	}
 	
+	//
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		is_default_convertible<Service>::value &&
+		is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The default implementation of this abstract service is not a well defined service. "
+			"Please check that types are complete and exposing a valid service definition interface."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		is_default_convertible<Service>::value &&
+		is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The default implementation of this abstract service is not a well defined service. "
+			"Please check that types are complete and exposing a valid service definition interface."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		!is_default_convertible<Service>::value &&
+		is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The service type of the default implementation of this abstract service is not convertible to the abstract service type. "
+			"Please check that the service type of the default implementation of that abstract service is a compatible type."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		!is_default_convertible<Service>::value &&
+		is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The service type of the default implementation of this abstract service is not convertible to the abstract service type. "
+			"Please check that the service type of the default implementation of that abstract service is a compatible type."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		!is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The default implementation of this abstract service is not overriding that abstract service. "
+			"Ensure that the default implementation really override this abstract service."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_default_service_valid, Service>::value &&
+		!is_default_service_valid<Service>::value &&
+		!is_default_overrides_abstract<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The default implementation of this abstract service is not overriding that abstract service. "
+			"Ensure that the default implementation really override this abstract service."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!dependency_trait<is_default_service_valid, Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The default implementation of a dependency is not valid. "
+			"Ensure that every default implementation are valid services that override properly thier abstract services."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!dependency_trait<is_default_service_valid, Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The default implementation of a dependency is not valid. "
+			"Ensure that every default implementation are valid services that override properly thier abstract services."
+		);
+	}
+	//
+	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&
 		dependency_trait<is_construct_function_callable, Service, Arg, Args...>::value &&

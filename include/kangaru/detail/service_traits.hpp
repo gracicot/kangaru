@@ -229,9 +229,15 @@ private:
 
 	template<typename...>
 	static std::false_type test(...);
+
+	template<typename...>
+	static std::false_type test_helper(...);
 	
-	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0 >
-	static std::true_type test(seq<S...>);
+	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
+	static decltype(test_helper<U>(seq<S...>{})) test(seq<S...>);
 	
 public:
 	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
@@ -239,6 +245,34 @@ public:
 
 template<typename T>
 using is_override_convertible = typename is_override_convertible_helper<T>::type;
+
+template<typename T>
+struct is_override_services_helper {
+private:
+	// This is a workaround for msvc. Expansion in very complex expression
+	// leaves the compiler without clues about what's going on.
+	template<std::size_t I, typename U>
+	struct expander {
+		using type = is_service<meta_list_element_t<I, parent_types<U>>>;
+	};
+	template<typename...>
+	static std::false_type test(...);
+
+	template<typename...>
+	static std::false_type test_helper(...);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
+	static decltype(test_helper<U>(seq<S...>{})) test(seq<S...>);
+	
+public:
+	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
+};
+
+template<typename T>
+using is_override_services = typename is_override_services_helper<T>::type;
 
 template<typename T, typename... Args>
 using is_single_no_args = std::integral_constant<bool,
@@ -292,16 +326,21 @@ using is_default_service_valid = std::integral_constant<bool,
 >;
 
 template<typename T, typename... Args>
-using is_service_valid = std::integral_constant<bool, 
-	is_service<T>::value &&
+struct is_service_valid : std::integral_constant<bool,
 	is_single_no_args<T, Args...>::value &&
+	is_service<T>::value &&
 	dependency_trait<is_service, T, Args...>::value &&
 	is_service_constructible<T, Args...>::value &&
 	dependency_trait<is_service_constructible, T, Args...>::value &&
+	is_construct_function_callable<T, Args...>::value &&
+	dependency_trait<is_construct_function_callable, T, Args...>::value &&
 	is_default_service_valid<T>::value &&
-	dependency_trait<is_override_convertible, T, Args...>::value && 
-	is_override_convertible<T>::value
->;
+	dependency_trait<is_default_service_valid, T, Args...>::value &&
+	is_override_convertible<T>::value &&
+	dependency_trait<is_override_convertible, T, Args...>::value &&
+	is_override_services<T>::value &&
+	dependency_trait<is_override_services, T, Args...>::value
+> {};
 
 } // namespace detail
 } // namespace kgr

@@ -10,6 +10,48 @@ namespace detail {
 
 template<typename T, typename... Args>
 struct ServiceError {
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_override_convertible, Service>::value &&
+		!is_override_convertible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"The service injected type cannot be converted to the overriding type. "
+			"Check if the service is overriding the right service and if types are compatible."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_override_convertible, Service>::value &&
+		!is_override_convertible<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"The service injected type cannot be converted to the overriding type. "
+			"Check if the service is overriding the right service and if types are compatible."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!dependency_trait<is_override_convertible, Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies injected type cannot be converted to one of it's overriding type. "
+			"Check if that service is overriding the right service and if types are compatible."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!dependency_trait<is_override_convertible, Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies injected type cannot be converted to one of it's overriding type. "
+			"Check if that service is overriding the right service and if types are compatible."
+		);
+	}
+	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&
 		dependency_trait<is_construct_function_callable, Service, Arg, Args...>::value &&

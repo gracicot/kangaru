@@ -12,7 +12,6 @@ template<typename T, typename... Args>
 struct ServiceError {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		dependency_trait<is_override_convertible, Service>::value &&
 		!is_override_convertible<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
@@ -23,7 +22,6 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		dependency_trait<is_override_convertible, Service>::value &&
 		!is_override_convertible<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
@@ -34,7 +32,8 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!dependency_trait<is_override_convertible, Service>::value, int> = 0>
+		!dependency_trait<is_override_convertible, Service>::value &&
+		is_service_constructible<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies injected type cannot be converted to one of it's overriding type. "
@@ -44,15 +43,14 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!dependency_trait<is_override_convertible, Service>::value, int> = 0>
+		!dependency_trait<is_override_convertible, Service, Arg, Args...>::value &&
+		is_service_constructible<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies injected type cannot be converted to one of it's overriding type. "
 			"Check if that service is overriding the right service and if types are compatible."
 		);
 	}
-	
-	//
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
@@ -68,7 +66,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		dependency_trait<is_default_service_valid, Service>::value &&
+		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		is_default_convertible<Service>::value &&
 		is_default_overrides_abstract<Service>::value, int> = 0>
@@ -94,7 +92,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		dependency_trait<is_default_service_valid, Service>::value &&
+		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_convertible<Service>::value &&
 		is_default_overrides_abstract<Service>::value, int> = 0>
@@ -119,7 +117,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		dependency_trait<is_default_service_valid, Service>::value &&
+		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_overrides_abstract<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
@@ -141,14 +139,13 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!dependency_trait<is_default_service_valid, Service>::value, int> = 0>
+		!dependency_trait<is_default_service_valid, Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"The default implementation of a dependency is not valid. "
 			"Ensure that every default implementation are valid services that override properly thier abstract services."
 		);
 	}
-	//
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&

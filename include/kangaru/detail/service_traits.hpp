@@ -317,7 +317,7 @@ public:
 template<typename T>
 using is_default_convertible = typename is_default_convertible_helper<T>::type;
 
-template<typename T, typename... Args>
+template<typename T>
 using is_default_service_valid = std::integral_constant<bool,
 	((has_default<T>::value && std::is_abstract<T>::value) ||
 	!(has_default<T>::value || std::is_abstract<T>::value)) &&

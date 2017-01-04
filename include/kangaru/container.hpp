@@ -270,7 +270,7 @@ private:
 		);
 		
 		// This could be faster if we had access to instance of override services.
-		return *static_cast<detail::BaseInjected<T>*>(_services[type_id<detail::BaseInjected<T>>]);
+		return *static_cast<detail::BaseInjected<T>*>(_services[type_id<T>]);
 	}
 	
 	/*
@@ -301,7 +301,7 @@ private:
 		auto& serviceRef = *service;
 		instance_ptr<detail::BaseInjected<T>> injectedTypeService = std::move(service);
 		
-		_services[type_id<detail::BaseInjected<T>>] = injectedTypeService.get();
+		_services[type_id<T>] = injectedTypeService.get();
 		_instances.emplace_back(std::move(injectedTypeService));
 		
 		return serviceRef;
@@ -321,7 +321,7 @@ private:
 			"the override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
-		_services[type_id<detail::BaseInjected<Override>>] = overrideService.get();
+		_services[type_id<Override>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
 		
 		return save_instance_helper<T, Others...>(std::move(service));
@@ -372,7 +372,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
 	detail::BaseInjected<T>& definition() {
-		if (auto service = _services[type_id<detail::BaseInjected<T>>]) {
+		if (auto service = _services[type_id<T>]) {
 			return *static_cast<detail::BaseInjected<T>*>(service);
 		} else {
 			return save_new_instance<T>();

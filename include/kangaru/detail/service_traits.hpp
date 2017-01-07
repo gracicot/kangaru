@@ -59,25 +59,40 @@ template<typename, typename, typename, typename = void>
 struct has_callable_template_construct : std::false_type {};
 
 template<typename T, typename... TArgs, typename... Args>
-struct has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<is_construct_invokable<decltype(&T::template construct<TArgs...>), Args...>::value>> : std::true_type {};
+struct has_callable_template_construct<
+	T, meta_list<TArgs...>, meta_list<Args...>,
+	enable_if_t<is_construct_invokable<decltype(&T::template construct<TArgs...>), Args...>::value>
+> : std::true_type {};
 
 template<typename, typename, typename = void>
 struct has_callable_construct : std::false_type {};
 
 template<typename T, typename... Args>
-struct has_callable_construct<T, meta_list<Args...>, enable_if_t<is_construct_invokable<decltype(&T::construct), Args...>::value>> : std::true_type {};
+struct has_callable_construct<
+	T, meta_list<Args...>,
+	enable_if_t<is_construct_invokable<decltype(&T::construct), Args...>::value>
+> : std::true_type {};
 
 template<typename, typename, typename, typename = void>
 struct get_template_construct_helper;
 
 template<typename T, typename... Args>
-struct get_template_construct_helper<T, meta_list<>, meta_list<Args...>, enable_if_t<!has_callable_template_construct<T, meta_list<>, meta_list<Args...>>::value>> {};
+struct get_template_construct_helper<
+	T, meta_list<>, meta_list<Args...>,
+	enable_if_t<!has_callable_template_construct<T, meta_list<>, meta_list<Args...>>::value>
+> {};
 
 template<typename T, typename Head, typename... Tail, typename... Args>
-struct get_template_construct_helper<T, meta_list<Head, Tail...>, meta_list<Args...>, enable_if_t<!has_callable_template_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>> : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
+struct get_template_construct_helper<
+	T, meta_list<Head, Tail...>, meta_list<Args...>,
+	enable_if_t<!has_callable_template_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>
+> : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
 
 template<typename T, typename... TArgs, typename... Args>
-struct get_template_construct_helper<T, meta_list<TArgs...>, meta_list<Args...>, enable_if_t<has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
+struct get_template_construct_helper<
+	T, meta_list<TArgs...>, meta_list<Args...>,
+	enable_if_t<has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>
+> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
 
 template<typename T, typename... Args>
 using get_template_construct = get_template_construct_helper<T, meta_list<Args...>, meta_list<Args...>>;

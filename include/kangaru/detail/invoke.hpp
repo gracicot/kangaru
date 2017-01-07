@@ -42,8 +42,9 @@ struct AdlMapPart {
 template<typename Parameter>
 struct AdlMap {
 private:
-	template<typename P>
-	static auto map(int) -> decltype(service_map(std::declval<P>(), std::declval<kgr::Map<>>()));
+	
+	template<typename P> // The space is needed here for visual studio.
+	static auto map(int) -> decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
 	
 	template<typename P>
 	static auto map(...) -> decltype(service_map(std::declval<P>()));

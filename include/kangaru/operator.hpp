@@ -10,7 +10,7 @@ namespace detail {
 template<typename CRTP, template<typename> class Map>
 struct InvokerBase {
 	template<typename F, typename... Args>
-	auto operator()(F&& f, Args&&... args) -> decltype(std::declval<Container>().invoke<Map>(std::declval<F>(), std::declval<Args>()...)) {
+	function_result_t<std::decay_t<F>> operator()(F&& f, Args&&... args) {
 		return static_cast<CRTP*>(this)->_container.template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 };

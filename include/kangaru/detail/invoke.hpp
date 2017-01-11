@@ -4,6 +4,8 @@
 #include <type_traits>
 #include "meta_list.hpp"
 #include "utils.hpp"
+#include "traits.hpp"
+#include "injected.hpp"
 
 namespace kgr {
 
@@ -32,18 +34,22 @@ struct AutoCallNoMap {
 
 namespace detail {
 
-template<typename Parameter>
-struct AdlMapPart {
-	using Service = decltype(service_map(std::declval<Parameter>()));
-};
+template<typename, typename = void>
+struct has_map_entry : std::false_type {};
 
-}
+template<typename P>
+struct has_map_entry<P, void_t<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>> : std::true_type {};
+
+template<typename P>
+struct has_map_entry<P, void_t<decltype(service_map(std::declval<P>()))>> : std::true_type {};
+
+template<typename, typename = void>
+struct AdlMapHelper {};
 
 template<typename Parameter>
-struct AdlMap {
+struct AdlMapHelper<Parameter, detail::enable_if_t<detail::has_map_entry<Parameter>::value>> {
 private:
-	
-	template<typename P> // The space is needed here for visual studio.
+	template<typename P> // The space is needed on the next line for visual studio.
 	static auto map(int) -> decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
 	
 	template<typename P>
@@ -52,6 +58,11 @@ private:
 public:
 	using Service = decltype(map<Parameter>(0));
 };
+
+} // namespace detail
+
+template<typename P>
+struct AdlMap : detail::AdlMapHelper<P> {};
 
 } // namespace kgr
 

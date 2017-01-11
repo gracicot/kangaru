@@ -59,7 +59,7 @@ private:
 	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
 	static decltype(test_helper<U, C>(tuple_seq<typename C::Parameters>{})) test();
 	
-	template<typename U, typename C, enable_if_t<is_member_autocall<U, C>::value, int> = 0>
+	template<typename U, typename C, enable_if_t<is_member_autocall<U, C>::value && !is_invoke_call<C>::value, int> = 0>
 	static get_member_autocall<U, C> test();
 	
 	using inner_type = decltype(test<T, F>());
@@ -77,7 +77,7 @@ struct autocall_arguments<T, F, enable_if_t<is_invoke_call<F>::value>> {
 };
 
 template<typename T, typename F>
-struct autocall_arguments<T, F, enable_if_t<is_member_autocall<T, F>::value>> {
+struct autocall_arguments<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
 private:
 	template<template<typename> class Map>
 	struct mapped_type {

@@ -81,6 +81,25 @@ private:
 	T _service;
 };
 
+template<typename>
+struct original;
+
+template<typename T>
+struct original<BaseInjected<T>&> {
+	using type = T;
+};
+
+template<typename T>
+struct original<Injected<T>&&> {
+	using type = T;
+};
+
+template<typename T>
+using original_t = typename original<T>::type;
+
+template<std::size_t n, typename F>
+using injected_argument_t = original_t<function_argument_t<n, F>>;
+
 } // namespace detail
 
 template<typename T>

@@ -118,7 +118,7 @@ public:
 	 * Args are additional arguments to be sent to the function after services arguments.
 	 * This function will deduce arguments from the function signature.
 	 */
-	template<template<typename> class Map = AdlMap, typename U, typename... Args, enable_if<detail::is_invokable<Map, detail::decay_t<U>, Args...>> = 0>
+	template<template<typename> class Map = AdlMap, typename U, typename... Args, enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
 	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) {
 		return invoke_helper<Map>(
 			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
@@ -517,39 +517,19 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
-		int unpack[] = {(invoke_autocall<detail::meta_list_element_t<S, typename detail::decay_t<T>::Autocall>>(std::forward<T>(service)), 0)..., 0};
+		using U = detail::decay_t<T>;
+		
+		int unpack[] = {(invoke_autocall(
+			detail::tuple_seq<
+				typename detail::function_arguments_t<
+					typename detail::autocall_function_t<U, detail::meta_list_element_t<S, typename U::Autocall>>::value_type
+				>
+			>{},
+			std::forward<T>(service),
+			detail::autocall_function_t<U, detail::meta_list_element_t<S, typename U::Autocall>>::value
+		), 0)..., 0};
 		
 		static_cast<void>(unpack);
-	}
-	
-	/*
-	 * This function is the invoke_autocall when <Method> is kgr::Invoke with parameters explicitly listed.
-	 */
-	template<typename Method, typename T, enable_if<detail::is_invoke_call<Method>> = 0>
-	void invoke_autocall(T&& service) {
-		invoke_autocall<Method>(detail::tuple_seq<typename Method::Parameters>{}, std::forward<T>(service));
-	}
-	
-	/* 
-	 * This function is a helper for invoke_autocall when <Method> is kgr::Invoke with parameters explicitly listed.
-	 * It receive a sequence of integers for unpacking parameters.
-	 */
-	template<typename Method, typename T, std::size_t... S>
-	void invoke_autocall(detail::seq<S...>, T&& service) {
-		invoke_autocall(
-			detail::tuple_seq<detail::function_arguments_t<typename Method::value_type>>{},
-			std::forward<T>(service),
-			&detail::decay_t<T>::template autocall<Method, detail::meta_list_element_t<S, typename Method::Parameters>...>
-		);
-	}
-	
-	/*
-	 * This function is the invoke_autocall when Method is an integral constant of a pointer to method.
-	 */
-	template<typename Method, typename T, disable_if<detail::is_invoke_call<Method>> = 0>
-	void invoke_autocall(T&& service) {
-		using U = detail::decay_t<T>;
-		invoke_autocall(detail::tuple_seq<detail::meta_list<ContainerService>>{}, std::forward<T>(service), &U::template autocall<Method, U::template Map>);
 	}
 	
 	/*

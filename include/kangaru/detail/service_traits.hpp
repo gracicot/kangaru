@@ -4,6 +4,7 @@
 #include "traits.hpp"
 #include "single.hpp"
 #include "injected.hpp"
+#include "invoke.hpp"
 #include "container_service.hpp"
 
 namespace kgr {
@@ -11,25 +12,6 @@ namespace detail {
 
 template<typename T>
 using is_container_service = std::is_base_of<ContainerServiceTag, T>;
-
-template<typename>
-struct original;
-
-template<typename T>
-struct original<BaseInjected<T>&> {
-	using type = T;
-};
-
-template<typename T>
-struct original<Injected<T>&&> {
-	using type = T;
-};
-
-template<typename T>
-using original_t = typename original<T>::type;
-
-template<std::size_t n, typename F>
-using injected_argument_t = original_t<function_argument_t<n, F>>;
 
 template<typename F, typename... Args>
 struct is_construct_invokable_helper {
@@ -340,21 +322,180 @@ using is_default_service_valid = std::integral_constant<bool,
 >;
 
 template<typename T, typename... Args>
+using service_check = std::integral_constant<bool, 
+	is_service<T>::value &&
+	is_service_constructible<T, Args...>::value &&
+	is_construct_function_callable<T, Args...>::value &&
+	is_default_service_valid<T>::value &&
+	is_override_convertible<T>::value &&
+	is_override_services<T>::value
+>;
+
+template<typename T, typename... Args>
+using dependency_check = std::integral_constant<bool, 
+	dependency_trait<is_service, T, Args...>::value &&
+	dependency_trait<is_service_constructible, T, Args...>::value &&
+	dependency_trait<is_construct_function_callable, T, Args...>::value &&
+	dependency_trait<is_default_service_valid, T, Args...>::value &&
+	dependency_trait<is_override_convertible, T, Args...>::value &&
+	dependency_trait<is_override_services, T, Args...>::value
+>;
+
+template<template<typename> class Map, typename T, typename... Args>
+struct is_invokable_helper {
+private:
+	template<typename U, typename... As, std::size_t... S, int_t<
+		decltype(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...))> = 0>
+	static std::true_type test(seq<S...>);
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(tuple_seq_minus<function_arguments_t<T>, sizeof...(Args)>{}));
+};
+
+template<template<typename> class Map, typename T, typename... Args>
+struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};
+
+template<template<typename...> class Trait, typename T>
+struct autocall_trait_helper {
+private:
+	template<typename>
+	static std::false_type test_helper(...);
+	
+	template<typename U, std::size_t... S, int_t<
+		enable_if_t<Trait<U, meta_list_element_t<S, typename U::Autocall>>::value>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename>
+	static std::true_type test(...);
+	
+	template<typename U>
+	static decltype(test_helper<U>(detail::tuple_seq<typename U::Autocall>{})) test(int);
+	
+public:
+	using type = decltype(test<T>(0));
+};
+
+template<template<typename...> class Trait, typename T>
+using autocall_trait = typename autocall_trait_helper<Trait, T>::type;
+
+template<typename T, typename F>
+struct is_autocall_entry_map_complete_helper {
+private:
+	template<typename U, typename C, std::size_t I>
+	struct expander {
+		using type = meta_list_element_t<I, function_arguments_t<typename C::value_type>>;
+	};
+	
+	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
+	static std::true_type test(...);
+	
+	template<typename U, typename C, enable_if_t<!is_invoke_call<C>::value, int> = 0>
+	static std::false_type test(...);
+	
+	template<typename>
+	static std::false_type test_helper(...);
+	
+	template<template<typename> class Map, typename U, typename C, std::size_t... S, int_t<service_map_t<Map, typename expander<U, C, S>::type>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename U, typename C>
+	static decltype(test_helper<U::template Map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	
+public:
+	using type = decltype(test<T, F>(0));
+};
+
+template<typename T, typename F>
+using is_autocall_entry_map_complete = typename is_autocall_entry_map_complete_helper<T, F>::type;
+
+template<typename T, typename F>
+struct is_autocall_entry_valid_helper {
+private:
+	// This is workaround for clang. Clang will not interpret the name of the class itself
+	// as a valid template template parameter. using this alias, it forces it to use the name as a template.
+	template<typename U, typename C>
+	using self_t = typename is_autocall_entry_valid_helper<U, C>::type;
+	
+	struct expander {
+		template<typename U, typename C, std::size_t I>
+		using type = std::integral_constant<bool, true &&
+			service_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
+			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
+			autocall_trait<self_t, meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;
+	};
+	
+	struct invoke_call_expand {
+		template<typename U, typename C, std::size_t I>
+		using type = typename is_invoke_call<C>::value;
+	};
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+	template<typename>
+	static std::false_type test_helper(...);
+	
+	template<typename U, typename C, std::size_t... S, int_t<
+		enable_if_t<std::conditional<is_autocall_entry_map_complete<U, C>::value, expander, invoke_call_expand>::type::template type<U, C, S>::type::value>...> = 0>
+	static std::true_type test_helper(seq<S...>);
+	
+	template<typename U, typename C, enable_if_t<is_valid_autocall_function<U, C>::value, int> = 0>
+	static decltype(test_helper<U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	
+public:
+	using type = decltype(test<T, F>(0));
+};
+
+template<typename T, typename F>
+using is_autocall_entry_valid = typename is_autocall_entry_valid_helper<T, F>::type;
+
+template<typename T>
+using is_autocall_valid = std::integral_constant<bool,
+// 	autocall_trait<is_autocall_entry_map_complete, T>::value &&
+	autocall_trait<is_autocall_entry_valid, T>::value
+>;
+
+template<typename T, typename... Args>
 struct is_service_valid : std::integral_constant<bool,
 	is_single_no_args<T, Args...>::value &&
-	is_service<T>::value &&
-	dependency_trait<is_service, T, Args...>::value &&
-	is_service_constructible<T, Args...>::value &&
-	dependency_trait<is_service_constructible, T, Args...>::value &&
-	is_construct_function_callable<T, Args...>::value &&
-	dependency_trait<is_construct_function_callable, T, Args...>::value &&
-	is_default_service_valid<T>::value &&
-	dependency_trait<is_default_service_valid, T, Args...>::value &&
-	is_override_convertible<T>::value &&
-	dependency_trait<is_override_convertible, T, Args...>::value &&
-	is_override_services<T>::value &&
-	dependency_trait<is_override_services, T, Args...>::value
+	service_check<T, Args...>::value &&
+	dependency_check<T, Args...>::value &&
+	is_autocall_valid<T>::value &&
+	dependency_trait<is_autocall_valid, T, Args...>::value
 > {};
+
+template<template<typename> class Map, typename T, typename... Args>
+struct is_invoke_service_valid_helper {
+private:
+	template<typename U, std::size_t I>
+	struct expander {
+		using type = std::integral_constant<bool, is_service_valid<service_map_t<Map, function_argument_t<I, U>>>::value>;
+	};
+
+	template<typename U>
+	using map_t = service_map_t<Map, U>;
+	
+	template<typename U, typename... As, std::size_t... S, int_t<map_t<function_argument_t<S, U>>..., enable_if_t<expander<U, S>::type::value>...> = 0>
+	static std::true_type test(seq<S...>);
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+public:
+	using type = decltype(test<T, Args...>(tuple_seq_minus<function_arguments_t<T>, sizeof...(Args)>{}));
+};
+
+template<template<typename> class Map, typename T, typename... Args>
+struct is_invoke_service_valid : is_invoke_service_valid_helper<Map, T, Args...>::type {};
+
+template<template<typename> class Map, typename T, typename... Args>
+using is_invoke_valid = std::integral_constant<bool,
+	is_invoke_service_valid<Map, T, Args...>::value &&
+	is_invokable<Map, T, Args...>::value
+>;
 
 } // namespace detail
 } // namespace kgr

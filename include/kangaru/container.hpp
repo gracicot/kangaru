@@ -521,7 +521,7 @@ private:
 		
 		int unpack[] = {(invoke_autocall(
 			detail::tuple_seq<
-				typename detail::function_arguments_t<
+				detail::function_arguments_t<
 					typename detail::autocall_function_t<U, detail::meta_list_element_t<S, typename U::Autocall>>::value_type
 				>
 			>{},

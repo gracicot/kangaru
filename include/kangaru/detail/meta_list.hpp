@@ -38,6 +38,17 @@ struct meta_list_contains<T, meta_list<T, Tail...>> : std::true_type {};
 template <typename>
 struct meta_list_size;
 
+template<typename, template<typename...> class>
+struct meta_list_transform;
+
+template<typename... Types, template<typename> class F>
+struct meta_list_transform<meta_list<Types...>, F> {
+	using type = meta_list<F<Types>...>;
+};
+
+template<typename List, template<typename...> class F>
+using meta_list_transform_t = typename meta_list_transform<List, F>::type;
+
 template <typename... Types>
 struct meta_list_size<meta_list<Types...>> {
 	static constexpr std::size_t value = sizeof...(Types);
@@ -51,6 +62,7 @@ struct meta_list_empty;
 
 template<typename... Types>
 struct meta_list_empty<meta_list<Types...>> : std::integral_constant<bool, sizeof...(Types) == 0> {};
+
 
 } // namespace detail
 } // namespace kgr

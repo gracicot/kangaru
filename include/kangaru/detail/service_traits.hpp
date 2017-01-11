@@ -453,10 +453,7 @@ template<typename T, typename F>
 using is_autocall_entry_valid = typename is_autocall_entry_valid_helper<T, F>::type;
 
 template<typename T>
-using is_autocall_valid = std::integral_constant<bool,
-// 	autocall_trait<is_autocall_entry_map_complete, T>::value &&
-	autocall_trait<is_autocall_entry_valid, T>::value
->;
+using is_autocall_valid = autocall_trait<is_autocall_entry_valid, T>;
 
 template<typename T, typename... Args>
 struct is_service_valid : std::integral_constant<bool,

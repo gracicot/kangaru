@@ -18,6 +18,8 @@ struct GenericServiceDestruction {
 template<typename Generic, typename Type>
 struct GenericServiceDestruction<Generic, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
 
+template<typename, typename> struct autocall_function;
+
 } // namespace detail
 
 template<typename CRTP, typename Type>
@@ -61,6 +63,7 @@ protected:
 	
 private:
 	template<typename, typename...> friend struct detail::has_emplace_helper;
+	template<typename, typename> friend struct detail::autocall_function;
 	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {

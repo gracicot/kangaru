@@ -109,6 +109,9 @@ struct is_invoke_call : std::false_type {};
 template<typename T>
 struct is_invoke_call<T, void_t<typename T::Parameters>> : std::true_type {};
 
+template<typename T, typename F>
+using is_member_autocall = std::is_base_of<object_type_t<typename F::value_type>, ServiceType<T>>;
+
 template<template<typename> class Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};
 
@@ -148,24 +151,6 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class Map, typename T, typename... Args>
-struct is_invokable_helper {
-private:
-	template<typename U, typename... As, std::size_t... S>
-	static std::true_type test(seq<S...>, decltype(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, function_argument_t<S, U>>>>()..., std::declval<As>()...))*);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(tuple_seq_minus<function_arguments_t<T>, sizeof...(Args)>{}, nullptr));
-};
-
-template<template<typename> class Map, typename T, typename... Args>
-struct defer_is_invokable_helper {
-	static constexpr bool value = is_invokable_helper<Map, T, Args...>::type::value;
-};
-
 template<typename T, typename... Args>
 using has_emplace = typename has_emplace_helper<T, Args...>::type;
 
@@ -188,9 +173,6 @@ using is_emplaceable = std::integral_constant<bool, std::is_default_constructibl
 
 template<typename T, typename... Args>
 using is_service_instantiable = std::integral_constant<bool, is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
-
-template<template<typename> class Map, typename U, typename... Args>
-using is_invokable = std::integral_constant<bool, defer_is_invokable_helper<Map, U, Args...>::value>;
 
 } // namespace detail
 } // namespace kgr

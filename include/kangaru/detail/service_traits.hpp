@@ -139,13 +139,10 @@ using is_construct_function_callable = is_construct_function_callable_helper<T, 
 
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {
-	static std::true_type sink(...);
-	
-	template<typename U, typename... As, std::size_t... S>
-	static decltype(sink(
-		std::declval<enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value, int>>()...,
-		std::declval<enable_if_t<Trait<injected_argument_t<S, construct_function_t<U, As...>>>::value, int>>()...
-	)) test(seq<S...>);
+	template<typename U, typename... As, std::size_t... S, int_t<
+		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
+		enable_if_t<Trait<injected_argument_t<S, construct_function_t<U, As...>>>::value>...> = 0>
+	static std::true_type test(seq<S...>);
 	
 	template<typename U, typename...>
 	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
@@ -421,7 +418,7 @@ private:
 	
 	struct expander {
 		template<typename U, typename C, std::size_t I>
-		using type = std::integral_constant<bool, true &&
+		using type = std::integral_constant<bool,
 			service_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
 			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
 			autocall_trait<self_t, meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;

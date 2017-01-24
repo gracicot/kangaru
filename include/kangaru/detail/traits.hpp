@@ -113,7 +113,7 @@ template<typename T>
 struct is_invoke_call<T, void_t<typename T::Parameters>> : std::true_type {};
 
 template<typename T, typename F>
-using is_member_autocall = std::is_base_of<object_type_t<typename F::value_type>, ServiceType<T>>;
+using is_member_autocall = std::integral_constant<bool, !is_invoke_call<F>::value>;
 
 template<template<typename> class Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};

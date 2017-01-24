@@ -37,10 +37,13 @@ namespace detail {
 template<typename T, typename F>
 struct autocall_function {
 private:
+	template<typename T>
+	static T identity(T);
+
 	template<typename U, typename C>
 	struct get_member_autocall {
 		using type = std::integral_constant<
-			decltype(&U::template autocall<C, U::template Map>),
+			decltype(identity(&U::template autocall<C, U::template Map>)),
 			&U::template autocall<C, U::template Map>
 		>;
 	};
@@ -48,7 +51,7 @@ private:
 	template<typename U, typename C, std::size_t... S>
 	struct get_invoke_autocall {
 		using type = std::integral_constant<
-			decltype(&U::template autocall<C, detail::meta_list_element_t<S, typename C::Parameters>...>),
+			decltype(identity(&U::template autocall<C, detail::meta_list_element_t<S, typename C::Parameters>...>)),
 			&U::template autocall<C, detail::meta_list_element_t<S, typename C::Parameters>...>
 		>;
 	};

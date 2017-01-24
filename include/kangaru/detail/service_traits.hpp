@@ -7,6 +7,13 @@
 #include "invoke.hpp"
 #include "container_service.hpp"
 
+#ifdef _MSC_VER
+#ifndef __clang__
+#define KGR_KANGARU_MSVC_NO_AUTOCALL_MAP_CHECK
+#endif // !__clang__
+#endif // _MSC_VER
+
+
 namespace kgr {
 namespace detail {
 
@@ -358,11 +365,16 @@ struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};
 template<template<typename...> class Trait, typename T>
 struct autocall_trait_helper {
 private:
+	template<typename U, std::size_t I>
+	struct expand {
+		using type = Trait<U, meta_list_element_t<I, typename U::Autocall>>;
+	};
+
 	template<typename>
 	static std::false_type test_helper(...);
 	
 	template<typename U, std::size_t... S, int_t<
-		enable_if_t<Trait<U, meta_list_element_t<S, typename U::Autocall>>::value>...> = 0>
+		enable_if_t<expand<U, S>::type::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename>
@@ -380,10 +392,16 @@ using autocall_trait = typename autocall_trait_helper<Trait, T>::type;
 
 template<typename T, typename F>
 struct is_autocall_entry_map_complete_helper {
+#ifndef KGR_KANGARU_MSVC_NO_AUTOCALL_MAP_CHECK
 private:
+	template<typename U>
+	struct Map {
+		using type = typename T::template Map<U>;
+	};
+
 	template<typename U, typename C, std::size_t I>
 	struct expander {
-		using type = meta_list_element_t<I, function_arguments_t<typename C::value_type>>;
+		using type = typename Map<meta_list_element_t<I, function_arguments_t<typename C::value_type>>>::type;
 	};
 	
 	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
@@ -392,17 +410,20 @@ private:
 	template<typename U, typename C, enable_if_t<!is_invoke_call<C>::value, int> = 0>
 	static std::false_type test(...);
 	
-	template<typename>
+	template<typename, typename>
 	static std::false_type test_helper(...);
 	
-	template<template<typename> class Map, typename U, typename C, std::size_t... S, int_t<service_map_t<Map, typename expander<U, C, S>::type>...> = 0>
+	template<typename U, typename C, std::size_t... S, int_t<typename expander<U, C, S>::type...> = 0>
 	static std::true_type test_helper(seq<S...>);
-	
-	template<typename U, typename C>
-	static decltype(test_helper<U::template Map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+
+	template<typename U, typename C, enable_if_t<!is_invoke_call<C>::value> = 0 >
+	static decltype(test_helper<U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
 	
 public:
 	using type = decltype(test<T, F>(0));
+#else 
+	using type = std::true_type;
+#endif
 };
 
 template<typename T, typename F>
@@ -416,17 +437,21 @@ private:
 	template<typename U, typename C>
 	using self_t = typename is_autocall_entry_valid_helper<U, C>::type;
 	
-	struct expander {
+	struct invoke_method_condition {
 		template<typename U, typename C, std::size_t I>
 		using type = std::integral_constant<bool,
 			service_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
-			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
-			autocall_trait<self_t, meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;
+			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;
 	};
-	
-	struct invoke_call_expand {
+
+	struct invoke_call_condition {
 		template<typename U, typename C, std::size_t I>
-		using type = typename is_invoke_call<C>::value;
+		using type = typename is_invoke_call<C>;
+	};
+
+	template<typename U, typename C, std::size_t I>
+	struct expander {
+		using type = typename std::conditional<is_autocall_entry_map_complete<U, C>::value, invoke_method_condition, invoke_call_condition>::type::template type<U, C, I>::type;
 	};
 	
 	template<typename...>
@@ -436,7 +461,7 @@ private:
 	static std::false_type test_helper(...);
 	
 	template<typename U, typename C, std::size_t... S, int_t<
-		enable_if_t<std::conditional<is_autocall_entry_map_complete<U, C>::value, expander, invoke_call_expand>::type::template type<U, C, S>::type::value>...> = 0>
+		enable_if_t<expander<U, C, S>::type::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename U, typename C, enable_if_t<is_valid_autocall_function<U, C>::value, int> = 0>

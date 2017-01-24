@@ -4,8 +4,6 @@
 #include "traits.hpp"
 #include "meta_list.hpp"
 
-#include <tuple>
-
 namespace kgr {
 
 struct Single {

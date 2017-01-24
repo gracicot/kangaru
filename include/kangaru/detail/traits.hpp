@@ -72,6 +72,9 @@ struct TupleSeqGen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
 template<typename Tuple>
 using tuple_seq = typename TupleSeqGen<Tuple>::type;
 
+template<typename F>
+using function_seq = tuple_seq<function_arguments_t<F>>;
+
 template<typename List, int n>
 using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (n > meta_list_size<List>::value ? meta_list_size<List>::value : n)>::type;
 

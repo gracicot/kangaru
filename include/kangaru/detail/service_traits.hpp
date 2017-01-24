@@ -180,8 +180,8 @@ private:
 
 	// This overload is needed for msvc.
 	// Or else it will try to call the one just above with a 0 as S for strange reason.
-	template<typename U, typename... As>
-	static std::true_type test(seq<>);
+	template<typename U, typename... As, int_t<construct_function_t<U, As...>> = 0>
+	static is_service_instantiable<T> test(seq<>);
 	
 	template<typename U, typename...>
 	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);

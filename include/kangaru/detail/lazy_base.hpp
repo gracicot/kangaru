@@ -121,7 +121,7 @@ struct LazyCopyAssign<CRTP, T, detail::enable_if_t<std::is_copy_assignable<T>::v
 
 template<typename CRTP, typename T>
 struct LazyMoveConstruct<CRTP, T, detail::enable_if_t<std::is_move_constructible<T>::value>> {
-	LazyMoveConstruct(LazyMoveConstruct&& other) {
+	LazyMoveConstruct(LazyMoveConstruct&& other) noexcept {
 		auto& o = static_cast<CRTP&>(other);
 		if (o._initialized) {
 			static_cast<CRTP&>(*this).emplace(std::move(o.data()));

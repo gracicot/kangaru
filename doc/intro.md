@@ -43,7 +43,7 @@ Macros defined by the library are not part of it's interface.
 
  - MSVC: 2015 update 3 or better
  - GCC: 5.1 or better
- - Clang: 3.7 or better
+ - Clang: 3.5 or better
 
 Index
 -----

@@ -33,7 +33,7 @@ _Service Definitions_ are classes that contain a service and tell the container 
 
 ### Macros
 
-This library does not make use of macros of macros to prevent multiple inclusion.
+This library does not make use of macros to prevent multiple inclusion.
 Every macros that starts with `KGR_KANGARU_` is considered reserved.
 Note that some features of this library are easier to use with macros, and we recommend you to use those that are defined in the documentation.
 

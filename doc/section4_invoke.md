@@ -21,25 +21,39 @@ The `invoke` function can found what parameters the function needs.
 But we need a way to associate parameters to services. Introducing the service map:
 
 ```c++
+auto service_map(Argument) -> Service;
+```
+    
+The service map is a function that takes a parameter to be mapped, and has the associated service as return type.
+Each entry must be in the same namespace as the argument it receives. The container will search the right `service_map` function through ADL.
+
+For each service in which you want to be able work with `invoke` without explicitely listing every services, declare the following entries:
+
+```c++
+auto service_map(const Notification&) -> NotificationService;
+auto service_map(const FileManager&) -> FileManagerService;
+```
+
+If you want, you can also receive the parameter `kgr::Map<>` to desambiguate the function if you already had one named like this:
+
+```c++
+auto service_map(const Notification&, kgr::Map<>) -> NotificationService;
+auto service_map(const FileManager&, kgr::Map<>) -> FileManagerService;
+```
+
+> Note that you wont need to define the function themselves, as the container only use them to check the return type.
+
+Alternatively, if you don't want to use ADL to map arguments to their services, you can define your own service map using a template struct and specialise it for every service:
+
+```c++
 template<typename>
-struct ServiceMap;
-```
-    
-The service map is a template class that has the parameter type as template parameter and is using the `Service` type, which equal to which service the parameter should be associated.
+struct MyMap;
 
-For each service in which you want to be able work with `invoke` without explicitely listing every services, specialize the struct like this:
-
-```c++
-template<> struct ServiceMap<Notification> : kgr::Map<NotificationService> {};
-template<> struct ServiceMap<FileManager&> : kgr::Map<FileManagerService> {};
+template<> struct MyMap<Notification> : kgr::Map<NotificationService> {};
+template<> struct MyMap<FileManager&> : kgr::Map<FileManagerService> {};
 ```
-    
-Alternatively, you can make your ServiceMap using `Service` as the service it maps:
 
-```c++
-template<> struct ServiceMap<Notification> { using Service = NotificationService; };
-template<> struct ServiceMap<FileManager&> { using Service = FileManagerService;  };
-```
+> Note that this way of defining the service map is deprecated, and likely removed in future major releases.
 
 > Note the presence of the `&` after `FileManager`. This is because `FileManager`, `FileManager&` and `const FileManager*` could all be bound to different service definitions.
 > Take note that you must declare the service map yourself.
@@ -51,10 +65,10 @@ int doThings(Notification n, FileManager& fm);
 
 // ...
 
-int result = container.invoke<ServiceMap>(doThings);
+int result = container.invoke(doThings);
 ```
     
-With `ServiceMap`, the container can even call function from third party libraries!
+With the service map, the container can even call function from third party libraries!
 
 ## Additional parameters
 

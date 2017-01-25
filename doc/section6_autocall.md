@@ -34,7 +34,7 @@ private:
 If we want `init()` to be called at the service's construction, we need our definition to extends autocall:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap, METHOD(&ClownMaster::init)> {};
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap, METHOD(&ClownMaster::init)> {};
 ```
     
 But wait, there's more!
@@ -76,12 +76,12 @@ private:
 Now we want to add `setFileManager` to the list of method to call:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap,
     METHOD(&ClownMaster::init),
     METHOD(&ClownMaster::setFileManager)
 > {};
 ```
-        
+
 The method are called in the order that are listed in `AutoCall`.
 
 ### Without the service map
@@ -89,7 +89,7 @@ The method are called in the order that are listed in `AutoCall`.
 Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::Invoke` class:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<ServiceMap,
+struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap,
     kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
     METHOD(&ClownMaster::setFileManager)
 > {};

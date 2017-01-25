@@ -37,8 +37,8 @@ namespace detail {
 template<typename T, typename F>
 struct autocall_function {
 private:
-	template<typename T>
-	static T identity(T);
+	template<typename U>
+	static U identity(U);
 
 	template<typename U, typename C>
 	struct get_member_autocall {

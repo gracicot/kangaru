@@ -1,7 +1,6 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
 
-#include <tuple>
 #include "meta_list.hpp"
 
 namespace kgr {

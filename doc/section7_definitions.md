@@ -133,7 +133,7 @@ struct IFileManagerService {
     virtual IFileManager& forward() = 0;
 }
 ```
-    
+
 Abstract services are implicitly single.
 
 [Next chapter: Debugging](section8_debug.md)

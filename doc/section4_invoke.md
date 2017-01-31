@@ -43,6 +43,16 @@ auto service_map(const FileManager&, kgr::Map<>) -> FileManagerService;
 
 > Note that you wont need to define the function themselves, as the container only use them to check the return type.
 
+Now that our service map is defined, we can use invoke like this:
+
+```c++
+int doThings(Notification n, FileManager& fm);
+
+// ...
+
+int result = container.invoke(doThings);
+```
+
 Alternatively, if you don't want to use ADL to map arguments to their services, you can define your own service map using a template struct and specialise it for every service:
 
 ```c++
@@ -58,14 +68,14 @@ template<> struct MyMap<FileManager&> : kgr::Map<FileManagerService> {};
 > Note the presence of the `&` after `FileManager`. This is because `FileManager`, `FileManager&` and `const FileManager*` could all be bound to different service definitions.
 > Take note that you must declare the service map yourself.
 
-Now that our service map is defined, we can use invoke like this:
+Using this syntax, you must send your service map when invoking:
 
 ```c++
 int doThings(Notification n, FileManager& fm);
 
 // ...
 
-int result = container.invoke(doThings);
+int result = container.invoke<MyMap>(doThings);
 ```
     
 With the service map, the container can even call function from third party libraries!

@@ -18,7 +18,7 @@ It has one member function: `operator()`. This function is equivalent to calling
 Here's an example:
     
     // NotificationService is a non-single service.
-    auto notificationGenerator = container.service<GeneratorService<NotificationService>>();
+    auto notificationGenerator = container.service<kgr::GeneratorService<NotificationService>>();
     
     auto notification1 = notificationGenerator();
     auto notification2 = notificationGenerator();
@@ -38,11 +38,13 @@ Here's a code snippet using the `Invoker`:
 
     int sendRequest(ClownMaster&, Notification, double timeout);
     
-    auto invoker = container.service<InvokerService<ServiceMap>>();
+    auto invoker = container.service<kgr::DefaultInvokerService>();
     
     invoker(sendRequest, 10); // calls sendRequest with 10 as it's timeout
     
-Just like `Generator`, another version of the invoker for a forked container is provided. It's called `ForkedInvoker`, and it's definition `ForkedInvokerService`.
+We used `DefaultInvokerService` because we don't care which service map is used.
+    
+Just like `Generator`, another version of the invoker for a forked container is provided. It's called `kgr::ForkedInvoker`, and it's definition `ForkedInvokerService`.
     
 ## Lazy
 
@@ -59,7 +61,7 @@ Lazy is provided with a service definition named `LazyService<T>` where `T` is a
 You can use it like this:
 
     // The contained 'ClownMaster' is not constructed yet.
-    auto lazyClownMaster = container.service<LazyService<ClownMasterService>>();
+    auto lazyClownMaster = container.service<kgr::LazyService<ClownMasterService>>();
     
     // ClownMaster is constructed here, the operator* is used.
     cout << *lazyClownMaster;

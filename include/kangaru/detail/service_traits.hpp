@@ -139,7 +139,7 @@ template<typename T, typename... Args>
 struct is_construct_function_callable_helper<T, meta_list<Args...>, enable_if_t<is_construct_invokable<construct_function_t<T, Args...>, Args...>::value>> : std::true_type {};
 
 template<typename T, typename... Args>
-struct is_construct_function_callable_helper<T, meta_list<Args...>, enable_if_t<is_container_service<T>::value || std::is_abstract<T>::value>> : std::true_type {};
+struct is_construct_function_callable_helper<T, meta_list<Args...>, enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value>> : std::true_type {};
 
 template<typename T, typename... Args>
 using is_construct_function_callable = is_construct_function_callable_helper<T, meta_list<Args...>>;
@@ -157,7 +157,7 @@ struct dependency_trait_helper {
 	static std::true_type test(seq<S...>);
 	
 	template<typename U, typename...>
-	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
+	static enable_if_t<is_container_service<U>::value || is_abstract_service<U>::value, std::true_type> test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -189,7 +189,7 @@ private:
 	static is_service_instantiable<T> test(seq<>);
 	
 	template<typename U, typename...>
-	static enable_if_t<is_container_service<U>::value || std::is_abstract<U>::value, std::true_type> test_helper(int);
+	static enable_if_t<is_container_service<U>::value || is_abstract_service<U>::value, std::true_type> test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -291,7 +291,7 @@ private:
 	template<typename>
 	static std::false_type test(...);
 	
-	template<typename U, enable_if_t<has_default<U>::value && std::is_abstract<U>::value, int> = 0>
+	template<typename U, enable_if_t<has_default<U>::value && is_abstract_service<U>::value, int> = 0>
 	static is_overriden_by<U, default_type<U>> test(int);
 	
 	template<typename U, enable_if_t<!has_default<U>::value, int> = 0>
@@ -325,7 +325,7 @@ using is_default_convertible = typename is_default_convertible_helper<T>::type;
 
 template<typename T>
 using is_default_service_valid = std::integral_constant<bool,
-	(std::is_abstract<T>::value || !has_default<T>::value) &&
+	(is_abstract_service<T>::value || !has_default<T>::value) &&
 	is_default_overrides_abstract<T>::value &&
 	is_default_convertible<T>::value
 >;

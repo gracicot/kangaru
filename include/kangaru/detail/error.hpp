@@ -95,7 +95,7 @@ struct ServiceError {
 	}
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
 		!is_default_service_valid<Service>::value &&
 		is_default_convertible<Service>::value &&
@@ -109,7 +109,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		is_default_convertible<Service>::value &&
@@ -123,7 +123,7 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_convertible<Service>::value &&
@@ -137,7 +137,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_convertible<Service>::value &&
@@ -151,7 +151,7 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_overrides_abstract<Service>::value, int> = 0>
@@ -164,7 +164,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		std::is_abstract<Service>::value &&
+		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
 		!is_default_service_valid<Service>::value &&
 		!is_default_overrides_abstract<Service>::value, int> = 0>
@@ -177,7 +177,7 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!std::is_abstract<Service>::value &&
+		!is_abstract_service<Service>::value &&
 		!is_default_service_valid<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
@@ -187,7 +187,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
-		!std::is_abstract<Service>::value &&
+		!is_abstract_service<Service>::value &&
 		!is_default_service_valid<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,

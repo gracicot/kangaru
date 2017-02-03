@@ -53,7 +53,7 @@ int doThings(Notification n, FileManager& fm);
 int result = container.invoke(doThings);
 ```
 
-> Note that for version `v3.2.1`, abstract services are abstract classes. Since you cannot have a function signature that has an abstract type as return type, mapping your service to `kgr::Map<your-abstract-service>`. It will be fixed in `v3.3.0`.
+> Note that for version `v3.2.1`, abstract services are abstract classes. Since you cannot have a function signature that has an abstract type as return type, mapping your service to `kgr::Map<your-abstract-service>`. It will be fixed in `v3.3.0`. For more detail, see [#35](https://github.com/gracicot/kangaru/issues/35) and [#37](https://github.com/gracicot/kangaru/issues/37)
 
 ---
 

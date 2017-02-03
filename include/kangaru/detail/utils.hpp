@@ -42,6 +42,12 @@ namespace detail {
 template<template<typename> class Map, typename T>
 using service_map_t = typename Map<T>::Service;
 
+template<typename T>
+struct is_map : std::false_type {};
+
+template<typename... Ts>
+struct is_map<kgr::Map<Ts...>> : std::true_type {};
+
 } // namespace detail
 } // namespace kgr
 

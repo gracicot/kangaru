@@ -53,6 +53,10 @@ int doThings(Notification n, FileManager& fm);
 int result = container.invoke(doThings);
 ```
 
+> Note that for version `v3.2.1`, abstract services are abstract classes. Since you cannot have a function signature that has an abstract type as return type, mapping your service to `kgr::Map<your-abstract-service>`. It will be fixed in `v3.3.0`. For more detail, see [#35](https://github.com/gracicot/kangaru/issues/35) and [#37](https://github.com/gracicot/kangaru/issues/37)
+
+---
+
 Alternatively, if you don't want to use ADL to map arguments to their services, you can define your own service map using a template struct and specialise it for every service:
 
 ```c++
@@ -88,7 +92,7 @@ Here's an emaxple:
 ```c++
 int doThings(Notification n, FileManager& fm, int a, double b);
 
-int result = container.invoke<NotificationService, FileManagerService>(doThings, 7, 8.9);
+int result = container.invoke(doThings, 7, 8.9);
 ```
 
 [Next chapter: Operator services](section5_operator.md)

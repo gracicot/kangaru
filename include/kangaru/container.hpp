@@ -230,7 +230,7 @@ private:
 	 * This function will create a new instance and save it.
 	 * It also returns a reference to the constructed service.
 	 */
-	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<std::is_abstract<T>> = 0>
+	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_abstract_service<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
 		
@@ -245,7 +245,7 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<std::is_abstract<T>> = 0,
+		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
@@ -257,7 +257,7 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<std::is_abstract<T>> = 0,
+		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
 	detail::BaseInjected<T>& save_new_instance(Args&&...) {
 		save_new_instance<detail::default_type<T>>();

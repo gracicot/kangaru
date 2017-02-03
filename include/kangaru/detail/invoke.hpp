@@ -104,34 +104,30 @@ using is_valid_autocall_function = std::integral_constant<bool,
 >;
 
 template<typename, typename = void>
-struct has_map_entry : std::false_type {};
+struct map_entry {};
 
 template<typename P>
-struct has_map_entry<P, void_t<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>> : std::true_type {};
-
-template<typename P>
-struct has_map_entry<P, void_t<decltype(service_map(std::declval<P>()))>> : std::true_type {};
-
-template<typename, typename = void>
-struct AdlMapHelper {};
-
-template<typename Parameter>
-struct AdlMapHelper<Parameter, detail::enable_if_t<detail::has_map_entry<Parameter>::value>> {
-private:
-	template<typename P> // The space is needed on the next line for visual studio.
-	static auto map(int) -> decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
-	
-	template<typename P>
-	static auto map(...) -> decltype(service_map(std::declval<P>()));
-	
-public:
-	using Service = decltype(map<Parameter>(0));
+struct map_entry<P, enable_if_t<is_service<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> {
+	using Service = decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
 };
+
+template<typename P>
+struct map_entry<P, enable_if_t<is_service<decltype(service_map(std::declval<P>()))>::value>> {
+	using Service = decltype(service_map(std::declval<P>()));
+};
+
+template<typename P>
+struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> :
+	decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >())) {};
+
+template<typename P>
+struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>()))>::value>> :
+	decltype(service_map(std::declval<P>())) {};
 
 } // namespace detail
 
 template<typename P>
-struct AdlMap : detail::AdlMapHelper<P> {};
+struct AdlMap : detail::map_entry<P> {};
 
 } // namespace kgr
 

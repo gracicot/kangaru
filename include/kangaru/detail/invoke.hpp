@@ -117,14 +117,12 @@ struct map_entry<P, enable_if_t<is_service<decltype(service_map(std::declval<P>(
 };
 
 template<typename P>
-struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> {
-	using Service = typename decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))::Service;
-};
+struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> :
+	decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >())) {};
 
 template<typename P>
-struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>()))>::value>> {
-	using Service = typename decltype(service_map(std::declval<P>()))::Service;
-};
+struct map_entry<P, enable_if_t<is_map<decltype(service_map(std::declval<P>()))>::value>> :
+	decltype(service_map(std::declval<P>())) {};
 
 } // namespace detail
 

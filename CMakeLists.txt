@@ -8,6 +8,7 @@ set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU
 
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
+option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 
 if (KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
@@ -19,8 +20,12 @@ add_library(kangaru INTERFACE)
 
 target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+
+if (KANGARU_EXPORT)
+	export(PACKAGE kangaru)
+endif()
 
 if (KANGARU_INSTALL)
 	set(KANGARU_CONFIG_PATH "lib/cmake/kangaru")
@@ -68,6 +73,4 @@ if (KANGARU_INSTALL)
 		EXPORT kangaruTargets FILE kangaruTargets.cmake
 		DESTINATION ${KANGARU_CONFIG_PATH}
 	)
-
-	export(PACKAGE kangaru)
 endif()

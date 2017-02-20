@@ -139,7 +139,7 @@ public:
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
-	template<typename... Services, typename U, typename... Args, detail::int_t<enable_if<detail::is_service_valid<Services>>...> = 0>
+	template<typename... Services, typename U, typename... Args, detail::int_t<enable_if<detail::is_service_valid<Services>>..., detail::enable_if_t<(sizeof...(Services) > 0)>> = 0>
 	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}

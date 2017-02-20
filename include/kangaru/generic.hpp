@@ -23,7 +23,7 @@ template<typename, typename> struct autocall_function;
 } // namespace detail
 
 template<typename CRTP, typename Type>
-struct GenericService {
+struct GenericService : detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type> {
 	friend struct Container;
 	using Self = CRTP;
 	
@@ -62,6 +62,7 @@ protected:
 	}
 	
 private:
+	friend struct detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type>;
 	template<typename, typename...> friend struct detail::has_emplace_helper;
 	template<typename, typename> friend struct detail::autocall_function;
 	

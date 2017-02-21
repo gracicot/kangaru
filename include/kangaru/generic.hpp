@@ -65,6 +65,7 @@ private:
 	friend struct detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type>;
 	template<typename, typename...> friend struct detail::has_emplace_helper;
 	template<typename, typename> friend struct detail::autocall_function;
+	friend struct detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type>;
 	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {

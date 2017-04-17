@@ -49,6 +49,9 @@ using decay_t = typename std::decay<T>::type;
 template<std::size_t S, typename T>
 using tuple_element_t = typename std::tuple_element<S, T>::type;
 
+template<std::size_t size, std::size_t align>
+using aligned_storage_t = typename std::aligned_storage<size, align>::type;
+
 template<std::size_t ...>
 struct seq {};
 
@@ -126,6 +129,9 @@ struct Sink {
 	
 	template<typename T>
 	constexpr operator T&& () const;
+	
+	template<typename T>
+	constexpr operator const T& () const;
 };
 
 template<typename T, typename... Args>

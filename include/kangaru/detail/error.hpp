@@ -42,6 +42,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		is_service_constructible<Service, Arg, Args...>::value &&
 		is_autocall_valid<Service>::value &&
 		dependency_trait<is_autocall_valid, Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
@@ -53,6 +54,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		is_service_constructible<Service>::value &&
 		is_autocall_valid<Service>::value &&
 		dependency_trait<is_autocall_valid, Service>::value, int> = 0>
 	ServiceError() {

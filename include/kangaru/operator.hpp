@@ -9,20 +9,28 @@ namespace detail {
 
 template<typename CRTP, template<typename> class Map>
 struct InvokerBase {
-	template<typename F, typename... Args>
+	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
 	function_result_t<typename std::decay<F>::type> operator()(F&& f, Args&&... args) {
 		return static_cast<CRTP*>(this)->container().template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
+	
+	Sink operator()(detail::NotInvokableError = {}, ...) = delete;
 };
 
 template<typename CRTP, typename T>
 struct GeneratorBase {
-	static_assert(!std::is_base_of<Single, T>::value, "Generator only work with non-single services.");
+	static_assert(!is_single<T>::value, "Generator only work with non-single services.");
 	
-	template<typename... Args>
+	template<typename... Args, enable_if_t<is_service_valid<T, Args...>::value, int> = 0>
 	ServiceType<T> operator()(Args&& ...args) {
 		return static_cast<CRTP*>(this)->container().template service<T>(std::forward<Args>(args)...);
 	}
+	
+	template<typename U = T, enable_if_t<std::is_default_constructible<ServiceError<U>>::value, int> = 0>
+	Sink operator()(ServiceError<U> = {}) = delete;
+	
+	template<typename... Args>
+	Sink operator()(ServiceError<T, identity_t<Args>...>, Args&&...) = delete;
 };
 
 } // namespace detail

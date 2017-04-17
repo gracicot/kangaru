@@ -95,6 +95,12 @@ public:
 template<typename T, typename F>
 using autocall_function_t = typename autocall_function<T, F>::type;
 
+template<typename T, std::size_t I>
+using autocall_nth_function = detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::Autocall>>;
+
+template<typename T, std::size_t I>
+using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::Autocall>>::value_type;
+
 template<typename T, typename F>
 using autocall_arguments_t = typename autocall_arguments<T, F>::type;
 

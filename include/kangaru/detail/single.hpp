@@ -15,6 +15,8 @@ struct Single {
 	Single& operator=(Single&&) = default;
 };
 
+struct Abstract {};
+
 template<typename T>
 struct Default {
 	using DefaultService = T;
@@ -58,7 +60,7 @@ template<typename T>
 using has_default = typename default_type_helper<T>::has_default;
 
 template<typename T>
-using is_abstract_service = std::is_abstract<T>;
+using is_abstract_service = std::integral_constant<bool, std::is_base_of<Abstract, T>::value || std::is_abstract<T>::value>;
 
 template<typename T>
 using is_single = std::integral_constant<bool, std::is_base_of<Single, T>::value || is_abstract_service<T>::value>;

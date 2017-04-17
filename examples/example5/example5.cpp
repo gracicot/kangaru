@@ -3,7 +3,7 @@
 #include <memory>
 #include <tuple>
 
-#include "kangaru/kangaru.hpp"
+#include <kangaru/kangaru.hpp>
 
 /**
  * This example explains advanced use of kangaru and it's components.

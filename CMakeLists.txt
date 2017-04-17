@@ -10,10 +10,6 @@ option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 
-if (KANGARU_BUILD_EXAMPLES)
-	add_subdirectory(examples)
-endif()
-
 set(KANGARU_INSTALL_INCLUDE_DIR "include")
 
 add_library(kangaru INTERFACE)
@@ -22,6 +18,10 @@ target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+
+if (KANGARU_BUILD_EXAMPLES)
+	add_subdirectory(examples)
+endif()
 
 if (KANGARU_EXPORT)
 	export(PACKAGE kangaru)

@@ -523,11 +523,7 @@ private:
 		using U = detail::decay_t<T>;
 		
 		int unpack[] = {(invoke_autocall(
-			detail::function_seq<
-				typename detail::autocall_function_t<U, detail::meta_list_element_t<S, typename U::Autocall>>::value_type
-			>{},
-			std::forward<T>(service),
-			detail::autocall_function_t<U, detail::meta_list_element_t<S, typename U::Autocall>>::value
+			detail::function_seq<detail::autocall_nth_function_t<U, S>>{}, std::forward<T>(service), detail::autocall_nth_function<U, S>::value
 		), 0)..., 0};
 		
 		static_cast<void>(unpack);

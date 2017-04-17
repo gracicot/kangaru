@@ -11,7 +11,7 @@ template<typename CRTP, template<typename> class Map>
 struct InvokerBase {
 	template<typename F, typename... Args>
 	function_result_t<typename std::decay<F>::type> operator()(F&& f, Args&&... args) {
-		return static_cast<CRTP*>(this)->_container.template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
+		return static_cast<CRTP*>(this)->container().template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 };
 
@@ -21,7 +21,7 @@ struct GeneratorBase {
 	
 	template<typename... Args>
 	ServiceType<T> operator()(Args&& ...args) {
-		return static_cast<CRTP*>(this)->_container.template service<T>(std::forward<Args>(args)...);
+		return static_cast<CRTP*>(this)->container().template service<T>(std::forward<Args>(args)...);
 	}
 };
 
@@ -29,11 +29,19 @@ struct GeneratorBase {
 
 template<template<typename> class Map>
 struct Invoker : detail::InvokerBase<Invoker<Map>, Map> {
-	explicit Invoker(Container& container) : _container{container} {}
+	explicit Invoker(Container& container) : _container{&container} {}
 	
 private:
+	kgr::Container& container() {
+		return *_container;
+	}
+	
+	const kgr::Container& container() const {
+		return *_container;
+	}
+	
 	friend struct detail::InvokerBase<Invoker<Map>, Map>;
-	kgr::Container& _container;
+	kgr::Container* _container;
 };
 
 using DefaultInvoker = Invoker<kgr::AdlMap>;
@@ -43,6 +51,14 @@ struct ForkedInvoker : detail::InvokerBase<ForkedInvoker<Map>, Map> {
 	explicit ForkedInvoker(Container container) : _container{std::move(container)} {}
 	
 private:
+	kgr::Container& container() {
+		return _container;
+	}
+	
+	const kgr::Container& container() const {
+		return _container;
+	}
+	
 	friend struct detail::InvokerBase<ForkedInvoker<Map>, Map>;
 	kgr::Container _container;
 };
@@ -51,11 +67,19 @@ using DefaultForkedInvoker = ForkedInvoker<kgr::AdlMap>;
 
 template<typename T>
 struct Generator : detail::GeneratorBase<Generator<T>, T> {
-	explicit Generator(Container& container) : _container{container} {}
+	explicit Generator(Container& container) : _container{&container} {}
 	
 private:
+	kgr::Container& container() {
+		return *_container;
+	}
+	
+	const kgr::Container& container() const {
+		return *_container;
+	}
+	
 	friend struct detail::GeneratorBase<Generator<T>, T>;
-	kgr::Container& _container;
+	kgr::Container* _container;
 };
 
 template<typename T>
@@ -63,6 +87,14 @@ struct ForkedGenerator : detail::GeneratorBase<ForkedGenerator<T>, T> {
 	explicit ForkedGenerator(Container container) : _container{std::move(container)} {}
 	
 private:
+	kgr::Container& container() {
+		return _container;
+	}
+	
+	const kgr::Container& container() const {
+		return _container;
+	}
+	
 	friend struct detail::GeneratorBase<ForkedGenerator<T>, T>;
 	kgr::Container _container;
 };

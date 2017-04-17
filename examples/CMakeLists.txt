@@ -13,8 +13,6 @@ elseif (MSVC)
   # using Visual Studio C++
 endif()
 
-include_directories(${PROJECT_SOURCE_DIR}/../../include)
-
 add_subdirectory(example1)
 add_subdirectory(example2)
 add_subdirectory(example3)

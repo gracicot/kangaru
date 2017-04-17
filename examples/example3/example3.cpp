@@ -2,7 +2,7 @@
 #include <string>
 #include <tuple>
 
-#include "kangaru/kangaru.hpp"
+#include <kangaru/kangaru.hpp>
 
 /**
  * This example explains moderate use of kangaru and it's components.

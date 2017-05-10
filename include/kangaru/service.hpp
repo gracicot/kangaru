@@ -116,13 +116,13 @@ public:
 };
 
 template<typename T>
-struct AbstractService {
-	virtual T& forward() = 0;
+struct AbstractService : Abstract {
+	T& forward();
 };
 
 template<typename T>
-struct AbstractSharedService {
-	virtual std::shared_ptr<T> forward() = 0;
+struct AbstractSharedService : Abstract {
+	std::shared_ptr<T> forward();
 };
 
 } // namespace kgr

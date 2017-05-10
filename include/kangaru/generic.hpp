@@ -93,7 +93,7 @@ private:
 		});
 	}
 	
-	typename std::aligned_storage<sizeof(Type), alignof(Type)>::type _instance;
+	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
 
 } // namespace kgr

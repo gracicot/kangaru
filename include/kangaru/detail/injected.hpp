@@ -11,11 +11,20 @@ struct Container;
 
 namespace detail {
 
+template<typename T, typename = void>
+struct BaseInjectedHelper {
+	virtual ~BaseInjectedHelper() = default;
+	kgr::detail::Sink forward();
+};
+
 template<typename T>
-struct BaseInjected {
-	virtual ~BaseInjected() {}
+struct BaseInjectedHelper<T, void_t<ServiceType<T>>> {
+	virtual ~BaseInjectedHelper() = default;
 	virtual ServiceType<T> forward() = 0;
 };
+
+template<typename T>
+struct BaseInjected : BaseInjectedHelper<T> {};
 
 template<typename T>
 struct SingleInjected final : BaseInjected<T> {

@@ -54,6 +54,12 @@ struct has_callable_template_construct<
 > : std::true_type {};
 
 template<typename, typename, typename = void>
+struct template_construct_exist : std::false_type {};
+
+template<typename T, typename... Args>
+struct template_construct_exist<T, meta_list<Args...>, void_t<decltype(&T::template construct<Args...>)>> : std::true_type {};
+
+template<typename, typename, typename = void>
 struct has_callable_construct : std::false_type {};
 
 template<typename T, typename... Args>
@@ -85,6 +91,33 @@ struct get_template_construct_helper<
 
 template<typename T, typename... Args>
 using get_template_construct = get_template_construct_helper<T, meta_list<Args...>, meta_list<Args...>>;
+
+template<typename, typename, typename = void>
+struct get_any_template_construct_helper;
+
+template<typename T, typename Head, typename... Tail>
+struct get_any_template_construct_helper<
+	T, meta_list<Head, Tail...>,
+	enable_if_t<!template_construct_exist<T, meta_list<Head, Tail...>>::value>
+> : get_any_template_construct_helper<T, meta_list<Tail...>> {};
+
+template<typename T, typename... Args>
+struct get_any_template_construct_helper<
+	T, meta_list<Args...>,
+	enable_if_t<template_construct_exist<T, meta_list<Args...>>::value>
+> : std::integral_constant<decltype(&T::template construct<Args...>), &T::template construct<Args...>> {};
+
+template<typename T, typename... Args>
+using get_any_template_construct = get_any_template_construct_helper<T, meta_list<Args...>>;
+
+template<typename, typename, typename = void>
+struct has_any_template_construct_helper : std::false_type {};
+
+template<typename T, typename... Args>
+struct has_any_template_construct_helper<T, meta_list<Args...>, void_t<typename get_any_template_construct<T, Args...>::value_type>> : std::true_type {};
+
+template<typename T, typename... Args>
+using has_any_template_construct = has_any_template_construct_helper<T, meta_list<Args...>>;
 
 template<typename, typename, typename = void>
 struct has_template_construct_helper : std::false_type {};
@@ -121,10 +154,13 @@ template<typename T, typename... Args>
 struct construct_function_helper<false, T, Args...> {};
 
 template<typename T, typename... Args>
-using has_any_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
+using has_any_construct = std::integral_constant<bool, has_any_template_construct<T, Args...>::value || has_construct<T>::value>;
 
 template<typename T, typename... Args>
-using construct_function = typename construct_function_helper<has_any_construct<T, Args...>::value, T, Args...>::type;
+using has_valid_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
+
+template<typename T, typename... Args>
+using construct_function = typename construct_function_helper<has_valid_construct<T, Args...>::value, T, Args...>::type;
 
 template<typename T, typename... Args>
 using construct_function_t = typename construct_function<T, Args...>::value_type;
@@ -156,8 +192,8 @@ struct dependency_trait_helper {
 		enable_if_t<expand<U, S>::type::value>...> = 0>
 	static std::true_type test(seq<S...>);
 	
-	template<typename U, typename...>
-	static enable_if_t<is_container_service<U>::value || is_abstract_service<U>::value, std::true_type> test_helper(int);
+	template<typename U, typename... As>
+	static enable_if_t<!has_any_construct<U, As...>::value, std::true_type> test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -188,8 +224,8 @@ private:
 	template<typename U, typename... As, int_t<construct_function_t<U, As...>> = 0>
 	static is_service_instantiable<T> test(seq<>);
 	
-	template<typename U, typename...>
-	static enable_if_t<is_container_service<U>::value || is_abstract_service<U>::value, std::true_type> test_helper(int);
+	template<typename U, typename... As>
+	static enable_if_t<!has_any_construct<U, As...>::value, std::true_type> test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);

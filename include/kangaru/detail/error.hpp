@@ -76,6 +76,7 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
 		!dependency_trait<is_override_convertible, Service>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	ServiceError() {
@@ -87,6 +88,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
 		!dependency_trait<is_override_convertible, Service, Arg, Args...>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
@@ -95,6 +97,7 @@ struct ServiceError {
 			"Check if that service is overriding the right service and if types are compatible."
 		);
 	}
+	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		is_abstract_service<Service>::value &&
@@ -199,6 +202,8 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
+		is_service_constructible<Service>::value &&
 		!dependency_trait<is_default_service_valid, Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
@@ -209,6 +214,8 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
+		is_service_constructible<Service, Arg, Args...>::value &&
 		!dependency_trait<is_default_service_valid, Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
@@ -243,7 +250,7 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Arg>::value &&
-		!dependency_trait<is_construct_function_callable, Service, Arg, Args...>::value &&
+		!dependency_trait<is_construct_function_callable, Service>::value &&
 		is_construct_function_callable<Service, Arg, Args...>::value &&
 		is_service_constructible<Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
@@ -309,6 +316,7 @@ struct ServiceError {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		!is_single<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
 		!is_construct_function_callable<Service>::value, int> = 0>
 	ServiceError() {
 		static_assert(false_t<Service>::value,
@@ -320,11 +328,32 @@ struct ServiceError {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		!is_single<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
 		!is_construct_function_callable<Service, Arg, Args...>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"The service construct function cannot be called. "
 			"Check if the construct function is well formed, receive injected arguments first and additional parameters at the end."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		has_any_construct<Service>::value &&
+		!dependency_trait<is_service, Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"A dependency or one of their dependencies is not a service. Be sure to use the service definition in the list of dependencies of that service."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		has_any_construct<Service, Arg, Args...>::value &&
+		!dependency_trait<is_service, Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"A dependency or one of their dependencies is not a service. Be sure to use the service definition in the list of dependencies of that service."
 		);
 	}
 	

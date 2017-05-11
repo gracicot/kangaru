@@ -119,9 +119,9 @@ public:
 	 * This function will deduce arguments from the function signature.
 	 */
 	template<template<typename> class Map = AdlMap, typename U, typename... Args, enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
-	detail::function_result_t<detail::decay_t<U>> invoke(U&& function, Args&&... args) {
+	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke(U&& function, Args&&... args) {
 		return invoke_helper<Map>(
-			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
+			detail::tuple_seq_minus<detail::invoke_function_arguments_t<Map, detail::decay_t<U>, Args...>, sizeof...(Args)>{},
 			std::forward<U>(function),
 			std::forward<Args>(args)...
 		);
@@ -477,8 +477,8 @@ private:
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
 	template<template<typename> class Map, typename U, typename... Args, std::size_t... S>
-	detail::function_result_t<detail::decay_t<U>> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(mapped_service<Map, detail::function_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
+	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
+		return std::forward<U>(function)(mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()..., std::forward<Args>(args)...);
 	}
 	
 	/*

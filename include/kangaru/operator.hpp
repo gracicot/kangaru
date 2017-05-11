@@ -10,7 +10,7 @@ namespace detail {
 template<typename CRTP, template<typename> class Map>
 struct InvokerBase {
 	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
-	function_result_t<decay_t<F>> operator()(F&& f, Args&&... args) {
+	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
 		return static_cast<CRTP*>(this)->container().template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	

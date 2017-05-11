@@ -2,14 +2,21 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP
 
 #include "meta_list.hpp"
+#include "void_t.hpp"
+
+#include <type_traits>
 
 namespace kgr {
 namespace detail {
 
-template <typename T>
-struct function_traits
-	: function_traits<decltype(&T::operator())>
-{};
+template<typename, typename = void>
+struct has_call_operator : std::false_type {};
+
+template<typename T>
+struct has_call_operator<T, void_t<decltype(&T::operator())>> : std::true_type {};
+
+template <typename>
+struct function_traits_helper {};
 
 template <typename Type, typename R, typename... Args>
 struct base_function_traits {
@@ -27,82 +34,88 @@ struct base_non_member_function_traits {
 };
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...)> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...)> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const volatile> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const volatile> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) volatile> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) volatile> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const volatile &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const volatile &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) volatile &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) volatile &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) const volatile &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) const volatile &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args...) volatile &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args...) volatile &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...)> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...)> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const volatile> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const volatile> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) volatile> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) volatile> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const volatile &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const volatile &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) volatile &> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) volatile &> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) const volatile &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) const volatile &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename Type, typename R, typename... Args>
-struct function_traits<R(Type::*)(Args..., ...) volatile &&> : base_function_traits<Type, R, Args...> {};
+struct function_traits_helper<R(Type::*)(Args..., ...) volatile &&> : base_function_traits<Type, R, Args...> {};
 
 template <typename R, typename... Args>
-struct function_traits<R(*)(Args...)> : base_non_member_function_traits<R, Args...> {};
+struct function_traits_helper<R(*)(Args...)> : base_non_member_function_traits<R, Args...> {};
 
 template <typename R, typename... Args>
-struct function_traits<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
+struct function_traits_helper<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
+
+template<typename F, typename = void>
+struct function_traits : function_traits_helper<F> {};
+
+template<typename T>
+struct function_traits<T, typename std::enable_if<has_call_operator<T>::value>::type> : function_traits_helper<decltype(&T::operator())> {};
 
 template <typename F>
 using function_arguments_t = typename function_traits<F>::argument_types;

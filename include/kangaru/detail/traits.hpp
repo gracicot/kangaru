@@ -4,18 +4,13 @@
 #include "function_traits.hpp"
 #include "utils.hpp"
 #include "meta_list.hpp"
+#include "void_t.hpp"
 
 #include <type_traits>
 #include <tuple>
 
 namespace kgr {
 namespace detail {
-
-// void_t implementation
-template<typename...>
-struct voider { using type = void; };
-
-template<typename... Ts> using void_t = typename voider<Ts...>::type;
 
 template<typename...>
 struct to_false {

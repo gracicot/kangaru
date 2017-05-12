@@ -521,12 +521,11 @@ private:
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
 		using U = detail::decay_t<T>;
+		using unpack = int[];
 		
-		int unpack[] = {(invoke_autocall(
+		(void)unpack{(invoke_autocall(
 			detail::function_seq<detail::autocall_nth_function_t<U, S>>{}, std::forward<T>(service), detail::autocall_nth_function<U, S>::value
 		), 0)..., 0};
-		
-		static_cast<void>(unpack);
 	}
 	
 	/*
@@ -535,7 +534,7 @@ private:
 	 */
 	template<typename T, typename F, std::size_t... S>
 	void invoke_autocall(detail::seq<S...>, T&& service, F&& function) {
-		invoke_raw([&service, &function](detail::function_argument_t<S, detail::decay_t<F>>... args){
+		invoke_raw([&service, &function](detail::function_argument_t<S, detail::decay_t<F>>... args) {
 			(std::forward<T>(service).*std::forward<F>(function))(std::forward<decltype(args)>(args)...);
 		});
 	}

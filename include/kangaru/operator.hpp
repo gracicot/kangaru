@@ -22,7 +22,7 @@ struct GeneratorBase {
 	static_assert(!is_single<T>::value, "Generator only work with non-single services.");
 	
 	template<typename... Args, enable_if_t<is_service_valid<T, Args...>::value, int> = 0>
-	ServiceType<T> operator()(Args&& ...args) {
+	ServiceType<T> operator()(Args&&... args) {
 		return static_cast<CRTP*>(this)->container().template service<T>(std::forward<Args>(args)...);
 	}
 	

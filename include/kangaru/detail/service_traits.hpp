@@ -145,7 +145,9 @@ template<typename T, typename... Args>
 struct construct_function_helper<false, T, Args...> {};
 
 template<typename T, typename... Args>
-using has_any_construct = std::integral_constant<bool, has_any_template_construct<T, Args...>::value || has_construct<T>::value>;
+struct has_any_construct {
+	constexpr static bool value = has_any_template_construct<T, Args...>::value || has_construct<T>::value;
+};
 
 template<typename T, typename... Args>
 using has_valid_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
@@ -177,14 +179,18 @@ struct dependency_trait_helper {
 	struct expand {
 		using type = Trait<injected_argument_t<I, construct_function_t<U, Args...>>>;
 	};
+	template<typename U, typename... As>
+	struct expand_has_construct {
+		constexpr static bool value = has_any_construct<U, As... >::value;
+	};
 
 	template<typename U, typename... As, std::size_t... S, int_t<
 		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
 		enable_if_t<expand<U, S>::type::value>...> = 0>
 	static std::true_type test(seq<S...>);
 	
-	template<typename U, typename... As>
-	static enable_if_t<!has_any_construct<U, As...>::value, std::true_type> test_helper(int);
+	template<typename U, typename... As, enable_if_t<!has_any_construct<U, As... >::value, int> = 0>
+	static std::true_type test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -192,7 +198,7 @@ struct dependency_trait_helper {
 	template<typename...>
 	static std::false_type test_helper(...);
 	
-	template<typename U, typename... As>
+	template<typename U, typename... As, enable_if_t<has_any_construct<U, As... >::value, int> = 0>
 	static decltype(test<U, As...>(tuple_seq_minus<function_arguments_t<construct_function_t<U, As...>>, sizeof...(As)>{})) test_helper(int);
 	
 public:
@@ -215,8 +221,8 @@ private:
 	template<typename U, typename... As, int_t<construct_function_t<U, As...>> = 0>
 	static is_service_instantiable<T> test(seq<>);
 	
-	template<typename U, typename... As>
-	static enable_if_t<!has_any_construct<U, As...>::value, std::true_type> test_helper(int);
+	template<typename U, typename... As, enable_if_t<!has_any_construct<U, As... >::value, int> = 0>
+	static std::true_type test_helper(int);
 	
 	template<typename...>
 	static std::false_type test(...);
@@ -224,7 +230,8 @@ private:
 	template<typename...>
 	static std::false_type test_helper(...);
 	
-	template<typename U, typename... As>
+	// The enable if is required here or else the function call will be ambiguous on visual studio.
+	template<typename U, typename... As, enable_if_t<has_any_construct<U, As... >::value, int> = 0>
 	static decltype(test<U, As...>(tuple_seq<function_result_t<construct_function_t<U, As...>>>{})) test_helper(int);
 	
 public:
@@ -483,8 +490,29 @@ using invoke_function_result_t = typename invoke_function<Map, T, Args...>::retu
 template<template<typename> class Map, typename T, typename... Args>
 struct is_invokable_helper {
 private:
-	template<typename U, typename... As, std::size_t... S, int_t<
-		decltype(std::declval<U>()(std::declval<ServiceType<service_map_t<Map, invoke_function_argument_t<S, Map, U, Args...>>>>()..., std::declval<As>()...))> = 0>
+	template<std::size_t I, typename U>
+	struct expand {
+		using type = ServiceType<service_map_t<Map, invoke_function_argument_t<I, Map, U, Args...>>>;
+	};
+
+	// This sub trait is for visual studio
+	// The constraint can be simplified because every argument are simple template argument
+	template<typename U, typename... As>
+	struct call_test {
+	private:
+		template<typename...>
+		static std::false_type test(...);
+
+		template<typename V, typename... A2s, int_t<decltype(std::declval<V>()(std::declval<A2s>()...))> = 0>
+		static std::true_type test(int);
+
+		using type = decltype(test<U, As...>(0));
+		
+	public:
+		static constexpr bool value = type::value;
+	};
+
+	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, typename expand<S, U>::type..., As...>::value, int> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename...>

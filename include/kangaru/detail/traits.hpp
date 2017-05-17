@@ -25,6 +25,10 @@ struct to_int {
 	using type = int;
 };
 
+// Workaround for visual studio to take the address of a generic lambda
+template<typename T>
+T exact(T);
+
 template<typename... Ts>
 using int_t = typename to_int<Ts...>::type;
 

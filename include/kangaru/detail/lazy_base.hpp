@@ -14,12 +14,13 @@ private:
 	using rref = typename std::remove_reference<ServiceType<T>>::type&&;
 	using ptr = decay_t<ServiceType<T>>*;
 	
-	static constexpr bool nothrow_get = 
-		noexcept(std::declval<Container>().service<T>()) &&
-		noexcept(std::declval<LazyStorage<ServiceType<T>>>().construct(std::declval<ServiceType<T>>()));
+	static constexpr bool nothrow_get() {
+		return noexcept(std::declval<Container>().service<T>()) &&
+			noexcept(std::declval<LazyStorage<ServiceType<T>>>().construct(std::declval<ServiceType<T>>()));
+	}
 	
 public:
-	ref get() noexcept(nothrow_get) {
+	ref get() noexcept(nothrow_get()) {
 		if (!_service) {
 			_service.construct(static_cast<CRTP*>(this)->container().template service<T>());
 		}
@@ -27,15 +28,15 @@ public:
 		return _service.value();
 	}
 	
-	ref operator*() & noexcept(nothrow_get) {
+	ref operator*() & noexcept(nothrow_get()) {
 		return get();
 	}
 	
-	ptr operator->() noexcept(nothrow_get) {
+	ptr operator->() noexcept(nothrow_get()) {
 		return &get();
 	}
 	
-	rref operator*() && noexcept(nothrow_get) {
+	rref operator*() && noexcept(nothrow_get()) {
 		return std::move(get());
 	}
 	

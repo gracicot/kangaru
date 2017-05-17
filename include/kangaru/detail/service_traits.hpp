@@ -13,6 +13,11 @@
 #endif // !__clang__
 #endif // _MSC_VER
 
+#if _MSC_VER == 1900
+#ifndef __clang__
+#define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+#endif // !__clang__
+#endif // _MSC_VER
 
 namespace kgr {
 namespace detail {
@@ -407,7 +412,15 @@ struct has_callable_template_call : std::false_type {};
 template<template<typename> class Map, typename T, typename... TArgs, typename... Args>
 struct has_callable_template_call<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
-	enable_if_t<is_pointer_invokable<Map, T, decltype(&T::template operator()<TArgs...>), Args...>::value>
+	enable_if_t<is_pointer_invokable<Map, T,
+
+#ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+	decltype(&T::operator()<TArgs...>),
+#else
+	decltype(&T::template operator()<TArgs...>),
+#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+	
+	Args...>::value>
 > : std::true_type {};
 
 template<template<typename> class, typename, typename, typename, typename = void>
@@ -430,7 +443,11 @@ struct get_template_call_helper<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<has_callable_template_call<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
 > {
+#ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+	using type = decltype(&T::operator()<TArgs...>);
+#else
 	using type = decltype(&T::template operator()<TArgs...>);
+#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 };
 
 template<template<typename> class Map, typename T, typename... Args>
@@ -446,7 +463,7 @@ template<template<typename> class Map, typename, typename, typename = void>
 struct invoke_function_helper {};
 
 template<template<typename> class Map, typename T, typename... Args>
-struct invoke_function_helper<Map, T, meta_list<Args...>, enable_if_t<has_call_operator<T>::value>> {
+struct invoke_function_helper<Map, T, meta_list<Args...>, enable_if_t<has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>> {
 	using type = decltype(&T::operator());
 	using return_type = function_result_t<type>;
 	using argument_types = function_arguments_t<type>;

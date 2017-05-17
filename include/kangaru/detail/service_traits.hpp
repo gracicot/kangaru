@@ -415,9 +415,9 @@ struct has_callable_template_call<
 	enable_if_t<is_pointer_invokable<Map, T,
 
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-	decltype(&T::operator()<TArgs...>),
+	decltype(exact(&T::operator()<TArgs...>)),
 #else
-	decltype(&T::template operator()<TArgs...>),
+	decltype(exact(&T::template operator()<TArgs...>)),
 #endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	
 	Args...>::value>
@@ -444,9 +444,9 @@ struct get_template_call_helper<
 	enable_if_t<has_callable_template_call<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
 > {
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-	using type = decltype(&T::operator()<TArgs...>);
+	using type = decltype(exact(&T::operator()<TArgs...>));
 #else
-	using type = decltype(&T::template operator()<TArgs...>);
+	using type = decltype(exact(&T::template operator()<TArgs...>));
 #endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 };
 

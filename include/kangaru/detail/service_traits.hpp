@@ -509,7 +509,7 @@ struct is_invokable_helper {
 private:
 	template<std::size_t I, typename U>
 	struct expand {
-		using type = ServiceType<service_map_t<Map, invoke_function_argument_t<I, Map, U, Args...>>>;
+		using type = invoke_function_argument_t<I, Map, U, Args...>;
 	};
 
 	// This sub trait is for visual studio
@@ -528,8 +528,11 @@ private:
 	public:
 		static constexpr bool value = type::value;
 	};
+	
+	template<typename U>
+	using map_t = service_map_t<Map, U>;
 
-	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, typename expand<S, U>::type..., As...>::value, int> = 0>
+	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, ServiceType<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename...>

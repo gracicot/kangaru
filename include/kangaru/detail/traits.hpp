@@ -98,11 +98,22 @@ struct is_service : std::false_type {};
 template<typename T>
 struct is_service<T, enable_if_t<(!std::is_polymorphic<T>::value || std::is_abstract<T>::value) && has_forward<T>::value>> : std::true_type {};
 
-template<typename T, typename = void>
-struct has_construct : std::false_type {};
+// Here, usual traits using void_t don't quite work with visual studio for this particular case.
+template<typename T>
+struct has_construct_helper {
+private:
+	template<typename U, typename V = decltype(&U::construct)>
+	static std::true_type test(int);
+
+	template<typename>
+	static std::false_type test(...);
+
+public:
+	using type = decltype(test<T>(0));
+};
 
 template<typename T>
-struct has_construct<T, void_t<decltype(&T::construct)>> : std::true_type {};
+using has_construct = typename has_construct_helper<T>::type;
 
 template<typename T, typename = void>
 struct is_invoke_call : std::false_type {};

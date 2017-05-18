@@ -71,40 +71,7 @@ A "include kangaru" header file should look like this:
 
 // declare some needed macros
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
-
-namespace <your-namespace> {
-
-// declare the service map
-template<typename>
-struct ServiceMap;
-
-// specializing the service map for container services.
-
-template<> struct ServiceMap<kgr::Container&> : kgr::Map<kgr::ContainerService> {};
-template<> struct ServiceMap<kgr::Container> : kgr::Map<kgr::ForkService> {};
-
-// specializing the service map for operator services.
-
-template<template<typename> class Map>
-struct ServiceMap<kgr::Invoker<Map>> : kgr::Map<kgr::InvokerService<Map>> {};
-
-template<template<typename> class Map>
-struct ServiceMap<kgr::ForkedInvoker<Map>> : kgr::Map<kgr::ForkedInvokerService<Map>> {};
-
-template<typename T>
-struct ServiceMap<kgr::Generator<T>> : kgr::Map<kgr::GeneratorService<T>> {};
-
-template<typename T>
-struct ServiceMap<kgr::ForkedGenerator<T>> : kgr::Map<kgr::ForkedGeneratorService<T>> {};
-
-template<typename T>
-struct ServiceMap<kgr::Lazy<T>> : kgr::Map<kgr::LazyService<T>> {};
-
-template<typename T>
-struct ServiceMap<kgr::ForkedLazy<T>> : kgr::Map<kgr::ForkedLazyService<T>> {};
-
-} // <your-namespace>
 ```
 
 This will add a common point between your project and kangaru.
-Feel free to copy this header into your project. Just replace `<your-namespace>` by the name of your namespace and you are ready to hack!
+Feel free to copy this header into your project. Just place that header into your project and you are ready to hack!

@@ -81,7 +81,7 @@ int doThings(Notification n, FileManager& fm);
 
 int result = container.invoke<MyMap>(doThings);
 ```
-    
+
 With the service map, the container can even call function from third party libraries!
 
 ## Additional parameters
@@ -93,6 +93,20 @@ Here's an emaxple:
 int doThings(Notification n, FileManager& fm, int a, double b);
 
 int result = container.invoke(doThings, 7, 8.9);
+```
+
+C++14 generic lambda are also supported. The only restriction is that all `auto` must be at the end. Just like this:
+```c++
+auto doThings = [](Notification n, FileManager& fm, int a, auto b){};
+
+int result = container.invoke(doThings, 7, 8.9); // auto as been deduced to be `double`
+```
+
+This however, is not supported:
+```c++
+auto doThings = [](Notification n, FileManager& fm, auto a, double b){};
+
+int result = container.invoke(doThings, 7, 8.9); // error, not invokable
 ```
 
 [Next chapter: Operator services](section5_operator.md)

@@ -74,4 +74,4 @@ A "include kangaru" header file should look like this:
 ```
 
 This will add a common point between your project and kangaru.
-Feel free to copy this header into your project. Just place that header into your project and you are ready to hack!
+Feel free to copy this header into your project. Just replace the macro name to fit your needs and you're ready to hack!

@@ -27,11 +27,11 @@ using ForkService = FilteredForkService<All>;
 auto service_map(Container&&) -> ForkService;
 
 template<template<typename> class Map>
-struct InvokerService {
-	explicit InvokerService(in_place_t, Container& container) : _container{container} {}
+struct MappedInvokerService {
+	explicit MappedInvokerService(in_place_t, Container& container) : _container{container} {}
 	
-	Invoker<Map> forward() {
-		return Invoker<Map>{_container};
+	MappedInvoker<Map> forward() {
+		return MappedInvoker<Map>{_container};
 	}
 	
 	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
@@ -42,17 +42,17 @@ private:
 	Container& _container;
 };
 
-using DefaultInvokerService = InvokerService<kgr::AdlMap>;
+using InvokerService = MappedInvokerService<kgr::AdlMap>;
 
 template<template<typename> class Map>
-auto service_map(const Invoker<Map>&) -> InvokerService<Map>;
+auto service_map(const MappedInvoker<Map>&) -> MappedInvokerService<Map>;
 
 template<template<typename> class Map, typename Predicate = All>
-struct ForkedInvokerService {
-	explicit ForkedInvokerService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+struct ForkedMappedInvokerService {
+	explicit ForkedMappedInvokerService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
 	
-	ForkedInvoker<Map> forward() {
-		return ForkedInvoker<Map>{std::move(_container)};
+	ForkedMappedInvoker<Map> forward() {
+		return ForkedMappedInvoker<Map>{std::move(_container)};
 	}
 	
 	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
@@ -63,10 +63,10 @@ private:
 	Container _container;
 };
 
-using DefaultForkedInvokerService = ForkedInvokerService<kgr::AdlMap>;
+using ForkedInvokerService = ForkedMappedInvokerService<kgr::AdlMap>;
 
 template<template<typename> class Map>
-auto service_map(const ForkedInvoker<Map>&) -> ForkedInvokerService<Map>;
+auto service_map(const ForkedMappedInvoker<Map>&) -> ForkedMappedInvokerService<Map>;
 
 template<typename T>
 struct GeneratorService {

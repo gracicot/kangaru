@@ -22,30 +22,23 @@ template<typename, typename> struct autocall_function;
 
 } // namespace detail
 
-template<typename CRTP, typename Type>
-struct GenericService : detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type> {
+template<typename Type>
+struct GenericService : detail::GenericServiceDestruction<GenericService<Type>, Type> {
 	friend struct Container;
-	using Self = CRTP;
 	
 	GenericService() = default;
 	
-	GenericService(GenericService&& other) {
+	GenericService(GenericService&& other) noexcept {
 		emplace(std::move(other.instance()));
 	}
 	
-	GenericService& operator=(GenericService&& other) {
+	GenericService& operator=(GenericService&& other) noexcept {
 		emplace(std::move(other.instance()));
 		return *this;
 	}
 	
-	GenericService(const GenericService& other) {
-		emplace(other.instance());
-	}
-	
-	GenericService& operator=(const GenericService& other) {
-		emplace(other.instance());
-		return *this;
-	}
+	GenericService(const GenericService& other) = delete;
+	GenericService& operator=(const GenericService& other) = delete;
 	
 	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>::value, int> = 0>
 	GenericService(in_place_t, Args&&... args) {
@@ -62,9 +55,8 @@ protected:
 	}
 	
 private:
-	friend struct detail::GenericServiceDestruction<GenericService<CRTP, Type>, Type>;
+	friend struct detail::GenericServiceDestruction<GenericService<Type>, Type>;
 	template<typename, typename...> friend struct detail::has_emplace_helper;
-	template<typename, typename> friend struct detail::autocall_function;
 	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
@@ -76,9 +68,14 @@ private:
 		new (&_instance) Type{std::forward<Args>(args)...};
 	}
 	
+	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
+};
+
+template<typename CRTP>
+struct EnableAutoCall {
 	template<typename F, typename... Ts>
 	void autocall(Inject<Ts>... others) {
-		CRTP::call(instance(), F::value, std::forward<Inject<Ts>>(others).forward()...);
+		static_cast<CRTP*>(this)->call(F::value, std::forward<Inject<Ts>>(others).forward()...);
 	}
 	
 	template<typename F, template<typename> class Map>
@@ -89,11 +86,9 @@ private:
 	template<template<typename> class Map, typename F, std::size_t... S>
 	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
-			CRTP::call(instance(), F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
+			static_cast<CRTP*>(this)->call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
-	
-	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
 
 } // namespace kgr

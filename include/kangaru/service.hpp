@@ -16,11 +16,14 @@ template<typename, typename = Dependency<>>
 struct SingleService;
 
 template<typename Type, typename... Deps>
-struct SingleService<Type, Dependency<Deps...>> : GenericService<SingleService<Type, Dependency<Deps...>>, Type>, Single {
-	private: using Parent = GenericService<SingleService<Type, Dependency<Deps...>>, Type>;
+struct SingleService<Type, Dependency<Deps...>> : GenericService<Type>, EnableAutoCall<SingleService<Type, Dependency<Deps...>>>, Single {
+private:
+	using Parent = GenericService<Type>;
+	
+protected:
+	using Parent::instance;
 	
 public:
-	using typename Parent::Self;
 	using Parent::Parent;
 	
 	static auto construct(Inject<Deps>... deps) -> decltype(inject(deps.forward()...)) {
@@ -32,8 +35,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	static detail::function_result_t<T> call(Type& instance, T method, Args&&... args) {
-		return (instance.*method)(std::forward<Args>(args)...);
+	static detail::function_result_t<T> call(T method, Args&&... args) {
+		return (instance().*method)(std::forward<Args>(args)...);
 	}
 };
 
@@ -41,11 +44,14 @@ template<typename, typename = Dependency<>>
 struct Service;
 
 template<typename Type, typename... Deps>
-struct Service<Type, Dependency<Deps...>> : GenericService<Service<Type, Dependency<Deps...>>, Type> {
-	private: using Parent = GenericService<Service<Type, Dependency<Deps...>>, Type>;
+struct Service<Type, Dependency<Deps...>> : GenericService<Type>, EnableAutoCall<Service<Type, Dependency<Deps...>>> {
+private:
+	using Parent = GenericService<Type>;
+	
+protected:
+	using Parent::instance;
 	
 public:
-	using typename Parent::Self;
 	using Parent::Parent;
 	
 	template<typename... Args>
@@ -58,8 +64,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	static detail::function_result_t<T> call(Type& instance, T method, Args&&... args) {
-		return (instance.*method)(std::forward<Args>(args)...);
+	detail::function_result_t<T> call(T method, Args&&... args) {
+		return (instance().*method)(std::forward<Args>(args)...);
 	}
 };
 
@@ -67,11 +73,14 @@ template<typename, typename = Dependency<>>
 struct UniqueService;
 
 template<typename Type, typename... Deps>
-struct UniqueService<Type, Dependency<Deps...>> : GenericService<UniqueService<Type, Dependency<Deps...>>, std::unique_ptr<Type>> {
-	private: using Parent = GenericService<UniqueService<Type, Dependency<Deps...>>, std::unique_ptr<Type>>;
+struct UniqueService<Type, Dependency<Deps...>> : GenericService<std::unique_ptr<Type>>, EnableAutoCall<UniqueService<Type, Dependency<Deps...>>> {
+private:
+	using Parent = GenericService<std::unique_ptr<Type>>;
+	
+protected:
+	using Parent::instance;
 	
 public:
-	using typename Parent::Self;
 	using Parent::Parent;
 	
 	template<typename... Args>
@@ -85,8 +94,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	static detail::function_result_t<T> call(std::unique_ptr<Type>& instance, T method, Args&&... args) {
-		return ((*instance).*method)(std::forward<Args>(args)...);
+	detail::function_result_t<T> call(T method, Args&&... args) {
+		return (instance()->*method)(std::forward<Args>(args)...);
 	}
 };
 
@@ -94,11 +103,14 @@ template<typename, typename = Dependency<>>
 struct SharedService;
 
 template<typename Type, typename... Deps>
-struct SharedService<Type, Dependency<Deps...>> : GenericService<SharedService<Type, Dependency<Deps...>>, std::shared_ptr<Type>>, Single {
-	private: using Parent = GenericService<SharedService<Type, Dependency<Deps...>>, std::shared_ptr<Type>>;
+struct SharedService<Type, Dependency<Deps...>> : GenericService<std::shared_ptr<Type>>, EnableAutoCall<SharedService<Type, Dependency<Deps...>>>, Single {
+private:
+	using Parent = GenericService<std::shared_ptr<Type>>;
+	
+protected:
+	using Parent::instance;
 	
 public:
-	using typename Parent::Self;
 	using Parent::Parent;
 
 	static auto construct(Inject<Deps>... deps) -> decltype(inject(std::make_shared<Type>(deps.forward()...))) {
@@ -106,12 +118,12 @@ public:
 	}
 	
 	std::shared_ptr<Type> forward() {
-		return this->instance();
+		return instance();
 	}
 	
 	template<typename T, typename... Args>
-	static detail::function_result_t<T> call(std::shared_ptr<Type>& instance, T method, Args&&... args) {
-		return ((*instance).*method)(std::forward<Args>(args)...);
+	detail::function_result_t<T> call(T method, Args&&... args) {
+		return (instance()->*method)(std::forward<Args>(args)...);
 	}
 };
 

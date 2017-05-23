@@ -52,7 +52,7 @@ struct CandyFactory {
 	CandyFactory(
 		kgr::Generator<CaramelService> myCaramelGenerator,
 		kgr::Generator<kgr::LazyService<GummyBearService>> myGummyBearGenerator,
-		kgr::DefaultInvoker myInvoker
+		kgr::Invoker myInvoker
 	) : caramelGenerator{myCaramelGenerator},
 		gummyBearGenerator{myGummyBearGenerator},
 		invoker{myInvoker} {}
@@ -76,13 +76,13 @@ struct CandyFactory {
 private:
 	kgr::Generator<CaramelService> caramelGenerator;
 	kgr::Generator<kgr::LazyService<GummyBearService>> gummyBearGenerator;
-	kgr::DefaultInvoker invoker;
+	kgr::Invoker invoker;
 };
 
 struct CandyFactoryService : kgr::SingleService<CandyFactory, kgr::Dependency<
 	kgr::GeneratorService<CaramelService>,
 	kgr::GeneratorService<kgr::LazyService<GummyBearService>>,
-	kgr::DefaultInvokerService
+	kgr::InvokerService
 >> {};
 
 // a recepie

@@ -29,7 +29,7 @@ private:
 	using service_cont = std::unordered_map<type_id_t, void*>;
 	template<typename T> using contained_service_t = typename std::conditional<
 		detail::is_single<T>::value,
-		instance_ptr<detail::SingleInjected<T>>,
+		instance_ptr<detail::injected_concrete_t<T>>,
 		detail::Injected<T>>::type;
 	
 	template<typename T>
@@ -37,19 +37,27 @@ private:
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args>
-	static instance_ptr<detail::SingleInjected<T>> make_instance_ptr(Args&&... args) {
-		return instance_ptr<detail::SingleInjected<T>>{
-			new detail::SingleInjected<T>{std::forward<Args>(args)...},
-			&Container::deleter<detail::BaseInjected<T>>
+	template<typename T, typename... Args, disable_if<detail::is_virtual<T>> = 0>
+	static instance_ptr<detail::Injected<T>> make_instance_ptr(Args&&... args) {
+		return instance_ptr<detail::Injected<T>>{
+			new detail::Injected<T>{std::forward<Args>(args)...},
+			&Container::deleter<detail::Injected<T>>
+		};
+	}
+	
+	template<typename T, typename... Args, enable_if<detail::is_virtual<T>> = 0>
+	static instance_ptr<detail::VirtualInjected<T>> make_instance_ptr(Args&&... args) {
+		return instance_ptr<detail::VirtualInjected<T>>{
+			new detail::VirtualInjected<T>{std::forward<Args>(args)...},
+			&Container::deleter<detail::BaseVirtualInjected<T>>
 		};
 	}
 	
 	template<typename T, typename C, typename... Args>
-	static instance_ptr<detail::BaseInjected<C>> make_override_ptr(Args&&... args) {
+	static instance_ptr<detail::BaseVirtualInjected<C>> make_override_ptr(Args&&... args) {
 		return instance_ptr<detail::ServiceOverride<T, C>>{
 			new detail::ServiceOverride<T, C>{std::forward<Args>(args)...},
-			&Container::deleter<detail::BaseInjected<C>>
+			&Container::deleter<detail::BaseVirtualInjected<C>>
 		};
 	}
 	
@@ -233,7 +241,7 @@ private:
 	 * It also returns a reference to the constructed service.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_abstract_service<T>> = 0>
-	detail::BaseInjected<T>& save_new_instance(Args&&... args) {
+	detail::injected_wrapper_t<T>& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
 		
 		autocall(service.get());
@@ -249,7 +257,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
-	detail::BaseInjected<T>& save_new_instance(Args&&...) {
+		detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
 		throw std::out_of_range{"No instance found for the requested abstract service"};
 	}
 	
@@ -261,7 +269,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
-	detail::BaseInjected<T>& save_new_instance(Args&&...) {
+		detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
 		save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow
@@ -272,7 +280,7 @@ private:
 		);
 		
 		// This could be faster if we had access to instance of override services.
-		return *static_cast<detail::BaseInjected<T>*>(_services[type_id<T>]);
+		return *static_cast<detail::injected_wrapper_t<T>*>(_services[type_id<T>]);
 	}
 	
 	/*
@@ -281,7 +289,7 @@ private:
 	 * It will save the instance and will save overrides if any.
 	 */
 	template<typename T>
-	detail::SingleInjected<T>& save_instance(contained_service_t<T> service) {
+	detail::injected_concrete_t<T>& save_instance(contained_service_t<T> service) {
 		return save_instance<T>(detail::tuple_seq<detail::parent_types<T>>{}, std::move(service));
 	}
 	
@@ -290,7 +298,7 @@ private:
 	 * It starts the iteration that save each overrides and the service itself.
 	 */
 	template<typename T, std::size_t... S>
-	detail::SingleInjected<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
+	detail::injected_concrete_t<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
 		return save_instance_helper<T, detail::meta_list_element_t<S, detail::parent_types<T>>...>(std::move(service));
 	}
 	
@@ -299,9 +307,9 @@ private:
 	 * It also returns a reference to the instance inside the container.
 	 */
 	template<typename T>
-	detail::SingleInjected<T>& save_instance_helper(contained_service_t<T> service) {
+	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
 		auto& serviceRef = *service;
-		instance_ptr<detail::BaseInjected<T>> injectedTypeService = std::move(service);
+		instance_ptr<detail::injected_wrapper_t<T>> injectedTypeService = std::move(service);
 		
 		_services[type_id<T>] = injectedTypeService.get();
 		_instances.emplace_back(std::move(injectedTypeService));
@@ -315,12 +323,16 @@ private:
 	 * It will class save_instance_helper with one template argument as it's last iteration.
 	 */
 	template<typename T, typename Override, typename... Others>
-	detail::SingleInjected<T>& save_instance_helper(contained_service_t<T> service) {
+	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
 		auto overrideService = make_override_ptr<T, Override>(service->get());
 		
 		static_assert(
-			std::is_same<instance_ptr<detail::BaseInjected<Override>>, decltype(overrideService)>::value,
-			"the override service must be the type instance_ptr<detail::BaseInjected<Override>>"
+			std::is_same<instance_ptr<detail::BaseVirtualInjected<Override>>, decltype(overrideService)>::value,
+					  "The override service must be the type instance_ptr<detail::BaseInjected<Override>>"
+		);
+		
+		static_assert(detail::is_virtual<Override>::value,
+					  "The overriden service must be virtual. See dicumentation about kgr::Virtual"
 		);
 		
 		_services[type_id<Override>] = overrideService.get();
@@ -373,9 +385,9 @@ private:
 	 * This version of this function create the service if it was not created before.
 	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
-	detail::BaseInjected<T>& definition() {
+	detail::injected_wrapper_t<T>& definition() {
 		if (auto service = _services[type_id<T>]) {
-			return *static_cast<detail::BaseInjected<T>*>(service);
+			return *static_cast<detail::injected_wrapper_t<T>*>(service);
 		} else {
 			return save_new_instance<T>();
 		}

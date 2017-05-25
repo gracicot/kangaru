@@ -16,6 +16,7 @@ struct Single {
 };
 
 struct Abstract {};
+struct Virtual {};
 
 template<typename T>
 struct Default {
@@ -64,6 +65,9 @@ using is_abstract_service = std::integral_constant<bool, std::is_base_of<Abstrac
 
 template<typename T>
 using is_single = std::integral_constant<bool, std::is_base_of<Single, T>::value || is_abstract_service<T>::value>;
+
+template<typename T>
+using is_virtual = std::integral_constant<bool, is_abstract_service<T>::value ||std::is_base_of<Virtual, T>::value || (meta_list_size<parent_types<T>>::value > 0)>;
 
 template<typename Service, typename Overrider>
 using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;

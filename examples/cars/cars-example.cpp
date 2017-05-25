@@ -66,7 +66,7 @@ struct HondaHRVDiesel : HondaHRV {
 		HondaHRV{fuel} {}
 };
 
-struct FuelService           : kgr::SingleService<Fuel>, kgr::Virtual {};
+struct FuelService           : kgr::AbstractService<Fuel> {};
 struct PetrolService         : kgr::SingleService<Petrol>, kgr::Overrides<FuelService> {};
 struct PremiumPetrolService  : kgr::SingleService<PremiumPetrol> {};
 struct DieselService         : kgr::SingleService<Diesel> {};

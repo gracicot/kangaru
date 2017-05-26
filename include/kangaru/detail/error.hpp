@@ -74,6 +74,28 @@ struct ServiceError {
 		);
 	}
 	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		!is_override_virtual<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"An overriden service is not virtual, it therefore cannot be overriden."
+			"The overriden service should be abstract or extend kgr::Virtual."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		!is_override_virtual<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"An overriden service is not virtual, it therefore cannot be overriden."
+			"The overriden service should be abstract or extend kgr::Virtual."
+		);
+	}
+	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service>::value &&
@@ -95,6 +117,30 @@ struct ServiceError {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies injected type cannot be converted to one of it's overriding type. "
 			"Check if that service is overriding the right service and if types are compatible."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
+		!dependency_trait<is_override_virtual, Service>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies overrides a non-virtual service. "
+			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
+		!dependency_trait<is_override_virtual, Service, Arg, Args...>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies overrides a non-virtual service. "
+			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
 		);
 	}
 	

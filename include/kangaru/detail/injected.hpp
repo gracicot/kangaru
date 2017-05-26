@@ -116,7 +116,7 @@ using injected_argument_t = original_t<function_argument_t<n, F>>;
 
 template<typename T>
 using injected_wrapper_t = typename std::conditional<is_single<T>::value && is_virtual<T>::value,
-BaseVirtualInjected<T>, Injected<T>
+	BaseVirtualInjected<T>, Injected<T>
 >::type;
 
 template<typename T>

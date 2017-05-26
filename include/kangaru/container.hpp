@@ -333,7 +333,7 @@ private:
 		);
 		
 		static_assert(detail::is_virtual<Override>::value,
-					  "The overriden service must be virtual. See dicumentation about kgr::Virtual"
+					  "The overriden service must be virtual"
 		);
 		
 		_services[type_id<Override>] = overrideService.get();

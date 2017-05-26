@@ -325,6 +325,29 @@ using is_single_no_args = std::integral_constant<bool,
 >;
 
 template<typename T>
+struct is_override_virtual_helper {
+private:
+	// This is a workaround for msvc. Expansion in very complex expression
+	// leaves the compiler without clues about what's going on.
+	template<std::size_t I, typename U>
+	struct expander {
+		using type = is_virtual<meta_list_element_t<I, parent_types<U>>>;
+	};
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
+	static std::true_type test(seq<S...>);
+	
+public:
+	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
+};
+
+template<typename T>
+using is_override_virtual = typename is_override_virtual_helper<T>::type;
+
+template<typename T>
 struct is_default_overrides_abstract_helper {
 private:
 	template<typename>
@@ -376,6 +399,7 @@ using service_check = std::integral_constant<bool,
 	is_construct_function_callable<T, Args...>::value &&
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
+	is_override_virtual<T>::value &&
 	is_override_services<T>::value
 >;
 

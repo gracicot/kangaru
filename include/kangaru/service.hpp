@@ -16,7 +16,7 @@ template<typename, typename = Dependency<>>
 struct SingleService;
 
 template<typename Type, typename... Deps>
-struct SingleService<Type, Dependency<Deps...>> : GenericService<Type>, EnableAutoCall<SingleService<Type, Dependency<Deps...>>>, Single {
+struct SingleService<Type, Dependency<Deps...>> : GenericService<Type>, Single {
 private:
 	using Parent = GenericService<Type>;
 	
@@ -44,7 +44,7 @@ template<typename, typename = Dependency<>>
 struct Service;
 
 template<typename Type, typename... Deps>
-struct Service<Type, Dependency<Deps...>> : GenericService<Type>, EnableAutoCall<Service<Type, Dependency<Deps...>>> {
+struct Service<Type, Dependency<Deps...>> : GenericService<Type> {
 private:
 	using Parent = GenericService<Type>;
 	
@@ -73,7 +73,7 @@ template<typename, typename = Dependency<>>
 struct UniqueService;
 
 template<typename Type, typename... Deps>
-struct UniqueService<Type, Dependency<Deps...>> : GenericService<std::unique_ptr<Type>>, EnableAutoCall<UniqueService<Type, Dependency<Deps...>>> {
+struct UniqueService<Type, Dependency<Deps...>> : GenericService<std::unique_ptr<Type>> {
 private:
 	using Parent = GenericService<std::unique_ptr<Type>>;
 	
@@ -103,7 +103,7 @@ template<typename, typename = Dependency<>>
 struct SharedService;
 
 template<typename Type, typename... Deps>
-struct SharedService<Type, Dependency<Deps...>> : GenericService<std::shared_ptr<Type>>, EnableAutoCall<SharedService<Type, Dependency<Deps...>>>, Single {
+struct SharedService<Type, Dependency<Deps...>> : GenericService<std::shared_ptr<Type>>, Single {
 private:
 	using Parent = GenericService<std::shared_ptr<Type>>;
 	

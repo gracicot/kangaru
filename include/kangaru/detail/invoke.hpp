@@ -1,37 +1,12 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_HPP
 
-#include <type_traits>
 #include "meta_list.hpp"
 #include "utils.hpp"
 #include "traits.hpp"
 #include "injected.hpp"
 
 namespace kgr {
-
-struct Container;
-
-template<typename T, T t>
-using Method = std::integral_constant<T, t>;
-
-template<typename M, typename... Ps>
-struct Invoke : M {
-	using Parameters = detail::meta_list<Ps...>;
-};
-
-template<template<typename> class M, typename... Ts>
-struct AutoCall {
-	using Autocall = detail::meta_list<Ts...>;
-	
-	template<typename T>
-	using Map = M<T>;
-};
-
-template<typename... Ts>
-struct AutoCallNoMap {
-	using Autocall = detail::meta_list<Ts...>;
-};
-
 namespace detail {
 
 template<typename T, typename F>
@@ -43,16 +18,16 @@ private:
 	template<typename U, typename C>
 	struct get_member_autocall {
 		using type = std::integral_constant<
-			decltype(identity(&U::template autocall<C, U::template Map>)),
-			&U::template autocall<C, U::template Map>
+			decltype(identity(&U::template autocall<T, C, U::template Map>)),
+			&U::template autocall<T, C, U::template Map>
 		>;
 	};
 	
 	template<typename U, typename C, std::size_t... S>
 	struct get_invoke_autocall {
 		using type = std::integral_constant<
-			decltype(identity(&U::template autocall<C, detail::meta_list_element_t<S, typename C::Parameters>...>)),
-			&U::template autocall<C, detail::meta_list_element_t<S, typename C::Parameters>...>
+			decltype(identity(&U::template autocall<T, C, detail::meta_list_element_t<S, typename C::Parameters>...>)),
+			&U::template autocall<T, C, detail::meta_list_element_t<S, typename C::Parameters>...>
 		>;
 	};
 	

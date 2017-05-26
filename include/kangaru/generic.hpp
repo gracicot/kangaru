@@ -71,26 +71,6 @@ private:
 	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
 
-template<typename CRTP>
-struct EnableAutoCall {
-	template<typename F, typename... Ts>
-	void autocall(Inject<Ts>... others) {
-		static_cast<CRTP*>(this)->call(F::value, std::forward<Inject<Ts>>(others).forward()...);
-	}
-	
-	template<typename F, template<typename> class Map>
-	void autocall(Inject<ContainerService> cs) {
-		autocall<Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, std::move(cs));
-	}
-	
-	template<template<typename> class Map, typename F, std::size_t... S>
-	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
-		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
-			static_cast<CRTP*>(this)->call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
-		});
-	}
-};
-
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_GENERIC_HPP

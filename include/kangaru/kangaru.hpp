@@ -1,6 +1,7 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
 
+#include "autocall.hpp"
 #include "container.hpp"
 #include "generic.hpp"
 #include "operator.hpp"

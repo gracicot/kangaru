@@ -31,7 +31,7 @@ public:
 	}
 
 	Type& forward() {
-		return this->instance();
+		return instance();
 	}
 	
 	template<typename T, typename... Args>
@@ -60,7 +60,7 @@ public:
 	}
 
 	Type forward() {
-		return std::move(this->instance());
+		return std::move(instance());
 	}
 	
 	template<typename T, typename... Args>
@@ -90,7 +90,7 @@ public:
 	}
 	
 	std::unique_ptr<Type> forward() {
-		return std::move(this->instance());
+		return std::move(instance());
 	}
 	
 	template<typename T, typename... Args>

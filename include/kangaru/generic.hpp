@@ -18,8 +18,6 @@ struct GenericServiceDestruction {
 template<typename Generic, typename Type>
 struct GenericServiceDestruction<Generic, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
 
-template<typename, typename> struct autocall_function;
-
 } // namespace detail
 
 template<typename Type>

@@ -13,7 +13,6 @@ namespace detail {
 
 template<typename T, typename = void>
 struct BaseVirtualInjectedHelper {
-	virtual ~BaseVirtualInjectedHelper() = default;
 	kgr::detail::Sink forward();
 };
 

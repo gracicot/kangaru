@@ -20,10 +20,10 @@ struct Amp {
 };
 
 struct Guitar {
-	Guitar(Amp myAmp) : amp{myAmp} {};
+	Guitar(Amp myAmp, std::string myModel) : amp{myAmp}, model{std::move(myModel)} {};
 	
-	string model;
 	Amp amp;
+	string model;
 };
 
 struct Studio {
@@ -36,14 +36,15 @@ struct Studio {
 	string name;
 };
 
-// This is our service definitions
 struct AmpService : kgr::Service<Amp> {
+	// Here we override the construct function. We are injecting a int into our Amp type.
 	static auto construct() -> decltype(kgr::inject(std::declval<int>())) {
 		static int watts = 0;
 		return kgr::inject(watts += 48);
 	}
 };
 
+// Other service definitions
 struct GuitarService : kgr::Service<Guitar, kgr::Dependency<AmpService>> {};
 struct StudioService : kgr::SingleService<Studio> {};
 
@@ -53,19 +54,21 @@ int main()
 	
 	container.service<StudioService>().name = "The Music Box";
 	
-	auto guitar1 = container.service<GuitarService>();
-	auto guitar2 = container.service<GuitarService>();
-	auto guitar3 = container.service<GuitarService>();
-	
-	guitar1.model = "Gibson";
-	guitar2.model = "Fender";
-	guitar3.model = "Ibanez";
+	// Here we are sending an additional argument to the constructor.
+	// As you can see, the Guitar constructor takes a string as second argument.
+	auto guitar1 = container.service<GuitarService>("Gibson");
+	auto guitar2 = container.service<GuitarService>("Fender");
+	auto guitar3 = container.service<GuitarService>("Ibanez");
 	
 	auto& studio = container.service<StudioService>();
 	
+	// Output:
+	// The studio "The Music Box" records a Gibson with a 48 watt amp.
 	studio.record(guitar1);
-	studio.record(guitar2);
-	studio.record(guitar3);
 	
-	return 0;
+	// The studio "The Music Box" records a Fender with a 96 watt amp.
+	studio.record(guitar2);
+	
+	// The studio "The Music Box" records a Ibanez with a 144 watt amp.
+	studio.record(guitar3);
 }

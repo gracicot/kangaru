@@ -153,6 +153,4 @@ int main()
 	std::shared_ptr<Baker> baker = container.service<BakerService>();
 	
 	bakery.start(baker);
-	
-	return 0;
 }

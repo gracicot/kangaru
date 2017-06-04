@@ -129,6 +129,4 @@ int main()
 	double result = container.invoke(washMonitorAndKeyboard);
 	
 	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
-	
-	return 0;
 }

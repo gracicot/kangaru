@@ -81,6 +81,4 @@ int main()
 	// Will print: No planks left, no product made.
 	// As a result, product3 is not made.
 	gerald.makeProduct("table");
-	
-	return 0;
 }

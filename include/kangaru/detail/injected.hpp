@@ -4,8 +4,6 @@
 #include "utils.hpp"
 #include "single.hpp"
 #include "traits.hpp"
-#include "single.hpp"
-#include "service_storage.hpp"
 
 namespace kgr {
 
@@ -115,23 +113,15 @@ using original_t = typename original<T>::type;
 template<std::size_t n, typename F>
 using injected_argument_t = original_t<function_argument_t<n, F>>;
 
-// This helps simplifying symbols
 template<typename T>
-struct injected_wrapper : std::conditional<is_single<T>::value && is_virtual<T>::value,
+using injected_wrapper_t = typename std::conditional<is_single<T>::value && is_virtual<T>::value,
 	BaseVirtualInjected<T>, Injected<T>
-> {};
+>::type;
 
 template<typename T>
-struct injected_concrete : std::conditional<is_single<T>::value && is_virtual<T>::value,
+using injected_concrete_t = typename std::conditional<is_single<T>::value && is_virtual<T>::value,
 	VirtualInjected<T>, Injected<T>
-> {};
-
-template<typename T>
-using injected_wrapper_t = typename injected_wrapper<T>::type;
-
-template<typename T>
-using injected_concrete_t = typename injected_concrete<T>::type;
-
+>::type;
 
 } // namespace detail
 

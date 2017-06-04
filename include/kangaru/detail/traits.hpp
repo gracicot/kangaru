@@ -170,6 +170,12 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
+template<typename T>
+using is_service_embeddable = std::integral_constant<bool,
+	std::is_trivially_destructible<T>::value &&
+	sizeof(T) <= sizeof(void*) && alignof(T) <= alignof(void*)
+>;
+
 template<typename T, typename... Args>
 using has_emplace = typename has_emplace_helper<T, Args...>::type;
 

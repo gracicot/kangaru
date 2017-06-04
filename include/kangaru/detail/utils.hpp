@@ -6,9 +6,6 @@
 namespace kgr {
 namespace detail {
 
-constexpr std::size_t service_storage_size = sizeof(void*);
-constexpr std::size_t service_storage_alignement = alignof(void*);
-
 struct no_autocall_t {};
 
 template<typename, typename = void>
@@ -18,9 +15,6 @@ template<typename T>
 struct ServiceTypeHelper<T, decltype(void(std::declval<T>().forward()))> {
 	using type = decltype(std::declval<T>().forward());
 };
-
-template<typename>
-struct type_wrapper {};
 
 } // namespace detail
 

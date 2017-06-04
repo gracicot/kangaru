@@ -8,7 +8,6 @@
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
 #include "detail/exception.hpp"
-#include "detail/service_storage.hpp"
 #include "detail/injected.hpp"
 #include "detail/error.hpp"
 #include "predicate.hpp"
@@ -28,48 +27,37 @@ private:
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
 	using instance_cont = std::vector<instance_ptr<void>>;
-	using service_cont = std::unordered_map<type_id_t, detail::ServiceStorage>;
+	using service_cont = std::unordered_map<type_id_t, void*>;
 	template<typename T> using contained_service_t = typename std::conditional<
 		detail::is_single<T>::value,
-		typename std::conditional<
-			detail::is_service_embeddable<T>::value,
-			detail::injected_concrete_t<T>*,
-			instance_ptr<detail::injected_concrete_t<T>>
-		>::type,
-		detail::Injected<T>
-	>::type;
+		instance_ptr<detail::injected_concrete_t<T>>,
+		detail::Injected<T>>::type;
 	
 	template<typename T>
 	static void deleter(void* i) {
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if<detail::is_service_embeddable<T>> = 0>
-	contained_service_t<T> make_instance_ptr(Args&&... args) {
-		auto service = _services.emplace(
-			std::piecewise_construct,
-			std::make_tuple(type_id<T>),
-			std::forward_as_tuple(
-				detail::type_wrapper<detail::injected_concrete_t<T>>{},
-				std::forward<Args>(args)...
-			)
-		);
-		
-		return &service.first->second.template get<detail::injected_concrete_t<T>>();
-	}
-	
-	template<typename T, typename... Args, disable_if<detail::is_service_embeddable<T>> = 0>
-	static contained_service_t<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<detail::injected_concrete_t<T>>{
-			new detail::injected_concrete_t<T>{std::forward<Args>(args)...},
-			&Container::deleter<detail::injected_wrapper_t<T>>
+	template<typename T, typename... Args, disable_if<detail::is_virtual<T>> = 0>
+	static instance_ptr<detail::Injected<T>> make_instance_ptr(Args&&... args) {
+		return instance_ptr<detail::Injected<T>>{
+			new detail::Injected<T>{std::forward<Args>(args)...},
+			&Container::deleter<detail::Injected<T>>
 		};
 	}
 	
-	template<typename T, typename C>
-	static instance_ptr<detail::BaseVirtualInjected<C>> make_override_ptr(T& override) {
+	template<typename T, typename... Args, enable_if<detail::is_virtual<T>> = 0>
+	static instance_ptr<detail::VirtualInjected<T>> make_instance_ptr(Args&&... args) {
+		return instance_ptr<detail::VirtualInjected<T>>{
+			new detail::VirtualInjected<T>{std::forward<Args>(args)...},
+			&Container::deleter<detail::BaseVirtualInjected<T>>
+		};
+	}
+	
+	template<typename T, typename C, typename... Args>
+	static instance_ptr<detail::BaseVirtualInjected<C>> make_override_ptr(Args&&... args) {
 		return instance_ptr<detail::ServiceOverride<T, C>>{
-			new detail::ServiceOverride<T, C>{override},
+			new detail::ServiceOverride<T, C>{std::forward<Args>(args)...},
 			&Container::deleter<detail::BaseVirtualInjected<C>>
 		};
 	}
@@ -292,10 +280,8 @@ private:
 			"The default service type of an abstract service must override that abstract serivce."
 		);
 		
-		auto service = _services.find(type_id<T>);
-		
 		// This could be faster if we had access to instance of override services.
-		return service->second.template get<detail::injected_wrapper_t<T>>();
+		return *static_cast<detail::injected_wrapper_t<T>*>(_services[type_id<T>]);
 	}
 	
 	/*
@@ -321,28 +307,12 @@ private:
 	 * This function save the instance into the container.
 	 * It also returns a reference to the instance inside the container.
 	 */
-	template<typename T, enable_if<detail::is_service_embeddable<T>> = 0>
-	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
-		return *service;
-	}
-	
-	/*
-	 * This function save the instance into the container.
-	 * It also returns a reference to the instance inside the container.
-	 */
-	template<typename T, disable_if<detail::is_service_embeddable<T>> = 0>
+	template<typename T>
 	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
 		auto& serviceRef = *service;
 		instance_ptr<detail::injected_wrapper_t<T>> injectedTypeService = std::move(service);
 		
-		auto it = _services.find(type_id<T>);
-		
-		if (it == _services.end()) {
-			_services.emplace(type_id<T>, service.get());
-		} else {
-			it->second.pointer = service.get();
-		}
-		
+		_services[type_id<T>] = injectedTypeService.get();
 		_instances.emplace_back(std::move(injectedTypeService));
 		
 		return serviceRef;
@@ -359,21 +329,14 @@ private:
 		
 		static_assert(
 			std::is_same<instance_ptr<detail::BaseVirtualInjected<Override>>, decltype(overrideService)>::value,
-			"The override service must be the type instance_ptr<detail::BaseVirtualInjected<Override>>"
+			"The override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
 		static_assert(detail::is_virtual<Override>::value,
 			"The overriden service must be virtual"
 		);
 		
-		auto it = _services.find(type_id<Override>);
-		
-		if (it == _services.end()) {
-			_services.emplace(type_id<Override>, overrideService.get());
-		} else {
-			it->second.pointer = overrideService.get();
-		}
-		
+		_services[type_id<Override>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
 		
 		return save_instance_helper<T, Others...>(std::move(service));
@@ -424,9 +387,8 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
 	detail::injected_wrapper_t<T>& definition() {
-		auto service = _services.find(type_id<T>);
-		if (service != _services.end()) {
-			return service->second.template get<detail::injected_wrapper_t<T>>();
+		if (auto service = _services[type_id<T>]) {
+			return *static_cast<detail::injected_wrapper_t<T>*>(service);
 		} else {
 			return save_new_instance<T>();
 		}

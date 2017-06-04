@@ -112,6 +112,4 @@ int main()
 	// The trickster will show "It's doing lava tricks!"
 	// because LavaWand is overriding FireWand.
 	fireMage.doTrick();
-	
-	return 0;
 }

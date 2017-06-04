@@ -53,6 +53,4 @@ int main()
 	printer1.print();
 	printer2.print();
 	printer3.print();
-	
-	return 0;
 }

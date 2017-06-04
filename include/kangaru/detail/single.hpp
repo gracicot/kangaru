@@ -72,6 +72,12 @@ using is_virtual = std::integral_constant<bool, is_abstract_service<T>::value ||
 template<typename Service, typename Overrider>
 using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;
 
+template<typename T>
+using is_service_embeddable = std::integral_constant<bool,
+	std::is_trivially_destructible<T>::value && !is_virtual<T>::value &&
+	sizeof(T) <= service_storage_size && alignof(T) <= service_storage_alignement
+>;
+
 } // namespace detail
 } // namespace kgr
 

@@ -61,4 +61,4 @@ feel free to contribute!
  * Testing with multiple / virtual inheritance
  * Unit tests
  * Better messages for compile-time errors (ongoing)
- * Service sources, [more detail here](https://github.com/gracicot/kangaru/issues/41)
+ * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)

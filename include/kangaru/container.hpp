@@ -288,7 +288,6 @@ private:
 	
 	/*
 	 * This function will save the instance sent as arguments.
-	 * It receive a service that overrides.
 	 * It will save the instance and will save overrides if any.
 	 */
 	template<typename T>
@@ -297,8 +296,8 @@ private:
 	}
 	
 	/*
+	 * This function implements the logic to save a service in the container.
 	 * This function saves the instance and it's overrides if any.
-	 * It starts the iteration that save each overrides and the service itself.
 	 */
 	template<typename T, std::size_t... S>
 	detail::injected_concrete_t<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
@@ -492,7 +491,10 @@ private:
 	 */
 	template<template<typename> class Map, typename U, typename... Args, std::size_t... S>
 	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(
+			mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()...,
+			std::forward<Args>(args)...
+		);
 	}
 	
 	/*

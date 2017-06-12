@@ -39,9 +39,6 @@ constexpr detail::no_autocall_t no_autocall{};
 
 namespace detail {
 
-template<template<typename> class Map, typename T>
-using service_map_t = typename Map<T>::Service;
-
 template<typename T>
 struct is_map : std::false_type {};
 

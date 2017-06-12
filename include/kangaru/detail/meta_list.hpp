@@ -35,6 +35,18 @@ struct meta_list_contains<T, meta_list<Head, Tail...>> : meta_list_contains<T, m
 template <typename T, typename... Tail>
 struct meta_list_contains<T, meta_list<T, Tail...>> : std::true_type {};
 
+template <typename, typename>
+struct meta_list_unique;
+
+template <typename T>
+struct meta_list_unique<T, meta_list<>> : std::false_type {};
+
+template <typename T, typename Head, typename... Tail>
+struct meta_list_unique<T, meta_list<Head, Tail...>> : meta_list_unique<T, meta_list<Tail...>> {};
+
+template <typename T, typename... Tail>
+struct meta_list_unique<T, meta_list<T, Tail...>> : std::integral_constant<bool, !meta_list_contains<T, meta_list<Tail...>>::value> {};
+
 template <typename>
 struct meta_list_size;
 

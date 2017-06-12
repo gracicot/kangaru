@@ -12,17 +12,17 @@ namespace kgr {
 namespace detail {
 
 struct AutoCallBase {
-	template<typename T, typename F, typename... Ts>
+	template<typename T, typename F, typename... Ts, int_t<enable_if_t<!is_map<F>::value>, enable_if_t<!is_map<Ts>::value>...> = 0>
 	void autocall(Inject<Ts>... others) {
 		static_cast<T*>(this)->call(F::value, std::forward<Inject<Ts>>(others).forward()...);
 	}
 	
-	template<typename T, typename F, template<typename> class Map>
+	template<typename T, typename F, typename Map, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
 	void autocall(Inject<ContainerService> cs) {
 		autocall<T, Map, F>(detail::tuple_seq<detail::function_arguments_t<typename F::value_type>>{}, std::move(cs));
 	}
 	
-	template<typename T, template<typename> class Map, typename F, std::size_t... S>
+	template<typename T, typename Map, typename F, std::size_t... S, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
 	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
 			static_cast<T*>(this)->call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
@@ -40,17 +40,18 @@ struct Invoke : M {
 	using Parameters = detail::meta_list<Ps...>;
 };
 
-template<template<typename> class M, typename... Ts>
+template<typename... Ts>
 struct AutoCall : detail::AutoCallBase {
 	using Autocall = detail::meta_list<Ts...>;
 	
-	template<typename T>
-	using Map = M<T>;
+	using Map = kgr::Map<>;
 };
 
-template<typename... Ts>
-struct AutoCallNoMap : detail::AutoCallBase {
+template<typename... Maps, typename... Ts>
+struct AutoCall<kgr::Map<Maps...>, Ts...> : detail::AutoCallBase {
 	using Autocall = detail::meta_list<Ts...>;
+	
+	using Map = kgr::Map<Maps...>;
 };
 
 } // namespace kgr

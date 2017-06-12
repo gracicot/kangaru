@@ -128,12 +128,6 @@ struct is_invoke_call<T, void_t<typename T::Parameters>> : std::true_type {};
 template<typename T, typename F>
 using is_member_autocall = std::integral_constant<bool, !is_invoke_call<F>::value>;
 
-template<template<typename> class Map, typename T, typename = void>
-struct is_complete_map : std::false_type {};
-
-template<template<typename> class Map, typename T>
-struct is_complete_map<Map, T, void_t<typename Map<T>::Service>> : std::true_type {};
-
 struct Sink {
 	constexpr Sink() = default;
 	

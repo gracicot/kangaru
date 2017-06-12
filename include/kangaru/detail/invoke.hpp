@@ -2,12 +2,14 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_HPP
 
 #include "meta_list.hpp"
+#include "service_map.hpp"
 #include "utils.hpp"
 #include "traits.hpp"
 #include "injected.hpp"
 
 namespace kgr {
 namespace detail {
+
 
 template<typename T, typename F>
 struct autocall_function {
@@ -18,8 +20,8 @@ private:
 	template<typename U, typename C>
 	struct get_member_autocall {
 		using type = std::integral_constant<
-			decltype(identity(&U::template autocall<T, C, U::template Map>)),
-			&U::template autocall<T, C, U::template Map>
+			decltype(identity(&U::template autocall<T, C, typename U::Map>)),
+			&U::template autocall<T, C, typename U::Map>
 		>;
 	};
 	
@@ -57,14 +59,14 @@ struct autocall_arguments<T, F, enable_if_t<is_invoke_call<F>::value>> {
 template<typename T, typename F>
 struct autocall_arguments<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
 private:
-	template<template<typename> class Map>
+	template<typename Map>
 	struct mapped_type {
 		template<typename U>
 		using map = service_map_t<Map, U>;
 	};
 	
 public:
-	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type<T::template Map>::template map>;
+	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type<typename T::Map>::template map>;
 };
 
 template<typename T, typename F>
@@ -84,23 +86,7 @@ using is_valid_autocall_function = std::integral_constant<bool,
 	is_invoke_call<F>::value || is_member_autocall<T, F>::value
 >;
 
-template<typename, typename = void>
-struct map_entry {};
-
-template<typename P>
-struct map_entry<P, enable_if_t<is_service<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> {
-	using Service = decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
-};
-
-template<typename P>
-struct map_entry<P, enable_if_t<is_service<decltype(service_map(std::declval<P>()))>::value>> {
-	using Service = decltype(service_map(std::declval<P>()));
-};
-
 } // namespace detail
-
-template<typename P>
-struct AdlMap : detail::map_entry<P> {};
 
 } // namespace kgr
 

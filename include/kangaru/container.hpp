@@ -128,7 +128,9 @@ public:
 	 * Args are additional arguments to be sent to the function after services arguments.
 	 * This function will deduce arguments from the function signature.
 	 */
-	template<template<typename> class Map = AdlMap, typename U, typename... Args, enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
+	template<typename Map = kgr::Map<>, typename U, typename... Args,
+		enable_if<detail::is_map<Map>> = 0,
+		enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
 	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke(U&& function, Args&&... args) {
 		return invoke_helper<Map>(
 			detail::tuple_seq_minus<detail::invoke_function_arguments_t<Map, detail::decay_t<U>, Args...>, sizeof...(Args)>{},
@@ -141,7 +143,7 @@ public:
 	 * This function returns the result of the callable object of type U.
 	 * This version of the function is called when `function` is not invokable to provide diagnostic.
 	 */
-	template<template<typename> class Map>
+	template<typename Map>
 	detail::Sink invoke(detail::NotInvokableError = {}, ...) = delete;
 	
 	/*
@@ -151,6 +153,7 @@ public:
 	 */
 	template<typename... Services, typename U, typename... Args, detail::int_t<
 		enable_if<detail::is_service_valid<Services>>...,
+		disable_if<detail::is_map<Services>>...,
 		detail::enable_if_t<(sizeof...(Services) > 0)>> = 0>
 	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
@@ -346,7 +349,7 @@ private:
 	 * This function call service using the service map.
 	 * This function is called when the service map `Map` is valid for a given `T`
 	 */
-	template<template<typename> class Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
+	template<typename Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
 	auto mapped_service() -> decltype(service<detail::service_map_t<Map, T>>()) {
 		return service<detail::service_map_t<Map, T>>();
 	}
@@ -484,7 +487,7 @@ private:
 	 * This function is an helper for the public invoke function.
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
-	template<template<typename> class Map, typename U, typename... Args, std::size_t... S>
+	template<typename Map, typename U, typename... Args, std::size_t... S>
 	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
 		return std::forward<U>(function)(
 			mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()...,

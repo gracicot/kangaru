@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_TRAITS_HPP
 
 #include "traits.hpp"
+#include "service_map.hpp"
 #include "single.hpp"
 #include "injected.hpp"
 #include "invoke.hpp"
@@ -413,7 +414,7 @@ using dependency_check = std::integral_constant<bool,
 	dependency_trait<is_override_services, T, Args...>::value
 >;
 
-template<template<typename> class Map, typename T, typename P, typename... Args>
+template<typename Map, typename T, typename P, typename... Args>
 struct is_pointer_invokable_helper {
 private:
 	template<typename U, typename V, typename... As, std::size_t... S, int_t<
@@ -427,13 +428,13 @@ public:
 	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}));
 };
 
-template<template<typename> class Map, typename T, typename P, typename... Args>
+template<typename Map, typename T, typename P, typename... Args>
 struct is_pointer_invokable : is_pointer_invokable_helper<Map, T, P, Args...>::type {};
 
-template<template<typename> class, typename, typename, typename, typename = void>
+template<typename, typename, typename, typename, typename = void>
 struct has_callable_template_call : std::false_type {};
 
-template<template<typename> class Map, typename T, typename... TArgs, typename... Args>
+template<typename Map, typename T, typename... TArgs, typename... Args>
 struct has_callable_template_call<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<is_pointer_invokable<Map, T,
@@ -447,22 +448,22 @@ struct has_callable_template_call<
 	Args...>::value>
 > : std::true_type {};
 
-template<template<typename> class, typename, typename, typename, typename = void>
+template<typename, typename, typename, typename, typename = void>
 struct get_template_call_helper;
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct get_template_call_helper<
 	Map, T, meta_list<>, meta_list<Args...>,
 	enable_if_t<!has_callable_template_call<Map, T, meta_list<>, meta_list<Args...>>::value>
 > {};
 
-template<template<typename> class Map, typename T, typename Head, typename... Tail, typename... Args>
+template<typename Map, typename T, typename Head, typename... Tail, typename... Args>
 struct get_template_call_helper<
 	Map, T, meta_list<Head, Tail...>, meta_list<Args...>,
 	enable_if_t<!has_callable_template_call<Map, T, meta_list<Head, Tail...>, meta_list<Args...>>::value>
 > : get_template_call_helper<Map, T, meta_list<Tail...>, meta_list<Args...>> {};
 
-template<template<typename> class Map, typename T, typename... TArgs, typename... Args>
+template<typename Map, typename T, typename... TArgs, typename... Args>
 struct get_template_call_helper<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<has_callable_template_call<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
@@ -474,19 +475,19 @@ struct get_template_call_helper<
 #endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 using get_template_call = get_template_call_helper<Map, T, meta_list<Args...>, meta_list<Args...>>;
 
-template<template<typename> class, typename, typename, typename = void>
+template<typename, typename, typename, typename = void>
 struct has_template_call_operator : std::false_type {};
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct has_template_call_operator<Map, T, meta_list<Args...>, void_t<typename get_template_call<Map, T, Args...>::type>> : std::true_type {};
 
-template<template<typename> class Map, typename, typename, typename = void>
+template<typename, typename, typename, typename = void>
 struct invoke_function_helper {};
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<Map, T, meta_list<Args...>, enable_if_t<has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>> {
 	using type = decltype(&T::operator());
 	using return_type = function_result_t<type>;
@@ -494,7 +495,7 @@ struct invoke_function_helper<Map, T, meta_list<Args...>, enable_if_t<has_call_o
 	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<Map, T, meta_list<Args...>, void_t<function_result_t<T>, enable_if_t<!has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>>> {
 	using type = T;
 	using return_type = function_result_t<type>;
@@ -502,7 +503,7 @@ struct invoke_function_helper<Map, T, meta_list<Args...>, void_t<function_result
 	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
 	enable_if_t<!has_call_operator<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
@@ -513,22 +514,22 @@ struct invoke_function_helper<
 	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct invoke_function : invoke_function_helper<Map, T, meta_list<Args...>> {};
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 using invoke_function_t = typename invoke_function<Map, T, Args...>::type;
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 using invoke_function_arguments_t = typename invoke_function<Map, T, Args...>::argument_types;
 
-template<std::size_t n, template<typename> class Map, typename T, typename... Args>
+template<std::size_t n, typename Map, typename T, typename... Args>
 using invoke_function_argument_t = typename invoke_function<Map, T, Args...>::template argument_type<n>;
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 using invoke_function_result_t = typename invoke_function<Map, T, Args...>::return_type;
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct is_invokable_helper {
 private:
 	template<std::size_t I, typename U>
@@ -572,7 +573,7 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};
 
 template<template<typename...> class Trait, typename T>
@@ -616,12 +617,12 @@ private:
 	template<typename>
 	static std::false_type test_helper(...);
 	
-	template<template<typename> class Map, typename U, typename C, std::size_t... S, int_t<
+	template<typename Map, typename U, typename C, std::size_t... S, int_t<
 		service_map_t<Map, meta_list_element_t<S, function_arguments_t<typename C::value_type>>>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename U, typename C>
-	static decltype(test_helper<U::template Map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	static decltype(test_helper<typename U::Map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
 	
 public:
 	using type = decltype(test<T, F>(0));
@@ -672,7 +673,7 @@ private:
 	static decltype(test_helper<U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
 	
 public:
-	using type = decltype(test<T, F>(0));
+	using type = decltype(test_helper<T, F>(tuple_seq<function_arguments_t<typename F::value_type>>{}));
 };
 
 template<typename T, typename F>
@@ -690,7 +691,7 @@ struct is_service_valid : std::integral_constant<bool,
 	dependency_trait<is_autocall_valid, T, Args...>::value
 > {};
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid_helper {
 private:
 	template<typename U, std::size_t I>
@@ -717,10 +718,10 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid : is_invoke_service_valid_helper<Map, T, Args...>::type {};
 
-template<template<typename> class Map, typename T, typename... Args>
+template<typename Map, typename T, typename... Args>
 using is_invoke_valid = std::integral_constant<bool,
 	is_invoke_service_valid<Map, T, Args...>::value &&
 	is_invokable<Map, T, Args...>::value

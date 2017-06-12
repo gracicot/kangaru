@@ -7,7 +7,7 @@
 namespace kgr {
 namespace detail {
 
-template<typename CRTP, template<typename> class Map>
+template<typename CRTP, typename Map>
 struct InvokerBase {
 	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
 	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
@@ -35,7 +35,7 @@ struct GeneratorBase {
 
 } // namespace detail
 
-template<template<typename> class Map>
+template<typename Map>
 struct MappedInvoker : detail::InvokerBase<MappedInvoker<Map>, Map> {
 	explicit MappedInvoker(Container& container) : _container{&container} {}
 	
@@ -52,9 +52,9 @@ private:
 	kgr::Container* _container;
 };
 
-using Invoker = MappedInvoker<kgr::AdlMap>;
+using Invoker = MappedInvoker<kgr::Map<>>;
 
-template<template<typename> class Map>
+template<typename Map>
 struct ForkedMappedInvoker : detail::InvokerBase<ForkedMappedInvoker<Map>, Map> {
 	explicit ForkedMappedInvoker(Container container) : _container{std::move(container)} {}
 	
@@ -71,7 +71,7 @@ private:
 	kgr::Container _container;
 };
 
-using ForkedInvoker = ForkedMappedInvoker<kgr::AdlMap>;
+using ForkedInvoker = ForkedMappedInvoker<kgr::Map<>>;
 
 template<typename T>
 struct Generator : detail::GeneratorBase<Generator<T>, T> {

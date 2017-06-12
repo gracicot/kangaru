@@ -26,7 +26,7 @@ using ForkService = FilteredForkService<All>;
 
 auto service_map(Container&&) -> ForkService;
 
-template<template<typename> class Map>
+template<typename Map>
 struct MappedInvokerService {
 	explicit MappedInvokerService(in_place_t, Container& container) : _container{container} {}
 	
@@ -42,12 +42,12 @@ private:
 	Container& _container;
 };
 
-using InvokerService = MappedInvokerService<kgr::AdlMap>;
+using InvokerService = MappedInvokerService<kgr::Map<>>;
 
-template<template<typename> class Map>
+template<typename Map>
 auto service_map(const MappedInvoker<Map>&) -> MappedInvokerService<Map>;
 
-template<template<typename> class Map, typename Predicate = All>
+template<typename Map, typename Predicate = All>
 struct ForkedMappedInvokerService {
 	explicit ForkedMappedInvokerService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
 	
@@ -63,9 +63,9 @@ private:
 	Container _container;
 };
 
-using ForkedInvokerService = ForkedMappedInvokerService<kgr::AdlMap>;
+using ForkedInvokerService = ForkedMappedInvokerService<kgr::Map<>>;
 
-template<template<typename> class Map>
+template<typename Map>
 auto service_map(const ForkedMappedInvoker<Map>&) -> ForkedMappedInvokerService<Map>;
 
 template<typename T>

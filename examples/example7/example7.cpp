@@ -77,7 +77,7 @@ struct SpeakersService : kgr::SingleService<Speakers> {};
 
 struct MinimalComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>> {};
 
-struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<kgr::AdlMap,
+struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<
 	METHOD(&Computer::setMonitor),
 	METHOD(&Computer::setAccessories)
 > {};

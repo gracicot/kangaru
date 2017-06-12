@@ -32,6 +32,7 @@ private:
 		detail::is_single<T>::value,
 		instance_ptr<detail::injected_concrete_t<T>>,
 		detail::Injected<T>>::type;
+	using unpack = int[];
 	
 	template<typename T>
 	static void deleter(void* i) {
@@ -101,7 +102,7 @@ public:
 	}
 	
 	/*
-	 * This function returns the service given by serivce definition T.
+	 * This function returns the service given by service definition T.
 	 * T must be a valid service and must be constructible with arguments passed as parameters
 	 * In case of a non-single service, it takes additional arguments to be sent to the T::construct function.
 	 * T must not be a polymorphic type.
@@ -278,7 +279,7 @@ private:
 		// a call to this function where the default service don't overrides T, it would be UB.
 		static_assert(
 			detail::is_overriden_by<T, detail::default_type<T>>::value,
-			"The default service type of an abstract service must override that abstract serivce."
+			"The default service type of an abstract service must override that abstract service."
 		);
 		
 		// This could be faster if we had access to instance of override services.
@@ -301,16 +302,14 @@ private:
 	 */
 	template<typename T, std::size_t... S>
 	detail::injected_concrete_t<T>& save_instance(detail::seq<S...>, contained_service_t<T> service) {
-		return save_instance_helper<T, detail::meta_list_element_t<S, detail::parent_types<T>>...>(std::move(service));
-	}
-	
-	/*
-	 * This function save the instance into the container.
-	 * It also returns a reference to the instance inside the container.
-	 */
-	template<typename T>
-	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
 		auto& serviceRef = *service;
+		
+		// This codes loop over S to expand to enclosed code for each values of S.
+		(void)unpack{(
+			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
+		, 0)..., 0};
+		
+		// We need this line to downcast service into it's abstract wrapper.
 		instance_ptr<detail::injected_wrapper_t<T>> injectedTypeService = std::move(service);
 		
 		_services[type_id<T>] = injectedTypeService.get();
@@ -321,26 +320,28 @@ private:
 	
 	/*
 	 * This function is the iteration that saves overrides to the container.
-	 * It will call itself until there is no override left.
-	 * It will class save_instance_helper with one template argument as it's last iteration.
+	 * It will be called as many times as there's overrides to save.
 	 */
-	template<typename T, typename Override, typename... Others>
-	detail::injected_concrete_t<T>& save_instance_helper(contained_service_t<T> service) {
-		auto overrideService = make_override_ptr<T, Override>(service->get());
+	template<typename Override, typename T>
+	void save_override(T& service) {
+		auto overrideService = make_override_ptr<T, Override>(service);
 		
 		static_assert(
 			std::is_same<instance_ptr<detail::BaseVirtualInjected<Override>>, decltype(overrideService)>::value,
 			"The override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
+<<<<<<< HEAD
 		static_assert(detail::is_virtual<Override>::value,
+=======
+		static_assert(
+			detail::is_virtual<Override>::value,
+>>>>>>> Clenup save overrides calls
 			"The overriden service must be virtual"
 		);
 		
 		_services[type_id<Override>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
-		
-		return save_instance_helper<T, Others...>(std::move(service));
 	}
 	
 	///////////////////////
@@ -534,7 +535,6 @@ private:
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
 	void autocall(detail::seq<S...>, T&& service) {
 		using U = detail::decay_t<T>;
-		using unpack = int[];
 		
 		(void)unpack{(invoke_autocall(
 			detail::function_seq<detail::autocall_nth_function_t<U, S>>{}, std::forward<T>(service), detail::autocall_nth_function<U, S>::value

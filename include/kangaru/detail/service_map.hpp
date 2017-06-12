@@ -19,11 +19,8 @@ struct map_entry<kgr::Map<Maps...>, P, enable_if_t<is_service<decltype(service_m
 	using Service = decltype(service_map(std::declval<P>()));
 };
 
-template<typename Map, typename P>
-struct AdlMap : detail::map_entry<Map, P> {};
-
 template<typename Map, typename T>
-using service_map_t = typename AdlMap<Map, T>::Service;
+using service_map_t = typename map_entry<Map, T>::Service;
 
 template<typename Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};

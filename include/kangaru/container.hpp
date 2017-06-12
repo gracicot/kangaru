@@ -7,6 +7,7 @@
 #include "detail/container_service.hpp"
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
+#include "detail/exception.hpp"
 #include "detail/injected.hpp"
 #include "detail/error.hpp"
 #include "predicate.hpp"
@@ -258,8 +259,8 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
-		detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
-		throw std::out_of_range{"No instance found for the requested abstract service"};
+	detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
+		throw AbstractNotFound{};
 	}
 	
 	/*
@@ -270,7 +271,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
-		detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
+	detail::injected_wrapper_t<T>& save_new_instance(Args&&...) {
 		save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow

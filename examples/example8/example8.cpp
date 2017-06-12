@@ -115,6 +115,4 @@ int main() {
 	// > GummyBear made
 	// > A sweet recepie mixing Caramel and GummyBear completed
 	candyFactory.mix(recepie);
-	
-	return 0;
 }

@@ -10,7 +10,6 @@
 namespace kgr {
 namespace detail {
 
-
 template<typename T, typename F>
 struct autocall_function {
 private:

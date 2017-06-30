@@ -8,23 +8,23 @@ namespace debug {
 
 template<typename T, typename U, typename... Args>
 auto service(U&& u, Args&&...) -> detail::enable_if_t<std::is_constructible<detail::ServiceError<T, Args...>, U>::value> {
-	detail::ServiceError<T, Args...> error{std::forward<U>(u)};
-	
-	static_cast<void>(error);
+	(void) detail::ServiceError<T, Args...> {std::forward<U>(u)};
 }
 
 template<typename T, typename U, typename... Args>
-auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detail::ServiceError<T, Args...>, U>::value> = delete;
-
-template<typename T>
-auto service() -> detail::enable_if_t<std::is_default_constructible<detail::ServiceError<T>>::value> {
-	detail::ServiceError<T> error{};
-	
-	static_cast<void>(error);
+auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detail::ServiceError<T, Args...>, U>::value> {
+	static_assert(detail::false_t<T>::value, "No error detected.");
 }
 
 template<typename T>
-auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::ServiceError<T>>::value> = delete;
+auto service() -> detail::enable_if_t<std::is_default_constructible<detail::ServiceError<T>>::value> {
+	(void) detail::ServiceError<T> {};
+}
+
+template<typename T>
+auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::ServiceError<T>>::value> {
+	static_assert(detail::false_t<T>::value, "No error detected.");
+}
 
 }
 }

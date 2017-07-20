@@ -279,8 +279,7 @@ private:
 		
 		// The static assert is still required here, if other checks fails and allow
 		// a call to this function where the default service don't overrides T, it would be UB.
-		static_assert(
-			detail::is_overriden_by<T, detail::default_type<T>>::value,
+		static_assert(detail::is_overriden_by<T, detail::default_type<T>>::value,
 			"The default service type of an abstract service must override that abstract service."
 		);
 		
@@ -327,8 +326,7 @@ private:
 	void save_override(T& service) {
 		auto overrideService = make_override_ptr<T, Override>(service);
 		
-		static_assert(
-			std::is_same<instance_ptr<detail::BaseVirtualInjected<Override>>, decltype(overrideService)>::value,
+		static_assert(std::is_same<instance_ptr<detail::BaseVirtualInjected<Override>>, decltype(overrideService)>::value,
 			"The override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
@@ -523,20 +521,18 @@ private:
 	/*
 	 * This function starts the iteration (autocall_helper).
 	 */
-	template<typename T, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
-	void autocall(T&& service) {
-		autocall(detail::tuple_seq<typename detail::decay_t<T>::Autocall>{}, std::forward<T>(service));
+	template<typename T, enable_if<detail::has_autocall<T>> = 0>
+	void autocall(T& service) {
+		autocall(detail::tuple_seq<typename detail::decay_t<T>::Autocall>{}, service);
 	}
 	
 	/*
 	 * This function is the iteration for autocall.
 	 */
-	template<typename T, std::size_t... S, enable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
-	void autocall(detail::seq<S...>, T&& service) {
-		using U = detail::decay_t<T>;
-		
+	template<typename T, std::size_t... S, enable_if<detail::has_autocall<T>> = 0>
+	void autocall(detail::seq<S...>, T& service) {
 		(void)unpack{(invoke_autocall(
-			detail::function_seq<detail::autocall_nth_function_t<U, S>>{}, std::forward<T>(service), detail::autocall_nth_function<U, S>::value
+			detail::function_seq<detail::autocall_nth_function_t<T, S>>{}, service, detail::autocall_nth_function<T, S>::value
 		), 0)..., 0};
 	}
 	
@@ -545,9 +541,9 @@ private:
 	 * It invokes the function sent as parameter.
 	 */
 	template<typename T, typename F, std::size_t... S>
-	void invoke_autocall(detail::seq<S...>, T&& service, F&& function) {
-		invoke_raw([&service, &function](detail::function_argument_t<S, detail::decay_t<F>>... args) {
-			(std::forward<T>(service).*std::forward<F>(function))(std::forward<decltype(args)>(args)...);
+	void invoke_autocall(detail::seq<S...>, T& service, F function) {
+		invoke_raw([&service, &function](detail::function_argument_t<S, F>... args) {
+			(service.*function)(std::forward<decltype(args)>(args)...);
 		});
 	}
 	

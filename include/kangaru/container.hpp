@@ -477,7 +477,10 @@ private:
 	 */
 	template<template<typename> class Map, typename U, typename... Args, std::size_t... S>
 	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(
+			mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()...,
+			std::forward<Args>(args)...
+		);
 	}
 	
 	/*

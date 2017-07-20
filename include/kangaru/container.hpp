@@ -151,7 +151,6 @@ public:
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
-
 	template<typename... Services, typename U, typename... Args, detail::int_t<
 		enable_if<detail::is_service_valid<Services>>...,
 		disable_if<detail::is_map<Services>>...,

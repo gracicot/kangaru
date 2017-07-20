@@ -13,7 +13,7 @@ auto service(U&& u, Args&&...) -> detail::enable_if_t<std::is_constructible<deta
 
 template<typename T, typename U, typename... Args>
 auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detail::ServiceError<T, Args...>, U>::value> {
-	static_assert(detail::false_t<T>::value, "No error detected.");
+	static_assert(detail::false_t<T>::value, "No known error detected.");
 }
 
 template<typename T>
@@ -23,7 +23,7 @@ auto service() -> detail::enable_if_t<std::is_default_constructible<detail::Serv
 
 template<typename T>
 auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::ServiceError<T>>::value> {
-	static_assert(detail::false_t<T>::value, "No error detected.");
+	static_assert(detail::false_t<T>::value, "No known error detected.");
 }
 
 }

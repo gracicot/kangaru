@@ -333,12 +333,7 @@ private:
 			"The override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
-<<<<<<< HEAD
 		static_assert(detail::is_virtual<Override>::value,
-=======
-		static_assert(
-			detail::is_virtual<Override>::value,
->>>>>>> Clenup save overrides calls
 			"The overriden service must be virtual"
 		);
 		

@@ -180,18 +180,14 @@ using is_construct_function_callable = is_construct_function_callable_helper<T, 
 
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {
-	template<typename U, std::size_t I>
+	template<typename U, std::size_t I, typename... As>
 	struct expand {
-		using type = Trait<injected_argument_t<I, construct_function_t<U, Args...>>>;
-	};
-	template<typename U, typename... As>
-	struct expand_has_construct {
-		constexpr static bool value = has_any_construct<U, As... >::value;
+		using type = Trait<injected_argument_t<I, construct_function_t<U, As...>>>;
 	};
 
 	template<typename U, typename... As, std::size_t... S, int_t<
 		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
-		enable_if_t<expand<U, S>::type::value>...> = 0>
+		enable_if_t<expand<U, S, As...>::type::value>...> = 0>
 	static std::true_type test(seq<S...>);
 	
 	template<typename U, typename... As, enable_if_t<!has_any_construct<U, As... >::value, int> = 0>
@@ -203,7 +199,7 @@ struct dependency_trait_helper {
 	template<typename...>
 	static std::false_type test_helper(...);
 	
-	template<typename U, typename... As, enable_if_t<has_any_construct<U, As... >::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<has_any_construct<U, As...>::value, int> = 0, int_t<construct_function_t<U, As...>> = 0>
 	static decltype(test<U, As...>(tuple_seq_minus<function_arguments_t<construct_function_t<U, As...>>, sizeof...(As)>{})) test_helper(int);
 	
 public:

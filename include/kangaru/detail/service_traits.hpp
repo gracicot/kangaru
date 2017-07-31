@@ -8,16 +8,12 @@
 #include "invoke.hpp"
 #include "container_service.hpp"
 #include "construct_function.hpp"
+#include "override_traits.hpp"
+#include "invoke_function.hpp"
 
 #ifdef _MSC_VER
 #ifndef __clang__
 #define KGR_KANGARU_MSVC_NO_AUTOCALL_MAP_CHECK
-#endif // !__clang__
-#endif // _MSC_VER
-
-#if _MSC_VER == 1900
-#ifndef __clang__
-#define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 #endif // !__clang__
 #endif // _MSC_VER
 
@@ -30,11 +26,7 @@ struct dependency_trait_helper {
 	struct expand {
 		using type = Trait<injected_argument_t<I, construct_function_t<U, Args...>>>;
 	};
-	template<typename U, typename... As>
-	struct expand_has_construct {
-		constexpr static bool value = has_any_construct<U, As... >::value;
-	};
-
+	
 	template<typename U, typename... As, std::size_t... S, int_t<
 		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
 		enable_if_t<expand<U, S>::type::value>...> = 0>
@@ -92,144 +84,10 @@ public:
 template<typename T, typename... Args>
 using is_service_constructible = typename is_service_constructible_helper<T, Args...>::type;
 
-template<typename T>
-struct is_override_service_helper {
-private:
-	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
-	static std::true_type test(seq<S...>);
-	
-public:
-	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
-};
-
-template<typename T>
-using is_override_service = typename is_override_service_helper<T>::type;
-
-template<typename T>
-struct is_override_convertible_helper {
-private:
-	// This is a workaround for msvc. Expansion in very complex expression
-	// leaves the compiler without clues about what's going on.
-	template<std::size_t I, typename U>
-	struct expander {
-		using type = is_explicitly_convertible<ServiceType<U>, ServiceType<meta_list_element_t<I, parent_types<U>>>>;
-	};
-
-	template<typename...>
-	static std::false_type test(...);
-
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
-	static decltype(test_helper<U>(seq<S...>{})) test(seq<S...>);
-	
-public:
-	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
-};
-
-template<typename T>
-using is_override_convertible = typename is_override_convertible_helper<T>::type;
-
-template<typename T>
-struct is_override_services_helper {
-private:
-	// This is a workaround for msvc. Expansion in very complex expression
-	// leaves the compiler without clues about what's going on.
-	template<std::size_t I, typename U>
-	struct expander {
-		using type = is_service<meta_list_element_t<I, parent_types<U>>>;
-	};
-	template<typename...>
-	static std::false_type test(...);
-
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
-	static decltype(test_helper<U>(seq<S...>{})) test(seq<S...>);
-	
-public:
-	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
-};
-
-template<typename T>
-using is_override_services = typename is_override_services_helper<T>::type;
-
 template<typename T, typename... Args>
 using is_single_no_args = std::integral_constant<bool,
 	!is_single<T>::value || meta_list_empty<meta_list<Args...>>::value
 >;
-
-template<typename T>
-struct is_override_virtual_helper {
-private:
-	// This is a workaround for msvc. Expansion in very complex expression
-	// leaves the compiler without clues about what's going on.
-	template<std::size_t I, typename U>
-	struct expander {
-		using type = is_virtual<meta_list_element_t<I, parent_types<U>>>;
-	};
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<expander<S, U>::type::value>...> = 0>
-	static std::true_type test(seq<S...>);
-	
-public:
-	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
-};
-
-template<typename T>
-using is_override_virtual = typename is_override_virtual_helper<T>::type;
-
-template<typename T>
-struct is_default_overrides_abstract_helper {
-private:
-	template<typename>
-	static std::false_type test(...);
-	
-	template<typename U, enable_if_t<has_default<U>::value && is_abstract_service<U>::value, int> = 0>
-	static is_overriden_by<U, default_type<U>> test(int);
-	
-	template<typename U, enable_if_t<!has_default<U>::value, int> = 0>
-	static std::true_type test(int);
-	
-public:
-	using type = decltype(test<T>(0));
-};
-
-template<typename T>
-using is_default_overrides_abstract = typename is_default_overrides_abstract_helper<T>::type;
-
-template<typename T>
-struct is_default_convertible_helper {
-private:
-	template<typename>
-	static std::false_type test(...);
-	
-	template<typename U, enable_if_t<has_default<U>::value, int> = 0>
-	static is_explicitly_convertible<ServiceType<default_type<U>>, ServiceType<U>> test(int);
-	
-	template<typename U, enable_if_t<!has_default<U>::value, int> = 0>
-	static std::true_type test(int);
-	
-public:
-	using type = decltype(test<T>(0));
-};
-
-template<typename T>
-using is_default_convertible = typename is_default_convertible_helper<T>::type;
 
 template<typename T>
 using is_default_service_valid = std::integral_constant<bool,
@@ -258,181 +116,6 @@ using dependency_check = std::integral_constant<bool,
 	dependency_trait<is_override_convertible, T, Args...>::value &&
 	dependency_trait<is_override_services, T, Args...>::value
 >;
-
-template<typename Map, typename T, typename P, typename... Args>
-struct is_pointer_invokable_helper {
-private:
-	template<typename U, typename V, typename... As, std::size_t... S, int_t<decltype(
-		(std::declval<U>().*std::declval<V>())(
-			std::declval<ServiceType<service_map_t<Map, function_argument_t<S, V>>>>()...,
-			std::declval<As>()...
-		)
-	)> = 0>
-	static std::true_type test(seq<S...>);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}));
-};
-
-template<typename Map, typename T, typename P, typename... Args>
-struct is_pointer_invokable : is_pointer_invokable_helper<Map, T, P, Args...>::type {};
-
-template<typename, typename, typename, typename, typename = void>
-struct has_callable_template_call : std::false_type {};
-
-template<typename Map, typename T, typename... TArgs, typename... Args>
-struct has_callable_template_call<
-	Map, T, meta_list<TArgs...>, meta_list<Args...>,
-	enable_if_t<is_pointer_invokable<Map, T,
-
-#ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-	decltype(exact(&T::operator()<TArgs...>)),
-#else
-	decltype(exact(&T::template operator()<TArgs...>)),
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-	
-	Args...>::value>
-> : std::true_type {};
-
-template<typename, typename, typename, typename, typename = void>
-struct get_template_call_helper;
-
-template<typename Map, typename T, typename... Args>
-struct get_template_call_helper<
-	Map, T, meta_list<>, meta_list<Args...>,
-	enable_if_t<!has_callable_template_call<Map, T, meta_list<>, meta_list<Args...>>::value>
-> {};
-
-template<typename Map, typename T, typename Head, typename... Tail, typename... Args>
-struct get_template_call_helper<
-	Map, T, meta_list<Head, Tail...>, meta_list<Args...>,
-	enable_if_t<!has_callable_template_call<Map, T, meta_list<Head, Tail...>, meta_list<Args...>>::value>
-> : get_template_call_helper<Map, T, meta_list<Tail...>, meta_list<Args...>> {};
-
-template<typename Map, typename T, typename... TArgs, typename... Args>
-struct get_template_call_helper<
-	Map, T, meta_list<TArgs...>, meta_list<Args...>,
-	enable_if_t<has_callable_template_call<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
-> {
-#ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-	using type = decltype(exact(&T::operator()<TArgs...>));
-#else
-	using type = decltype(exact(&T::template operator()<TArgs...>));
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-};
-
-template<typename Map, typename T, typename... Args>
-using get_template_call = get_template_call_helper<Map, T, meta_list<Args...>, meta_list<Args...>>;
-
-template<typename, typename, typename, typename = void>
-struct has_template_call_operator : std::false_type {};
-
-template<typename Map, typename T, typename... Args>
-struct has_template_call_operator<Map, T, meta_list<Args...>, void_t<typename get_template_call<Map, T, Args...>::type>> : std::true_type {};
-
-template<typename, typename, typename, typename = void>
-struct invoke_function_helper {};
-
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	enable_if_t<has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-> {
-	using type = decltype(&T::operator());
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
-
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	void_t<
-		function_result_t<T>,
-		enable_if_t<!has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-	>
-> {
-	using type = T;
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
-
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	enable_if_t<!has_call_operator<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
-> {
-	using type = typename get_template_call<Map, T, Args...>::type;
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
-
-template<typename Map, typename T, typename... Args>
-struct invoke_function : invoke_function_helper<Map, T, meta_list<Args...>> {};
-
-template<typename Map, typename T, typename... Args>
-using invoke_function_t = typename invoke_function<Map, T, Args...>::type;
-
-template<typename Map, typename T, typename... Args>
-using invoke_function_arguments_t = typename invoke_function<Map, T, Args...>::argument_types;
-
-template<std::size_t n, typename Map, typename T, typename... Args>
-using invoke_function_argument_t = typename invoke_function<Map, T, Args...>::template argument_type<n>;
-
-template<typename Map, typename T, typename... Args>
-using invoke_function_result_t = typename invoke_function<Map, T, Args...>::return_type;
-
-template<typename Map, typename T, typename... Args>
-struct is_invokable_helper {
-private:
-	template<std::size_t I, typename U>
-	struct expand {
-		using type = invoke_function_argument_t<I, Map, U, Args...>;
-	};
-
-	// This sub trait is for visual studio
-	// The constraint can be simplified because every argument are simple template argument
-	template<typename U, typename... As>
-	struct call_test {
-	private:
-		template<typename...>
-		static std::false_type test(...);
-
-		template<typename V, typename... A2s, int_t<decltype(std::declval<V>()(std::declval<A2s>()...))> = 0>
-		static std::true_type test(int);
-
-		using type = decltype(test<U, As...>(0));
-		
-	public:
-		static constexpr bool value = type::value;
-	};
-	
-	template<typename U>
-	using map_t = service_map_t<Map, U>;
-
-	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, ServiceType<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, typename... As>
-	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(Args)>{})) test(int);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(0));
-};
-
-template<typename Map, typename T, typename... Args>
-struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};
 
 template<template<typename...> class Trait, typename T>
 struct autocall_trait_helper {

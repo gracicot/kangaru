@@ -9,6 +9,9 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Trait that check if the service definition can be constructed given the return type of it's construct function.
+ */
 template<typename T, typename... Args>
 struct is_service_constructible_helper {
 private:
@@ -39,9 +42,15 @@ public:
 	using type = decltype(test_helper<T, Args...>(0));
 };
 
+/*
+ * Alias for is_service_constructible_helper
+ */
 template<typename T, typename... Args>
 using is_service_constructible = typename is_service_constructible_helper<T, Args...>::type;
 
+/*
+ * Meta trait that applies a trait recursively for each dependencies and thier dependencies.
+ */
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {
 	template<typename U, std::size_t I>
@@ -70,9 +79,15 @@ public:
 	using type = decltype(test_helper<T, Args...>(0));
 };
 
+/*
+ * Alias for dependency_trait_helper
+ */
 template<template<typename...> class Trait, typename T, typename... Args>
 using dependency_trait = typename dependency_trait_helper<Trait, T, Args...>::type;
 
+/*
+ * Validity check for default services
+ */
 template<typename T>
 using is_default_service_valid = std::integral_constant<bool,
 	(is_abstract_service<T>::value || !has_default<T>::value) &&
@@ -80,6 +95,9 @@ using is_default_service_valid = std::integral_constant<bool,
 	is_default_convertible<T>::value
 >;
 
+/*
+ * Validity check for a service, without it's dependencies
+ */
 template<typename T, typename... Args>
 using service_check = std::integral_constant<bool, 
 	is_service<T>::value &&
@@ -91,6 +109,9 @@ using service_check = std::integral_constant<bool,
 	is_override_services<T>::value
 >;
 
+/*
+ * Validity check for dependencies of a service
+ */
 template<typename T, typename... Args>
 using dependency_check = std::integral_constant<bool, 
 	dependency_trait<is_service, T, Args...>::value &&

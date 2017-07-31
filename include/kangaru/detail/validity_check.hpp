@@ -9,11 +9,17 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Check if a call for kgr::Container::service has no arguments in the case of a single service
+ */
 template<typename T, typename... Args>
 using is_single_no_args = std::integral_constant<bool,
 	!is_single<T>::value || meta_list_empty<meta_list<Args...>>::value
 >;
 
+/*
+ * Complete validity check for a particlar service and all it's properties
+ */
 template<typename T, typename... Args>
 struct is_service_valid : std::integral_constant<bool,
 	is_single_no_args<T, Args...>::value &&
@@ -23,6 +29,9 @@ struct is_service_valid : std::integral_constant<bool,
 	dependency_trait<is_autocall_valid, T, Args...>::value
 > {};
 
+/*
+ * Trait that check if a function is invocable, and all it's injected arguments are valid.
+ */
 template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid_helper {
 private:
@@ -50,9 +59,15 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
+/*
+ * Alias for is_invoke_service_valid_helper
+ */
 template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid : is_invoke_service_valid_helper<Map, T, Args...>::type {};
 
+/*
+ * Validity check for a invoke expression
+ */
 template<typename Map, typename T, typename... Args>
 using is_invoke_valid = std::integral_constant<bool,
 	is_invoke_service_valid<Map, T, Args...>::value &&

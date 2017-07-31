@@ -38,7 +38,7 @@ struct VirtualInjected final {
 	
 private:
 	void* _service;
-	forward_ptr<T> _forward;;
+	forward_ptr<T> _forward;
 };
 
 template<typename>

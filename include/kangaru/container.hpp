@@ -2,7 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP
 
 #include "detail/traits.hpp"
-#include "detail/service_traits.hpp"
+#include "detail/validity_check.hpp"
 #include "detail/utils.hpp"
 #include "detail/container_service.hpp"
 #include "detail/invoke.hpp"

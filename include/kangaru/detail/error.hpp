@@ -3,7 +3,8 @@
 
 #include "traits.hpp"
 #include "single.hpp"
-#include "service_traits.hpp"
+#include "service_check.hpp"
+#include "autocall_traits.hpp"
 
 namespace kgr {
 namespace detail {

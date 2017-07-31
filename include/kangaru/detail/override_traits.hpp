@@ -7,22 +7,10 @@
 namespace kgr {
 namespace detail {
 
-template<typename T>
-struct is_override_service_helper {
-private:
-	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename U, std::size_t... S, int_t<enable_if_t<is_service<meta_list_element_t<S, parent_types<U>>>::value>...> = 0>
-	static std::true_type test(seq<S...>);
-	
-public:
-	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
-};
-
-template<typename T>
-using is_override_service = typename is_override_service_helper<T>::type;
-
+/*
+ * Trait that check if the service type returned by
+ * overrides service definitions can be converted to the service type of the service T definition.
+ */
 template<typename T>
 struct is_override_convertible_helper {
 private:
@@ -49,9 +37,15 @@ public:
 	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
 };
 
+/*
+ * Alias for is_override_convertible_helper
+ */
 template<typename T>
 using is_override_convertible = typename is_override_convertible_helper<T>::type;
 
+/*
+ * Trait that check if all types specified in overrides are services
+ */
 template<typename T>
 struct is_override_services_helper {
 private:
@@ -78,9 +72,15 @@ public:
 	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
 };
 
+/*
+ * Alias for is_override_services_helper
+ */
 template<typename T>
 using is_override_services = typename is_override_services_helper<T>::type;
 
+/*
+ * Trait that check if all overriden services are virtual
+ */
 template<typename T>
 struct is_override_virtual_helper {
 private:
@@ -101,9 +101,15 @@ public:
 	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
 };
 
+/*
+ * Alias for is_override_virtual_helper
+ */
 template<typename T>
 using is_override_virtual = typename is_override_virtual_helper<T>::type;
 
+/*
+ * Trait that check if the default service of an abstract service overrides that abstract service
+ */
 template<typename T>
 struct is_default_overrides_abstract_helper {
 private:
@@ -120,9 +126,15 @@ public:
 	using type = decltype(test<T>(0));
 };
 
+/*
+ * Alias for is_default_overrides_abstract_helper
+ */
 template<typename T>
 using is_default_overrides_abstract = typename is_default_overrides_abstract_helper<T>::type;
 
+/*
+ * Trait that check if the default service type is convertible to the abstract service type.
+ */
 template<typename T>
 struct is_default_convertible_helper {
 private:
@@ -139,6 +151,9 @@ public:
 	using type = decltype(test<T>(0));
 };
 
+/*
+ * Alias for is_default_convertible_helper
+ */
 template<typename T>
 using is_default_convertible = typename is_default_convertible_helper<T>::type;
 

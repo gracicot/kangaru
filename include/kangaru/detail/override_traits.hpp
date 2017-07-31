@@ -1,6 +1,9 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_OVERRIDE_TRAITS_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_OVERRIDE_TRAITS_HPP
 
+#include "traits.hpp"
+#include "meta_list.hpp"
+
 namespace kgr {
 namespace detail {
 
@@ -58,6 +61,7 @@ private:
 	struct expander {
 		using type = is_service<meta_list_element_t<I, parent_types<U>>>;
 	};
+	
 	template<typename...>
 	static std::false_type test(...);
 

@@ -361,63 +361,6 @@ private:
 	}
 	
 	///////////////////////
-	//      service      //
-	///////////////////////
-	
-	/*
-	 * This function call service using the service map.
-	 * This function is called when the service map `Map` is valid for a given `T`
-	 */
-	template<typename Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
-	auto mapped_service() -> decltype(service<detail::service_map_t<Map, T>>()) {
-		return service<detail::service_map_t<Map, T>>();
-	}
-	
-	///////////////////////
-	//    definition     //
-	///////////////////////
-	
-	/*
-	 * This function returns a service definition.
-	 * This version of this function create the service each time it is called.
-	 */
-	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition(Args&&... args) {
-		auto service = make_service_instance<T>(std::forward<Args>(args)...);
-		
-		autocall(service);
-		
-		return detail::injected_wrapper<T>{std::move(service)};
-	}
-	
-	/*
-	 * This function returns a service definition.
-	 * This version of this function is specific to a container service.
-	 */
-	template<typename T, enable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition() {
-		return detail::injected_wrapper<T>{T{*this}};
-	}
-	
-	/*
-	 * This function returns a service definition.
-	 * This version of this function create the service if it was not created before.
-	 * It is called when getting a service definition for a single, non virtual service
-	 */
-	template<typename T,
-		enable_if<detail::is_single<T>> = 0,
-		disable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition() {
-		auto service = _services[type_id<T>];
-		
-		if (service.first) {
-			return make_wrapper<T>(service);
-		} else {
-			return detail::injected_wrapper<T>(save_new_instance<T>());
-		}
-	}
-	
-	///////////////////////
 	//   make instance   //
 	///////////////////////
 	
@@ -501,6 +444,63 @@ private:
 		service.emplace(std::forward<Args>(args)...);
 		
 		return service;
+	}
+	
+	///////////////////////
+	//      service      //
+	///////////////////////
+	
+	/*
+	 * This function call service using the service map.
+	 * This function is called when the service map `Map` is valid for a given `T`
+	 */
+	template<typename Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
+	auto mapped_service() -> decltype(service<detail::service_map_t<Map, T>>()) {
+		return service<detail::service_map_t<Map, T>>();
+	}
+	
+	///////////////////////
+	//    definition     //
+	///////////////////////
+	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function create the service each time it is called.
+	 */
+	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
+	detail::injected_wrapper<T> definition(Args&&... args) {
+		auto service = make_service_instance<T>(std::forward<Args>(args)...);
+		
+		autocall(service);
+		
+		return detail::injected_wrapper<T>{std::move(service)};
+	}
+	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function is specific to a container service.
+	 */
+	template<typename T, enable_if<detail::is_container_service<T>> = 0>
+	detail::injected_wrapper<T> definition() {
+		return detail::injected_wrapper<T>{T{*this}};
+	}
+	
+	/*
+	 * This function returns a service definition.
+	 * This version of this function create the service if it was not created before.
+	 * It is called when getting a service definition for a single, non virtual service
+	 */
+	template<typename T,
+		enable_if<detail::is_single<T>> = 0,
+		disable_if<detail::is_container_service<T>> = 0>
+	detail::injected_wrapper<T> definition() {
+		auto service = _services[type_id<T>];
+		
+		if (service.first) {
+			return make_wrapper<T>(service);
+		} else {
+			return detail::injected_wrapper<T>(save_new_instance<T>());
+		}
 	}
 	
 	///////////////////////

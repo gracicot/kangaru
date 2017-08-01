@@ -499,7 +499,7 @@ private:
 		if (service.first) {
 			return make_wrapper<T>(service);
 		} else {
-			return detail::injected_wrapper<T>(save_new_instance<T>());
+			return detail::injected_wrapper<T>{save_new_instance<T>()};
 		}
 	}
 	

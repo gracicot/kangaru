@@ -3,6 +3,7 @@
 
 #include "meta_list.hpp"
 #include "traits.hpp"
+#include "service_map.hpp"
 #include "invoke.hpp"
 #include "service_check.hpp"
 
@@ -127,7 +128,7 @@ private:
 	template<typename...>
 	static std::false_type test(...);
 	
-	template<typename>
+	template<typename...>
 	static std::false_type test_helper(...);
 	
 	template<typename U, typename C, std::size_t... S, int_t<

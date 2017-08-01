@@ -1,8 +1,7 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE_HPP
 
-#include "utils.hpp"
-#include "injected.hpp"
+#include <type_traits>
 
 namespace kgr {
 

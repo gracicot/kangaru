@@ -4,18 +4,36 @@
 #include "traits.hpp"
 
 namespace kgr {
+
+template<typename...>
+struct Map;
+
+template<>
+struct Map<> {};
+
+template<typename T>
+struct Map<T> {
+	using Service = T;
+};
+
 namespace detail {
+
+template<typename T>
+struct is_map : std::false_type {};
+
+template<typename... Ts>
+struct is_map<Map<Ts...>> : std::true_type {};
 
 template<typename, typename, typename = void>
 struct map_entry {};
 
 template<typename... Maps, typename P>
-struct map_entry<kgr::Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()))>::value>> {
-	using Service = decltype(service_map(std::declval<P>(), std::declval<kgr::Map<> >()));
+struct map_entry<Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>(), std::declval<Map<> >()))>::value>> {
+	using Service = decltype(service_map(std::declval<P>(), std::declval<Map<> >()));
 };
 
 template<typename... Maps, typename P>
-struct map_entry<kgr::Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>()))>::value>> {
+struct map_entry<Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>()))>::value>> {
 	using Service = decltype(service_map(std::declval<P>()));
 };
 

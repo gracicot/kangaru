@@ -337,10 +337,24 @@ private:
 			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
 		, 0)..., 0};
 		
-		_services[type_id<T>] = {service.get(), nullptr};
+		_services[type_id<T>] = {service.get(), get_forward<T>()};
 		_instances.emplace_back(std::move(service));
 		
 		return serviceRef;
+	}
+	
+	template<typename T, enable_if<detail::is_virtual<T>> = 0>
+	contained_forward_t get_forward() {
+		return reinterpret_cast<contained_forward_t>(
+			static_cast<detail::forward_ptr<T>>([](void* service) -> ServiceType<T> {
+				return static_cast<T*>(service)->forward();
+			})
+		);
+	}
+	
+	template<typename T, disable_if<detail::is_virtual<T>> = 0>
+	contained_forward_t get_forward() {
+		return nullptr;
 	}
 	
 	/*

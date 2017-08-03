@@ -145,13 +145,6 @@ public:
 	
 	/*
 	 * This function returns the result of the callable object of type U.
-	 * This version of the function is called when `function` is not invokable to provide diagnostic.
-	 */
-	template<typename Map>
-	detail::Sink invoke(detail::NotInvokableError = {}, ...) = delete;
-	
-	/*
-	 * This function returns the result of the callable object of type U.
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
@@ -164,7 +157,7 @@ public:
 	}
 	
 	/*
-	 * This oveload is called when one of the services to be injected is invalid.
+	 * This oveload is called when the function mannot be invoked.
 	 * It will provide diagnostic on GCC.
 	 */
 	template<typename... Services>

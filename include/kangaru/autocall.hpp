@@ -17,7 +17,7 @@ struct AutoCallBase {
 		static_cast<T*>(this)->call(F::value, std::forward<Inject<Ts>>(others).forward()...);
 	}
 	
-	template<typename T, typename Map, typename F, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
+	template<typename T, typename F, typename Map, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
 	void autocall(Inject<ContainerService> cs) {
 		autocall<T, Map, F>(detail::function_seq<typename F::value_type>{}, std::move(cs));
 	}

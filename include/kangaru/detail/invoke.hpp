@@ -16,8 +16,8 @@ private:
 	template<typename U, typename C>
 	struct get_member_autocall {
 		using type = std::integral_constant<
-			decltype(exact(&U::template autocall<T, typename U::Map, C>)),
-			&U::template autocall<T, typename U::Map, C>
+			decltype(exact(&U::template autocall<T, C, typename U::Map>)),
+			&U::template autocall<T, C, typename U::Map>
 		>;
 	};
 	

@@ -134,36 +134,23 @@ template<typename, typename, typename, typename = void>
 struct invoke_function_helper {};
 
 /*
- * Specialization of invoke_function_helper for ordrinary lambda.
- * Will extract correctly argument types, called function type nad return type.
+ * Specialization of invoke_function_helper for function types and ordinary lambda.
+ * Will extract correctly argument types, called function type and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
-	enable_if_t<has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-> : function_traits<T> {};
-
-/*
- * Specialization of invoke_function_helper for functions.
- * Will extract correctly argument types, called function type nad return type.
- */
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	void_t<
-		function_result_t<T>,
-		enable_if_t<!has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-	>
+	enable_if_t<has_call_operator<T>::value || std::is_pointer<T>::value>
 > : function_traits<T> {};
 
 /*
  * Specialization of invoke_function_helper for generic lambda.
- * Will extract correctly argument types, called function type nad return type.
+ * Will extract correctly argument types, called function type and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
-	enable_if_t<!has_call_operator<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
+	enable_if_t<!has_call_operator<T>::value && !std::is_pointer<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
 > : function_traits<get_template_call_t<Map, T, Args...>> {};
 
 /*

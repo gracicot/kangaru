@@ -13,6 +13,14 @@
 #endif // !__clang__
 #endif // _MSC_VER
 
+#if _MSC_VER
+#ifndef __clang__
+// MSVC has a defect that makes decltype with the address of a
+// generic lambda not possible unless sending the address to a function.
+#define KGR_KANGARU_MSVC_EXACT_DECLTYPE
+#endif // !__clang__
+#endif // _MSC_VER
+
 namespace kgr {
 namespace detail {
 
@@ -58,11 +66,17 @@ template<typename Map, typename T, typename... TArgs, typename... Args>
 struct is_template_call_callable<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<is_pointer_invokable<Map, T,
-
+	
+	// Some MSVC vesions cannoet parse the valid syntax corretly. We must write
+	// the expression in that way in order to compile.
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	decltype(exact(&T::operator()<TArgs...>)),
-#else
+#elif defined(KGR_KANGARU_MSVC_EXACT_DECLTYPE)
+	// GCC won't accept taking the address of a generic lambda if the address is sent to a function like exact.
 	decltype(exact(&T::template operator()<TArgs...>)),
+#else
+	// Vanilla syntax
+	decltype(&T::template operator()<TArgs...>),
 #endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	
 	Args...>::value>
@@ -107,9 +121,13 @@ struct get_template_call<
 	// the expression in that way in order to compile.
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	using type = decltype(exact(&T::operator()<TArgs...>));
-#else
+#elif defined(KGR_KANGARU_MSVC_EXACT_DECLTYPE)
+	// GCC won't accept taking the address of a generic lambda if the address is sent to a function like exact.
 	using type = decltype(exact(&T::template operator()<TArgs...>));
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+#else
+	// Vanilla syntax
+	using type = decltype(&T::template operator()<TArgs...>);
+#endif
 };
 
 /*
@@ -135,7 +153,7 @@ struct invoke_function_helper {};
 
 /*
  * Specialization of invoke_function_helper for function types and ordinary lambda.
- * Will extract correctly argument types, called function type and return type.
+ * Will extract correctly argument types and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
@@ -145,7 +163,7 @@ struct invoke_function_helper<
 
 /*
  * Specialization of invoke_function_helper for generic lambda.
- * Will extract correctly argument types, called function type and return type.
+ * Will extract correctly argument types and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<

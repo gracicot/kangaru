@@ -100,7 +100,7 @@ template<typename T, typename = void>
 struct is_service : std::false_type {};
 
 template<typename T>
-struct is_service<T, enable_if_t<(!std::is_polymorphic<T>::value || std::is_abstract<T>::value) && has_forward<T>::value>> : std::true_type {};
+struct is_service<T, enable_if_t<!std::is_polymorphic<T>::value && has_forward<T>::value>> : std::true_type {};
 
 // Here, usual traits using void_t don't quite work with visual studio for this particular case.
 template<typename T>

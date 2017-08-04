@@ -18,11 +18,17 @@ private:
 	template<typename...>
 	static std::false_type test_helper(...);
 	
+	/*
+	 * Test if the function type C can be called with the S... first arguments, followed by arguments As...
+	 * 
+	 * Also, we test if the S... first arguments are injected arguments, and really are services.
+	 */
 	template<typename C, typename... As, std::size_t... S, int_t<
 		decltype(std::declval<C>()(std::declval<function_argument_t<S, C>>()..., std::declval<As>()...)),
 		enable_if_t<is_service<injected_argument_t<S, C>>::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
+	// We call test helper with a sequence of the number of parameter minus the number of provided arguments.
 	template<typename C, typename... As>
 	static decltype(test_helper<C, As...>(tuple_seq_minus<function_arguments_t<C>, sizeof...(As)>{})) test(int);
 	
@@ -47,6 +53,12 @@ using is_construct_invokable = typename is_construct_invokable_helper<F, Args...
 template<typename, typename, typename, typename = void>
 struct has_callable_template_construct : std::false_type {};
 
+/*
+ * Specialization of has_callable_template_construct.
+ * 
+ * We select this specialization if the function construct<TArgs...> exist within T,
+ * and also if that function is invokable using Args... as provided arguments.
+ */
 template<typename T, typename... TArgs, typename... Args>
 struct has_callable_template_construct<
 	T, meta_list<TArgs...>, meta_list<Args...>,
@@ -59,18 +71,34 @@ struct has_callable_template_construct<
 template<typename, typename, typename, typename = void>
 struct get_template_construct_helper;
 
+/*
+ * Specialization of get_template_construct_helper.
+ * 
+ * This specialization is the final iteration of the meta algorithm. We get here when no suitable function is found.
+ */
 template<typename T, typename... Args>
 struct get_template_construct_helper<
 	T, meta_list<>, meta_list<Args...>,
 	enable_if_t<!has_callable_template_construct<T, meta_list<>, meta_list<Args...>>::value>
 > {};
 
+/*
+ * Specialization of get_template_construct_helper.
+ * 
+ * This specialization an iteration of the meta algorithm. No function has been found yet. We continue the loop.
+ */
 template<typename T, typename Head, typename... Tail, typename... Args>
 struct get_template_construct_helper<
 	T, meta_list<Head, Tail...>, meta_list<Args...>,
 	enable_if_t<!has_callable_template_construct<T, meta_list<Head, Tail...>, meta_list<Args...>>::value>
 > : get_template_construct_helper<T, meta_list<Tail...>, meta_list<Args...>> {};
 
+/*
+ * Specialization of get_template_construct_helper.
+ * 
+ * This specialization is an iteration of the meta algorithm. We get here when we found a suitable function to call.
+ * The algorithm stops the loop and return the function.
+ */
 template<typename T, typename... TArgs, typename... Args>
 struct get_template_construct_helper<
 	T, meta_list<TArgs...>, meta_list<Args...>,
@@ -78,7 +106,7 @@ struct get_template_construct_helper<
 > : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
 
 /*
- * This is an alias for get_template_construct_helper
+ * The starting point for get_template_construct_helper.
  */
 template<typename T, typename... Args>
 using get_template_construct = get_template_construct_helper<T, meta_list<Args...>, meta_list<Args...>>;
@@ -89,11 +117,19 @@ using get_template_construct = get_template_construct_helper<T, meta_list<Args..
 template<typename, typename, typename = void>
 struct template_construct_exist : std::false_type {};
 
+/*
+ * Specialization of template_construct_exist
+ * 
+ * This specialization is selected when the construct function T::construct<Args...> exist.
+ * We don't check for validity of parameter, nor if it's invocable.
+ */
 template<typename T, typename... Args>
 struct template_construct_exist<T, meta_list<Args...>, void_t<decltype(&T::template construct<Args...>)>> : std::true_type {};
 
 /*
  * Trait that returns a pointer to the first existing template function, even if that function is not possibly callable.
+ * 
+ * A lot similar to get_template_construct_helper, but we only check for the existance of the function, without validating it.
  */
 template<typename, typename, typename = void>
 struct get_any_template_construct_helper;
@@ -218,6 +254,11 @@ struct is_construct_function_callable_helper<
 	enable_if_t<is_construct_invokable<construct_function_t<T, Args...>, Args...>::value>
 > : std::true_type {};
 
+/*
+ * Returns if a construct function is callable given a set of parameter if there should be a construct function
+ * 
+ * If there is no construct function required for that service, returns true
+ */
 template<typename T, typename... Args>
 struct is_construct_function_callable_helper<
 	T, meta_list<Args...>,

@@ -35,7 +35,7 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	static detail::function_result_t<T> call(T method, Args&&... args) {
+	detail::function_result_t<T> call(T method, Args&&... args) {
 		return (instance().*method)(std::forward<Args>(args)...);
 	}
 };

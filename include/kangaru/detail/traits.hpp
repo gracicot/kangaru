@@ -151,6 +151,7 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
+// We implement has_emplace with an old fashioned trait, because GCC don't handle friendship in specialized arguments.
 template<typename T, typename... Args>
 struct has_emplace_helper {
 private:

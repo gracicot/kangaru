@@ -235,10 +235,16 @@ template<typename T, typename... Args>
 using construct_function_t = typename construct_function<T, Args...>::value_type;
 
 /*
+ * The return type of the selected construct function 
+ */
+template<typename T, typename... Args>
+using construct_function_result_t = function_result_t<construct_function_t<T, Args...>>;
+
+/*
  * A sequence generator for the returned injected arguments
  */
 template<typename T, typename... Args>
-using construct_result_seq = tuple_seq<function_result_t<construct_function_t<T, Args...>>>;
+using construct_result_seq = tuple_seq<construct_function_result_t<T, Args...>>;
 
 /*
  * Returns if a construct function is callable given a set of parameter if there should be a construct function

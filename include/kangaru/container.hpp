@@ -122,10 +122,10 @@ public:
 	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	detail::Sink service(detail::ServiceError<T> = {}) = delete;
+	void service(detail::ServiceError<T> = {}) = delete;
 	
 	template<typename T, typename... Args>
-	detail::Sink service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -161,7 +161,7 @@ public:
 	 * It will provide diagnostic on GCC.
 	 */
 	template<typename... Services>
-	detail::Sink invoke(detail::NotInvokableError = {}, ...) = delete;
+	void invoke(detail::NotInvokableError = {}, ...) = delete;
 	
 	/*
 	 * This function clears this container.
@@ -230,7 +230,7 @@ public:
 	 */
 	template<typename T, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_single<T>> = 0>
 	bool contains() const {
-		return _services.find(type_id<T>) != _services.end();
+		return _services.find(type_id<T>()) != _services.end();
 	}
 	
 private:
@@ -304,7 +304,7 @@ private:
 		);
 		
 		// This could be faster if we had access to instance of override services.
-		auto&& service = _services[type_id<T>];
+		auto&& service = _services[type_id<T>()];
 		return std::make_pair(service.first, reinterpret_cast<detail::forward_ptr<T>>(service.second));
 	}
 	
@@ -330,7 +330,7 @@ private:
 			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
 		, 0)..., 0};
 		
-		_services[type_id<T>] = {service.get(), get_forward<T>()};
+		_services[type_id<T>()] = {service.get(), get_forward<T>()};
 		_instances.emplace_back(std::move(service));
 		
 		return serviceRef;
@@ -364,7 +364,7 @@ private:
 			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
 		};
 		
-		_services[type_id<Override>] = {&service, reinterpret_cast<contained_forward_t>(forward)};
+		_services[type_id<Override>()] = {&service, reinterpret_cast<contained_forward_t>(forward)};
 	}
 	
 	///////////////////////
@@ -489,7 +489,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_container_service<T>> = 0>
 	detail::injected_wrapper<T> definition() {
-		return detail::injected_wrapper<T>{T{*this}};
+		return detail::Injected<ContainerService>{ContainerService{*this}};
 	}
 	
 	/*
@@ -501,7 +501,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_container_service<T>> = 0>
 	detail::injected_wrapper<T> definition() {
-		auto service = _services[type_id<T>];
+		auto service = _services[type_id<T>()];
 		
 		if (service.first) {
 			return make_wrapper<T>(service);
@@ -531,10 +531,10 @@ private:
 	 * It is called with some autocall function and the make_service_instance function.
 	 */
 	template<typename U, typename... Args>
-	detail::function_result_t<detail::decay_t<U>> invoke_raw(U&& function, Args&&... args) {
+	detail::function_result_t<U> invoke_raw(U function, Args&&... args) {
 		return invoke_raw_helper(
 			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
-			std::forward<U>(function),
+			function,
 			std::forward<Args>(args)...
 		);
 	}
@@ -544,8 +544,8 @@ private:
 	 * It unpacks arguments of the function U with an integer sequence.
 	 */
 	template<typename U, typename... Args, std::size_t... S>
-	detail::function_result_t<detail::decay_t<U>> invoke_raw_helper(detail::seq<S...>, U&& function, Args&&... args) {
-		return std::forward<U>(function)(definition<detail::injected_argument_t<S, detail::decay_t<U>>>()..., std::forward<Args>(args)...);
+	detail::function_result_t<U> invoke_raw_helper(detail::seq<S...>, U function, Args&&... args) {
+		return function(definition<detail::injected_argument_t<S, U>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////

@@ -7,28 +7,25 @@ namespace kgr {
 
 struct Container;
 
-namespace detail {
-
-struct ContainerServiceTag {};
-
-template<typename T>
-using is_container_service = std::is_base_of<ContainerServiceTag, T>;
-
-} // namespace detail
-
-struct ContainerService : detail::ContainerServiceTag {
-	explicit ContainerService(Container& instance) : _instance{instance} {}
+struct ContainerService {
+	explicit ContainerService(Container& instance) : _instance{&instance} {}
 	
 	inline Container& forward() {
-		return _instance;
+		return *_instance;
 	}
 	
 private:
-	Container& _instance;
+	Container* _instance;
 };
 
 auto service_map(const Container&) -> ContainerService;
 
+namespace detail {
+
+template<typename T>
+using is_container_service = std::is_same<ContainerService, T>;
+
+} // namespace detail
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_CONTAINER_SERVICE_HPP

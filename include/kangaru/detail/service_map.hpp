@@ -6,15 +6,10 @@
 namespace kgr {
 
 template<typename...>
-struct Map;
+struct Map {};
 
-template<>
-struct Map<> {};
-
-template<typename T>
-struct Map<T> {
-	using Service = T;
-};
+template<typename = void>
+struct map_t {};
 
 namespace detail {
 
@@ -25,15 +20,38 @@ template<typename... Ts>
 struct is_map<Map<Ts...>> : std::true_type {};
 
 template<typename, typename, typename = void>
+struct is_mapped : std::false_type {};
+
+template<typename M, typename S>
+struct is_mapped<Map<M>, S, enable_if_t<is_service<decltype(service_map(std::declval<S>(), std::declval<map_t<M> >()))>::value>> : std::true_type {};
+
+template<typename S>
+struct is_mapped<Map<>, S, enable_if_t<is_service<decltype(service_map(std::declval<S>(), std::declval<map_t<> >()))>::value>> : std::true_type {};
+
+template<typename S>
+struct is_mapped<void, S, enable_if_t<is_service<decltype(service_map(std::declval<S>()))>::value>> : std::true_type {};
+
+template<typename, typename, typename = void>
 struct map_entry {};
 
-template<typename... Maps, typename P>
-struct map_entry<Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>(), std::declval<Map<> >()))>::value>> {
-	using Service = decltype(service_map(std::declval<P>(), std::declval<Map<> >()));
+template<typename First, typename... Maps, typename P>
+struct map_entry<Map<First, Maps...>, P, enable_if_t<!is_mapped<Map<First>, P>::value>> : map_entry<Map<Maps...>, P> {};
+
+template<typename First, typename... Maps, typename P>
+struct map_entry<Map<First, Maps...>, P, enable_if_t<is_mapped<Map<First>, P>::value>> {
+	using Service = decltype(service_map(std::declval<P>(), std::declval<map_t<First> >()));
 };
 
-template<typename... Maps, typename P>
-struct map_entry<Map<Maps...>, P, enable_if_t<is_service<decltype(service_map(std::declval<P>()))>::value>> {
+template<typename P>
+struct map_entry<Map<>, P, enable_if_t<is_mapped<Map<>, P>::value>> {
+	using Service = decltype(service_map(std::declval<P>(), std::declval<map_t<> >()));
+};
+
+template<typename P>
+struct map_entry<Map<>, P, enable_if_t<!is_mapped<Map<>, P>::value>> : map_entry<void, P> {};
+
+template<typename P>
+struct map_entry<void, P, enable_if_t<is_mapped<void, P>::value>> {
 	using Service = decltype(service_map(std::declval<P>()));
 };
 

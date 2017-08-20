@@ -15,8 +15,8 @@ struct Single {
 	Single& operator=(Single&&) = default;
 };
 
-struct Abstract {};
 struct Virtual {};
+struct Abstract : Virtual {};
 
 template<typename T>
 struct Default {
@@ -61,13 +61,13 @@ template<typename T>
 using has_default = typename default_type_helper<T>::has_default;
 
 template<typename T>
-using is_abstract_service = std::integral_constant<bool, std::is_base_of<Abstract, T>::value || std::is_abstract<T>::value>;
+using is_abstract_service = std::is_base_of<Abstract, T>;
 
 template<typename T>
 using is_single = std::integral_constant<bool, std::is_base_of<Single, T>::value || is_abstract_service<T>::value>;
 
 template<typename T>
-using is_virtual = std::integral_constant<bool, is_abstract_service<T>::value ||std::is_base_of<Virtual, T>::value || (meta_list_size<parent_types<T>>::value > 0)>;
+using is_virtual = std::integral_constant<bool, std::is_base_of<Virtual, T>::value || !meta_list_empty<parent_types<T>>::value>;
 
 template<typename Service, typename Overrider>
 using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;

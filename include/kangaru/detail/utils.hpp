@@ -18,7 +18,6 @@ struct ServiceTypeHelper<T, decltype(void(std::declval<T>().forward()))> {
 
 } // namespace detail
 
-
 template<typename T>
 using ServiceType = typename detail::ServiceTypeHelper<T>::type;
 

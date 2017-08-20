@@ -9,7 +9,7 @@
  */
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter
-// Will not be needed when N4469 will be accepted
+// Will not be needed once this library upgrade to C++17
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using std::string;
@@ -125,7 +125,7 @@ int main()
 	// computer 2 will print only about the keyboard.
 	computer2.printGear();
 	
-	// will call 'washMonitorAndKeyboard' with the right parameters.
+	// will call 'washMonitorAndKeyboard' with the right set of parameters.
 	double result = container.invoke(washMonitorAndKeyboard);
 	
 	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;

@@ -10,7 +10,7 @@ template<typename Predicate>
 struct FilteredForkService {
 	explicit FilteredForkService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
 	
-	inline Container forward() {
+	Container forward() {
 		return std::move(_container);
 	}
 	

@@ -13,6 +13,14 @@
 #endif // !__clang__
 #endif // _MSC_VER
 
+#if _MSC_VER
+#ifndef __clang__
+// MSVC has a defect that makes decltype with the address of a
+// generic lambda not possible unless sending the address to a function.
+#define KGR_KANGARU_MSVC_EXACT_DECLTYPE
+#endif // !__clang__
+#endif // _MSC_VER
+
 namespace kgr {
 namespace detail {
 
@@ -58,11 +66,17 @@ template<typename Map, typename T, typename... TArgs, typename... Args>
 struct is_template_call_callable<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<is_pointer_invokable<Map, T,
-
+	
+	// Some MSVC vesions cannot parse the valid syntax corretly. We must write
+	// the expression in that way in order to compile.
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	decltype(exact(&T::operator()<TArgs...>)),
-#else
+#elif defined(KGR_KANGARU_MSVC_EXACT_DECLTYPE)
+	// GCC won't accept taking the address of a generic lambda if the address is sent to a function like exact.
 	decltype(exact(&T::template operator()<TArgs...>)),
+#else
+	// Vanilla syntax
+	decltype(&T::template operator()<TArgs...>),
 #endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	
 	Args...>::value>
@@ -72,13 +86,13 @@ struct is_template_call_callable<
  * Trait that returns the type of the first matching callable template call operator
  */
 template<typename, typename, typename, typename, typename = void>
-struct get_template_call_helper;
+struct get_template_call;
 
 /*
  * Specialization of get_template_call_helper when there is no functoin found
  */
 template<typename Map, typename T, typename... Args>
-struct get_template_call_helper<
+struct get_template_call<
 	Map, T, meta_list<>, meta_list<Args...>,
 	enable_if_t<!is_template_call_callable<Map, T, meta_list<>, meta_list<Args...>>::value>
 > {};
@@ -90,16 +104,16 @@ struct get_template_call_helper<
  * Will call recursively the next iteration of the trait.
  */
 template<typename Map, typename T, typename Head, typename... Tail, typename... Args>
-struct get_template_call_helper<
+struct get_template_call<
 	Map, T, meta_list<Head, Tail...>, meta_list<Args...>,
 	enable_if_t<!is_template_call_callable<Map, T, meta_list<Head, Tail...>, meta_list<Args...>>::value>
-> : get_template_call_helper<Map, T, meta_list<Tail...>, meta_list<Args...>> {};
+> : get_template_call<Map, T, meta_list<Tail...>, meta_list<Args...>> {};
 
 /*
  * Specialization of get_template_call_helper when a callable candidate is found.
  */
 template<typename Map, typename T, typename... TArgs, typename... Args>
-struct get_template_call_helper<
+struct get_template_call<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<is_template_call_callable<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
 > {
@@ -107,16 +121,20 @@ struct get_template_call_helper<
 	// the expression in that way in order to compile.
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	using type = decltype(exact(&T::operator()<TArgs...>));
-#else
+#elif defined(KGR_KANGARU_MSVC_EXACT_DECLTYPE)
+	// GCC won't accept taking the address of a generic lambda if the address is sent to a function like exact.
 	using type = decltype(exact(&T::template operator()<TArgs...>));
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+#else
+	// Vanilla syntax
+	using type = decltype(&T::template operator()<TArgs...>);
+#endif
 };
 
 /*
- * Alias for get_template_call_helper
+ * Alias for get_template_call_helper::type
  */
 template<typename Map, typename T, typename... Args>
-using get_template_call = get_template_call_helper<Map, T, meta_list<Args...>, meta_list<Args...>>;
+using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...>, meta_list<Args...>>::type;
 
 /*
  * Trait that tells if the class T has a callable template call operator
@@ -125,7 +143,7 @@ template<typename, typename, typename, typename = void>
 struct has_template_call_operator : std::false_type {};
 
 template<typename Map, typename T, typename... Args>
-struct has_template_call_operator<Map, T, meta_list<Args...>, void_t<typename get_template_call<Map, T, Args...>::type>> : std::true_type {};
+struct has_template_call_operator<Map, T, meta_list<Args...>, void_t<get_template_call_t<Map, T, Args...>>> : std::true_type {};
 
 /*
  * function_trait equivalent for an invoke function. It has to choose if it's a lambda, generic lambda or a function.
@@ -134,64 +152,30 @@ template<typename, typename, typename, typename = void>
 struct invoke_function_helper {};
 
 /*
- * Specialization of invoke_function_helper for ordrinary lambda.
- * Will extract correctly argument types, called function type nad return type.
+ * Specialization of invoke_function_helper for function types and ordinary lambda.
+ * Will extract correctly argument types and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
-	enable_if_t<has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-> {
-	using type = decltype(&T::operator());
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
-
-/*
- * Specialization of invoke_function_helper for functions.
- * Will extract correctly argument types, called function type nad return type.
- */
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	void_t<
-		function_result_t<T>,
-		enable_if_t<!has_call_operator<T>::value && !has_template_call_operator<Map, T, meta_list<Args...>>::value>
-	>
-> {
-	using type = T;
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
+	enable_if_t<has_call_operator<T>::value || std::is_pointer<T>::value>
+> : function_traits<T> {};
 
 /*
  * Specialization of invoke_function_helper for generic lambda.
- * Will extract correctly argument types, called function type nad return type.
+ * Will extract correctly argument types and return type.
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
-	enable_if_t<!has_call_operator<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
-> {
-	using type = typename get_template_call<Map, T, Args...>::type;
-	using return_type = function_result_t<type>;
-	using argument_types = function_arguments_t<type>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
-};
+	enable_if_t<!has_call_operator<T>::value && !std::is_pointer<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
+> : function_traits<get_template_call_t<Map, T, Args...>> {};
 
 /*
  * Alias for invoke_function_helper
  */
 template<typename Map, typename T, typename... Args>
 struct invoke_function : invoke_function_helper<Map, T, meta_list<Args...>> {};
-
-/*
- * Alias for invoke_function::type, the type of the called function.
- */
-template<typename Map, typename T, typename... Args>
-using invoke_function_t = typename invoke_function<Map, T, Args...>::type;
 
 /*
  * Alias for invoke_function::argument_types, a meta list of argument types.

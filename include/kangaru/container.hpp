@@ -564,7 +564,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::has_autocall<T>> = 0>
 	void autocall(T& service) {
-		autocall(detail::tuple_seq<typename detail::decay_t<T>::Autocall>{}, service);
+		autocall(detail::tuple_seq<typename T::Autocall>{}, service);
 	}
 	
 	/*
@@ -591,8 +591,8 @@ private:
 	/*
 	 * This function is called when there is no autocall to do.
 	 */
-	template<typename T, disable_if<detail::has_autocall<detail::decay_t<T>>> = 0>
-	void autocall(T&&) {}
+	template<typename T, disable_if<detail::has_autocall<T>> = 0>
+	void autocall(T&) {}
 	
 	///////////////////////
 	//     instances     //

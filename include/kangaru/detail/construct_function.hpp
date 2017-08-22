@@ -187,7 +187,11 @@ struct construct_function_helper {
 private:
 	template<typename U>
 	struct get_construct {
-		using type = std::integral_constant<decltype(&U::construct), &U::construct>;
+		// We do not use integral_constant here, &U::construct might have no linkage.
+		struct type {
+			using value_type = decltype(&U::construct);
+			constexpr static value_type value = &U::construct;
+		};
 	};
 	
 	template<typename U, typename... As, enable_if_t<

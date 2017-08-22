@@ -1,16 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-project(kangaru-examples)
-
-set(CMAKE_CXX_STANDARD 11)
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
-elseif (GNU)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wsuggest-override -Wmain -Werror")
-elseif (Intel)
-  # using Intel C++
-elseif (MSVC)
-  # using Visual Studio C++
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wmain")
 endif()
 
 add_subdirectory(example1)

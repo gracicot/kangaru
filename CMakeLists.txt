@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.0)
 project(kangaru)
 
-set(KANGARU_VERSION_MAJOR "3")
-set(KANGARU_VERSION_MINOR "3")
+set(CMAKE_CXX_STANDARD 11)
+
+set(KANGARU_VERSION_MAJOR "4")
+set(KANGARU_VERSION_MINOR "0")
 set(KANGARU_VERSION_PATCH "0")
 
 set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU_VERSION_PATCH}")
@@ -10,6 +12,7 @@ set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
+option(KANGARU_TEST "Build test binaries" false)
 
 set(KANGARU_INSTALL_INCLUDE_DIR "include")
 
@@ -20,8 +23,14 @@ target_include_directories(kangaru INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
+
 if (KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
+endif()
+
+if (KANGARU_TEST)
+    add_subdirectory(test)
 endif()
 
 if (KANGARU_EXPORT)
@@ -41,14 +50,14 @@ if (KANGARU_INSTALL)
 
 	# build tree package config
 	configure_file(
-		cmake/kangaruBuildConfig.cmake.in
+		cmake/config/kangaruBuildConfig.cmake.in
 		kangaruConfig.cmake
 		@ONLY
 	)
 
 	# install tree package config
 	configure_package_config_file(
-		cmake/kangaruConfig.cmake.in
+		cmake/config/kangaruConfig.cmake.in
 		${KANGARU_CONFIG_PATH}/kangaruConfig.cmake
 		INSTALL_DESTINATION ${KANGARU_CONFIG_PATH}
 		NO_CHECK_REQUIRED_COMPONENTS_MACRO

@@ -3,3 +3,4 @@ build
 build-*
 *.kdev4
 !.gitignore
+!.gitmodules

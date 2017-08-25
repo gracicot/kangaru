@@ -3,33 +3,24 @@
 #include "kangaru/kangaru.hpp"
 
 TEST_CASE("Container creates a single", "[single]") {
+	kgr::Container c;
+	
+	static int constructed;
+	constructed = 0;
+	
+	struct Service {
+		Service() { constructed++; }
+	};
+	
+	struct Definition : kgr::SingleService<Service> {};
+		
 	SECTION("Construct the single one time") {
-		kgr::Container c;
-		
-		static int constructed = 0;
-		
-		struct Service {
-			Service() { constructed++; }
-		};
-		
-		struct Definition : kgr::SingleService<Service> {};
-		
 		(void) c.service<Definition>();
 		
 		REQUIRE(constructed == 1);
 	}
 	
 	SECTION("Construct the single one time with multiple invocation") {
-		kgr::Container c;
-		
-		static int constructed = 0;
-		
-		struct Service {
-			Service() { constructed++; }
-		};
-		
-		struct Definition : kgr::SingleService<Service> {};
-		
 		(void) c.service<Definition>();
 		(void) c.service<Definition>();
 		
@@ -37,73 +28,62 @@ TEST_CASE("Container creates a single", "[single]") {
 	}
 	
 	SECTION("Returns the same instance") {
-		kgr::Container c;
-		
-		struct Service {};
-		struct Definition : kgr::SingleService<Service> {};
-		
 		REQUIRE(&c.service<Definition>() == &c.service<Definition>());
 	}
+}
+
+TEST_CASE("Singles are never moved or copied", "[single]") {
+	kgr::Container c;
+		
+	static bool constructed = false;
+	static bool displaced = false;
 	
-	SECTION("Don't move or copy") {
-		kgr::Container c;
+	struct Service {
+		Service() noexcept {
+			constructed = true;
+		}
 		
-		static bool constructed = false;
-		static bool displaced = false;
+		Service(const Service&) noexcept {
+			displaced = true;
+		}
 		
-		struct Service {
-			Service() {
-				constructed = true;
-			}
+		Service(Service&&) noexcept {
+			displaced = true;
+		}
+		
+		Service& operator=(const Service&) noexcept {
+			displaced = true;
 			
-			Service(const Service&) {
-				displaced = true;
-			}
-			
-			Service(Service&&) {
-				displaced = true;
-			}
-			
-			Service& operator=(const Service&) {
-				displaced = true;
+			return *this;
+		}
+		
+		Service& operator=(Service&&) noexcept {
+			displaced = true;
 				
-				return *this;
-			}
-			
-			Service& operator=(Service&&) {
-				displaced = true;
-				 
-				return *this;
-			}
-		};
-		
-		struct Definition : kgr::SingleService<Service> {};
-		
+			return *this;
+		}
+	};
+	
+	struct Definition : kgr::SingleService<Service> {};
+	
+	SECTION("When created") {
 		(void) c.service<Definition>();
 		
 		REQUIRE(constructed);
 		REQUIRE_FALSE(displaced);
 	}
 	
-	SECTION("Are deleted when the container dies") {
-		static bool deleted = false;
+	SECTION("When the container is moved") {
+		(void) c.service<Definition>();
 		
-		struct Service { ~Service() { deleted = true; } };
-		struct Definition : kgr::SingleService<Service> {};
+		auto c2 = std::move(c);
 		
-		{
-			kgr::Container c;
-			
-			(void) c.service<Definition>();
-			
-			REQUIRE_FALSE(deleted);
-		}
-		
-		REQUIRE(deleted);
+		REQUIRE(constructed);
+		REQUIRE_FALSE(displaced);
 	}
 }
 
-TEST_CASE("Singles are defined", "[single]") {
+TEST_CASE("Singles are defined using tags", "[single]") {
 	SECTION("By being abstract") {
 		struct Definition : kgr::Abstract {};
 		
@@ -115,6 +95,23 @@ TEST_CASE("Singles are defined", "[single]") {
 		
 		REQUIRE(kgr::detail::is_single<Definition>{});
 	}
+}
+
+TEST_CASE("Singles are deleted when the container dies", "[single]") {
+	static bool deleted = false;
+	
+	struct Service { ~Service() { deleted = true; } };
+	struct Definition : kgr::SingleService<Service> {};
+	
+	{
+		kgr::Container c;
+		
+		(void) c.service<Definition>();
+		
+		REQUIRE_FALSE(deleted);
+	}
+	
+	REQUIRE(deleted);
 }
 
 TEST_CASE("Singles are not copiable", "[single]") {

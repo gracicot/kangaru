@@ -2,57 +2,60 @@
 #include "catch.hpp"
 #include "kangaru/kangaru.hpp"
 
-TEST_CASE("Container returns a service", "[service]") {
-	SECTION("Returns the service from definition") {
-		struct Service {};
-		struct Definition {
-			Definition(kgr::in_place_t) {}
-			
-			Service forward() {
-				return std::move(service);
-			}
-			
-			static auto construct() -> decltype(kgr::inject()) {
-				return kgr::inject();
-			}
-			
-			Service service;
-		};
+TEST_CASE("Container returns a service from a definition", "[service]") {
+	struct Service {};
+	struct Definition {
+		Definition(kgr::in_place_t) {}
 		
-		struct Result {
-			static std::false_type test(...) {
-				return {};
-			}
-			
-			static std::true_type test(Service) {
-				return {};
-			}
-		};
+		Service forward() {
+			return std::move(service);
+		}
 		
-		REQUIRE(Result::test(kgr::Container{}.service<Definition>()));
-	}
+		static auto construct() -> decltype(kgr::inject()) {
+			return kgr::inject();
+		}
+		
+		Service service;
+	};
 	
-	SECTION("Move the service") {
-		struct Service {
-			Service() = default;
-			Service(Service&&) = default;
-			Service& operator=(Service&&) = default;
-			
-			bool copied = false;
-			
-			Service(const Service&) {
-				copied = true;
-			}
-			
-			Service& operator=(const Service&) {
-				copied = true;
-				
-				return *this;
-			}
-		};
+	struct Result {
+		static std::false_type test(...) {
+			return {};
+		}
 		
-		struct Definition : kgr::Service<Service> {};
+		static std::true_type test(Service&&) {
+			return {};
+		}
+	};
+	
+	REQUIRE(Result::test(kgr::Container{}.service<Definition>()));
+}
+	
+TEST_CASE("Container returns a service by moving it", "[service]") {
+	struct Service {
+		Service() = default;
+		Service(Service&&) = default;
+		Service& operator=(Service&&) = default;
 		
-		REQUIRE_FALSE(kgr::Container{}.service<Definition>().copied);
-	}
+		bool copied = false;
+		
+		Service(const Service&) {
+			copied = true;
+		}
+		
+		Service& operator=(const Service&) {
+			copied = true;
+			
+			return *this;
+		}
+	};
+	
+	struct Definition : kgr::Service<Service> {};
+	
+	kgr::Container c;
+	
+	auto service = c.service<Definition>();
+	
+	REQUIRE_FALSE(c.service<Definition>().copied);
+	REQUIRE_FALSE(service.copied);
 }

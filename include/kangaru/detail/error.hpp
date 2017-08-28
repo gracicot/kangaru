@@ -9,6 +9,10 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * This class is only constructible if a service has an error.
+ * It will call the right constructor and trigger the correct static_assert for the situation.
+ */
 template<typename T, typename... Args>
 struct ServiceError {
 	template<typename Service = T, enable_if_t<

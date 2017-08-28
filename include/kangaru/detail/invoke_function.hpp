@@ -240,6 +240,7 @@ public:
 
 /*
  * Alias for is_invokable_helper
+ * Using inheritance here helped msvc in some cases.
  */
 template<typename Map, typename T, typename... Args>
 struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};

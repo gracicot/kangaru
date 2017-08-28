@@ -5,6 +5,9 @@
 
 namespace kgr {
 
+/*
+ * This exception is thrown when an abstract service is not found, yet asked for it's definition.
+ */
 struct AbstractNotFound : std::exception {
 	inline const char* what() const noexcept override {
 		return "No instance found for the requested abstract service";

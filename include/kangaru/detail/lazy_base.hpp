@@ -7,6 +7,10 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * This is the base class of the Lazy and ForkedLazy class.
+ * This implements all the common things a Lazy must implement.
+ */
 template<typename CRTP, typename T>
 struct LazyBase {
 private:

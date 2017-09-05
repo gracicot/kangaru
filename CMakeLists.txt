@@ -9,10 +9,17 @@ set(KANGARU_VERSION_PATCH "0")
 
 set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU_VERSION_PATCH}")
 
+set(KANGARU_ENABLE_TESTS false)
+
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 option(KANGARU_TEST "Build test binaries" false)
+option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
+
+if(${KANGARU_TEST_CXX14} OR ${KANGARU_TEST})
+	set(KANGARU_ENABLE_TESTS true)
+endif()
 
 set(KANGARU_INSTALL_INCLUDE_DIR "include")
 
@@ -29,7 +36,7 @@ if (KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
-if (KANGARU_TEST)
+if (KANGARU_ENABLE_TESTS)
     add_subdirectory(test)
 endif()
 

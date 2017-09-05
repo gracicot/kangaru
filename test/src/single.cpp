@@ -32,6 +32,17 @@ TEST_CASE("Container creates a single", "[single]") {
 	}
 }
 
+TEST_CASE("Container contains a single after contruction", "[single]") {
+	kgr::Container c;
+	
+	struct Service {};
+	struct Definition : kgr::SingleService<Service> {};
+		
+	(void) c.service<Definition>();
+	
+	REQUIRE(c.contains<Definition>());
+}
+
 TEST_CASE("Singles are never moved or copied", "[single]") {
 	kgr::Container c;
 		

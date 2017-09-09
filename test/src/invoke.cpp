@@ -57,11 +57,11 @@ namespace testcase_arguments {
 		explicit generic_functor1(bool& c, int e1, double e2) noexcept : called{c}, expected1{e1}, expected2{e2} {}
 		
 		template<typename T1, typename T2>
-		void operator()(T1 a, T2 b) {
+		void operator()(T1&& a, T2&& b) {
 			called = true;
 			
-			REQUIRE((std::is_same<T1, int>::value));
-			REQUIRE((std::is_same<T2, double>::value));
+			REQUIRE((std::is_same<typename std::decay<T1>::type, int>::value));
+			REQUIRE((std::is_same<typename std::decay<T2>::type, double>::value));
 			
 			CHECK(a == expected1);
 			CHECK(b == expected2);
@@ -77,11 +77,10 @@ namespace testcase_arguments {
 		explicit generic_functor2(bool& c, int e1, double e2) noexcept : called{c}, expected1{e1}, expected2{e2} {}
 		
 		template<typename T>
-		void operator()(int a, T b) {
+		void operator()(int a, T&& b) {
 			called = true;
 			
-			REQUIRE((std::is_same<typename std::decay<T>::type, T>::value));
-			REQUIRE((std::is_same<T, double>::value));
+			REQUIRE((std::is_same<typename std::decay<T>::type, double>::value));
 			
 			CHECK(a == expected1);
 			CHECK(b == expected2);
@@ -141,11 +140,11 @@ namespace testcase_inject_mapped {
 		explicit generic_functor1(bool& c, int e1, double e2) noexcept : called{c}, expected1{e1}, expected2{e2} {}
 		
 		template<typename T1, typename T2>
-		void operator()(Service2&, Service1, T1 a, T2 b) {
+		void operator()(Service2&, Service1, T1&& a, T2&& b) {
 			called = true;
 			
-			REQUIRE((std::is_same<T1, int>::value));
-			REQUIRE((std::is_same<T2, double>::value));
+			REQUIRE((std::is_same<typename std::decay<T1>::type, int>::value));
+			REQUIRE((std::is_same<typename std::decay<T2>::type, double>::value));
 			
 			CHECK(a == expected1);
 			CHECK(b == expected2);
@@ -161,10 +160,10 @@ namespace testcase_inject_mapped {
 		explicit generic_functor2(bool& c, int e1, double e2) noexcept : called{c}, expected1{e1}, expected2{e2} {}
 		
 		template<typename T1>
-		void operator()(Service2&, Service1, int a, T1 b) {
+		void operator()(Service2&, Service1, int a, T1&& b) {
 			called = true;
 			
-			REQUIRE((std::is_same<T1, double>::value));
+			REQUIRE((std::is_same<typename std::decay<T1>::type, double>::value));
 			
 			CHECK(a == expected1);
 			CHECK(b == expected2);
@@ -174,6 +173,23 @@ namespace testcase_inject_mapped {
 		bool& called;
 		int expected1;
 		double expected2;
+	};
+	
+	struct generic_functor3 {
+		explicit generic_functor3(bool& c, int e1, std::size_t s) noexcept : called{c}, expected1{e1}, size{s} {}
+		
+		template<typename... Ts>
+		void operator()(Service2&, Service1, int a, Ts&&... bs) {
+			called = true;
+			
+			CHECK(a == expected1);
+			CHECK(sizeof...(bs) == size);
+		}
+		
+	private:
+		bool& called;
+		int expected1;
+		std::size_t size;
 	};
 
 	TEST_CASE("The container inject service parameters using service map", "[invoke]") {
@@ -230,6 +246,15 @@ namespace testcase_inject_mapped {
 			const auto arg2 = any_double_distribution(random);
 			
 			c.invoke(generic_functor2{called, arg1, arg2}, arg1, arg2);
+			
+			REQUIRE(called);
+			REQUIRE(c.contains<Definition2>());
+		}
+		
+		SECTION("Forward mix of variadic deduced and regular parameter after injection") {
+			const auto arg1 = any_int_distribution(random);
+			
+			c.invoke(generic_functor3{called, arg1, 4}, arg1, 1, "arg2", 3.0, 4.f);
 			
 			REQUIRE(called);
 			REQUIRE(c.contains<Definition2>());

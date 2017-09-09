@@ -342,5 +342,6 @@ TEST_CASE("Definition can override with multiple level and virtual inheritance",
 		REQUIRE(derived_forward_called == 1);
 		
 		REQUIRE(static_cast<ServiceMiddle1*>(&c.service<DefinitionDerived>()) == &c.service<DefinitionMiddle1>());
+		REQUIRE(static_cast<ServiceMiddle2*>(&c.service<DefinitionDerived>()) == &c.service<DefinitionMiddle2>());
 	}
 }

@@ -21,6 +21,11 @@
 
 namespace kgr {
 
+/**
+ * The kangaru container class.
+ * 
+ * This class will construct services and share single instances for a given definition.
+ */
 struct Container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
@@ -403,7 +408,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		return make_instance_ptr<T>(in_place, std::forward<Args>(args)...);
+		return make_instance_ptr<T>(detail::in_place, std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -414,7 +419,7 @@ private:
 		disable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	contained_service_t<T> make_contained_service(Args&&... args) {
-		return T{in_place, std::forward<Args>(args)...};
+		return T{detail::in_place, std::forward<Args>(args)...};
 	}
 	
 	/*

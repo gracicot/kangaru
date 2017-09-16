@@ -4,3 +4,4 @@ build-*
 *.kdev4
 !.gitignore
 !.gitmodules
+!.travis.yml

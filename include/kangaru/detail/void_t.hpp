@@ -4,7 +4,10 @@
 namespace kgr {
 namespace detail {
 
-// void_t implementation
+/*
+ * This is the void_t implementation.
+ * We chose this particular implementation because C++11 don't enforce sfinae otherwise.
+ */
 template<typename...>
 struct voider { using type = void; };
 

@@ -11,6 +11,11 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * This class implements all autocall functions that a definition must implement for autocall.
+ * 
+ * All AutoCall specialization extends this one.
+ */
 struct AutoCallBase {
 	template<typename T, typename F, typename... Ts, int_t<enable_if_t<!is_map<F>::value>, enable_if_t<!is_map<Ts>::value>...> = 0>
 	void autocall(Inject<Ts>... others) {
@@ -35,11 +40,21 @@ struct AutoCallBase {
 template<typename T, T t>
 using Method = std::integral_constant<T, t>;
 
+/*
+ * 
+ */
 template<typename M, typename... Ps>
 struct Invoke : M {
 	using Parameters = detail::meta_list<Ps...>;
 };
 
+/*
+ * The class that defines AutoCall.
+ * 
+ * It is intended to be extended by user definition.
+ * 
+ * It should be the only way to enable autocall in a service.
+ */
 template<typename... Ts>
 struct AutoCall : detail::AutoCallBase {
 	using Autocall = detail::meta_list<Ts...>;
@@ -47,6 +62,9 @@ struct AutoCall : detail::AutoCallBase {
 	using Map = kgr::Map<>;
 };
 
+/*
+ * Specialization of AutoCall when a map is sent as first parameter.
+ */
 template<typename... Maps, typename... Ts>
 struct AutoCall<kgr::Map<Maps...>, Ts...> : detail::AutoCallBase {
 	using Autocall = detail::meta_list<Ts...>;

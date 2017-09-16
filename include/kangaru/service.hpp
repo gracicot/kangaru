@@ -9,9 +9,17 @@
 
 namespace kgr {
 
+/**
+ * This class is simply a list of definition the current service depends on to be constructed.
+ */
 template<typename... Args>
 struct Dependency {};
 
+/**
+ * This class is the default single service.
+ * 
+ * It hold the service as value, and returns it by reference.
+ */
 template<typename, typename = Dependency<>>
 struct SingleService;
 
@@ -40,6 +48,11 @@ public:
 	}
 };
 
+/**
+ * This is the default non-single service.
+ * 
+ * It hold and return the service by value.
+ */
 template<typename, typename = Dependency<>>
 struct Service;
 
@@ -69,6 +82,14 @@ public:
 	}
 };
 
+/**
+ * This class is the service definition for a non-single heap allocated service.
+ * 
+ * It works for both case where you need a shared pointer non-single service,
+ * because they are implicitly constructible from a unique pointer.
+ * 
+ * It will hold the service as a std::unique_ptr, and inject it as a std::unique_ptr
+ */
 template<typename, typename = Dependency<>>
 struct UniqueService;
 
@@ -99,6 +120,11 @@ public:
 	}
 };
 
+/**
+ * This class is a service definition when a single should be injected as a shared pointer.
+ * 
+ * It will hold the service as a std::shared_ptr and inject it a s a std::shared_ptr
+ */
 template<typename, typename = Dependency<>>
 struct SharedService;
 
@@ -127,11 +153,21 @@ public:
 	}
 };
 
+/*
+ * This class is a abstract service that a kgr::SingleService can override.
+ * 
+ * It cannot be constructed, but only overrided.
+ */
 template<typename T>
 struct AbstractService : Abstract {
 	T& forward();
 };
 
+/*
+ * This class is an abstract service that can be overrided by kgr::SharedService
+ * 
+ * As it is abstract, a service that overrides it must be instanciated by the container before usage.
+ */
 template<typename T>
 struct AbstractSharedService : Abstract {
 	std::shared_ptr<T> forward();

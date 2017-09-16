@@ -91,11 +91,11 @@ TEST_CASE("Injected arguments can be single and non single", "[dependency]") {
 }
 
 TEST_CASE("Container injects arguments recursively", "[dependency]") {
-	static bool service1_constructed = false;
-	static bool service2_constructed = false;
-	static bool service3_one_constructed = false;
-	static bool service3_two_constructed = false;
-	static bool service4_constructed = false;
+	static bool service1_constructed;
+	static bool service2_constructed;
+	static bool service3_one_constructed;
+	static bool service3_two_constructed;
+	static bool service4_constructed;
 	
 	service1_constructed = false;
 	service2_constructed = false;

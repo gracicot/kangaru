@@ -17,7 +17,7 @@ struct Credential {};
 
 struct Connection {
     // Connect needs some credential
-	void connect(Credential const&);
+    void connect(Credential const&);
 };
 
 struct Database {
@@ -53,8 +53,8 @@ auto service_map(Database const&) -> DatabaseService;
 int main() {
     kgr::Container container;
     
-    // get the database.
-    // the database has a connection injected,
+    // Get the database.
+    // The database has a connection injected,
     // and the connection had the connect function called before injection.
     auto&& database = container.service<DatabaseService>();
     
@@ -63,7 +63,7 @@ int main() {
     
     // invoke a callable object
     auto function = [](Credential c, Database& db) {
-	    // Do stuff!
+        // Do stuff!
     };
     
     // The function is called with it's parameter injected.
@@ -73,20 +73,20 @@ int main() {
 
 Installation
 ------------
-To make kangaru available on a machine, you must create a build directory:
+To make kangaru available on a machine, you must clonse the repository and create a build directory:
 
-    git clone https://github.com/gracicot/kangaru.git && cd kangaru
-    mkdir build && cd build
+    $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
+	$ mkdir build && cd build
 
-Then use cmake to generate the makefile and export the package:
+Then use cmake to generate the makefile and export the package informations:
 
-    cmake ..
+    $ cmake ..
 
 That's it! Link it to your project using cmake and you can already include and code!
 
 Optionally, you can also install kangaru on your system:
 
-    sudo make install
+    # make install
 
 Adding Include Path
 -------------------

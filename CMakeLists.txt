@@ -9,8 +9,6 @@ set(KANGARU_VERSION_PATCH "0")
 
 set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU_VERSION_PATCH}")
 
-set(KANGARU_ENABLE_TESTS false)
-
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
@@ -37,6 +35,7 @@ if (KANGARU_BUILD_EXAMPLES)
 endif()
 
 if (KANGARU_ENABLE_TESTS)
+	enable_testing()
     add_subdirectory(test)
 endif()
 

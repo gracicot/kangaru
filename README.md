@@ -11,12 +11,14 @@ The name Kangaru came from the feature of injecting itself as a dependency into 
 #include <kangaru/kangaru.hpp>
 
 // This macro is used as a shortcut to use kgr::Method.
-#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) KGR_KANGARU_METHOD(__VA_ARGS__)
 
+// The following classes are user classes.
+// As you can see, this library is not intrusive and don't require modifications
 struct Credential {};
 
 struct Connection {
-    // Connect needs some credential
+    // The connect needs some credential
     void connect(Credential const&);
 };
 
@@ -33,22 +35,22 @@ struct Database {
 // We define all dependencies between classes,
 // and tell the container how to map function parameter to those definitions.
 
- // Simple injectable service by value
+// Simple injectable service by value
 struct CredentialService : kgr::Service<Credential> {};
-
-// Map the function parameter type to the credential service definition
-auto service_map(Credential const&) -> CredentialService;
 
 // Connection service is single,
 // and need the connect function to be called on creation
 struct ConnectionService : kgr::SingleService<Credential>,
     kgr::Autocall<METHOD(&Connection::connect)> {};
 
-// Database is also a single, and has a connection as it's dependency
+
+// Database is also a single, and has a connection as dependency
 struct DatabaseService : kgr::SingleService<Database, kgr::Dependency<ConnectionService>> {};
 
+// The service map maps a function parameter type to a service definition
 // We also want to map a Database argument type for the example.
-auto service_map(Database const&) -> DatabaseService;
+auto service_map(Database const&) -> DatabaseService
+auto service_map(Credential const&) -> CredentialService;
 
 int main() {
     kgr::Container container;
@@ -61,12 +63,12 @@ int main() {
     // commit the database
     database.commit();
     
-    // invoke a callable object
+    // Let `function` be a callable object
     auto function = [](Credential c, Database& db) {
-        // Do stuff!
+        // Do stuff with credential and database
     };
     
-    // The function is called with it's parameter injected.
+    // The function is called with it's parameter injected automatically.
     container.invoke(function);
 }
 ```

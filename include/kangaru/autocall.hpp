@@ -8,6 +8,8 @@
 #include "detail/container_service.hpp"
 #include "container.hpp"
 
+#define KGR_KANGARU_METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+
 namespace kgr {
 namespace detail {
 
@@ -37,11 +39,14 @@ struct AutoCallBase {
 
 } // namespace detail
 
+/*
+ * This alias simply to transform a member function address to a type.
+ */
 template<typename T, T t>
 using Method = std::integral_constant<T, t>;
 
 /*
- * 
+ * This class wraps a method and tell explicitly which services are needed.
  */
 template<typename M, typename... Ps>
 struct Invoke : M {

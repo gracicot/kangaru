@@ -103,21 +103,22 @@ struct map_entry<void, P, enable_if_t<is_mapped<void, P>::value>> {
 };
 
 /*
- * This is an alias for the mapped definition in a service map.
- */
-template<typename Map, typename T>
-using service_map_t = typename map_entry<Map, T>::Service;
-
-/*
  * Trait to tell if a parameter is mapped using the map group Map.
  */
 template<typename Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};
 
 template<typename Map, typename T>
-struct is_complete_map<Map, T, void_t<service_map_t<Map, T>>> : std::true_type {};
+struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::Service>> : std::true_type {};
 
 } // namespace detail
+
+/*
+ * This is an alias for the mapped definition in a service map.
+ */
+template<typename Map, typename T = kgr::Map<>>
+using service_map_t = typename detail::map_entry<Map, T>::Service;
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_MAP_HPP

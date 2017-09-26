@@ -60,10 +60,10 @@ int main() {
     // and the connection had the connect function called before injection.
     auto&& database = container.service<DatabaseService>();
     
-    // commit the database
+    // Commit the database
     database.commit();
     
-    // Let `function` be a callable object
+    // Let `function` be a callable object that takes mapped services.
     auto function = [](Credential c, Database& db) {
         // Do stuff with credential and database
     };
@@ -72,6 +72,20 @@ int main() {
     container.invoke(function);
 }
 ```
+
+Features
+--------
+
+ * Recursive dependency resolution
+ * Non intrusive. No existing classes need modification.
+ * You tell the container how to construct your types
+ * You tell the container how to store them
+ * You tell the container how they are injected
+ * Injection by setters
+ * Clean and simple API
+ * Low runtime overhead
+ * Header only library
+ * Clean diagnostics at compile-time.
 
 Installation
 ------------
@@ -104,20 +118,6 @@ And then add the include dirs to your target:
 Then you can include the library as follow:
 
     #include <kangaru/kangaru.hpp>
-
-Features
---------
-
- * Recursive dependency resolution
- * Non intrusive. No existing classes need modification.
- * You tell the container how to construct your types
- * You tell the container how to store them
- * You tell the container how they are injected
- * Injection by setters
- * Clean and simple API
- * Low runtime overhead
- * Header only library
- * Clean diagnostics at compile-time.
 
 What's next?
 ------------

@@ -147,3 +147,37 @@ namespace testcase_autocall_custom_map {
 		REQUIRE(injected_constructed);
 	}
 }
+
+
+namespace testcase_autocall_custom_map_no_map {
+	static bool injected_constructed = false;
+	
+	struct Map {};
+	
+	struct InjectedService {
+		InjectedService() {
+			injected_constructed = true;
+		}
+	};
+	
+	struct Service {
+		bool called = false;
+		
+		void function(InjectedService) {
+			called = true;
+		}
+	};
+	
+	struct InjectedDefinition : kgr::Service<InjectedService> {};
+	
+	struct Definition : kgr::Service<Service>, kgr::AutoCall<kgr::Map<Map>,
+		METHOD(&Service::function)
+	> {};
+	
+	auto service_map(InjectedService const&) -> InjectedDefinition;
+		
+	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map fallback to normal map", "[autocall]") {
+		REQUIRE(kgr::Container{}.service<Definition>().called);
+		REQUIRE(injected_constructed);
+	}
+}

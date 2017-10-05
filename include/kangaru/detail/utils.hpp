@@ -18,7 +18,7 @@ struct ServiceTypeHelper {};
  * Specialization of ServiceTypeHelper when T has a forward function callable without parameter.
  */
 template<typename T>
-struct ServiceTypeHelper<T, decltype(void(std::declval<T>().forward()))> {
+struct ServiceTypeHelper<T, typename std::enable_if<!std::is_same<decltype(std::declval<T>().forward()), void>::value>::type> {
 	using type = decltype(std::declval<T>().forward());
 };
 

@@ -69,18 +69,7 @@ struct has_callable_template_construct<
  * This trait will extract the first matching construct function that is callable.
  */
 template<typename, typename, typename, typename = void>
-struct get_template_construct_helper;
-
-/*
- * Specialization of get_template_construct_helper.
- * 
- * This specialization is the final iteration of the meta algorithm. We get here when no suitable function is found.
- */
-template<typename T, typename... Args>
-struct get_template_construct_helper<
-	T, meta_list<>, meta_list<Args...>,
-	enable_if_t<!has_callable_template_construct<T, meta_list<>, meta_list<Args...>>::value>
-> {};
+struct get_template_construct_helper {};
 
 /*
  * Specialization of get_template_construct_helper.
@@ -132,7 +121,7 @@ struct template_construct_exist<T, meta_list<Args...>, void_t<decltype(&T::templ
  * A lot similar to get_template_construct_helper, but we only check for the existance of the function, without validating it.
  */
 template<typename, typename, typename = void>
-struct get_any_template_construct_helper;
+struct get_any_template_construct_helper {};
 
 template<typename T, typename Head, typename... Tail>
 struct get_any_template_construct_helper<

@@ -28,6 +28,8 @@ TEST_CASE("The definition can be construct using emplace", "[definition]") {
 	};
 	
 	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
+	
+	(void) kgr::Container{}.service<Definition>();
 }
 
 TEST_CASE("The definition cannot be construct with emplace differing construct", "[definition]") {
@@ -51,6 +53,8 @@ TEST_CASE("The definition cannot be only be construct with emplace if parameters
 	
 	REQUIRE_FALSE(kgr::detail::is_service_valid<Definition>::value);
 	REQUIRE((kgr::detail::is_service_valid<Definition, double>::value));
+	
+	(void) kgr::Container{}.service<Definition>(0.0);
 }
 
 namespace template_construct {
@@ -69,5 +73,11 @@ TEST_CASE("The construct function can be template", "[definition]") {
 	REQUIRE((kgr::detail::is_service_valid<Definition, int>::value));
 	REQUIRE((kgr::detail::is_service_valid<Definition, std::tuple<>>::value));
 	REQUIRE_FALSE((kgr::detail::is_service_valid<Definition, int, double>::value));
+	
+	kgr::Container c;
+	(void) c.service<Definition>(0.0);
+	(void) c.service<Definition>(0.0f);
+	(void) c.service<Definition>(0);
+	(void) c.service<Definition>(std::tuple<>{});
 }
 }

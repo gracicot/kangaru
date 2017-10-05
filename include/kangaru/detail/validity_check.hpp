@@ -35,25 +35,25 @@ struct is_service_valid : std::integral_constant<bool,
 template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid_helper {
 private:
+	template<typename U>
+	using map_t = service_map_t<U, Map>;
+	
 	template<typename U, std::size_t I>
 	struct expander {
-		using type = std::integral_constant<bool, is_service_valid<service_map_t<Map, invoke_function_argument_t<I, Map, U, Args...>>>::value>;
+		using type = std::integral_constant<bool, is_service_valid<map_t<invoke_function_argument_t<I, Map, U, Args...>>>::value>;
 	};
-
-	template<typename U>
-	using map_t = service_map_t<Map, U>;
 	
 	template<typename U, typename... As, std::size_t... S, int_t<map_t<invoke_function_argument_t<S, Map, U, As...>>..., enable_if_t<expander<U, S>::type::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
-	
+	/*
 	template<typename...>
-	static std::false_type test_helper(...);
+	static std::false_type test_helper(...);*/
 	
 	template<typename U, typename... As>
 	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(Args)>{})) test(int);
-	
+/*	
 	template<typename...>
-	static std::false_type test(...);
+	static std::false_type test(...);*/
 	
 public:
 	using type = decltype(test<T, Args...>(0));

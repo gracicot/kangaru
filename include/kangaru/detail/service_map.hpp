@@ -39,23 +39,29 @@ struct is_map<Map<Ts...>> : std::true_type {};
 template<typename, typename, typename = void>
 struct is_mapped : std::false_type {};
 
+template<typename M, typename S>
+using is_valid_entry = std::is_convertible<ServiceType<decltype(service_map(std::declval<S>(), std::declval<M>()))>, S>;
+
+template<typename S>
+using is_valid_void_entry = std::is_convertible<ServiceType<decltype(service_map(std::declval<S>()))>, S>;
+
 /*
  * Specialization when map M maps the service S
  */
 template<typename M, typename S>
-struct is_mapped<Map<M>, S, enable_if_t<is_service<decltype(service_map(std::declval<S>(), std::declval<map_t<M> >()))>::value>> : std::true_type {};
+struct is_mapped<Map<M>, S, enable_if_t<is_valid_entry<map_t<M>, S>::value>> : std::true_type {};
 
 /*
  * Specialization for an empty map, equivalent for a void map
  */
 template<typename S>
-struct is_mapped<Map<>, S, enable_if_t<is_service<decltype(service_map(std::declval<S>(), std::declval<map_t<> >()))>::value>> : std::true_type {};
+struct is_mapped<Map<>, S, enable_if_t<is_valid_entry<map_t<>, S>::value>> : std::true_type {};
 
 /*
  * Specialization when no map is specified.
  */
 template<typename S>
-struct is_mapped<void, S, enable_if_t<is_service<decltype(service_map(std::declval<S>()))>::value>> : std::true_type {};
+struct is_mapped<void, S, enable_if_t<is_valid_void_entry<S>::value>> : std::true_type {};
 
 /*
  * Trait that extranct the mapped service type given the parameter and a group of maps.
@@ -116,7 +122,7 @@ struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::Servic
 /*
  * This is an alias for the mapped definition in a service map.
  */
-template<typename Map, typename T = kgr::Map<>>
+template<typename T, typename Map = kgr::Map<>>
 using service_map_t = typename detail::map_entry<Map, T>::Service;
 
 } // namespace kgr

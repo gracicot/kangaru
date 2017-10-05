@@ -68,7 +68,7 @@ private:
 	static std::false_type test_helper(...);
 	
 	template<typename Map, typename U, typename C, std::size_t... S, int_t<
-		service_map_t<Map, meta_list_element_t<S, function_arguments_t<typename C::value_type>>>...> = 0>
+		service_map_t<meta_list_element_t<S, function_arguments_t<typename C::value_type>>, Map>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename U, typename C>

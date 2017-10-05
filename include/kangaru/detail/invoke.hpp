@@ -80,7 +80,7 @@ private:
 	template<typename Map>
 	struct mapped_type {
 		template<typename U>
-		using map = service_map_t<Map, U>;
+		using map = service_map_t<U, Map>;
 	};
 	
 public:

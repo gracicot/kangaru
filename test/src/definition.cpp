@@ -58,6 +58,7 @@ TEST_CASE("The definition cannot be only be construct with emplace if parameters
 }
 
 namespace template_construct {
+
 struct Service {};
 struct Definition {
 	template<typename T>
@@ -83,6 +84,7 @@ TEST_CASE("The construct function can be template", "[definition]") {
 }
 
 namespace template_construct_param {
+
 struct Service {};
 struct Definition {
 	template<typename T>
@@ -111,6 +113,7 @@ TEST_CASE("The construct function can be a mix of non templated and template par
 }
 
 namespace template_construct_inject {
+
 struct Service {};
 struct Service2 {};
 struct Definition2 : kgr::Service<Service2> {};
@@ -183,10 +186,10 @@ TEST_CASE("The construct function can be a mix of non templated and template par
 }
 
 namespace in_place_constructor {
-struct Service {};
 
 bool constructor_called = false;
 
+struct Service {};
 struct Definition {
 	Definition(kgr::in_place_t) { constructor_called = true; }
 	static auto construct() -> decltype(kgr::inject()) { return kgr::inject(); }
@@ -200,11 +203,11 @@ TEST_CASE("The container call the constructor with the in_place_t constructor", 
 }
 
 namespace no_in_place {
-struct Service {};
 
 bool constructor_called = false;
 bool emplace_called = false;
 
+struct Service {};
 struct Definition {
 	Definition() { constructor_called = true; }
 	static auto construct() -> decltype(kgr::inject()) { return kgr::inject(); }
@@ -220,10 +223,10 @@ TEST_CASE("The container call the default if no constructor with the in_place_t 
 }
 
 namespace in_place_recieves_injected_parameters {
-struct Service {};
 
 bool constructor_called = false;
 
+struct Service {};
 struct Definition {
 	Definition(kgr::in_place_t, int&&, double&) { constructor_called = true; }
 	static auto construct(double& a) -> decltype(kgr::inject(int{}, a)) { return kgr::inject(1, a); }
@@ -239,11 +242,11 @@ TEST_CASE("The forward injected parameters to the Definition constructor", "[def
 }
 
 namespace definition_constructor_priority {
-struct Service {};
 
 bool constructor_called = false;
 bool emplace_called = false;
 
+struct Service {};
 struct Definition {
 	Definition(kgr::in_place_t, int, double&) { constructor_called = true; }
 	

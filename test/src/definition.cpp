@@ -181,3 +181,85 @@ TEST_CASE("The construct function can be a mix of non templated and template par
 	(void) c.service<DefinitionC>(DefinitionB{}, 0, std::tuple<>{});
 }
 }
+
+namespace in_place_constructor {
+struct Service {};
+
+bool constructor_called = false;
+
+struct Definition {
+	Definition(kgr::in_place_t) { constructor_called = true; }
+	static auto construct() -> decltype(kgr::inject()) { return kgr::inject(); }
+	Service forward() { return {}; }
+};
+
+TEST_CASE("The container call the constructor with the in_place_t constructor", "[definition]") {
+	(void) kgr::Container{}.service<Definition>();
+	REQUIRE(constructor_called);
+}
+}
+
+namespace no_in_place {
+struct Service {};
+
+bool constructor_called = false;
+bool emplace_called = false;
+
+struct Definition {
+	Definition() { constructor_called = true; }
+	static auto construct() -> decltype(kgr::inject()) { return kgr::inject(); }
+	void emplace() { emplace_called = true; }
+	Service forward() { return {}; }
+};
+
+TEST_CASE("The container call the default if no constructor with the in_place_t constructor is defined", "[definition]") {
+	(void) kgr::Container{}.service<Definition>();
+	REQUIRE(emplace_called);
+	REQUIRE(constructor_called);
+}
+}
+
+namespace in_place_recieves_injected_parameters {
+struct Service {};
+
+bool constructor_called = false;
+
+struct Definition {
+	Definition(kgr::in_place_t, int&&, double&) { constructor_called = true; }
+	static auto construct(double& a) -> decltype(kgr::inject(int{}, a)) { return kgr::inject(1, a); }
+	Service forward() { return {}; }
+};
+
+TEST_CASE("The forward injected parameters to the Definition constructor", "[definition]") {
+	REQUIRE((kgr::detail::is_service_valid<Definition, double&>::value));
+	double a = 0;
+	(void) kgr::Container{}.service<Definition>(a);
+	REQUIRE(constructor_called);
+}
+}
+
+namespace definition_constructor_priority {
+struct Service {};
+
+bool constructor_called = false;
+bool emplace_called = false;
+
+struct Definition {
+	Definition(kgr::in_place_t, int, double&) { constructor_called = true; }
+	
+	template<typename T>
+	static auto construct(int a, T& b) -> decltype(kgr::inject(std::move(a), b)) { return kgr::inject(std::move(a), b); }
+	
+	template<typename... Args>
+	void emplace(Args&&...) { emplace_called = true; }
+	Service forward() { return {}; }
+};
+
+TEST_CASE("The container prefer the in_place_t constructor over emplace function", "[definition]") {
+	double d = 0;
+	(void) kgr::Container{}.service<Definition>(0, d);
+	
+	REQUIRE(constructor_called);
+	REQUIRE_FALSE(emplace_called);
+}
+}

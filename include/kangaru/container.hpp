@@ -365,6 +365,10 @@ private:
 			"The overriden service must be virtual"
 		);
 		
+		static_assert(!detail::is_final_service<Override>::value,
+			"A final service cannot be overriden"
+		);
+		
 		detail::forward_ptr<Override> forward = [](void* s) -> ServiceType<Override> {
 			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
 		};

@@ -16,6 +16,7 @@ struct Single {
 };
 
 struct Virtual {};
+struct Final {};
 struct Abstract : Virtual, Single {};
 
 template<typename T>
@@ -65,6 +66,9 @@ using is_abstract_service = std::is_base_of<Abstract, T>;
 
 template<typename T>
 using is_single = std::is_base_of<Single, T>;
+
+template<typename T>
+using is_final_service = std::is_base_of<Final, T>;
 
 template<typename T>
 using is_virtual = std::integral_constant<bool, std::is_base_of<Virtual, T>::value || !meta_list_empty<parent_types<T>>::value>;

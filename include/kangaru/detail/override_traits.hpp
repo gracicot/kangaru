@@ -108,6 +108,35 @@ template<typename T>
 using is_override_virtual = typename is_override_virtual_helper<T>::type;
 
 /*
+ * Trait that check if no overriden services are final
+ */
+template<typename T>
+struct is_override_not_final_helper {
+private:
+	// This is a workaround for msvc. Expansion in very complex expression
+	// leaves the compiler without clues about what's going on.
+	template<std::size_t I, typename U>
+	struct expander {
+		using type = is_final_service<meta_list_element_t<I, parent_types<U>>>;
+	};
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<!expander<S, U>::type::value>...> = 0>
+	static std::true_type test(seq<S...>);
+	
+public:
+	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
+};
+
+/*
+ * Alias for is_override_virtual_helper
+ */
+template<typename T>
+using is_override_not_final = typename is_override_not_final_helper<T>::type;
+
+/*
  * Trait that check if the default service of an abstract service overrides that abstract service
  */
 template<typename T>

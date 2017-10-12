@@ -95,6 +95,11 @@ using is_default_service_valid = std::integral_constant<bool,
 	is_default_convertible<T>::value
 >;
 
+template<typename T>
+using is_abstract_not_final = std::integral_constant<bool,
+	!is_abstract_service<T>::value || !is_final_service<T>::value
+>;
+
 /*
  * Validity check for a service, without it's dependencies
  */
@@ -106,7 +111,9 @@ using service_check = std::integral_constant<bool,
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
 	is_override_virtual<T>::value &&
-	is_override_services<T>::value
+	is_override_services<T>::value &&
+	is_override_not_final<T>::value &&
+	is_abstract_not_final<T>::value
 >;
 
 /*
@@ -119,7 +126,9 @@ using dependency_check = std::integral_constant<bool,
 	dependency_trait<is_construct_function_callable, T, Args...>::value &&
 	dependency_trait<is_default_service_valid, T, Args...>::value &&
 	dependency_trait<is_override_convertible, T, Args...>::value &&
-	dependency_trait<is_override_services, T, Args...>::value
+	dependency_trait<is_override_services, T, Args...>::value &&
+	dependency_trait<is_override_not_final, T, Args...>::value &&
+	dependency_trait<is_abstract_not_final, T, Args...>::value
 >;
 
 } // namespace detail

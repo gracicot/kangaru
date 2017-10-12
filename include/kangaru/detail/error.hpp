@@ -101,6 +101,30 @@ struct ServiceError {
 		);
 	}
 	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		is_override_virtual<Service>::value &&
+		!is_override_not_final<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"An overriden service is marked as final, thus this service annot override it."
+			"The overriden service should be virtual or abtrant and not be final."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		is_override_virtual<Service>::value &&
+		!is_override_not_final<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"An overriden service is marked as final, thus this service annot override it."
+			"The overriden service should be virtual or abtrant and not be final."
+		);
+	}
+	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service>::value &&
@@ -151,6 +175,32 @@ struct ServiceError {
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
+		dependency_trait<is_override_virtual, Service>::value &&
+		!dependency_trait<is_override_not_final, Service>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies overrides a final service. "
+			"Check if every dependencies overrides a non final service"
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
+		dependency_trait<is_override_virtual, Service, Arg, Args...>::value &&
+		!dependency_trait<is_override_not_final, Service, Arg, Args...>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies overrides a final service. "
+			"Check if every dependencies overrides a non final service"
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
 		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
 		!is_default_service_valid<Service>::value &&
@@ -167,8 +217,8 @@ struct ServiceError {
 		is_service<Service>::value &&
 		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service, Arg, Args...>::value &&
-		!is_default_service_valid<Service>::value &&
 		is_default_convertible<Service>::value &&
+		!is_final_service<Service>::value &&
 		is_default_overrides_abstract<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,
@@ -181,7 +231,6 @@ struct ServiceError {
 		is_service<Service>::value &&
 		is_abstract_service<Service>::value &&
 		dependency_trait<is_default_service_valid, Service>::value &&
-		!is_default_service_valid<Service>::value &&
 		!is_default_convertible<Service>::value &&
 		is_default_overrides_abstract<Service>::value, int> = 0>
 	ServiceError() {
@@ -272,6 +321,46 @@ struct ServiceError {
 		static_assert(false_t<Service>::value,
 			"The default implementation of a dependency is not valid. "
 			"Ensure that every default implementation are valid services that override properly thier abstract services."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_abstract_not_final<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"An abstract service cannot be final"
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_abstract_not_final<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"An abstract service cannot be final"
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service>::value &&
+		is_service_constructible<Service>::value &&
+		!dependency_trait<is_abstract_not_final, Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies are final abstract service or depends on a final abstract service"
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
+		is_service_constructible<Service, Arg, Args...>::value &&
+		!dependency_trait<is_abstract_not_final, Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies are final abstract service or depends on a final abstract service"
 		);
 	}
 	

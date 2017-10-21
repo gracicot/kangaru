@@ -91,7 +91,7 @@ public:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_service<T>> = 0,
 		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
-	void instance(Args&&... args) {
+	void instanciate(Args&&... args) {
 		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)));
 	}
 	
@@ -106,7 +106,7 @@ public:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_service<T>> = 0,
 		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
-	void instance(detail::no_autocall_t, Args&&... args) {
+	void instanciate(detail::no_autocall_t, Args&&... args) {
 		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
 	}
 	
@@ -272,11 +272,9 @@ private:
 		
 		autocall(service);
 		
-		auto forward = [](void* ptr) -> ServiceType<T> {
-			return static_cast<T*>(ptr)->forward();
-		};
+		static_assert(std::is_same<decltype(service), T&>::value, "save_instance returned a different service type than the required one!");
 		
-		return std::make_pair(&service, static_cast<detail::forward_ptr<T>>(forward));
+		return std::make_pair(&service, get_forward<T>());
 	}
 	
 	/*
@@ -300,7 +298,7 @@ private:
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
 	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&...) {
-		save_new_instance<detail::default_type<T>>();
+		auto& service = save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow
 		// a call to this function where the default service don't overrides T, it would be UB.
@@ -308,9 +306,7 @@ private:
 			"The default service type of an abstract service must override that abstract service."
 		);
 		
-		// This could be faster if we had access to instance of override services.
-		auto&& service = _services[type_id<T>()];
-		return std::make_pair(service.first, reinterpret_cast<detail::forward_ptr<T>>(service.second));
+		return std::make_pair(service.first, get_override_forward<T, detail::default_type<T>>());
 	}
 	
 	/*
@@ -335,19 +331,24 @@ private:
 			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
 		, 0)..., 0};
 		
-		_services[type_id<T>()] = {service.get(), get_forward<T>()};
+		_services[type_id<T>()] = {service.get(), reinterpret_cast<contained_forward_t>(get_forward<T>())};
 		_instances.emplace_back(std::move(service));
 		
 		return serviceRef;
 	}
 	
+	template<typename Override, typename T, enable_if<detail::is_virtual<T>> = 0>
+	detail::forward_ptr<Override> get_override_forward() {
+		return static_cast<detail::forward_ptr<Override>>([](void* s) -> ServiceType<Override> {
+			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
+		});
+	}
+	
 	template<typename T, enable_if<detail::is_virtual<T>> = 0>
-	contained_forward_t get_forward() {
-		return reinterpret_cast<contained_forward_t>(
-			static_cast<detail::forward_ptr<T>>([](void* service) -> ServiceType<T> {
-				return static_cast<T*>(service)->forward();
-			})
-		);
+	detail::forward_ptr<T> get_forward() {
+		return static_cast<detail::forward_ptr<T>>([](void* service) -> ServiceType<T> {
+			return static_cast<T*>(service)->forward();
+		});
 	}
 	
 	template<typename T, disable_if<detail::is_virtual<T>> = 0>
@@ -369,11 +370,10 @@ private:
 			"A final service cannot be overriden"
 		);
 		
-		detail::forward_ptr<Override> forward = [](void* s) -> ServiceType<Override> {
-			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
+		_services[type_id<Override>()] = {
+			&service,
+			reinterpret_cast<contained_forward_t>(get_override_forward<Override, T>())
 		};
-		
-		_services[type_id<Override>()] = {&service, reinterpret_cast<contained_forward_t>(forward)};
 	}
 	
 	///////////////////////

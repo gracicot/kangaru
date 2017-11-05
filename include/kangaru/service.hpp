@@ -34,8 +34,9 @@ protected:
 public:
 	using Parent::Parent;
 	
-	static auto construct(Inject<Deps>... deps) -> decltype(inject(deps.forward()...)) {
-		return inject(deps.forward()...);
+	template<typename... Args>
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::declval<Deps>().forward()..., std::declval<Args>()...)) {
+		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
 	Type& forward() {
@@ -68,7 +69,7 @@ public:
 	using Parent::Parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(deps.forward()..., std::declval<Args>()...)) {
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::declval<Deps>().forward()..., std::declval<Args>()...)) {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
@@ -106,7 +107,7 @@ public:
 	
 	template<typename... Args>
 	static auto construct(Inject<Deps>... deps, Args&&... args)
-	-> decltype(inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::declval<Args>()...}})) {
+	-> decltype(inject(std::unique_ptr<Type>{new Type{std::declval<Deps>().forward()..., std::declval<Args>()...}})) {
 		return inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::forward<Args>(args)...}});
 	}
 	
@@ -139,7 +140,7 @@ protected:
 public:
 	using Parent::Parent;
 
-	static auto construct(Inject<Deps>... deps) -> decltype(inject(std::make_shared<Type>(deps.forward()...))) {
+	static auto construct(Inject<Deps>... deps) -> decltype(inject(std::make_shared<Type>(std::declval<Deps>().forward()...))) {
 		return inject(std::make_shared<Type>(deps.forward()...));
 	}
 	

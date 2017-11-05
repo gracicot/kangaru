@@ -11,7 +11,7 @@ namespace kgr {
  * This is the default predicate used by the container.
  */
 struct All {
-	constexpr inline bool operator()(type_id_t) const {
+	constexpr inline bool operator()(type_id_t) const noexcept {
 		return true;
 	}
 };
@@ -21,18 +21,18 @@ struct All {
  */
 template<typename First, typename... Ts>
 struct NoneOf {
-	constexpr bool operator()(type_id_t id) const {
+	constexpr bool operator()(type_id_t id) const noexcept {
 		return !compare<First, Ts...>(id);
 	}
 	
 private:
 	template<typename Compared, typename Second, typename... Rest>
-	constexpr bool compare(type_id_t id) const {
+	constexpr bool compare(type_id_t id) const noexcept {
 		return id == type_id<Compared>() && compare<Second, Rest...>(id);
 	}
 	
 	template<typename Compared>
-	constexpr bool compare(type_id_t id) const {
+	constexpr bool compare(type_id_t id) const noexcept {
 		return id == type_id<Compared>();
 	}
 };
@@ -42,18 +42,18 @@ private:
  */
 template<typename First, typename... Ts>
 struct AnyOf {
-	constexpr bool operator()(type_id_t id) const {
+	constexpr bool operator()(type_id_t id) const noexcept {
 		return compare<First, Ts...>(id);
 	}
 	
 private:
 	template<typename Compared, typename Second, typename... Rest>
-	constexpr bool compare(type_id_t id) const {
+	constexpr bool compare(type_id_t id) const noexcept {
 		return id == type_id<Compared>() && compare<Second, Rest...>(id);
 	}
 	
 	template<typename Compared>
-	constexpr bool compare(type_id_t id) const {
+	constexpr bool compare(type_id_t id) const noexcept {
 		return id == type_id<Compared>();
 	}
 };

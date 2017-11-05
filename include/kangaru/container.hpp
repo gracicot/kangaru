@@ -82,6 +82,21 @@ public:
 	
 	/*
 	 * This function construct a service definition with the provided arguments.
+	 * It is usually used to instanciate explicit services.
+	 * It also saves it in the container.
+	 * It returns void.
+	 * This function require the service to be single.
+	 */
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_service<T>> = 0>
+	void construct(Args&&... args) {
+		save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+	}
+	
+	/*
+	 * This function construct a service definition without any injection occuring.
+	 * The container will use the defintion's constructor directly.
 	 * It also saves it in the container.
 	 * It returns void.
 	 * This function only works with single services.
@@ -250,6 +265,7 @@ private:
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_virtual<T>> = 0,
+		disable_if<detail::is_explicit_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	T& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
@@ -293,10 +309,23 @@ private:
 	
 	/*
 	 * This function is a specialization of save_new_instance for abstract classes.
+	 * Since you cannot construct an abstract class, this function always throw.
+	 */
+	template<typename T, typename... Args,
+		enable_if<detail::is_single<T>> = 0,
+		enable_if<detail::is_explicit_service<T>> = 0,
+		disable_if<detail::is_abstract_service<T>> = 0>
+	T& save_new_instance(Args&&...) {
+		throw AbstractNotFound{};
+	}
+	
+	/*
+	 * This function is a specialization of save_new_instance for abstract classes.
 	 * Since that abstract service has a default service specified, we can contruct that one.
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
+		disable_if<detail::is_explicit_service<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
 	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&...) {

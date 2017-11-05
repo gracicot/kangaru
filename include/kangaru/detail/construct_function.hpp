@@ -188,7 +188,7 @@ private:
 		!has_template_construct<U, As...>::value, int> = 0>
 	static get_construct<U> test();
 	
-	template<typename U, typename... As, enable_if_t<has_template_construct<U, As...>::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<has_any_template_construct<U, As...>::value, int> = 0>
 	static get_template_construct<U, As...> test();
 	
 	using inner_type = decltype(test<T, Args...>());
@@ -261,7 +261,7 @@ struct is_construct_function_callable_helper<
 template<typename T, typename... Args>
 struct is_construct_function_callable_helper<
 	T, meta_list<Args...>,
-	enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value>
+	enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value || (is_explicit_service<T>::value && sizeof...(Args) > 0)>
 > : std::true_type {};
 
 /*

@@ -21,8 +21,7 @@ using is_single_no_args = std::integral_constant<bool,
  * Complete validity check for a particlar service and all it's properties
  */
 template<typename T, typename... Args>
-struct is_service_valid : std::integral_constant<bool,
-	is_single_no_args<T, Args...>::value &&
+struct is_construction_valid : std::integral_constant<bool,
 	service_check<T, Args...>::value &&
 	dependency_check<T, Args...>::value &&
 	is_autocall_valid<T>::value &&
@@ -30,6 +29,15 @@ struct is_service_valid : std::integral_constant<bool,
 > {};
 
 /*
+ * Complete validity check for a particlar service and all it's properties
+ */
+template<typename T, typename... Args>
+struct is_service_valid : std::integral_constant<bool,
+	is_single_no_args<T, Args...>::value &&
+	is_construction_valid<T, Args...>::value
+> {};
+
+/* 
  * Trait that check if a function is invocable, and all it's injected arguments are valid.
  */
 template<typename Map, typename T, typename... Args>
@@ -45,15 +53,15 @@ private:
 	
 	template<typename U, typename... As, std::size_t... S, int_t<map_t<invoke_function_argument_t<S, Map, U, As...>>..., enable_if_t<expander<U, S>::type::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
-	/*
+	
 	template<typename...>
-	static std::false_type test_helper(...);*/
+	static std::false_type test_helper(...);
 	
 	template<typename U, typename... As>
 	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(Args)>{})) test(int);
-/*	
+	
 	template<typename...>
-	static std::false_type test(...);*/
+	static std::false_type test(...);
 	
 public:
 	using type = decltype(test<T, Args...>(0));

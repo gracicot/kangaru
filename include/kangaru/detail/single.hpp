@@ -17,7 +17,7 @@ struct Single {
 
 struct Virtual {};
 struct Final {};
-struct Explicit : Single {};
+struct Supplied : Single {};
 struct Abstract : Virtual, Single {};
 
 template<typename T>
@@ -69,7 +69,7 @@ template<typename T>
 using is_single = std::is_base_of<Single, T>;
 
 template<typename T>
-using is_explicit_service = std::is_base_of<Explicit, T>;
+using is_supplied_service = std::is_base_of<Supplied, T>;
 
 template<typename T>
 using is_final_service = std::is_base_of<Final, T>;

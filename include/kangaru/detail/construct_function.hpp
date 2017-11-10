@@ -261,7 +261,7 @@ struct is_construct_function_callable_helper<
 template<typename T, typename... Args>
 struct is_construct_function_callable_helper<
 	T, meta_list<Args...>,
-	enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value || (is_explicit_service<T>::value && sizeof...(Args) > 0)>
+	enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value || (is_supplied_service<T>::value && sizeof...(Args) > 0)>
 > : std::true_type {};
 
 /*

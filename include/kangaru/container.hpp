@@ -81,18 +81,29 @@ public:
 	~Container() = default;
 	
 	/*
-	 * This function construct a service definition with the provided arguments.
-	 * It is usually used to instanciate explicit services.
-	 * It also saves it in the container.
-	 * It returns void.
+	 * This function construct and save in place a service definition with the provided arguments.
+	 * The service is only constructed if it is not found.
+	 * It is usually used to instanciate supplied services.
+	 * It returns if the service has been constructed.
 	 * This function require the service to be single.
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_service<T>> = 0>
-	void construct(Args&&... args) {
-		save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+		enable_if<detail::is_construction_valid<T, Args...>> = 0>
+	bool emplace(Args&&... args) {
+		return contains<T>() ? false : (autocall(save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...))), true);
 	}
+	
+	/*
+	 * The following two overloads are called in a case where the service is invalid,
+	 * or is called when provided arguments don't match the constructor.
+	 * In GCC, a diagnostic is provided.
+	 */
+	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
+	bool emplace(detail::ServiceError<T> = {}) = delete;
+	
+	template<typename T, typename... Args>
+	bool emplace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function construct a service definition without any injection occuring.
@@ -105,6 +116,7 @@ public:
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_service<T>> = 0,
+		enable_if<detail::is_autocall_valid<T>> = 0,
 		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
 	void instanciate(Args&&... args) {
 		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)));
@@ -141,11 +153,11 @@ public:
 	 * or is called when provided arguments don't match the constructor.
 	 * In GCC, a diagnostic is provided.
 	 */
-	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	void service(detail::ServiceError<T> = {}) = delete;
-	
 	template<typename T, typename... Args>
 	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	
+	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
+	void service(detail::ServiceError<T> = {}) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -265,7 +277,7 @@ private:
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_virtual<T>> = 0,
-		disable_if<detail::is_explicit_service<T>> = 0,
+		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	T& save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
@@ -311,7 +323,7 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_explicit_service<T>> = 0,
+		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	T& save_new_instance(Args&&...) {
 		throw AbstractNotFound{};
@@ -323,11 +335,11 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		disable_if<detail::is_explicit_service<T>> = 0,
+		disable_if<detail::is_supplied_service<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
 	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&...) {
-		auto& service = save_new_instance<detail::default_type<T>>();
+		auto&& service = save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow
 		// a call to this function where the default service don't overrides T, it would be UB.

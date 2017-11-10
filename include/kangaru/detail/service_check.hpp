@@ -25,7 +25,7 @@ private:
 	template<typename U, typename... As, int_t<construct_function_t<U, As...>> = 0>
 	static is_service_instantiable<T> test(seq<>);
 	
-	template<typename U, typename... As, enable_if_t<is_explicit_service<U>::value || !has_any_construct<U, As...>::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<is_supplied_service<U>::value || !has_any_construct<U, As...>::value, int> = 0>
 	static std::true_type test_helper(int);
 	
 	template<typename...>
@@ -35,7 +35,7 @@ private:
 	static std::false_type test_helper(...);
 	
 	// The enable if is required here or else the function call will be ambiguous on visual studio.
-	template<typename U, typename... As, enable_if_t<!is_explicit_service<U>::value && has_any_construct<U, As...>::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<!is_supplied_service<U>::value && has_any_construct<U, As...>::value, int> = 0>
 	static decltype(test<U, As...>(tuple_seq<function_result_t<construct_function_t<U, As...>>>{})) test_helper(int);
 	
 public:

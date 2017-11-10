@@ -35,7 +35,7 @@ public:
 	using Parent::Parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::declval<Deps>().forward()..., std::declval<Args>()...)) {
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> inject_result<ServiceType<Deps>..., Args...> {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
@@ -69,7 +69,7 @@ public:
 	using Parent::Parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args) -> decltype(inject(std::declval<Deps>().forward()..., std::declval<Args>()...)) {
+	static auto construct(Inject<Deps>... deps, Args&&... args) -> inject_result<ServiceType<Deps>..., Args...> {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 

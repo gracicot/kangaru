@@ -39,10 +39,10 @@ struct Carpenter {
 	void makeProduct(string name) {
 		if (stack.planks > 0) {
 			cout << "Another " << name << " made, but only " << stack.planks << " planks left!" << endl;
-		
+			
 			auto product = container.service<ProductService>();
 			product.name = name;
-		
+			
 			products.emplace_back(move(product));
 		} else {
 			cout << "No planks left, no product made." << endl;
@@ -63,10 +63,7 @@ int main()
 	kgr::Container container;
 	
 	// We made the stack ourself and set the number of planks to 2
-	WoodStack stack{2};
-	
-	// We are providing our stack instance to the container.
-	container.instance<WoodStackService>(std::move(stack));
+	container.emplace<WoodStackService>(2);
 	
 	
 	// It has the Container and the WoodStack injected.

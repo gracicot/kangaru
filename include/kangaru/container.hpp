@@ -106,36 +106,28 @@ public:
 	bool emplace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
-	 * This function construct a service definition without any injection occuring.
-	 * The container will use the defintion's constructor directly.
-	 * It also saves it in the container.
-	 * It returns void.
-	 * This function only works with single services.
-	 * This version of the function will call functions in autocall.
+	 * This function construct and save in place a service definition with the provided arguments.
+	 * The inserted instance of the service will be used for now on.
+	 * It does not delete the old instance if any.
+	 * This function require the service to be single.
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_service<T>> = 0,
-		enable_if<detail::is_autocall_valid<T>> = 0,
-		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
-	void instanciate(Args&&... args) {
-		autocall(save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...)));
+		enable_if<detail::is_construction_valid<T, Args...>> = 0>
+	void replace(Args&&... args) {
+		autocall(save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...)));
 	}
 	
 	/*
-	 * This function construct a service definition with the provided arguments.
-	 * It also saves it in the container.
-	 * It returns void.
-	 * This function only works with single services.
-	 * This version of the function will not call functions in autocall.
+	 * The following two overloads are called in a case where the service is invalid,
+	 * or is called when provided arguments don't match the constructor.
+	 * In GCC, a diagnostic is provided.
 	 */
-	template<typename T, typename... Args,
-		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_service<T>> = 0,
-		enable_if<detail::is_service_instantiable<T, Args...>> = 0>
-	void instanciate(detail::no_autocall_t, Args&&... args) {
-		save_instance<T>(make_contained_service<T>(std::forward<Args>(args)...));
-	}
+	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
+	bool replace(detail::ServiceError<T> = {}) = delete;
+	
+	template<typename T, typename... Args>
+	bool replace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the service given by service definition T.

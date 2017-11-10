@@ -128,6 +128,9 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
 	return std::tuple<detail::remove_rvalue_reference_t<Args>...>{std::forward<Args>(args)...};
 }
 
+template<typename... Ts>
+using inject_result = std::tuple<detail::remove_rvalue_reference_t<Ts>...>;
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INJECTED_HPP

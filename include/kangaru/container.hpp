@@ -326,7 +326,7 @@ private:
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	T& save_new_instance(Args&&...) {
-		throw AbstractNotFound{};
+		throw SuppliedNotFound{};
 	}
 	
 	/*

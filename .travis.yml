@@ -36,5 +36,5 @@ matrix:
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
 script:
-  - cmake .
+  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true
   - cmake --build . -- -j2

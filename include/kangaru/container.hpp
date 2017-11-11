@@ -25,6 +25,7 @@ namespace kgr {
  * The kangaru container class.
  * 
  * This class will construct services and share single instances for a given definition.
+ * It is the class that parses and manage dependency graphs and call autocall functions.
  */
 struct Container final {
 private:
@@ -91,6 +92,7 @@ public:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_construction_valid<T, Args...>> = 0>
 	bool emplace(Args&&... args) {
+		// TODO: We're doing two search in the map: One before constructing the service and one to insert. We should do only one.
 		return contains<T>() ? false : (autocall(save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...))), true);
 	}
 	
@@ -124,10 +126,10 @@ public:
 	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	bool replace(detail::ServiceError<T> = {}) = delete;
+	void replace(detail::ServiceError<T> = {}) = delete;
 	
 	template<typename T, typename... Args>
-	bool replace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	void replace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the service given by service definition T.

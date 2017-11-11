@@ -1,0 +1,40 @@
+language: cpp
+sudo: false
+
+matrix:
+  include:
+    - os: linux
+      env: LLVM_VERSION=3.6.2
+      addons: { apt: { packages: ["clang-3.6"], sources: ["llvm-toolchain-precise-3.6", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: LLVM_VERSION=3.7.1
+      addons: { apt: { packages: ["clang-3.7"], sources: ["llvm-toolchain-precise-3.7", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: LLVM_VERSION=3.8.1
+      addons: { apt: { packages: ["clang-3.8"], sources: ["llvm-toolchain-precise-3.8", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: LLVM_VERSION=3.9.1
+      addons: { apt: { packages: ["clang-3.9"], sources: ["llvm-toolchain-precise-3.9", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: LLVM_VERSION=4.0.0
+      addons: { apt: { packages: ["clang-4.0"], sources: ["llvm-toolchain-trusty-4.0", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: COMPILER=g++-5
+      addons: { apt: { packages: ["g++-5"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: COMPILER=g++-6
+      addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env: COMPILER=g++-7
+      addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
+
+script:
+  - cmake .
+  - cmake --build . -- -j2

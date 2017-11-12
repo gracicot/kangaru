@@ -83,5 +83,6 @@ install:
     fi
 
 script:
+  - cd ../
   - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true
   - cmake --build . -- -j2

@@ -8,8 +8,6 @@
 #include "detail/container_service.hpp"
 #include "container.hpp"
 
-#define KGR_KANGARU_METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
-
 namespace kgr {
 namespace detail {
 

@@ -11,7 +11,7 @@ The name Kangaru came from the feature of injecting itself as a dependency into 
 #include <kangaru/kangaru.hpp>
 
 // This macro is used as a shortcut to use kgr::Method.
-#define METHOD(...) KGR_KANGARU_METHOD(__VA_ARGS__)
+#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 // The following classes are user classes.
 // As you can see, this library is not intrusive and don't require modifications
@@ -90,7 +90,7 @@ Features
 
 Installation
 ------------
-To make kangaru available on a machine, you must clone the repository and create a build directory:
+To make kangaru available on your machine, you must clone the repository and create a build directory:
 
     $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
     $ mkdir build && cd build

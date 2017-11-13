@@ -10,7 +10,7 @@
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter
 // Will not be needed once this library upgrade to C++17
-#define METHOD(...) KGR_KANGARU_METHOD(__VA_ARGS__)
+#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using std::string;
 using std::cout;

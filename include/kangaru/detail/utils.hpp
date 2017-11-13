@@ -27,7 +27,7 @@ struct ServiceTypeHelper<T, typename std::enable_if<!std::is_same<decltype(std::
  * 
  * We defined the variable before the type because the variable is private, but the type is public.
  */
-struct {} constexpr in_place;
+struct {} constexpr in_place{};
 
 } // namespace detail
 

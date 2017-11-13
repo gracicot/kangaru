@@ -13,7 +13,7 @@ template<typename T>
 struct type_id_ptr {
 	// Having a static data member will ensure us that it has only one address for the whole program.
 	// Furthermore, the static data member having different types will ensure it won't get optimized.
-	static const T* id;
+	static const T* const id;
 };
 
 /*
@@ -27,7 +27,7 @@ struct type_id_ptr {
  * Using the pointer of a static data member is more stable.
  */
 template<typename T>
-T* const type_id_ptr<T>::id = nullptr;
+const T* const type_id_ptr<T>::id = nullptr;
 
 } // namespace detail
 

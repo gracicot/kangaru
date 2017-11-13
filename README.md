@@ -82,6 +82,7 @@ Features
  * You tell the container how to store them
  * You tell the container how they are injected
  * Injection by setters
+ * Function parameter injection
  * Clean and simple API
  * Low runtime overhead
  * Header only library
@@ -89,10 +90,10 @@ Features
 
 Installation
 ------------
-To make kangaru available on a machine, you must clonse the repository and create a build directory:
+To make kangaru available on a machine, you must clone the repository and create a build directory:
 
     $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
-	$ mkdir build && cd build
+    $ mkdir build && cd build
 
 Then use cmake to generate the makefile and export the package informations:
 
@@ -127,4 +128,4 @@ feel free to contribute!
 
  * Tests for compile-time errors
  * Better messages for compile-time errors (ongoing)
- * Service sources (replacable container)
+ * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)

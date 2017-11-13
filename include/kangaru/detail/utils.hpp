@@ -6,8 +6,6 @@
 namespace kgr {
 namespace detail {
 
-struct no_autocall_t {};
-
 /*
  * Type trait that extract the return type of the forward function.
  */
@@ -43,11 +41,6 @@ using ServiceType = typename detail::ServiceTypeHelper<T>::type;
  * This is a tag type to mark a constructor as the one the container should use to construct a definition.
  */
 using in_place_t = decltype(detail::in_place);
-
-/*
- * This is the instance of no_autocall_t that should be used.
- */
-constexpr detail::no_autocall_t no_autocall{};
 
 } // namespace kgr
 

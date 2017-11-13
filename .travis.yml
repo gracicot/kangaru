@@ -84,5 +84,6 @@ install:
 
 script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true
+  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true
   - cmake --build . -- -j2
+  - ctest .

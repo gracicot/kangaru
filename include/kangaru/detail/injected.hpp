@@ -22,7 +22,7 @@ using forward_ptr = ServiceType<T>(*)(void*);
  * When T is a reference type, the service definition T is a single.
  */
 template<typename T>
-struct Injected final {
+struct Injected {
 	template<typename... Args, enable_if_t<is_brace_constructible<T, Args...>::value, int> = 0>
 	explicit Injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
 	
@@ -42,7 +42,7 @@ private:
  * It contains a pointer to the service and it's forward function.
  */
 template<typename T>
-struct VirtualInjected final {
+struct VirtualInjected {
 	explicit VirtualInjected(void* service, forward_ptr<T> f) noexcept : _service{service}, _forward{f} {}
 	explicit VirtualInjected(std::pair<void*, forward_ptr<T>> data) noexcept : _service{data.first}, _forward{data.second} {}
 	
@@ -97,11 +97,11 @@ using injected_service_t = typename injected_service<T>::type;
  * We get a service definition type, and we return the wrapper type.
  */
 template<typename T>
-using injected_wrapper = typename std::conditional<detail::is_service<T>::value && !detail::is_single<T>::value,
-	detail::Injected<T>,
-	typename std::conditional<detail::is_virtual<T>::value,
-		detail::VirtualInjected<T>,
-		detail::Injected<T&>
+using injected_wrapper = typename std::conditional<is_service<T>::value && !is_single<T>::value,
+	Injected<T>,
+	typename std::conditional<is_virtual<T>::value,
+		VirtualInjected<T>,
+		Injected<T&>
 	>::type
 >::type;
 

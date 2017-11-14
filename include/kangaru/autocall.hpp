@@ -24,11 +24,12 @@ struct AutoCallBase {
 	
 	template<typename T, typename F, typename Map, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
 	void autocall(Inject<ContainerService> cs) {
-		autocall<T, Map, F>(detail::function_seq<typename F::value_type>{}, std::move(cs));
+		autocall_helper<T, Map, F>(detail::function_seq<typename F::value_type>{}, std::move(cs));
 	}
 	
+private:
 	template<typename T, typename Map, typename F, std::size_t... S, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
-	void autocall(detail::seq<S...>, Inject<ContainerService> cs) {
+	void autocall_helper(detail::seq<S...>, Inject<ContainerService> cs) {
 		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
 			static_cast<T*>(this)->call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});

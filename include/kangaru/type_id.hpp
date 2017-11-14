@@ -13,7 +13,7 @@ template<typename T>
 struct type_id_ptr {
 	// Having a static data member will ensure us that it has only one address for the whole program.
 	// Furthermore, the static data member having different types will ensure it won't get optimized.
-	static constexpr T* id = nullptr;
+	static const T* const id;
 };
 
 /*
@@ -25,12 +25,9 @@ struct type_id_ptr {
  * always yeild to the same value, no matter the dll or TU was not always respected.
  * 
  * Using the pointer of a static data member is more stable.
- * 
- * Since constexpr variable are implicitly inline in C++17,
- * it won't be necessary when kangaru switch to that language revision.
  */
 template<typename T>
-T* const type_id_ptr<T>::id;
+const T* const type_id_ptr<T>::id = nullptr;
 
 } // namespace detail
 

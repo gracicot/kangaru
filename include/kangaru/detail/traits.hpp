@@ -91,12 +91,6 @@ template<typename T>
 struct has_autocall<T, void_t<typename T::Autocall>> : std::true_type {};
 
 template<typename T, typename = void>
-struct has_forward : std::false_type {};
-
-template<typename T>
-struct has_forward<T, void_t<ServiceType<T>>> : std::true_type {};
-
-template<typename T, typename = void>
 struct is_service : std::false_type {};
 
 template<typename T>

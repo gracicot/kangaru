@@ -1,10 +1,26 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_UTILS_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_UTILS_HPP
 
+#include "void_t.hpp"
+
 #include <type_traits>
 
 namespace kgr {
 namespace detail {
+
+/*
+ * Type trait that check if a particular type T indeed have a forward function, and ensure it doesn't return void.
+ */
+template<typename T, typename = void>
+struct has_forward : std::false_type {};
+
+/*
+* Specialization of has_non_void_forward when the type T has a forward member function.
+*/
+template<typename T>
+struct has_forward<T, void_t<decltype(std::declval<T>().forward())>> : std::integral_constant<bool,
+	!std::is_same<decltype(std::declval<T>().forward()), void>::value
+> {};
 
 /*
  * Type trait that extract the return type of the forward function.
@@ -13,10 +29,11 @@ template<typename, typename = void>
 struct ServiceTypeHelper {};
 
 /*
- * Specialization of ServiceTypeHelper when T has a forward function callable without parameter.
+ * Specialization of ServiceTypeHelper when T has a valid forward function callable without parameter.
+ * Makes an alias to the return type of the forward function.
  */
 template<typename T>
-struct ServiceTypeHelper<T, typename std::enable_if<!std::is_same<decltype(std::declval<T>().forward()), void>::value>::type> {
+struct ServiceTypeHelper<T, typename std::enable_if<has_forward<T>::value>::type> {
 	using type = decltype(std::declval<T>().forward());
 };
 

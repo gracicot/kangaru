@@ -5,7 +5,7 @@
 TEST_CASE("The definition may not contain virtual members", "[definition]") {
 	struct Service {};
 	struct Definition : kgr::Service<Service> {
-		virtual ~Definition();
+		virtual ~Definition() {}
 	};
 	
 	REQUIRE_FALSE(kgr::detail::is_service<Definition>::value);

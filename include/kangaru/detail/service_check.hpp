@@ -53,22 +53,22 @@ using is_service_constructible = typename is_service_constructible_helper<T, Arg
  */
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait_helper {
-	template<typename U, std::size_t I>
+	template<typename U, std::size_t I, typename... As>
 	struct expand {
-		using type = Trait<injected_argument_t<I, construct_function_t<U, Args...>>>;
+		using type = Trait<injected_argument_t<I, construct_function_t<U, As...>>>;
 	};
-	
+
 	template<typename U, typename... As, std::size_t... S, int_t<
 		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
-		enable_if_t<expand<U, S>::type::value>...> = 0>
-	static std::true_type test(seq<S...>);
-	
+		enable_if_t<expand<U, S, As...>::type::value>...> = 0>
+		static std::true_type test(seq<S...>);
+
 	template<typename U, typename... As, enable_if_t<!has_any_construct<U, As... >::value, int> = 0>
 	static std::true_type test_helper(int);
-	
+
 	template<typename...>
 	static std::false_type test(...);
-	
+
 	template<typename...>
 	static std::false_type test_helper(...);
 	

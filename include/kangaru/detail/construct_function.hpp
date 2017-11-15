@@ -171,7 +171,15 @@ struct has_template_construct_helper<T, meta_list<Args...>, void_t<typename get_
 template<typename T, typename... Args>
 using has_template_construct = has_template_construct_helper<T, meta_list<Args...>>;
 
-template<bool, typename T, typename... Args>
+/*
+* Trait that returns if a service has a construct function, callable or not
+*/
+template<typename T, typename... Args>
+struct has_any_construct {
+	constexpr static bool value = has_any_template_construct<T, Args...>::value || has_construct<T>::value;
+};
+
+template<typename T, typename... Args>
 struct construct_function_helper {
 private:
 	template<typename U>
@@ -182,44 +190,29 @@ private:
 			constexpr static value_type value = &U::construct;
 		};
 	};
+
+	struct no_construct {};
 	
 	template<typename U, typename... As, enable_if_t<
 		has_construct<U>::value &&
 		!has_template_construct<U, As...>::value, int> = 0>
-	static get_construct<U> test();
-	
+	static typename get_construct<U>::type test(int);
+
 	template<typename U, typename... As, enable_if_t<has_any_template_construct<U, As...>::value, int> = 0>
-	static get_template_construct<U, As...> test();
-	
-	using inner_type = decltype(test<T, Args...>());
-	
+	static get_template_construct<U, As...> test(int);
+
+	template<typename U, typename... As>
+	static no_construct test(...);
+
 public:
-	using type = typename inner_type::type;
+	using type = decltype(test<T, Args...>(0));
 };
-
-template<typename T, typename... Args>
-struct construct_function_helper<false, T, Args...> {};
-
-/*
- * Trait that returns if a service has a construct function, callable or not
- */
-template<typename T, typename... Args>
-struct has_any_construct {
-	constexpr static bool value = has_any_template_construct<T, Args...>::value || has_construct<T>::value;
-};
-
-/*
- * Trait that returns if a service has a valid, callable construct function
- */
-template<typename T, typename... Args>
-using has_valid_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
-
 
 /*
  * An alias to the selected construct function
  */
 template<typename T, typename... Args>
-using construct_function = typename construct_function_helper<has_valid_construct<T, Args...>::value, T, Args...>::type;
+using construct_function = typename construct_function_helper<T, Args...>::type;
 
 /*
  * The type of the selected construct function 
@@ -238,6 +231,12 @@ using construct_function_result_t = function_result_t<construct_function_t<T, Ar
  */
 template<typename T, typename... Args>
 using construct_result_seq = tuple_seq<construct_function_result_t<T, Args...>>;
+
+/*
+* Trait that returns if a service has a valid, callable construct function
+*/
+template<typename T, typename... Args>
+using has_valid_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
 
 /*
  * Returns if a construct function is callable given a set of parameter if there should be a construct function

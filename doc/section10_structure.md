@@ -64,7 +64,7 @@ Having only one huge for everything is considered harmful to some extent. Having
 
 It may sound funny, but if you can, try not using the container directly. Having a lot of classes that uses the container will make coupling less controllable. Kangaru offers operator services that are meant to express your intent about how you plan to use the container. If you can drop usage of the container, then do it! This library is a great tool to minimize coupling, but coupling with this library is still coupling.
 
-If on the other hand using the container (of operator services) in a particular place reduces unwanted coupling with other thing, then  don't be afraid and use the container.
+If on the other hand using the container (or operator services) in a particular place reduces unwanted coupling with other thing, then  don't be afraid and use the container.
 
 ## Including kangaru
 

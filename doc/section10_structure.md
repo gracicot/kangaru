@@ -68,7 +68,7 @@ If on the other hand using the container (or operator services) in a particular 
 
 ## Including kangaru
 
-We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because you must define the service map, and maybe include your own generic services.
+We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because right now `kgr::AutoCall` is easier to use with a macro, and you can also include your own generic services that you want to use throughout your application.
 A "include kangaru" header file should look like this:
 
 ```c++

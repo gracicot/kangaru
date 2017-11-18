@@ -172,7 +172,6 @@ public:
 	/*
 	 * This function returns the result of the callable object of type U.
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
-	 * It will call it in a equivalent expression of `std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)`
 	 */
 	template<typename... Services, typename U, typename... Args, detail::int_t<
 		enable_if<detail::is_service_valid<Services>>...,
@@ -249,14 +248,39 @@ public:
 		_services.insert(other._services.begin(), other._services.end());
 	}
 	
+	
 	/**
 	 * This function will add all services form the container sent as parameter into this one.
 	 * Note that the lifetime of the container sent as parameter must be at least as long as this one.
 	 * If the container you rebase from won't live long enough, consider using the merge function.
+	 * 
+	 * It takes a predicate type as template argument.
+	 * The default predicate is kgr::All.
+	 * 
+	 * This version of the function takes a predicate that is default constructible.
+	 * It will call rebase() with a predicate as parameter.
+	 */
+	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
+	Container rebase(const Container& other) const {
+		return rebase(other, Predicate{});
+	}
+	
+	/**
+	 * This function will add all services form the container sent as parameter into this one.
+	 * Note that the lifetime of the container sent as parameter must be at least as long as this one.
+	 * If the container you rebase from won't live long enough, consider using the merge function.
+	 * 
+	 * It takes a predicate type as argument to filter.
 	 */
 	template<typename Predicate>
 	void rebase(const Container& other, Predicate predicate) {
-		_services.insert(other._services.begin(), other._services.end());
+		std::copy_if(
+			other._services.begin(), other._services.end(),
+			std::inserter(_services, _services.end()),
+			[&predicate](service_cont::const_reference i) {
+				return predicate(i.first);
+			}
+		);
 	}
 	
 	/*

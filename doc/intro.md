@@ -63,8 +63,8 @@ Macros defined by the library are not part of it's interface.
 ### Compiler Support
 
  - MSVC: 2015 update 3 or better
- - GCC: 5.1 or better
- - Clang: 3.5 or better
+ - GCC: 5.4 or better
+ - Clang: 3.6 or better
 
 Index
 -----

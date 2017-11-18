@@ -1,7 +1,7 @@
-Structure for large projects
-============================
+Structuring your projects
+=========================
 
-Have a large codebase? Big plans? Here's some suggestions to keep your project well organised!
+Have a large codebase? Want to structure you code correctly and scale better? Here's some suggestions to keep your usage of kangaru in project well organised!
 
 ## Definition completeness
 
@@ -54,9 +54,21 @@ As we can see, the files of `ClassA` and `ClassB` are unchanged and are not depe
 This has the effect of reducing coupling considerably: only code that uses kangaru will depend on it.
 If we were to remove kangaru from this project, the only changed thing would be to reimplement the desired logic in `ClassC`.
 
+## Fork the container
+
+If you have services that are tied together in a logical unit, and you only need to access some of those elsewhere, don't be afraid to fork the container!
+
+Having only one huge for everything is considered harmful to some extent. Having a container with thousands of services in it may slow your application. If you want your application to scale, prefer separating containers to contain only services that are useful in their context.
+
+## Minimize coupling to the container
+
+It may sound funny, but if you can, try not using the container directly. Having a lot of classes that uses the container will make coupling less controllable. Kangaru offers operator services that are meant to express your intent about how you plan to use the container. If you can drop usage of the container, then do it! This library is a great tool to minimize coupling, but coupling with this library is still coupling.
+
+If on the other hand using the container (or operator services) in a particular place reduces unwanted coupling with other thing, then  don't be afraid and use the container.
+
 ## Including kangaru
 
-We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because you must define the service map, and maybe include your own generic services.
+We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because right now `kgr::AutoCall` is easier to use with a macro, and you can also include your own generic services that you want to use throughout your application.
 A "include kangaru" header file should look like this:
 
 ```c++

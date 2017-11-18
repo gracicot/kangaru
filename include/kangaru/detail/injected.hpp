@@ -4,16 +4,10 @@
 #include "utils.hpp"
 #include "single.hpp"
 #include "traits.hpp"
+#include "service_storage.hpp"
 
 namespace kgr {
 namespace detail {
-
-/*
- * This defines the pointer to a forward function.
- * This is simply a shortcut for not writing the function pointer type everywhere.
- */
-template<typename T>
-using forward_ptr = ServiceType<T>(*)(void*);
 
 /*
  * This class is a non virtual service being injected.
@@ -44,7 +38,7 @@ private:
 template<typename T>
 struct VirtualInjected {
 	explicit VirtualInjected(void* service, forward_ptr<T> f) noexcept : _service{service}, _forward{f} {}
-	explicit VirtualInjected(std::pair<void*, forward_ptr<T>> data) noexcept : _service{data.first}, _forward{data.second} {}
+	explicit VirtualInjected(const typed_service_storage<T>& storage) noexcept : _service{storage.service}, _forward{storage.forward} {}
 	
 	ServiceType<T> forward() {
 		return _forward(_service);
@@ -97,13 +91,13 @@ using injected_service_t = typename injected_service<T>::type;
  * We get a service definition type, and we return the wrapper type.
  */
 template<typename T>
-using injected_wrapper = typename std::conditional<is_service<T>::value && !is_single<T>::value,
+using injected_wrapper = conditional_t<is_service<T>::value && !is_single<T>::value,
 	Injected<T>,
-	typename std::conditional<is_virtual<T>::value,
+	conditional_t<is_virtual<T>::value,
 		VirtualInjected<T>,
 		Injected<T&>
-	>::type
->::type;
+	>
+>;
 
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;

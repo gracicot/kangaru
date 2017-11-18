@@ -8,6 +8,7 @@
 #include "detail/invoke.hpp"
 #include "detail/single.hpp"
 #include "detail/exception.hpp"
+#include "detail/service_storage.hpp"
 #include "detail/injected.hpp"
 #include "detail/error.hpp"
 #include "predicate.hpp"
@@ -32,9 +33,8 @@ private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
-	using contained_forward_t = void(*)(void*);
 	using instance_cont = std::vector<instance_ptr<void>>;
-	using service_cont = std::unordered_map<type_id_t, std::pair<void*, contained_forward_t>>;
+	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	using service_cont_value = service_cont::value_type::second_type;
 	template<typename T> using contained_service_t = typename std::conditional<
 		detail::is_single<T>::value,
@@ -65,12 +65,12 @@ private:
 	
 	template<typename T, enable_if<detail::is_virtual<T>> = 0>
 	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
-		return detail::injected_wrapper<T>{instance.first, reinterpret_cast<ServiceType<T>(*)(void*)>(instance.second)};
+		return detail::injected_wrapper<T>{instance.cast<T>()};
 	}
 	
 	template<typename T, disable_if<detail::is_virtual<T>> = 0>
 	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
-		return detail::injected_wrapper<T>{*static_cast<T*>(instance.first)};
+		return detail::injected_wrapper<T>{*static_cast<T*>(instance.service)};
 	}
 	
 public:
@@ -321,15 +321,16 @@ private:
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_virtual<T>> = 0,
+		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&... args) {
+	detail::typed_service_storage<T> save_new_instance(Args&&... args) {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
 		
 		autocall(service);
 		
 		static_assert(std::is_same<decltype(service), T&>::value, "save_instance returned a different service type than the required one!");
 		
-		return std::make_pair(&service, get_forward<T>());
+		return detail::typed_service_storage<T>{&service, get_forward<T>()};
 	}
 	
 	/*
@@ -340,7 +341,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
-	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&...) {
+	detail::typed_service_storage<T> save_new_instance(Args&&...) {
 		throw AbstractNotFound{};
 	}
 	
@@ -352,7 +353,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	T& save_new_instance(Args&&...) {
+	detail::conditional_t<detail::is_virtual<T>::value, detail::typed_service_storage<T>, T&> save_new_instance(Args&&...) {
 		throw SuppliedNotFound{};
 	}
 	
@@ -365,8 +366,8 @@ private:
 		disable_if<detail::is_supplied_service<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
-	std::pair<void*, detail::forward_ptr<T>> save_new_instance(Args&&...) {
-		auto&& service = save_new_instance<detail::default_type<T>>();
+	detail::typed_service_storage<T> save_new_instance(Args&&...) {
+		auto&& storage = save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow
 		// a call to this function where the default service don't overrides T, it would be UB.
@@ -374,7 +375,7 @@ private:
 			"The default service type of an abstract service must override that abstract service."
 		);
 		
-		return std::make_pair(service.first, get_override_forward<T, detail::default_type<T>>());
+		return detail::typed_service_storage<T>{storage.service, get_override_forward<T, detail::default_type<T>>()};
 	}
 	
 	/*
@@ -399,29 +400,10 @@ private:
 			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
 		, 0)..., 0};
 		
-		_services[type_id<T>()] = {service.get(), reinterpret_cast<contained_forward_t>(get_forward<T>())};
+		emplace_or_assign<T>(service.get(), get_forward<T>());
 		_instances.emplace_back(std::move(service));
 		
 		return serviceRef;
-	}
-	
-	template<typename Override, typename T, enable_if<detail::is_virtual<T>> = 0>
-	detail::forward_ptr<Override> get_override_forward() {
-		return static_cast<detail::forward_ptr<Override>>([](void* s) -> ServiceType<Override> {
-			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
-		});
-	}
-	
-	template<typename T, enable_if<detail::is_virtual<T>> = 0>
-	detail::forward_ptr<T> get_forward() {
-		return static_cast<detail::forward_ptr<T>>([](void* service) -> ServiceType<T> {
-			return static_cast<T*>(service)->forward();
-		});
-	}
-	
-	template<typename T, disable_if<detail::is_virtual<T>> = 0>
-	contained_forward_t get_forward() {
-		return nullptr;
 	}
 	
 	/*
@@ -438,10 +420,37 @@ private:
 			"A final service cannot be overriden"
 		);
 		
-		_services[type_id<Override>()] = {
-			&service,
-			reinterpret_cast<contained_forward_t>(get_override_forward<Override, T>())
+		emplace_or_assign<Override>(&service, get_override_forward<Override, T>());
+	}
+	
+	template<typename Override, typename T, enable_if<detail::is_virtual<T>> = 0>
+	detail::forward_ptr<Override> get_override_forward() {
+		return [](void* s) -> ServiceType<Override> {
+			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
 		};
+	}
+	
+	template<typename T, enable_if<detail::is_virtual<T>> = 0>
+	detail::forward_ptr<T> get_forward() {
+		return [](void* service) -> ServiceType<T> {
+			return static_cast<T*>(service)->forward();
+		};
+	}
+	
+	template<typename T, disable_if<detail::is_virtual<T>> = 0>
+	detail::forward_ptr<T> get_forward() {
+		return nullptr;
+	}
+	
+	template<typename T>
+	void emplace_or_assign(void* service, detail::forward_ptr<T> forward) {
+		auto it = _services.find(type_id<T>());
+		
+		if (it == _services.end()) {
+			_services.emplace(type_id<T>(), detail::typed_service_storage<T>{service, forward});
+		} else {
+			it->second = detail::typed_service_storage<T>{service, forward};
+		}
 	}
 	
 	///////////////////////
@@ -578,10 +587,10 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_container_service<T>> = 0>
 	detail::injected_wrapper<T> definition() {
-		auto service = _services[type_id<T>()];
+		auto it = _services.find(type_id<T>());
 		
-		if (service.first) {
-			return make_wrapper<T>(service);
+		if (it != _services.end()) {
+			return make_wrapper<T>(it->second);
 		} else {
 			return detail::injected_wrapper<T>{save_new_instance<T>()};
 		}

@@ -45,6 +45,9 @@ using enable_if_t = typename std::enable_if<b, T>::type;
 template<typename T>
 using decay_t = typename std::decay<T>::type;
 
+template<bool b, typename T, typename F>
+using conditional_t = typename std::conditional<b, T, F>::type;
+
 template<std::size_t S, typename T>
 using tuple_element_t = typename std::tuple_element<S, T>::type;
 

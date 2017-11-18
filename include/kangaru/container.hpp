@@ -224,7 +224,7 @@ public:
 	 * It takes a predicate as argument.
 	 */
 	template<typename Predicate>
-	Container fork(Predicate&& predicate) const {
+	Container fork(Predicate predicate) const {
 		Container c;
 		
 		c._services.reserve(_services.size());
@@ -233,7 +233,6 @@ public:
 			_services.begin(), _services.end(),
 			std::inserter(c._services, c._services.begin()),
 			[&predicate](service_cont::const_reference i) {
-				// We don't forward the predicate here, we use it many times.
 				return predicate(i.first);
 			}
 		);
@@ -247,6 +246,16 @@ public:
 	 */
 	inline void merge(Container&& other) {
 		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
+		_services.insert(other._services.begin(), other._services.end());
+	}
+	
+	/**
+	 * This function will add all services form the container sent as parameter into this one.
+	 * Note that the lifetime of the container sent as parameter must be at least as long as this one.
+	 * If the container you rebase from won't live long enough, consider using the merge function.
+	 */
+	template<typename Predicate>
+	void rebase(const Container& other, Predicate predicate) {
 		_services.insert(other._services.begin(), other._services.end());
 	}
 	

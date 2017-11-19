@@ -10,7 +10,7 @@ The name Kangaru came from the feature of injecting itself as a dependency into 
 ```c++
 #include <kangaru/kangaru.hpp>
 
-// This macro is used as a shortcut to use kgr::Method.
+// This macro is used as a shortcut to use kgr::Method. Won't be needed in C++17
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 // The following classes are user classes.

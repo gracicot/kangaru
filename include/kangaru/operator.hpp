@@ -11,7 +11,8 @@ template<typename CRTP, typename Map>
 struct invoker_base {
 	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
 	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
-		return static_cast<CRTP*>(this)->container().template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
+		container& c = static_cast<CRTP*>(this)->container();
+		return c.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	
 	Sink operator()(detail::not_invokable_error = {}, ...) = delete;
@@ -23,7 +24,8 @@ struct generator_base {
 	
 	template<typename... Args, enable_if_t<is_service_valid<T, Args...>::value, int> = 0>
 	service_type<T> operator()(Args&&... args) {
-		return static_cast<CRTP*>(this)->container().template service<T>(std::forward<Args>(args)...);
+		container& c = static_cast<CRTP*>(this)->container();
+		return c.service<T>(std::forward<Args>(args)...);
 	}
 	
 	template<typename U = T, enable_if_t<std::is_default_constructible<service_error<U>>::value, int> = 0>

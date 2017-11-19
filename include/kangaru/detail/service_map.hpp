@@ -7,7 +7,7 @@ namespace kgr {
 
 /*
  * This class is the type when referring to a group of maps.
- * This can be used with kgr::AutoCall and mapped operator services.
+ * This can be used with kgr::autocall and mapped operator services.
  */
 template<typename...>
 struct map {};
@@ -28,7 +28,7 @@ template<typename T>
 struct is_map : std::false_type {};
 
 /*
- * This is the specialization when T is a kgr::Map.
+ * This is the specialization when T is a kgr::map.
  */
 template<typename... Ts>
 struct is_map<map<Ts...>> : std::true_type {};

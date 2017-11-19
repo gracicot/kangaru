@@ -11,27 +11,22 @@
 namespace kgr {
 namespace detail {
 
+template<typename, typename>
+struct autocall_function;
+
 /*
  * This class implements all autocall functions that a definition must implement for autocall.
  * 
  * All AutoCall specialization extends this one.
  */
 struct autocall_base {
-	template<typename T, typename F, typename... Ts, int_t<enable_if_t<!is_map<F>::value>, enable_if_t<!is_map<Ts>::value>...> = 0>
-	void do_autocall(inject_t<Ts>... others) {
-		static_cast<T*>(this)->call(F::value, std::forward<inject_t<Ts>>(others).forward()...);
-	}
-	
-	template<typename T, typename F, typename Map, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
-	void do_autocall(inject_t<container_service> cs) {
-		autocall_helper<T, Map, F>(detail::function_seq<typename F::value_type>{}, std::move(cs));
-	}
-	
 private:
+	template<typename, typename> friend struct autocall_function;
+	
 	template<typename T, typename Map, typename F, std::size_t... S, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
-	void autocall_helper(detail::seq<S...>, inject_t<container_service> cs) {
-		cs.forward().invoke<Map>([this](detail::function_argument_t<S, typename F::value_type>... args){
-			static_cast<T*>(this)->call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
+	static void autocall_helper(detail::seq<S...>, inject_t<container_service> cs, T& service) {
+		cs.forward().invoke<Map>([&](detail::function_argument_t<S, typename F::value_type>... args){
+			service.call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
 };

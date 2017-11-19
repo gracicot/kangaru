@@ -663,8 +663,8 @@ private:
 	template<typename T, typename F, std::size_t... S>
 	void invoke_autocall(detail::seq<S...>, T& service, F function) {
 		invoke_raw([&service, &function](detail::function_argument_t<S, F>... args) {
-			(service.*function)(std::forward<decltype(args)>(args)...);
-		});
+			function(std::forward<decltype(args)>(args)...);
+		}, service);
 	}
 	
 	/*

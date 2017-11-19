@@ -6,13 +6,16 @@
 #include "traits.hpp"
 #include "service_map.hpp"
 
+#ifndef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 #if _MSC_VER == 1900
 #ifndef __clang__
 // MSVC has a defect that makes the use of the template keyword an error in some corner cases.
 #define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 #endif // !__clang__
 #endif // _MSC_VER
+#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 
+#ifndef KGR_KANGARU_MSVC_EXACT_DECLTYPE
 #if _MSC_VER
 #ifndef __clang__
 // MSVC has a defect that makes decltype with the address of a
@@ -20,6 +23,7 @@
 #define KGR_KANGARU_MSVC_EXACT_DECLTYPE
 #endif // !__clang__
 #endif // _MSC_VER
+#endif // KGR_KANGARU_MSVC_EXACT_DECLTYPE
 
 namespace kgr {
 namespace detail {

@@ -63,7 +63,7 @@ struct dependency_trait_helper {
 		enable_if_t<expand<U, S, As...>::type::value>...> = 0>
 		static std::true_type test(seq<S...>);
 
-	template<typename U, typename... As, enable_if_t<!has_any_construct<U, As... >::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<is_supplied_service<U>::value || !has_any_construct<U, As... >::value, int> = 0>
 	static std::true_type test_helper(int);
 
 	template<typename...>
@@ -72,7 +72,7 @@ struct dependency_trait_helper {
 	template<typename...>
 	static std::false_type test_helper(...);
 	
-	template<typename U, typename... As, enable_if_t<has_any_construct<U, As... >::value, int> = 0>
+	template<typename U, typename... As, enable_if_t<!is_supplied_service<U>::value && has_any_construct<U, As... >::value, int> = 0>
 	static decltype(test<U, As...>(tuple_seq_minus<function_arguments_t<construct_function_t<U, As...>>, sizeof...(As)>{})) test_helper(int);
 	
 public:

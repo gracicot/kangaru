@@ -38,7 +38,7 @@ struct is_pointer_invokable_helper {
 private:
 	template<typename U, typename V, typename... As, std::size_t... S, int_t<decltype(
 		(std::declval<U>().*std::declval<V>())(
-			std::declval<service_type<service_map_t<function_argument_t<S, V>, Map>>>()...,
+			std::declval<service_type<mapped_service_t<function_argument_t<S, V>, Map>>>()...,
 			std::declval<As>()...
 		)
 	)> = 0>
@@ -214,7 +214,7 @@ private:
 	
 	// Alias for not using a template template argument in the next expression, will help simplify the expression and MSVC to parse it.
 	template<typename U>
-	using map_t = service_map_t<U, Map>;
+	using map_t = mapped_service_t<U, Map>;
 	
 	// We forward injected argument types (from expand) and additional arguments (As) to the sub trait call_test
 	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, service_type<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>

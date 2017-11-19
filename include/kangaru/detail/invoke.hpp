@@ -94,7 +94,7 @@ private:
 	template<typename Map>
 	struct mapped_type {
 		template<typename U>
-		using map = service_map_t<U, Map>;
+		using map = mapped_service_t<U, Map>;
 	};
 	
 public:

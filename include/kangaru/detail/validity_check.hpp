@@ -44,7 +44,7 @@ template<typename Map, typename T, typename... Args>
 struct is_invoke_service_valid_helper {
 private:
 	template<typename U>
-	using map_t = service_map_t<U, Map>;
+	using map_t = mapped_service_t<U, Map>;
 	
 	template<typename U, std::size_t I>
 	struct expander {

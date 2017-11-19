@@ -109,7 +109,7 @@ struct map_entry<map<First, Maps...>, P, enable_if_t<!is_mapped<map<First>, P>::
  */
 template<typename First, typename... Maps, typename P>
 struct map_entry<map<First, Maps...>, P, enable_if_t<is_mapped<map<First>, P>::value>> {
-	using Service = map_result_t<P, map_t<First>>;
+	using mapped_service = map_result_t<P, map_t<First>>;
 };
 
 /*
@@ -118,7 +118,7 @@ struct map_entry<map<First, Maps...>, P, enable_if_t<is_mapped<map<First>, P>::v
  */
 template<typename P>
 struct map_entry<map<>, P, enable_if_t<is_mapped<map<>, P>::value>> {
-	using Service = map_result_t<P, map_t<>>;
+	using mapped_service = map_result_t<P, map_t<>>;
 };
 
 /*
@@ -133,7 +133,7 @@ struct map_entry<map<>, P, enable_if_t<!is_mapped<map<>, P>::value>> : map_entry
  */
 template<typename P>
 struct map_entry<void, P, enable_if_t<is_mapped<void, P>::value>> {
-	using Service = map_result_t<P, void>;
+	using mapped_service = map_result_t<P, void>;
 };
 
 /*
@@ -146,15 +146,15 @@ struct is_complete_map : std::false_type {};
 * Specialization of is_complete_map when the service T is mapped in Map
 */
 template<typename Map, typename T>
-struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::Service>> : std::true_type {};
+struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::mapped_service>> : std::true_type {};
 
 } // namespace detail
 
 /*
  * This is an alias for the mapped definition in a service map.
  */
-template<typename T, typename Map = kgr::map<>>
-using service_map_t = typename detail::map_entry<Map, T>::Service;
+template<typename T, typename Map = map<>>
+using mapped_service_t = typename detail::map_entry<Map, T>::mapped_service;
 
 } // namespace kgr
 

@@ -9,7 +9,7 @@ namespace basic_mapping {
 	auto service_map(Service const&) -> Definition;
 	
 	TEST_CASE("The basic service map maps function to services using service_map", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service>, Definition>::value));
 	}
 }
 
@@ -22,7 +22,7 @@ namespace empty_map_mapping {
 	auto service_map(Service const&) -> NotDefinition;
 	
 	TEST_CASE("The service map maps function to services using service_map tagged", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service>, Definition>::value));
 	}
 }
 
@@ -36,7 +36,7 @@ namespace basic_mapped_mapping {
 	auto service_map(Service const&) -> NotDefinition;
 	
 	TEST_CASE("The service map maps function to services using service_map with specific map", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map>>, Definition>::value));
 	}
 }
 
@@ -52,7 +52,7 @@ namespace prioritized_single_mapped_mapping {
 	auto service_map(Service const&) -> NotDefinition;
 	
 	TEST_CASE("The service map maps function to services using service_map with specific map, choosing the right map", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map1>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map1>>, Definition>::value));
 	}
 }
 
@@ -68,8 +68,8 @@ namespace prioritized_multi_mapped_mapping {
 	auto service_map(Service const&) -> NotDefinition;
 	
 	TEST_CASE("The service map maps function to services using service_map with specific map, choosing the right map by priority", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map2, Map1>>, NotDefinition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map2, Map1>>, NotDefinition>::value));
 	}
 }
 
@@ -85,8 +85,8 @@ namespace prioritized_multi_mapped_mapping_fallback1 {
 	auto service_map(Service const&) -> NotDefinition;
 	
 	TEST_CASE("The service map maps function to services fallbacking to a valid service", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map2, Map1>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map2, Map1>>, Definition>::value));
 	}
 }
 
@@ -101,8 +101,8 @@ namespace prioritized_multi_mapped_mapping_fallback2 {
 	auto service_map(Service const&) -> Definition;
 	
 	TEST_CASE("The service map maps function to services fallbacking to void map for a valid service", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service, kgr::map<Map2, Map1>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map1, Map2>>, Definition>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service, kgr::map<Map2, Map1>>, Definition>::value));
 	}
 }
 
@@ -123,10 +123,10 @@ namespace prioritized_multi_mapped_mapping_multi_service {
 	auto service_map(Service2 const&, kgr::map_t<Map1>) -> Definition2;
 	
 	TEST_CASE("The service map maps functions to multiple services", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service1, kgr::map<Map1, Map2>>, Definition1>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service2, kgr::map<Map1, Map2>>, Definition2>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service1, kgr::map<Map2, Map1>>, NotDefinition1>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service2, kgr::map<Map2, Map1>>, NotDefinition2>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service1, kgr::map<Map1, Map2>>, Definition1>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service2, kgr::map<Map1, Map2>>, Definition2>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service1, kgr::map<Map2, Map1>>, NotDefinition1>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service2, kgr::map<Map2, Map1>>, NotDefinition2>::value));
 	}
 }
 
@@ -147,8 +147,8 @@ namespace prioritized_multi_mapped_invalid_mapping_multi_service {
 	auto service_map(Service2 const&, kgr::map_t<Map1>) -> Definition1;
 	
 	TEST_CASE("The service map maps functions to multiple services, fallbacking to a valid service", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<Service1, kgr::map<Map1, Map2>>, NotDefinition1>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service2, kgr::map<Map1, Map2>>, NotDefinition2>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service1, kgr::map<Map1, Map2>>, NotDefinition1>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service2, kgr::map<Map1, Map2>>, NotDefinition2>::value));
 	}
 }
 
@@ -161,7 +161,7 @@ namespace mapped_value_category {
 	auto service_map(Service1&&) -> Definition2;
 	
 	TEST_CASE("The service map maps functions to service with different value category", "[service_map]") {
-		REQUIRE((std::is_same<kgr::service_map_t<const Service1&>, Definition1>::value));
-		REQUIRE((std::is_same<kgr::service_map_t<Service1&&>, Definition2>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<const Service1&>, Definition1>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<Service1&&>, Definition2>::value));
 	}
 }

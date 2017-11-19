@@ -86,16 +86,7 @@ struct is_template_call_callable<
  * Trait that returns the type of the first matching callable template call operator
  */
 template<typename, typename, typename, typename, typename = void>
-struct get_template_call;
-
-/*
- * Specialization of get_template_call_helper when there is no functoin found
- */
-template<typename Map, typename T, typename... Args>
-struct get_template_call<
-	Map, T, meta_list<>, meta_list<Args...>,
-	enable_if_t<!is_template_call_callable<Map, T, meta_list<>, meta_list<Args...>>::value>
-> {};
+struct get_template_call {};
 
 /*
  * Specialization of get_template_call_helper when current template arguments does

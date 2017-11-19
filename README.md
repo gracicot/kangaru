@@ -127,6 +127,7 @@ There is some feature I would like to see become real. Here's a list of those,
 feel free to contribute!
 
  * Tests for compile-time errors
+ * More test coverage
  * Better messages for compile-time errors (ongoing)
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
 

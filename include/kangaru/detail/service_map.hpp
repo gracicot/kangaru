@@ -10,7 +10,7 @@ namespace kgr {
  * This can be used with kgr::AutoCall and mapped operator services.
  */
 template<typename...>
-struct Map {};
+struct map {};
 
 /*
  * This is the type you receive in a service_map function.
@@ -31,7 +31,7 @@ struct is_map : std::false_type {};
  * This is the specialization when T is a kgr::Map.
  */
 template<typename... Ts>
-struct is_map<Map<Ts...>> : std::true_type {};
+struct is_map<map<Ts...>> : std::true_type {};
 
 /*
  * Trait that returns the return type of the service_map function
@@ -71,19 +71,19 @@ struct is_mapped : std::false_type {};
  * Trait that check if the result of the map is a valid service that forwards something convertible to S.
  */
 template<typename M, typename S>
-using is_valid_entry = std::is_convertible<ServiceType<map_result_t<S, M>>, S>;
+using is_valid_entry = std::is_convertible<service_type<map_result_t<S, M>>, S>;
 
 /*
  * Specialization when map M maps the service S
  */
 template<typename M, typename S>
-struct is_mapped<Map<M>, S, enable_if_t<is_valid_entry<map_t<M>, S>::value>> : std::true_type {};
+struct is_mapped<map<M>, S, enable_if_t<is_valid_entry<map_t<M>, S>::value>> : std::true_type {};
 
 /*
  * Specialization for an empty map, equivalent for a void map
  */
 template<typename S>
-struct is_mapped<Map<>, S, enable_if_t<is_valid_entry<map_t<>, S>::value>> : std::true_type {};
+struct is_mapped<map<>, S, enable_if_t<is_valid_entry<map_t<>, S>::value>> : std::true_type {};
 
 /*
  * Specialization when no map is specified.
@@ -101,14 +101,14 @@ struct map_entry {};
  * When no service map entry has been found for First, continue with the next map
  */
 template<typename First, typename... Maps, typename P>
-struct map_entry<Map<First, Maps...>, P, enable_if_t<!is_mapped<Map<First>, P>::value>> : map_entry<Map<Maps...>, P> {};
+struct map_entry<map<First, Maps...>, P, enable_if_t<!is_mapped<map<First>, P>::value>> : map_entry<map<Maps...>, P> {};
 
 /*
  * Case when a map has been found.
  * We proceed to create an alias for the mapped definition.
  */
 template<typename First, typename... Maps, typename P>
-struct map_entry<Map<First, Maps...>, P, enable_if_t<is_mapped<Map<First>, P>::value>> {
+struct map_entry<map<First, Maps...>, P, enable_if_t<is_mapped<map<First>, P>::value>> {
 	using Service = map_result_t<P, map_t<First>>;
 };
 
@@ -117,7 +117,7 @@ struct map_entry<Map<First, Maps...>, P, enable_if_t<is_mapped<Map<First>, P>::v
  * We proceed to create an alias for the mapped definition.
  */
 template<typename P>
-struct map_entry<Map<>, P, enable_if_t<is_mapped<Map<>, P>::value>> {
+struct map_entry<map<>, P, enable_if_t<is_mapped<map<>, P>::value>> {
 	using Service = map_result_t<P, map_t<>>;
 };
 
@@ -126,7 +126,7 @@ struct map_entry<Map<>, P, enable_if_t<is_mapped<Map<>, P>::value>> {
  * We proceed to extend an try the void map.
  */
 template<typename P>
-struct map_entry<Map<>, P, enable_if_t<!is_mapped<Map<>, P>::value>> : map_entry<void, P> {};
+struct map_entry<map<>, P, enable_if_t<!is_mapped<map<>, P>::value>> : map_entry<void, P> {};
 
 /*
  * Case when the only service map found has no map specified at all.
@@ -153,7 +153,7 @@ struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::Servic
 /*
  * This is an alias for the mapped definition in a service map.
  */
-template<typename T, typename Map = kgr::Map<>>
+template<typename T, typename Map = kgr::map<>>
 using service_map_t = typename detail::map_entry<Map, T>::Service;
 
 } // namespace kgr

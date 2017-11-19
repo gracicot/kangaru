@@ -5,29 +5,29 @@
 
 namespace kgr {
 
-struct Container;
+struct container;
 
 /*
  * Special definition.
  * 
- * This is the definition for the service kgr::Container.
+ * This is the definition for the service kgr::container.
  * When the container is asked for this definition, il will proceed to inject himself in the constructor.
  */
-struct ContainerService {
-	explicit ContainerService(Container& instance) : _instance{&instance} {}
+struct container_service {
+	explicit container_service(container& instance) : _instance{&instance} {}
 	
-	inline Container& forward() {
+	inline container& forward() {
 		return *_instance;
 	}
 	
 private:
-	Container* _instance;
+	container* _instance;
 };
 
 /*
  * We map the container in the service map.
  */
-auto service_map(const Container&) -> ContainerService;
+auto service_map(const container&) -> container_service;
 
 namespace detail {
 
@@ -35,7 +35,7 @@ namespace detail {
  * Trait that tells if a particular service is the container service.
  */
 template<typename T>
-using is_container_service = std::is_same<ContainerService, T>;
+using is_container_service = std::is_same<container_service, T>;
 
 } // namespace detail
 } // namespace kgr

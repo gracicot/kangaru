@@ -66,18 +66,18 @@ struct HondaHRVDiesel : HondaHRV {
 		HondaHRV{fuel} {}
 };
 
-struct FuelService           : kgr::AbstractService<Fuel> {};
-struct PetrolService         : kgr::SingleService<Petrol>, kgr::Overrides<FuelService> {};
-struct PremiumPetrolService  : kgr::SingleService<PremiumPetrol> {};
-struct DieselService         : kgr::SingleService<Diesel> {};
+struct FuelService           : kgr::abstract_service<Fuel> {};
+struct PetrolService         : kgr::single_service<Petrol>, kgr::overrides<FuelService> {};
+struct PremiumPetrolService  : kgr::single_service<PremiumPetrol> {};
+struct DieselService         : kgr::single_service<Diesel> {};
 
-struct OpelAstraService      : kgr::Service<OpelAstra, kgr::Dependency<PetrolService>> {};
-struct NissanQuashqaiService : kgr::Service<NissanQuashqai, kgr::Dependency<PetrolService>> {};
-struct HondaHRVService       : kgr::Service<HondaHRV, kgr::Dependency<PremiumPetrolService>> {};
-struct HondaHRVDieselService : kgr::Service<HondaHRVDiesel, kgr::Dependency<DieselService>> {};
+struct OpelAstraService      : kgr::service<OpelAstra, kgr::dependency<PetrolService>> {};
+struct NissanQuashqaiService : kgr::service<NissanQuashqai, kgr::dependency<PetrolService>> {};
+struct HondaHRVService       : kgr::service<HondaHRV, kgr::dependency<PremiumPetrolService>> {};
+struct HondaHRVDieselService : kgr::service<HondaHRVDiesel, kgr::dependency<DieselService>> {};
 
-kgr::Container makeCarsContainer() {
-	kgr::Container container;
+kgr::container makeCarsContainer() {
+	kgr::container container;
 	
 	container.service<PetrolService>().setPrice(130.70);
 	container.service<PremiumPetrolService>().setPrice(144.50);
@@ -87,7 +87,7 @@ kgr::Container makeCarsContainer() {
 }
 
 int main() {
-	kgr::Container garage = makeCarsContainer();
+	kgr::container garage = makeCarsContainer();
 
 	auto astra1     = garage.service<OpelAstraService>();
 	auto astra2     = garage.service<OpelAstraService>();

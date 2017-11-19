@@ -12,7 +12,7 @@ namespace detail {
  * This is simply a shortcut for not writing the function pointer type everywhere.
  */
 template<typename T>
-using forward_ptr = ServiceType<T>(*)(void*);
+using forward_ptr = service_type<T>(*)(void*);
 
 template<typename T>
 struct forward_storage {

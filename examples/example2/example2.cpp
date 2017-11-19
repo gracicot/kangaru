@@ -27,13 +27,13 @@ struct Product {
 };
 
 // This is our wood stack service definition
-struct WoodStackService : kgr::SingleService<WoodStack> {};
+struct WoodStackService : kgr::single_service<WoodStack> {};
 
 // This is our product service definition
-struct ProductService : kgr::Service<Product, kgr::Dependency<WoodStackService>> {};
+struct ProductService : kgr::service<Product, kgr::dependency<WoodStackService>> {};
 
 struct Carpenter {
-	Carpenter(kgr::Container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
+	Carpenter(kgr::container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
 	
 	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
 	void makeProduct(string name) {
@@ -51,16 +51,16 @@ struct Carpenter {
 	
 private:
 	std::vector<Product> products;
-	kgr::Container& container;
+	kgr::container& container;
 	WoodStack& stack;
 };
 
 // This is our carpenter service definition
-struct CarpenterService : kgr::Service<Carpenter, kgr::Dependency<kgr::ContainerService, WoodStackService>> {};
+struct CarpenterService : kgr::service<Carpenter, kgr::dependency<kgr::container_service, WoodStackService>> {};
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	// We made the stack ourself and set the number of planks to 2
 	container.emplace<WoodStackService>(2);

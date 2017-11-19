@@ -8,137 +8,137 @@ namespace kgr {
 namespace detail {
 
 template<typename CRTP, typename Map>
-struct InvokerBase {
+struct invoker_base {
 	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
 	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
 		return static_cast<CRTP*>(this)->container().template invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	
-	Sink operator()(detail::NotInvokableError = {}, ...) = delete;
+	Sink operator()(detail::not_invokable_error = {}, ...) = delete;
 };
 
 template<typename CRTP, typename T>
-struct GeneratorBase {
+struct generator_base {
 	static_assert(!is_single<T>::value, "Generator only work with non-single services.");
 	
 	template<typename... Args, enable_if_t<is_service_valid<T, Args...>::value, int> = 0>
-	ServiceType<T> operator()(Args&&... args) {
+	service_type<T> operator()(Args&&... args) {
 		return static_cast<CRTP*>(this)->container().template service<T>(std::forward<Args>(args)...);
 	}
 	
-	template<typename U = T, enable_if_t<std::is_default_constructible<ServiceError<U>>::value, int> = 0>
-	Sink operator()(ServiceError<U> = {}) = delete;
+	template<typename U = T, enable_if_t<std::is_default_constructible<service_error<U>>::value, int> = 0>
+	Sink operator()(service_error<U> = {}) = delete;
 	
 	template<typename... Args>
-	Sink operator()(ServiceError<T, identity_t<Args>...>, Args&&...) = delete;
+	Sink operator()(service_error<T, identity_t<Args>...>, Args&&...) = delete;
 };
 
 } // namespace detail
 
 template<typename Map>
-struct MappedInvoker : detail::InvokerBase<MappedInvoker<Map>, Map> {
-	explicit MappedInvoker(Container& container) : _container{&container} {}
+struct mapped_invoker : detail::invoker_base<mapped_invoker<Map>, Map> {
+	explicit mapped_invoker(kgr::container& container) : _container{&container} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return *_container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return *_container;
 	}
 	
-	friend struct detail::InvokerBase<MappedInvoker<Map>, Map>;
-	kgr::Container* _container;
+	friend struct detail::invoker_base<mapped_invoker<Map>, Map>;
+	kgr::container* _container;
 };
 
-using Invoker = MappedInvoker<kgr::Map<>>;
+using invoker = mapped_invoker<map<>>;
 
 template<typename Map>
-struct ForkedMappedInvoker : detail::InvokerBase<ForkedMappedInvoker<Map>, Map> {
-	explicit ForkedMappedInvoker(Container container) : _container{std::move(container)} {}
+struct forked_mapped_invoker : detail::invoker_base<forked_mapped_invoker<Map>, Map> {
+	explicit forked_mapped_invoker(kgr::container container) : _container{std::move(container)} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return _container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return _container;
 	}
 	
-	friend struct detail::InvokerBase<ForkedMappedInvoker<Map>, Map>;
-	kgr::Container _container;
+	friend struct detail::invoker_base<forked_mapped_invoker<Map>, Map>;
+	kgr::container _container;
 };
 
-using ForkedInvoker = ForkedMappedInvoker<kgr::Map<>>;
+using forked_invoker = forked_mapped_invoker<map<>>;
 
 template<typename T>
-struct Generator : detail::GeneratorBase<Generator<T>, T> {
-	explicit Generator(Container& container) : _container{&container} {}
+struct generator : detail::generator_base<generator<T>, T> {
+	explicit generator(kgr::container& container) : _container{&container} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return *_container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return *_container;
 	}
 	
-	friend struct detail::GeneratorBase<Generator<T>, T>;
-	kgr::Container* _container;
+	friend struct detail::generator_base<generator<T>, T>;
+	kgr::container* _container;
 };
 
 template<typename T>
-struct ForkedGenerator : detail::GeneratorBase<ForkedGenerator<T>, T> {
-	explicit ForkedGenerator(Container container) : _container{std::move(container)} {}
+struct forked_generator : detail::generator_base<forked_generator<T>, T> {
+	explicit forked_generator(kgr::container container) : _container{std::move(container)} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return _container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return _container;
 	}
 	
-	friend struct detail::GeneratorBase<ForkedGenerator<T>, T>;
-	kgr::Container _container;
+	friend struct detail::generator_base<forked_generator<T>, T>;
+	kgr::container _container;
 };
 
 template<typename T>
-struct Lazy : detail::LazyBase<Lazy<T>, T> {
-	explicit Lazy(kgr::Container& container) : _container{&container} {}
+struct lazy : detail::lazy_base<lazy<T>, T> {
+	explicit lazy(kgr::container& container) : _container{&container} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return *_container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return *_container;
 	}
 	
-	friend struct detail::LazyBase<Lazy<T>, T>;
-	kgr::Container* _container;
+	friend struct detail::lazy_base<lazy<T>, T>;
+	kgr::container* _container;
 };
 
 template<typename T>
-struct ForkedLazy : detail::LazyBase<ForkedLazy<T>, T> {
-	explicit ForkedLazy(kgr::Container container) : _container{std::move(container)} {}
+struct forked_lazy : detail::lazy_base<forked_lazy<T>, T> {
+	explicit forked_lazy(kgr::container container) : _container{std::move(container)} {}
 	
 private:
-	kgr::Container& container() {
+	kgr::container& container() {
 		return _container;
 	}
 	
-	const kgr::Container& container() const {
+	const kgr::container& container() const {
 		return _container;
 	}
 	
-	friend struct detail::LazyBase<ForkedLazy<T>, T>;
-	kgr::Container _container;
+	friend struct detail::lazy_base<forked_lazy<T>, T>;
+	kgr::container _container;
 };
 
 } // namespace kgr

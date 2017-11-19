@@ -31,14 +31,14 @@ private:
 
 // This is our service definitions
 // PathProviderService is a single service of PathProvider
-struct PathProviderService : kgr::SingleService<PathProvider> {};
+struct PathProviderService : kgr::single_service<PathProvider> {};
 
 // PathPrinterService is a (not single) service of PathProvider and has a PathProviderService as dependency
-struct PathPrinterService : kgr::Service<PathPrinter, kgr::Dependency<PathProviderService>> {};
+struct PathPrinterService : kgr::service<PathPrinter, kgr::dependency<PathProviderService>> {};
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	// a PathProvider is provided for every printer
 	auto printer1 = container.service<PathPrinterService>();

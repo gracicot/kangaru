@@ -28,7 +28,7 @@ TEST_CASE("Container returns a service from a definition", "[service]") {
 		}
 	};
 	
-	REQUIRE(Result::test(kgr::Container{}.service<Definition>()));
+	REQUIRE(Result::test(kgr::container {}.service<Definition>()));
 }
 	
 TEST_CASE("Container returns a service by moving it", "[service]") {
@@ -50,9 +50,9 @@ TEST_CASE("Container returns a service by moving it", "[service]") {
 		}
 	};
 	
-	struct Definition : kgr::Service<Service> {};
+	struct Definition : kgr::service<Service> {};
 	
-	kgr::Container c;
+	kgr::container c;
 	
 	auto service = c.service<Definition>();
 	

@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #include "kangaru/kangaru.hpp"
 
-#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 TEST_CASE("Container all each function in autocall", "[autocall]") {
 	SECTION("One method called") {
@@ -15,9 +15,9 @@ TEST_CASE("Container all each function in autocall", "[autocall]") {
 			}
 		};
 		
-		struct Definition : kgr::Service<Service>, kgr::AutoCall<METHOD(&Service::function)> {};
+		struct Definition : kgr::service<Service>, kgr::autocall<METHOD(&Service::function)> {};
 		
-		REQUIRE(kgr::Container{}.service<Definition>().called);
+		REQUIRE(kgr::container {}.service<Definition>().called);
 	}
 	
 	SECTION("Multiple method called in order") {
@@ -46,11 +46,11 @@ TEST_CASE("Container all each function in autocall", "[autocall]") {
 			}
 		};
 		
-		struct Definition : kgr::Service<Service>, kgr::AutoCall<
+		struct Definition : kgr::service<Service>, kgr::autocall<
 			METHOD(&Service::function1), METHOD(&Service::function2), METHOD(&Service::function3)
 		> {};
 		
-		auto service = kgr::Container{}.service<Definition>();
+		auto service = kgr::container {}.service<Definition>();
 		
 		REQUIRE(service.called1);
 		REQUIRE(service.called2);
@@ -75,12 +75,12 @@ TEST_CASE("Container inject parameter in autocall function using an invoke call"
 		}
 	};
 	
-	struct InjectedDefinition : kgr::Service<InjectedService> {};
-	struct Definition : kgr::Service<Service>, kgr::AutoCall<
-		kgr::Invoke<METHOD(&Service::function), InjectedDefinition>
+	struct InjectedDefinition : kgr::service<InjectedService> {};
+	struct Definition : kgr::service<Service>, kgr::autocall<
+		kgr::invoke<METHOD(&Service::function), InjectedDefinition>
 	> {};
 	
-	REQUIRE(kgr::Container{}.service<Definition>().called);
+	REQUIRE(kgr::container {}.service<Definition>().called);
 	REQUIRE(injected_constructed);
 }
 
@@ -101,16 +101,16 @@ namespace testcase_autocall_map {
 		}
 	};
 	
-	struct InjectedDefinition : kgr::Service<InjectedService> {};
+	struct InjectedDefinition : kgr::service<InjectedService> {};
 	
-	struct Definition : kgr::Service<Service>, kgr::AutoCall<
+	struct Definition : kgr::service<Service>, kgr::autocall<
 		METHOD(&Service::function)
 	> {};
 	
 	auto service_map(InjectedService const&) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map", "[autocall]") {
-		REQUIRE(kgr::Container{}.service<Definition>().called);
+		REQUIRE(kgr::container {}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }
@@ -134,16 +134,16 @@ namespace testcase_autocall_custom_map {
 		}
 	};
 	
-	struct InjectedDefinition : kgr::Service<InjectedService> {};
+	struct InjectedDefinition : kgr::service<InjectedService> {};
 	
-	struct Definition : kgr::Service<Service>, kgr::AutoCall<kgr::Map<Map>,
+	struct Definition : kgr::service<Service>, kgr::autocall<kgr::map<Map>,
 		METHOD(&Service::function)
 	> {};
 	
 	auto service_map(InjectedService const&, kgr::map_t<Map>) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map", "[autocall]") {
-		REQUIRE(kgr::Container{}.service<Definition>().called);
+		REQUIRE(kgr::container {}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }
@@ -168,16 +168,16 @@ namespace testcase_autocall_custom_map_no_map {
 		}
 	};
 	
-	struct InjectedDefinition : kgr::Service<InjectedService> {};
+	struct InjectedDefinition : kgr::service<InjectedService> {};
 	
-	struct Definition : kgr::Service<Service>, kgr::AutoCall<kgr::Map<Map>,
+	struct Definition : kgr::service<Service>, kgr::autocall<kgr::map<Map>,
 		METHOD(&Service::function)
 	> {};
 	
 	auto service_map(InjectedService const&) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map fallback to normal map", "[autocall]") {
-		REQUIRE(kgr::Container{}.service<Definition>().called);
+		REQUIRE(kgr::container {}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }

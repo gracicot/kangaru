@@ -23,70 +23,70 @@ using lazy_stored_type = typename std::conditional<
  * This is used to implement all of the CRTP classes at once, without copy-pasting the CRTP parameters.
  */
 template<typename CRTP, typename T, template<typename, typename, typename = void> class... Bases>
-struct LazyCrtpHelper : Bases<CRTP, T>... {};
+struct lazy_crtp_helper : Bases<CRTP, T>... {};
 
 /*
- * This class implements the copy constructor of LazyStorage.
+ * This class implements the copy constructor of lazy_storage.
  * By default, it is deleted.
  */
 template<typename CRTP, typename T, typename = void>
-struct LazyCopyConstruct {
-	LazyCopyConstruct() = default;
-	LazyCopyConstruct(const LazyCopyConstruct&) = delete;
-	LazyCopyConstruct(LazyCopyConstruct&&) = default;
-	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
-	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
+struct lazy_copy_construct {
+	lazy_copy_construct() = default;
+	lazy_copy_construct(const lazy_copy_construct&) = delete;
+	lazy_copy_construct(lazy_copy_construct&&) = default;
+	lazy_copy_construct& operator=(const lazy_copy_construct&) = default;
+	lazy_copy_construct& operator=(lazy_copy_construct&&) = default;
 };
 
 /*
- * This class is a specialization of LazyCopyConstruct when T is copy constructible.
+ * This class is a specialization of lazy_copy_construct when T is copy constructible.
  * In that case, the copy constructor is implemented using emplacement.
  */
 template<typename CRTP, typename T>
-struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::value && !std::is_trivially_copy_constructible<T>::value>> {
-	LazyCopyConstruct(const LazyCopyConstruct& other) noexcept(std::is_nothrow_copy_constructible<T>::value){
+struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::value && !std::is_trivially_copy_constructible<T>::value>> {
+	lazy_copy_construct(const lazy_copy_construct& other) noexcept(std::is_nothrow_copy_constructible<T>::value){
 		auto&& o = static_cast<const CRTP&>(other);
 		if (o) {
 			static_cast<CRTP&>(*this).emplace(o.data());
 		}
 	}
 	
-	LazyCopyConstruct() = default;
-	LazyCopyConstruct& operator=(const LazyCopyConstruct&) = default;
-	LazyCopyConstruct(LazyCopyConstruct&&) = default;
-	LazyCopyConstruct& operator=(LazyCopyConstruct&&) = default;
+	lazy_copy_construct() = default;
+	lazy_copy_construct& operator=(const lazy_copy_construct&) = default;
+	lazy_copy_construct(lazy_copy_construct&&) = default;
+	lazy_copy_construct& operator=(lazy_copy_construct&&) = default;
 };
 
 /*
- * This is a specialization of LazyCopyConstruct when T is trivially copy constructible.
+ * This is a specialization of lazy_copy_construct when T is trivially copy constructible.
  * In that case, we become trivially copy constructible too, and simply copying the contained buffer.
  */
 template<typename CRTP, typename T>
-struct LazyCopyConstruct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {};
+struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {};
 
 /*
  * This class implements the copy assignation operator.
  * By default, it's deleted.
  */
 template<typename CRTP, typename T, typename = void>
-struct LazyCopyAssign {
-	LazyCopyAssign() = default;
-	LazyCopyAssign(const LazyCopyAssign&) = default;
-	LazyCopyAssign(LazyCopyAssign&&) = default;
-	LazyCopyAssign& operator=(const LazyCopyAssign&) = delete;
-	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
+struct lazy_copy_assign {
+	lazy_copy_assign() = default;
+	lazy_copy_assign(const lazy_copy_assign&) = default;
+	lazy_copy_assign(lazy_copy_assign&&) = default;
+	lazy_copy_assign& operator=(const lazy_copy_assign&) = delete;
+	lazy_copy_assign& operator=(lazy_copy_assign&&) = default;
 };
 
 /*
- * This class is a specialization of LazyCopyAssign when T is copy assignable, and copy constructible.
+ * This class is a specialization of lazy_copy_assign when T is copy assignable, and copy constructible.
  * Since the assignation may be a construction if the lazy did not contained any value, we must be able to copy contructing too.
  */
 template<typename CRTP, typename T>
-struct LazyCopyAssign<CRTP, T, enable_if_t<
+struct lazy_copy_assign<CRTP, T, enable_if_t<
 	std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value &&
 	!(std::is_trivially_copy_assignable<T>::value && std::is_trivially_copy_constructible<T>::value && std::is_trivially_destructible<T>::value)
 >> {
-	LazyCopyAssign& operator=(const LazyCopyAssign& other)
+	lazy_copy_assign& operator=(const lazy_copy_assign& other)
 	noexcept(
 		std::is_nothrow_copy_assignable<T>::value &&
 		std::is_nothrow_copy_constructible<T>::value &&
@@ -106,85 +106,85 @@ struct LazyCopyAssign<CRTP, T, enable_if_t<
 		return *this;
 	}
 	
-	LazyCopyAssign() = default;
-	LazyCopyAssign(const LazyCopyAssign&) = default;
-	LazyCopyAssign(LazyCopyAssign&&) = default;
-	LazyCopyAssign& operator=(LazyCopyAssign&&) = default;
+	lazy_copy_assign() = default;
+	lazy_copy_assign(const lazy_copy_assign&) = default;
+	lazy_copy_assign(lazy_copy_assign&&) = default;
+	lazy_copy_assign& operator=(lazy_copy_assign&&) = default;
 };
 
 /*
- * This class is a specialization of LazyCopyAssign, when T is trivially copy assignable, and trivially copy constructible.
+ * This class is a specialization of lazy_copy_assign, when T is trivially copy assignable, and trivially copy constructible.
  * In this case, the buffer is simply copied into this one without any other operations.
  */
 template<typename CRTP, typename T>
-struct LazyCopyAssign<CRTP, T, enable_if_t<
+struct lazy_copy_assign<CRTP, T, enable_if_t<
 	std::is_trivially_copy_assignable<T>::value &&
 	std::is_trivially_copy_constructible<T>::value &&
 	std::is_trivially_destructible<T>::value
 >> {};
 
 /*
- * This class implements the move constructor of LazyStorage.
+ * This class implements the move constructor of lazy_storage.
  * By default, it is deleted.
  */
 template<typename CRTP, typename T, typename = void>
-struct LazyMoveConstruct {
-	LazyMoveConstruct() = default;
-	LazyMoveConstruct(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct(LazyMoveConstruct&&) = delete;
-	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
+struct lazy_move_construct {
+	lazy_move_construct() = default;
+	lazy_move_construct(const lazy_move_construct&) = default;
+	lazy_move_construct(lazy_move_construct&&) = delete;
+	lazy_move_construct& operator=(const lazy_move_construct&) = default;
+	lazy_move_construct& operator=(lazy_move_construct&&) = default;
 };
 
 /*
- * This class is a specialization of LazyMoveConstruct when T is move constructible.
+ * This class is a specialization of lazy_move_construct when T is move constructible.
  * In that case, the move constructor is implemented using emplacement.
  */
 template<typename CRTP, typename T>
-struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !std::is_trivially_move_constructible<T>::value>> {
-	LazyMoveConstruct(LazyMoveConstruct&& other) noexcept(std::is_nothrow_move_constructible<T>::value) {
+struct lazy_move_construct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !std::is_trivially_move_constructible<T>::value>> {
+	lazy_move_construct(lazy_move_construct&& other) noexcept(std::is_nothrow_move_constructible<T>::value) {
 		auto&& o = static_cast<CRTP&>(other);
 		if (o) {
 			static_cast<CRTP&>(*this).emplace(std::move(o.data()));
 		}
 	}
 	
-	LazyMoveConstruct() = default;
-	LazyMoveConstruct(const LazyMoveConstruct&) = default;
-	LazyMoveConstruct& operator=(LazyMoveConstruct&&) = default;
-	LazyMoveConstruct& operator=(const LazyMoveConstruct&) = default;
+	lazy_move_construct() = default;
+	lazy_move_construct(const lazy_move_construct&) = default;
+	lazy_move_construct& operator=(lazy_move_construct&&) = default;
+	lazy_move_construct& operator=(const lazy_move_construct&) = default;
 };
 
 /*
- * This is a specialization of LazyMoveConstruct when T is trivially move constructible.
+ * This is a specialization of lazy_move_construct when T is trivially move constructible.
  * In that case, we become trivially move constructible too, and simply copying the contained buffer.
  */
 template<typename CRTP, typename T>
-struct LazyMoveConstruct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {};
+struct lazy_move_construct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {};
 
 /*
  * This class implements the copy assignation operator.
  * By default, it's deleted.
  */
 template<typename CRTP, typename T, typename = void>
-struct LazyMoveAssign {
-	LazyMoveAssign() = default;
-	LazyMoveAssign(const LazyMoveAssign&) = default;
-	LazyMoveAssign(LazyMoveAssign&&) = default;
-	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
-	LazyMoveAssign& operator=(LazyMoveAssign&&) = delete;
+struct lazy_move_assign {
+	lazy_move_assign() = default;
+	lazy_move_assign(const lazy_move_assign&) = default;
+	lazy_move_assign(lazy_move_assign&&) = default;
+	lazy_move_assign& operator=(const lazy_move_assign&) = default;
+	lazy_move_assign& operator=(lazy_move_assign&&) = delete;
 };
 
 /*
- * This class is a specialization of LazyMoveAssign when T is move assignable, and move constructible.
+ * This class is a specialization of lazy_move_assign when T is move assignable, and move constructible.
  * Since the assignation may be a construction if the lazy did not contained any value, we must be able to move contructing too.
  */
 template<typename CRTP, typename T>
-struct LazyMoveAssign<CRTP, T, enable_if_t<
+struct lazy_move_assign<CRTP, T, enable_if_t<
 	std::is_move_assignable<T>::value && std::is_move_constructible<T>::value &&
 	!(std::is_trivially_move_assignable<T>::value && std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)
 >> {
-	LazyMoveAssign& operator=(LazyMoveAssign&& other)
+	lazy_move_assign& operator=(lazy_move_assign&& other)
 	noexcept(
 		std::is_nothrow_move_assignable<T>::value &&
 		std::is_nothrow_move_constructible<T>::value && 
@@ -202,30 +202,30 @@ struct LazyMoveAssign<CRTP, T, enable_if_t<
 		return *this;
 	}
 	
-	LazyMoveAssign() = default;
-	LazyMoveAssign(const LazyMoveAssign&) = default;
-	LazyMoveAssign(LazyMoveAssign&&) = default;
-	LazyMoveAssign& operator=(const LazyMoveAssign&) = default;
+	lazy_move_assign() = default;
+	lazy_move_assign(const lazy_move_assign&) = default;
+	lazy_move_assign(lazy_move_assign&&) = default;
+	lazy_move_assign& operator=(const lazy_move_assign&) = default;
 };
 
 /*
- * This class is a specialization of LazyCopyAssign, when T is trivially move assignable, and trivially move constructible.
+ * This class is a specialization of lazy_move_assign, when T is trivially move assignable, and trivially move constructible.
  * In this case, the buffer is simply copied into this one without any other operations.
  */
 template<typename CRTP, typename T>
-struct LazyMoveAssign<CRTP, T, enable_if_t<
+struct lazy_move_assign<CRTP, T, enable_if_t<
 	std::is_trivially_move_assignable<T>::value &&
 	std::is_trivially_move_constructible<T>::value &&
 	std::is_trivially_destructible<T>::value
 >> {};
 
 /*
- * This class implements the destructor for LazyStorage.
+ * This class implements the destructor for lazy_storage.
  * By default, we call the destructor of the lazy object.
  */
 template<typename CRTP, typename T, typename = void>
-struct LazyDestruction {
-	~LazyDestruction() noexcept(std::is_nothrow_destructible<T>::value) {
+struct lazy_destruction {
+	~lazy_destruction() noexcept(std::is_nothrow_destructible<T>::value) {
 		destructor();
 	}
 	
@@ -242,36 +242,36 @@ protected:
 };
 
 /*
- * This class is a specialization of LazyDestruction when T is trivially destructible.
+ * This class is a specialization of lazy_destruction when T is trivially destructible.
  * In that case, the destructor function does nothing and we don't implement the destructor.
  */
 template<typename CRTP, typename T>
-struct LazyDestruction<CRTP, T, enable_if_t<std::is_trivially_destructible<T>::value>> {
+struct lazy_destruction<CRTP, T, enable_if_t<std::is_trivially_destructible<T>::value>> {
 protected:
 	void destructor() noexcept {}
 };
 
 /*
- * This class implements all the common things the LazyStorage must implement.
+ * This class implements all the common things the lazy_storage must implement.
  */
 template<typename CRTP, typename T>
-struct LazyStorageBase :
-	LazyCrtpHelper<
+struct lazy_storage_base :
+	lazy_crtp_helper<
 		CRTP, lazy_stored_type<T>,
-		LazyCopyConstruct, LazyCopyAssign, LazyMoveAssign, LazyMoveConstruct, LazyDestruction> {
+		lazy_copy_construct, lazy_copy_assign, lazy_move_assign, lazy_move_construct, lazy_destruction> {
 	
 	using type = lazy_stored_type<T>;
 	
-	LazyStorageBase() = default;
+	lazy_storage_base() = default;
 	
-	LazyStorageBase& operator=(LazyStorageBase&&) = default;
-	LazyStorageBase& operator=(const LazyStorageBase&) = default;
-	LazyStorageBase(LazyStorageBase&&) = default;
-	LazyStorageBase(const LazyStorageBase&) = default;
+	lazy_storage_base& operator=(lazy_storage_base&&) = default;
+	lazy_storage_base& operator=(const lazy_storage_base&) = default;
+	lazy_storage_base(lazy_storage_base&&) = default;
+	lazy_storage_base(const lazy_storage_base&) = default;
 	
-	~LazyStorageBase() = default;
+	~lazy_storage_base() = default;
 	
-	friend struct LazyMoveAssign<CRTP, lazy_stored_type<T>>;
+	friend lazy_move_assign<CRTP, lazy_stored_type<T>>;
 	
 	template<typename Arg>
 	void assign(Arg&& arg) noexcept(std::is_nothrow_constructible<type, Arg>::value && std::is_nothrow_assignable<type, Arg>::value) {
@@ -291,7 +291,7 @@ struct LazyStorageBase :
 	}
 	
 protected:
-	using LazyDestruction<CRTP, lazy_stored_type<T>>::destructor;
+	using lazy_destruction<CRTP, lazy_stored_type<T>>::destructor;
 	
 	type& data() noexcept {
 		return *reinterpret_cast<type*>(&_data);
@@ -301,7 +301,7 @@ protected:
 		return *reinterpret_cast<const type*>(&_data);
 	}
 	
-	typename std::aligned_storage<sizeof(type), alignof(type)>::type _data;
+	aligned_storage_t<sizeof(type), alignof(type)> _data;
 };
 
 /*
@@ -309,26 +309,26 @@ protected:
  * object or a rvalue reference as it's forwarded service type.
  */
 template<typename T>
-struct LazyStorage : LazyStorageBase<LazyStorage<T>, T> {
+struct lazy_storage : lazy_storage_base<lazy_storage<T>, T> {
 private:
-	using Base = LazyStorageBase<LazyStorage<T>, T>;
-	using Base::_data;
+	using base = lazy_storage_base<lazy_storage<T>, T>;
+	using base::_data;
 	
-	friend struct LazyStorageBase<LazyStorage<T>, T>;
+	friend lazy_storage_base<lazy_storage<T>, T>;
 	
 public:
-	using Base::data;
-	using Base::emplace;
-	using typename Base::type;
+	using base::data;
+	using base::emplace;
+	using typename base::type;
 	
-	LazyStorage() = default;
+	lazy_storage() = default;
 	
-	LazyStorage& operator=(LazyStorage&&) = default;
-	LazyStorage& operator=(const LazyStorage&) = default;
-	LazyStorage(LazyStorage&&) = default;
-	LazyStorage(const LazyStorage&) = default;
+	lazy_storage& operator=(lazy_storage&&) = default;
+	lazy_storage& operator=(const lazy_storage&) = default;
+	lazy_storage(lazy_storage&&) = default;
+	lazy_storage(const lazy_storage&) = default;
 	
-	~LazyStorage() = default;
+	~lazy_storage() = default;
 	
 	explicit operator bool() const noexcept {
 		return _initialized;
@@ -344,12 +344,12 @@ public:
 	
 	void destroy() noexcept(std::is_nothrow_destructible<type>::value) {
 		_initialized = false;
-		Base::destructor();
+		base::destructor();
 	}
 	
 private:
 	void reset() noexcept(std::is_nothrow_destructible<type>::value) {
-		Base::destructor();
+		base::destructor();
 		
 		_initialized = true;
 	}
@@ -362,28 +362,28 @@ private:
  * In that case, we simply holds a pointer, and set it to null if no object is held.
  */
 template<typename T>
-struct LazyStorage<T&> : LazyStorageBase<LazyStorage<T&>, T&> {
+struct lazy_storage<T&> : lazy_storage_base<lazy_storage<T&>, T&> {
 private:
-	using Base = LazyStorageBase<LazyStorage<T&>, T&>;
-	using Base::_data;
+	using base = lazy_storage_base<lazy_storage<T&>, T&>;
+	using base::_data;
 	
-	friend struct LazyStorageBase<LazyStorage<T&>, T&>;
+	friend struct lazy_storage_base<lazy_storage<T&>, T&>;
 	
 public:
-	using Base::data;
-	using Base::emplace;
-	using typename Base::type;
+	using base::data;
+	using base::emplace;
+	using typename base::type;
 	
-	LazyStorage() {
+	lazy_storage() {
 		emplace(nullptr);
 	}
 	
-	LazyStorage& operator=(LazyStorage&&) = default;
-	LazyStorage& operator=(const LazyStorage&) = default;
-	LazyStorage(LazyStorage&&) = default;
-	LazyStorage(const LazyStorage&) = default;
+	lazy_storage& operator=(lazy_storage&&) = default;
+	lazy_storage& operator=(const lazy_storage&) = default;
+	lazy_storage(lazy_storage&&) = default;
+	lazy_storage(const lazy_storage&) = default;
 	
-	~LazyStorage() = default;
+	~lazy_storage() = default;
 	
 	explicit operator bool() const noexcept {
 		return data();

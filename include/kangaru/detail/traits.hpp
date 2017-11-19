@@ -91,7 +91,7 @@ template<typename T, typename = void>
 struct has_autocall : std::false_type {};
 
 template<typename T>
-struct has_autocall<T, void_t<typename T::Autocall>> : std::true_type {};
+struct has_autocall<T, void_t<typename T::autocall_functions>> : std::true_type {};
 
 template<typename T, typename = void>
 struct is_service : std::false_type {};
@@ -120,7 +120,7 @@ template<typename T, typename = void>
 struct is_invoke_call : std::false_type {};
 
 template<typename T>
-struct is_invoke_call<T, void_t<typename T::Parameters>> : std::true_type {};
+struct is_invoke_call<T, void_t<typename T::parameters>> : std::true_type {};
 
 template<typename T, typename F>
 using is_member_autocall = std::integral_constant<bool, !is_invoke_call<F>::value>;

@@ -16,14 +16,14 @@ namespace detail {
  * When T is a reference type, the service definition T is a single.
  */
 template<typename T>
-struct Injected {
+struct injected {
 	template<typename... Args, enable_if_t<is_brace_constructible<T, Args...>::value, int> = 0>
-	explicit Injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
+	explicit injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
 	
 	template<typename... Args, enable_if_t<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int> = 0>
-	explicit Injected(Args&&... args) : _service(std::forward<Args>(args)...) {}
+	explicit injected(Args&&... args) : _service(std::forward<Args>(args)...) {}
 	
-	ServiceType<decay_t<T>> forward() {
+	service_type<decay_t<T>> forward() {
 		return _service.forward();
 	}
 	
@@ -36,11 +36,11 @@ private:
  * It contains a pointer to the service and it's forward function.
  */
 template<typename T>
-struct VirtualInjected {
-	explicit VirtualInjected(void* service, forward_ptr<T> f) noexcept : _service{service}, _forward{f} {}
-	explicit VirtualInjected(const typed_service_storage<T>& storage) noexcept : _service{storage.service}, _forward{storage.forward} {}
+struct virtual_injected {
+	explicit virtual_injected(void* service, forward_ptr<T> f) noexcept : _service{service}, _forward{f} {}
+	explicit virtual_injected(const typed_service_storage<T>& storage) noexcept : _service{storage.service}, _forward{storage.forward} {}
 	
-	ServiceType<T> forward() {
+	service_type<T> forward() {
 		return _forward(_service);
 	}
 	
@@ -60,7 +60,7 @@ struct injected_service;
  * This is for non-single, non-virtual services.
  */
 template<typename T>
-struct injected_service<Injected<T>&&> {
+struct injected_service<injected<T>&&> {
 	using type = T;
 };
 
@@ -68,7 +68,7 @@ struct injected_service<Injected<T>&&> {
  * This is for non-virtual single services.
  */
 template<typename T>
-struct injected_service<Injected<T&>&&> {
+struct injected_service<injected<T&>&&> {
 	using type = T;
 };
 
@@ -76,7 +76,7 @@ struct injected_service<Injected<T&>&&> {
  * This is for vritual services.
  */
 template<typename T>
-struct injected_service<VirtualInjected<T>&&> {
+struct injected_service<virtual_injected<T>&&> {
 	using type = T;
 };
 
@@ -92,10 +92,10 @@ using injected_service_t = typename injected_service<T>::type;
  */
 template<typename T>
 using injected_wrapper = conditional_t<is_service<T>::value && !is_single<T>::value,
-	Injected<T>,
+	injected<T>,
 	conditional_t<is_virtual<T>::value,
-		VirtualInjected<T>,
-		Injected<T&>
+		virtual_injected<T>,
+		injected<T&>
 	>
 >;
 
@@ -108,7 +108,7 @@ using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
  * This is an injected argument type in construct functions.
  */
 template<typename T>
-using Inject = detail::injected_wrapper<T>&&;
+using inject_t = detail::injected_wrapper<T>&&;
 
 /*
  * The function makes a tuple of either l-value reference, or objects.

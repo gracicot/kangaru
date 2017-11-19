@@ -10,7 +10,7 @@ namespace kgr {
  * 
  * This is the default predicate used by the container.
  */
-struct All {
+struct all {
 	constexpr inline bool operator()(type_id_t) const noexcept {
 		return true;
 	}
@@ -20,7 +20,7 @@ struct All {
  * This predicate returns true for all services except those specified.
  */
 template<typename First, typename... Ts>
-struct NoneOf {
+struct none_of {
 	constexpr bool operator()(type_id_t id) const noexcept {
 		return !compare<First, Ts...>(id);
 	}
@@ -41,7 +41,7 @@ private:
  * Predicate that returns false for all services, except those passed as argument.
  */
 template<typename First, typename... Ts>
-struct AnyOf {
+struct any_of {
 	constexpr bool operator()(type_id_t id) const noexcept {
 		return compare<First, Ts...>(id);
 	}

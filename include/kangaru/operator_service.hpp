@@ -7,142 +7,142 @@
 namespace kgr {
 
 template<typename Predicate>
-struct FilteredForkService {
-	explicit FilteredForkService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+struct filtered_fork_service {
+	explicit filtered_fork_service(in_place_t, container& container) : _container{container.fork<Predicate>()} {}
 	
-	Container forward() {
+	container forward() {
 		return std::move(_container);
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container _container;
+	container _container;
 };
 
-using ForkService = FilteredForkService<All>;
+using fork_service = filtered_fork_service<all>;
 
-auto service_map(Container&&) -> ForkService;
+auto service_map(container&&) -> fork_service;
 
 template<typename Map>
-struct MappedInvokerService {
-	explicit MappedInvokerService(in_place_t, Container& container) : _container{container} {}
+struct mapped_invoker_service {
+	explicit mapped_invoker_service(in_place_t, container& container) : _container{container} {}
 	
-	MappedInvoker<Map> forward() {
-		return MappedInvoker<Map>{_container};
+	mapped_invoker<Map> forward() {
+		return mapped_invoker<Map>{_container};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container& _container;
+	container& _container;
 };
 
-using InvokerService = MappedInvokerService<kgr::Map<>>;
+using invoker_service = mapped_invoker_service<map<>>;
 
 template<typename Map>
-auto service_map(const MappedInvoker<Map>&) -> MappedInvokerService<Map>;
+auto service_map(const mapped_invoker<Map>&) -> mapped_invoker_service<Map>;
 
-template<typename Map, typename Predicate = All>
-struct ForkedMappedInvokerService {
-	explicit ForkedMappedInvokerService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+template<typename Map, typename Predicate = all>
+struct forked_mapped_invoker_service {
+	explicit forked_mapped_invoker_service(in_place_t, container& container) : _container{container.fork<Predicate>()} {}
 	
-	ForkedMappedInvoker<Map> forward() {
-		return ForkedMappedInvoker<Map>{std::move(_container)};
+	forked_mapped_invoker<Map> forward() {
+		return forked_mapped_invoker<Map>{std::move(_container)};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container _container;
+	container _container;
 };
 
-using ForkedInvokerService = ForkedMappedInvokerService<kgr::Map<>>;
+using forked_invoker_service = forked_mapped_invoker_service<map<>>;
 
 template<typename Map>
-auto service_map(const ForkedMappedInvoker<Map>&) -> ForkedMappedInvokerService<Map>;
+auto service_map(const forked_mapped_invoker<Map>&) -> forked_mapped_invoker_service<Map>;
 
 template<typename T>
-struct GeneratorService {
-	explicit GeneratorService(in_place_t, Container& container) : _container{container} {}
+struct generator_service {
+	explicit generator_service(in_place_t, container& container) : _container{container} {}
 	
-	Generator<T> forward() {
-		return Generator<T>{_container};
+	generator<T> forward() {
+		return generator<T>{_container};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container& _container;
+	container& _container;
 };
 
 template<typename T>
-auto service_map(const Generator<T>&) -> GeneratorService<T>;
+auto service_map(const generator<T>&) -> generator_service<T>;
 
-template<typename T, typename Predicate = All>
-struct ForkedGeneratorService {
-	explicit ForkedGeneratorService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+template<typename T, typename Predicate = all>
+struct forked_generator_service {
+	explicit forked_generator_service(in_place_t, container& container) : _container{container.fork<Predicate>()} {}
 	
-	ForkedGenerator<T> forward() {
-		return ForkedGenerator<T>{std::move(_container)};
+	forked_generator<T> forward() {
+		return forked_generator<T>{std::move(_container)};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container _container;
+	container _container;
 };
 
 template<typename T>
-auto service_map(const ForkedGenerator<T>&) -> ForkedGeneratorService<T>;
+auto service_map(const forked_generator<T>&) -> forked_generator_service<T>;
 
 template<typename T>
-struct LazyService {
-	explicit LazyService(in_place_t, Container& container) : _container{container} {}
+struct lazy_service {
+	explicit lazy_service(in_place_t, container& container) : _container{container} {}
 	
-	Lazy<T> forward() {
-		return Lazy<T>{_container};
+	lazy<T> forward() {
+		return lazy<T>{_container};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container& _container;
+	container& _container;
 };
 
 template<typename T>
-auto service_map(const Lazy<T>&) -> LazyService<T>;
+auto service_map(const lazy<T>&) -> lazy_service<T>;
 
-template<typename T, typename Predicate = All>
-struct ForkedLazyService {
-	explicit ForkedLazyService(in_place_t, Container& container) : _container{container.fork<Predicate>()} {}
+template<typename T, typename Predicate = all>
+struct forked_lazy_service {
+	explicit forked_lazy_service(in_place_t, container& container) : _container{container.fork<Predicate>()} {}
 	
-	ForkedLazy<T> forward() {
-		return ForkedLazy<T>{std::move(_container)};
+	forked_lazy<T> forward() {
+		return forked_lazy<T>{std::move(_container)};
 	}
 	
-	static auto construct(Inject<ContainerService> cs) -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
 private:
-	Container _container;
+	container _container;
 };
 
 template<typename T>
-auto service_map(const ForkedLazy<T>&) -> ForkedLazyService<T>;
+auto service_map(const forked_lazy<T>&) -> forked_lazy_service<T>;
 
 } // namespace kgr
 

@@ -28,7 +28,7 @@ namespace kgr {
  * This class will construct services and share single instances for a given definition.
  * It is the class that parses and manage dependency graphs and call autocall functions.
  */
-struct Container final {
+struct container final {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
@@ -51,7 +51,7 @@ private:
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T(std::forward<Args>(args)...),
-			&Container::deleter<T>
+			&container::deleter<T>
 		};
 	}
 	
@@ -59,7 +59,7 @@ private:
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T{std::forward<Args>(args)...},
-			&Container::deleter<T>
+			&container::deleter<T>
 		};
 	}
 	
@@ -74,12 +74,12 @@ private:
 	}
 	
 public:
-	explicit Container() = default;
-	Container(const Container &) = delete;
-	Container& operator=(const Container &) = delete;
-	Container(Container&&) = default;
-	Container& operator=(Container&&) = default;
-	~Container() = default;
+	explicit container() = default;
+	container(const container &) = delete;
+	container& operator=(const container &) = delete;
+	container(container&&) = default;
+	container& operator=(container&&) = default;
+	~container() = default;
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.
@@ -101,11 +101,11 @@ public:
 	 * or is called when provided arguments don't match the constructor.
 	 * In GCC, a diagnostic is provided.
 	 */
-	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	bool emplace(detail::ServiceError<T> = {}) = delete;
+	template<typename T, enable_if<std::is_default_constructible<detail::service_error<T>>> = 0>
+	bool emplace(detail::service_error<T> = {}) = delete;
 	
 	template<typename T, typename... Args>
-	bool emplace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	bool emplace(detail::service_error<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.
@@ -125,11 +125,11 @@ public:
 	 * or is called when provided arguments don't match the constructor.
 	 * In GCC, a diagnostic is provided.
 	 */
-	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	void replace(detail::ServiceError<T> = {}) = delete;
+	template<typename T, enable_if<std::is_default_constructible<detail::service_error<T>>> = 0>
+	void replace(detail::service_error<T> = {}) = delete;
 	
 	template<typename T, typename... Args>
-	void replace(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	void replace(detail::service_error<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
 	/*
 	 * This function returns the service given by service definition T.
@@ -138,7 +138,7 @@ public:
 	 * T must not be a polymorphic type.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_service_valid<T, Args...>> = 0>
-	ServiceType<T> service(Args&&... args) {
+	service_type<T> service(Args&&... args) {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
 	
@@ -148,17 +148,17 @@ public:
 	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, typename... Args>
-	void service(detail::ServiceError<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	void service(detail::service_error<T, detail::identity_t<Args>...>, Args&&...) = delete;
 	
-	template<typename T, enable_if<std::is_default_constructible<detail::ServiceError<T>>> = 0>
-	void service(detail::ServiceError<T> = {}) = delete;
+	template<typename T, enable_if<std::is_default_constructible<detail::service_error<T>>> = 0>
+	void service(detail::service_error<T> = {}) = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
 	 * Args are additional arguments to be sent to the function after services arguments.
 	 * This function will deduce arguments from the function signature.
 	 */
-	template<typename Map = kgr::Map<>, typename U, typename... Args,
+	template<typename Map = map<>, typename U, typename... Args,
 		enable_if<detail::is_map<Map>> = 0,
 		enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
 	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke(U&& function, Args&&... args) {
@@ -177,7 +177,7 @@ public:
 		enable_if<detail::is_service_valid<Services>>...,
 		disable_if<detail::is_map<Services>>...,
 		detail::enable_if_t<(sizeof...(Services) > 0)>> = 0>
-	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<ServiceType<Services>>()..., std::declval<Args>()...)) {
+	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<service_type<Services>>()..., std::declval<Args>()...)) {
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}
 	
@@ -186,7 +186,7 @@ public:
 	 * It will provide diagnostic on GCC.
 	 */
 	template<typename... Services>
-	void invoke(detail::NotInvokableError = {}, ...) = delete;
+	void invoke(detail::not_invokable_error = {}, ...) = delete;
 	
 	/*
 	 * This function clears this container.
@@ -209,8 +209,8 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call fork() with a predicate as parameter.
 	 */
-	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
-	Container fork() const {
+	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
+	container fork() const {
 		return fork(Predicate{});
 	}
 	
@@ -223,8 +223,8 @@ public:
 	 * It takes a predicate as argument.
 	 */
 	template<typename Predicate>
-	Container fork(Predicate predicate) const {
-		Container c;
+	container fork(Predicate predicate) const {
+		container c;
 		
 		c._services.reserve(_services.size());
 		
@@ -243,7 +243,7 @@ public:
 	 * This function merges a container with another.
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
-	inline void merge(Container&& other) {
+	inline void merge(container&& other) {
 		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
 		_services.insert(other._services.begin(), other._services.end());
 	}
@@ -260,8 +260,8 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call rebase() with a predicate as parameter.
 	 */
-	template<typename Predicate = All, enable_if<std::is_default_constructible<Predicate>> = 0>
-	Container rebase(const Container& other) const {
+	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
+	container rebase(const container& other) const {
 		return rebase(other, Predicate{});
 	}
 	
@@ -273,7 +273,7 @@ public:
 	 * It takes a predicate type as argument to filter.
 	 */
 	template<typename Predicate>
-	void rebase(const Container& other, Predicate predicate) {
+	void rebase(const container& other, Predicate predicate) {
 		std::copy_if(
 			other._services.begin(), other._services.end(),
 			std::inserter(_services, _services.end()),
@@ -342,7 +342,7 @@ private:
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
 	detail::typed_service_storage<T> save_new_instance(Args&&...) {
-		throw AbstractNotFound{};
+		throw abstract_not_found{};
 	}
 	
 	/*
@@ -354,7 +354,7 @@ private:
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	detail::conditional_t<detail::is_virtual<T>::value, detail::typed_service_storage<T>, T&> save_new_instance(Args&&...) {
-		throw SuppliedNotFound{};
+		throw supplied_not_found{};
 	}
 	
 	/*
@@ -425,14 +425,14 @@ private:
 	
 	template<typename Override, typename T, enable_if<detail::is_virtual<T>> = 0>
 	detail::forward_ptr<Override> get_override_forward() {
-		return [](void* s) -> ServiceType<Override> {
-			return static_cast<ServiceType<Override>>(static_cast<T*>(s)->forward());
+		return [](void* s) -> service_type<Override> {
+			return static_cast<service_type<Override>>(static_cast<T*>(s)->forward());
 		};
 	}
 	
 	template<typename T, enable_if<detail::is_virtual<T>> = 0>
 	detail::forward_ptr<T> get_forward() {
-		return [](void* service) -> ServiceType<T> {
+		return [](void* service) -> service_type<T> {
 			return static_cast<T*>(service)->forward();
 		};
 	}
@@ -575,7 +575,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::is_container_service<T>> = 0>
 	detail::injected_wrapper<T> definition() {
-		return detail::Injected<ContainerService>{ContainerService{*this}};
+		return detail::injected<container_service>{container_service{*this}};
 	}
 	
 	/*
@@ -643,7 +643,7 @@ private:
 	 */
 	template<typename T, enable_if<detail::has_autocall<T>> = 0>
 	void autocall(T& service) {
-		autocall(detail::tuple_seq<typename T::Autocall>{}, service);
+		autocall(detail::tuple_seq<typename T::autocall_functions>{}, service);
 	}
 	
 	/*
@@ -681,6 +681,6 @@ private:
 	service_cont _services;
 };
 
-}  // namespace kgr
+} // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP

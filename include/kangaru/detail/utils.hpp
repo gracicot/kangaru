@@ -26,14 +26,14 @@ struct has_forward<T, void_t<decltype(std::declval<T>().forward())>> : std::inte
  * Type trait that extract the return type of the forward function.
  */
 template<typename, typename = void>
-struct ServiceTypeHelper {};
+struct service_type_helper {};
 
 /*
  * Specialization of ServiceTypeHelper when T has a valid forward function callable without parameter.
  * Makes an alias to the return type of the forward function.
  */
 template<typename T>
-struct ServiceTypeHelper<T, typename std::enable_if<has_forward<T>::value>::type> {
+struct service_type_helper<T, typename std::enable_if<has_forward<T>::value>::type> {
 	using type = decltype(std::declval<T>().forward());
 };
 
@@ -52,7 +52,7 @@ struct {} constexpr in_place{};
  * This type is the return type of the forward function of the service T.
  */
 template<typename T>
-using ServiceType = typename detail::ServiceTypeHelper<T>::type;
+using service_type = typename detail::service_type_helper<T>::type;
 
 /*
  * This is a tag type to mark a constructor as the one the container should use to construct a definition.

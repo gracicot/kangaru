@@ -12,15 +12,15 @@ namespace detail {
  * This implements all the common things a Lazy must implement.
  */
 template<typename CRTP, typename T>
-struct LazyBase {
+struct lazy_base {
 private:
-	using ref = typename std::remove_reference<ServiceType<T>>::type&;
-	using rref = typename std::remove_reference<ServiceType<T>>::type&&;
-	using ptr = decay_t<ServiceType<T>>*;
+	using ref = typename std::remove_reference<service_type<T>>::type&;
+	using rref = typename std::remove_reference<service_type<T>>::type&&;
+	using ptr = decay_t<service_type<T>>*;
 	
 	static constexpr bool nothrow_get() {
-		return noexcept(std::declval<Container>().service<T>()) &&
-			noexcept(std::declval<LazyStorage<ServiceType<T>>>().construct(std::declval<ServiceType<T>>()));
+		return noexcept(std::declval<container>().service<T>()) &&
+			noexcept(std::declval<lazy_storage<service_type<T>>>().construct(std::declval<service_type<T>>()));
 	}
 	
 public:
@@ -45,7 +45,7 @@ public:
 	}
 	
 private:
-	LazyStorage<ServiceType<T>> _service;
+	lazy_storage<service_type<T>> _service;
 };
 
 } // namespace detail

@@ -9,37 +9,37 @@ namespace kgr {
 namespace detail {
 
 template<typename Generic, typename Type, typename = void>
-struct GenericServiceDestruction {
-	~GenericServiceDestruction() {
+struct generic_service_destruction {
+	~generic_service_destruction() {
 		static_cast<Generic&>(*this).instance().~Type();
 	}
 };
 
 template<typename Generic, typename Type>
-struct GenericServiceDestruction<Generic, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
+struct generic_service_destruction<Generic, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
 
 } // namespace detail
 
 template<typename Type>
-struct GenericService : detail::GenericServiceDestruction<GenericService<Type>, Type> {
-	friend struct Container;
+struct generic_service : detail::generic_service_destruction<generic_service<Type>, Type> {
+	friend container;
 	
-	GenericService() = default;
+	generic_service() = default;
 	
-	GenericService(GenericService&& other) noexcept {
+	generic_service(generic_service&& other) noexcept {
 		emplace(std::move(other.instance()));
 	}
 	
-	GenericService& operator=(GenericService&& other) noexcept {
+	generic_service& operator=(generic_service&& other) noexcept {
 		emplace(std::move(other.instance()));
 		return *this;
 	}
 	
-	GenericService(const GenericService& other) = delete;
-	GenericService& operator=(const GenericService& other) = delete;
+	generic_service(const generic_service& other) = delete;
+	generic_service& operator=(const generic_service& other) = delete;
 	
 	template<typename... Args, detail::enable_if_t<detail::is_someway_constructible<Type, Args...>::value, int> = 0>
-	GenericService(in_place_t, Args&&... args) {
+	generic_service(in_place_t, Args&&... args) {
 		emplace(std::forward<Args>(args)...);
 	}
 	
@@ -53,7 +53,7 @@ protected:
 	}
 	
 private:
-	friend struct detail::GenericServiceDestruction<GenericService<Type>, Type>;
+	friend struct detail::generic_service_destruction<generic_service<Type>, Type>;
 	template<typename, typename...> friend struct detail::has_emplace_helper;
 	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>

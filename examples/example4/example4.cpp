@@ -68,19 +68,19 @@ private:
 
 struct MagicWandService;
 
-struct WandService : kgr::AbstractService<Wand>, kgr::Default<MagicWandService> {};
+struct WandService : kgr::abstract_service<Wand>, kgr::defaults_to<MagicWandService> {};
 
-struct MagicWandService : kgr::SingleService<MagicWand>, kgr::Overrides<WandService> {};
-struct FireWandService : kgr::SingleService<FireWand>, kgr::Overrides<MagicWandService> {};
-struct LavaWandService : kgr::SingleService<LavaWand>, kgr::Overrides<FireWandService, MagicWandService> {};
+struct MagicWandService : kgr::single_service<MagicWand>, kgr::overrides<WandService> {};
+struct FireWandService : kgr::single_service<FireWand>, kgr::overrides<MagicWandService> {};
+struct LavaWandService : kgr::single_service<LavaWand>, kgr::overrides<FireWandService, MagicWandService> {};
 
-struct TricksterService : kgr::Service<Trickster, kgr::Dependency<WandService>> {};
-struct WizardService : kgr::Service<Wizard, kgr::Dependency<MagicWandService>> {};
-struct FireMageService : kgr::Service<FireMage, kgr::Dependency<FireWandService>> {};
+struct TricksterService : kgr::service<Trickster, kgr::dependency<WandService>> {};
+struct WizardService : kgr::service<Wizard, kgr::dependency<MagicWandService>> {};
+struct FireMageService : kgr::service<FireMage, kgr::dependency<FireWandService>> {};
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	// Here, because of the default service type of WandService, MagicWandService is chosen.
 	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.

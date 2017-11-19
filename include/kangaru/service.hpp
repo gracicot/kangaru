@@ -13,29 +13,29 @@ namespace kgr {
  * This class is simply a list of definition the current service depends on to be constructed.
  */
 template<typename... Args>
-using Dependency = detail::meta_list<Args...>;
+using dependency = detail::meta_list<Args...>;
 
 /**
  * This class is the default single service.
  * 
  * It hold the service as value, and returns it by reference.
  */
-template<typename, typename = Dependency<>>
-struct SingleService;
+template<typename, typename = dependency<>>
+struct single_service;
 
 template<typename Type, typename... Deps>
-struct SingleService<Type, Dependency<Deps...>> : GenericService<Type>, Single {
+struct single_service<Type, dependency<Deps...>> : generic_service<Type>, single {
 private:
-	using Parent = GenericService<Type>;
+	using parent = generic_service<Type>;
 	
 protected:
-	using Parent::instance;
+	using parent::instance;
 	
 public:
-	using Parent::Parent;
+	using parent::parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args) -> inject_result<ServiceType<Deps>..., Args...> {
+	static auto construct(inject_t<Deps>... deps, Args&&... args) -> inject_result<service_type<Deps>..., Args...> {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
@@ -54,22 +54,22 @@ public:
  * 
  * It hold and return the service by value.
  */
-template<typename, typename = Dependency<>>
-struct Service;
+template<typename, typename = dependency<>>
+struct service;
 
 template<typename Type, typename... Deps>
-struct Service<Type, Dependency<Deps...>> : GenericService<Type> {
+struct service<Type, dependency<Deps...>> : generic_service<Type> {
 private:
-	using Parent = GenericService<Type>;
+	using parent = generic_service<Type>;
 	
 protected:
-	using Parent::instance;
+	using parent::instance;
 	
 public:
-	using Parent::Parent;
+	using parent::parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args) -> inject_result<ServiceType<Deps>..., Args...> {
+	static auto construct(inject_t<Deps>... deps, Args&&... args) -> inject_result<service_type<Deps>..., Args...> {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
 
@@ -91,22 +91,22 @@ public:
  * 
  * It will hold the service as a std::unique_ptr, and inject it as a std::unique_ptr
  */
-template<typename, typename = Dependency<>>
-struct UniqueService;
+template<typename, typename = dependency<>>
+struct unique_service;
 
 template<typename Type, typename... Deps>
-struct UniqueService<Type, Dependency<Deps...>> : GenericService<std::unique_ptr<Type>> {
+struct unique_service<Type, dependency<Deps...>> : generic_service<std::unique_ptr<Type>> {
 private:
-	using Parent = GenericService<std::unique_ptr<Type>>;
+	using parent = generic_service<std::unique_ptr<Type>>;
 	
 protected:
-	using Parent::instance;
+	using parent::instance;
 	
 public:
-	using Parent::Parent;
+	using parent::parent;
 	
 	template<typename... Args>
-	static auto construct(Inject<Deps>... deps, Args&&... args)
+	static auto construct(inject_t<Deps>... deps, Args&&... args)
 	-> decltype(inject(std::unique_ptr<Type>{new Type{std::declval<Deps>().forward()..., std::declval<Args>()...}})) {
 		return inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::forward<Args>(args)...}});
 	}
@@ -126,21 +126,21 @@ public:
  * 
  * It will hold the service as a std::shared_ptr and inject it a s a std::shared_ptr
  */
-template<typename, typename = Dependency<>>
-struct SharedService;
+template<typename, typename = dependency<>>
+struct shared_service;
 
 template<typename Type, typename... Deps>
-struct SharedService<Type, Dependency<Deps...>> : GenericService<std::shared_ptr<Type>>, Single {
+struct shared_service<Type, dependency<Deps...>> : generic_service<std::shared_ptr<Type>>, single {
 private:
-	using Parent = GenericService<std::shared_ptr<Type>>;
+	using parent = generic_service<std::shared_ptr<Type>>;
 	
 protected:
-	using Parent::instance;
+	using parent::instance;
 	
 public:
-	using Parent::Parent;
+	using parent::parent;
 
-	static auto construct(Inject<Deps>... deps) -> decltype(inject(std::make_shared<Type>(std::declval<Deps>().forward()...))) {
+	static auto construct(inject_t<Deps>... deps) -> decltype(inject(std::make_shared<Type>(std::declval<Deps>().forward()...))) {
 		return inject(std::make_shared<Type>(deps.forward()...));
 	}
 	
@@ -160,7 +160,7 @@ public:
  * It cannot be constructed, but only overrided.
  */
 template<typename T>
-struct AbstractService : Abstract {
+struct abstract_service : abstract {
 	T& forward();
 };
 
@@ -170,7 +170,7 @@ struct AbstractService : Abstract {
  * As it is abstract, a service that overrides it must be instanciated by the container before usage.
  */
 template<typename T>
-struct AbstractSharedService : Abstract {
+struct abstract_shared_service : abstract {
 	std::shared_ptr<T> forward();
 };
 

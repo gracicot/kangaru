@@ -18,7 +18,7 @@ private:
 	// leaves the compiler without clues about what's going on.
 	template<std::size_t I, typename U>
 	struct expander {
-		using type = is_explicitly_convertible<ServiceType<U>, ServiceType<meta_list_element_t<I, parent_types<U>>>>;
+		using type = is_explicitly_convertible<service_type<U>, service_type<meta_list_element_t<I, parent_types<U>>>>;
 	};
 
 	template<typename...>
@@ -171,7 +171,7 @@ private:
 	static std::false_type test(...);
 	
 	template<typename U, enable_if_t<has_default<U>::value, int> = 0>
-	static is_explicitly_convertible<ServiceType<default_type<U>>, ServiceType<U>> test(int);
+	static is_explicitly_convertible<service_type<default_type<U>>, service_type<U>> test(int);
 	
 	template<typename U, enable_if_t<!has_default<U>::value, int> = 0>
 	static std::true_type test(int);

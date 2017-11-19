@@ -12,10 +12,10 @@ TEST_CASE("Injected singles are the same returned by the container", "[dependenc
 		Service1* s1 = nullptr;
 	};
 	
-	struct Definition1 : kgr::SingleService<Service1> {};
-	struct Definition2 : kgr::Service<Service2, kgr::Dependency<Definition1>> {};
+	struct Definition1 : kgr::single_service<Service1> {};
+	struct Definition2 : kgr::service<Service2, kgr::dependency<Definition1>> {};
 	
-	kgr::Container c;
+	kgr::container c;
 	
 	REQUIRE(c.service<Definition2>().s1 == &c.service<Definition1>());
 }
@@ -30,7 +30,7 @@ TEST_CASE("Injected arguments are sent correctly to the constructor", "[dependen
 		Service1* s1 = nullptr;
 	};
 	
-	struct Definition1 : kgr::SingleService<Service1> {};
+	struct Definition1 : kgr::single_service<Service1> {};
 	
 	struct Definition2 {
 		Definition2(kgr::in_place_t) {}
@@ -40,14 +40,14 @@ TEST_CASE("Injected arguments are sent correctly to the constructor", "[dependen
 			return std::move(service);
 		}
 		
-		static auto construct(kgr::Inject<Definition1> d1) -> decltype(kgr::inject(d1.forward())) {
+		static auto construct(kgr::inject_t<Definition1> d1) -> decltype(kgr::inject(d1.forward())) {
 			return kgr::inject(d1.forward());
 		}
 		
 		Service2 service;
 	};
 	
-	kgr::Container c;
+	kgr::container c;
 	
 	REQUIRE(c.service<Definition2>().s1 == &c.service<Definition1>());
 }
@@ -68,8 +68,8 @@ TEST_CASE("Injected arguments can be single and non single", "[dependency]") {
 		Service1* s1 = nullptr;
 	};
 	
-	struct Definition1 : kgr::SingleService<Service1> {};
-	struct Definition2 : kgr::Service<Service2> {};
+	struct Definition1 : kgr::single_service<Service1> {};
+	struct Definition2 : kgr::service<Service2> {};
 	
 	struct Definition3 {
 		Definition3(kgr::in_place_t, Service1& dep1, Service2 dep2) : service{dep1, std::move(dep2)} {}
@@ -78,14 +78,14 @@ TEST_CASE("Injected arguments can be single and non single", "[dependency]") {
 			return std::move(service);
 		}
 		
-		static auto construct(kgr::Inject<Definition1> d1, kgr::Inject<Definition2> d2) -> decltype(kgr::inject(d1.forward(), d2.forward())) {
+		static auto construct(kgr::inject_t<Definition1> d1, kgr::inject_t<Definition2> d2) -> decltype(kgr::inject(d1.forward(), d2.forward())) {
 			return kgr::inject(d1.forward(), d2.forward());
 		}
 		
 		Service3 service;
 	};
 	
-	(void) kgr::Container{}.service<Definition3>();
+	(void) kgr::container {}.service<Definition3>();
 	
 	REQUIRE(constructor_called);
 }
@@ -123,14 +123,14 @@ TEST_CASE("Container injects arguments recursively", "[dependency]") {
 		Service4(Service3) { service4_constructed = true; }
 	};
 	
-	struct Definition1 : kgr::Service<Service1> {};
-	struct Definition2 : kgr::Service<Service2, kgr::Dependency<Definition1>> {};
-	struct Definition3One : kgr::Service<Service3, kgr::Dependency<Definition2>> {};
-	struct Definition3Two : kgr::Service<Service3, kgr::Dependency<Definition1, Definition2>> {};
-	struct Definition4 : kgr::Service<Service4, kgr::Dependency<Definition3Two>> {};
+	struct Definition1 : kgr::service<Service1> {};
+	struct Definition2 : kgr::service<Service2, kgr::dependency<Definition1>> {};
+	struct Definition3One : kgr::service<Service3, kgr::dependency<Definition2>> {};
+	struct Definition3Two : kgr::service<Service3, kgr::dependency<Definition1, Definition2>> {};
+	struct Definition4 : kgr::service<Service4, kgr::dependency<Definition3Two>> {};
 	
 	SECTION("Injected service can have dependencies") {
-		(void) kgr::Container{}.service<Definition3One>();
+		(void) kgr::container {}.service<Definition3One>();
 		
 		CHECK(service1_constructed);
 		CHECK(service2_constructed);
@@ -140,7 +140,7 @@ TEST_CASE("Container injects arguments recursively", "[dependency]") {
 	}
 	
 	SECTION("Injected service can have multiple dependencies") {
-		(void) kgr::Container{}.service<Definition4>();
+		(void) kgr::container {}.service<Definition4>();
 		
 		CHECK(service1_constructed);
 		CHECK(service2_constructed);

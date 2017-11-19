@@ -79,7 +79,7 @@ private:
 };
 
 // Oven service definition. 
-struct OvenService : kgr::Single {
+struct OvenService : kgr::single {
 	// constructor. Receives a fully constructed oven to contain.
 	template<typename... Args>
 	OvenService(kgr::in_place_t, Args&&... args) : oven{new Oven{std::forward<Args>(args)...}} {}
@@ -99,13 +99,13 @@ private:
 };
 
 // Baker service definition. 
-struct BakerService : kgr::Single {
+struct BakerService : kgr::single {
 	// constructor. Receives a fully constructed baker to contain.
 	template<typename... Args>
 	BakerService(kgr::in_place_t, Args&&... args) : baker{std::make_shared<Baker>(std::forward<Args>(args)...)} {}
 	
 	// construct method. Receives dependencies of a Baker.
-	static auto construct(kgr::Inject<FlourBagService> flourBag) -> decltype(kgr::inject(flourBag.forward())) {
+	static auto construct(kgr::inject_t<FlourBagService> flourBag) -> decltype(kgr::inject(flourBag.forward())) {
 		// dependencies are injected with the forward method.
 		return kgr::inject(flourBag.forward());
 	}
@@ -127,7 +127,7 @@ struct BakeryService {
 	
 	// construct method. Receives dependencies of a Baker.
 	// We have to receive the OvenService has a reference because it's single.
-	static auto construct(kgr::Inject<OvenService> oven) -> decltype(kgr::inject(oven.forward())) {
+	static auto construct(kgr::inject_t<OvenService> oven) -> decltype(kgr::inject(oven.forward())) {
 		// dependencies are injected with the forward method.
 		return kgr::inject(oven.forward());
 	}
@@ -143,7 +143,7 @@ private:
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	// The return type of 'service<BakeryService>' is the same as the BakeryService::forward return type.
 	Bakery bakery = container.service<BakeryService>();

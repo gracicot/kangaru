@@ -10,7 +10,7 @@
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter
 // Will not be needed once this library upgrade to C++17
-#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 
 using namespace std;
 
@@ -68,16 +68,16 @@ private:
 };
 
 // service definitions
-struct KeyboardService : kgr::SingleService<Keyboard> {};
-struct MonitorService : kgr::SingleService<Monitor> {};
-struct MouseService : kgr::SingleService<Mouse> {};
-struct SpeakersService : kgr::SingleService<Speakers> {};
+struct KeyboardService : kgr::single_service<Keyboard> {};
+struct MonitorService : kgr::single_service<Monitor> {};
+struct MouseService : kgr::single_service<Mouse> {};
+struct SpeakersService : kgr::single_service<Speakers> {};
 
-struct MinimalComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>> {};
+struct MinimalComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>> {};
 
-struct EquippedComputerService : kgr::Service<Computer, kgr::Dependency<KeyboardService>>, kgr::AutoCall<
-	kgr::Invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
-	kgr::Invoke<METHOD(&Computer::setMonitor), MonitorService>
+struct EquippedComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>>, kgr::autocall<
+	kgr::invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
+	kgr::invoke<METHOD(&Computer::setMonitor), MonitorService>
 > {};
 
 // A funtion to wash our favourite monitor and keyboard.
@@ -92,7 +92,7 @@ double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	// getting our four pieces of hardware
 	auto& keyboard = container.service<KeyboardService>();

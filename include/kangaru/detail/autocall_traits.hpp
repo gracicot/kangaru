@@ -24,7 +24,7 @@ struct autocall_trait_helper {
 private:
 	template<typename U, std::size_t I>
 	struct expand {
-		using type = Trait<U, meta_list_element_t<I, typename U::Autocall>>;
+		using type = Trait<U, meta_list_element_t<I, typename U::autocall_functions>>;
 	};
 
 	template<typename>
@@ -38,7 +38,7 @@ private:
 	static std::true_type test(...);
 	
 	template<typename U>
-	static decltype(test_helper<U>(detail::tuple_seq<typename U::Autocall>{})) test(int);
+	static decltype(test_helper<U>(detail::tuple_seq<typename U::autocall_functions>{})) test(int);
 	
 public:
 	using type = decltype(test<T>(0));
@@ -72,7 +72,7 @@ private:
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename U, typename C>
-	static decltype(test_helper<typename U::Map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	static decltype(test_helper<typename U::map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
 	
 public:
 	using type = decltype(test<T, F>(0));
@@ -118,11 +118,11 @@ private:
 	struct expander {
 		// If the map is incomplete, it's either an invalid
 		// autocall entry, or an invoke call
-		using type = typename std::conditional<
+		using type = typename conditional_t<
 			is_autocall_entry_map_complete<U, C>::value,
 			invoke_method_condition,
 			invoke_call_condition
-		>::type::template type<U, C, I>::type;
+		>::template type<U, C, I>::type;
 	};
 	
 	template<typename...>

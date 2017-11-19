@@ -11,25 +11,25 @@ TEST_CASE("Definition can override another", "[virtual]") {
 		static int derived_forward_called = 0;
 		static bool base_instanciated = false;
 		
-		struct DefinitionBase : kgr::SingleService<ServiceBase>, kgr::Virtual {
+		struct DefinitionBase : kgr::single_service<ServiceBase>, kgr::polymorphic {
 			DefinitionBase() {
 				base_instanciated = true;
 			}
 			
 			ServiceBase forward() {
 				base_forward_called++;
-				return SingleService::forward();
+				return single_service::forward();
 			}
 		};
 		
-		struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionBase> {
+		struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionBase> {
 			ServiceDerived forward() {
 				derived_forward_called++;
-				return SingleService::forward();
+				return single_service::forward();
 			}
 		};
 		
-		kgr::Container c;
+		kgr::container c;
 		
 		(void) c.service<DefinitionBase>();
 		(void) c.service<DefinitionDerived>();
@@ -46,15 +46,15 @@ TEST_CASE("Definition can override another", "[virtual]") {
 		
 		static bool base_instanciated = false;
 		
-		struct DefinitionBase : kgr::SingleService<ServiceBase>, kgr::Virtual {
+		struct DefinitionBase : kgr::single_service<ServiceBase>, kgr::polymorphic {
 			DefinitionBase() {
 				base_instanciated = true;
 			}
 		};
 		
-		struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionBase> {};
+		struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionBase> {};
 		
-		kgr::Container c;
+		kgr::container c;
 		
 		(void) c.service<DefinitionDerived>();
 		(void) c.service<DefinitionBase>();
@@ -75,36 +75,36 @@ TEST_CASE("Definition can override multiple definition", "[virtual]") {
 		static bool base1_instanciated = false;
 		static bool base2_instanciated = false;
 		
-		struct DefinitionBase1 : kgr::SingleService<ServiceBase1>, kgr::Virtual {
+		struct DefinitionBase1 : kgr::single_service<ServiceBase1>, kgr::polymorphic {
 			DefinitionBase1() {
 				base1_instanciated = true;
 			}
 			
 			ServiceBase1 forward() {
 				base1_forward_called++;
-				return SingleService::forward();
+				return single_service::forward();
 			}
 		};
 		
-		struct DefinitionBase2 : kgr::SingleService<ServiceBase2>, kgr::Virtual {
+		struct DefinitionBase2 : kgr::single_service<ServiceBase2>, kgr::polymorphic {
 			DefinitionBase2() {
 				base2_instanciated = true;
 			}
 			
 			ServiceBase2 forward() {
 				base2_forward_called++;
-				return SingleService::forward();
+				return single_service::forward();
 			}
 		};
 		
-		struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionBase1, DefinitionBase2> {
+		struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionBase1, DefinitionBase2> {
 			ServiceDerived forward() {
 				derived_forward_called++;
-				return SingleService::forward();
+				return single_service::forward();
 			}
 		};
 		
-		kgr::Container c;
+		kgr::container c;
 		
 		(void) c.service<DefinitionBase1>();
 		(void) c.service<DefinitionBase2>();
@@ -126,22 +126,22 @@ TEST_CASE("Definition can override multiple definition", "[virtual]") {
 		static bool base1_instanciated = false;
 		static bool base2_instanciated = false;
 		
-		struct DefinitionBase1 : kgr::SingleService<ServiceBase1>, kgr::Virtual {
+		struct DefinitionBase1 : kgr::single_service<ServiceBase1>, kgr::polymorphic {
 			DefinitionBase1() {
 				base1_instanciated = true;
 			}
 		};
 		
 		
-		struct DefinitionBase2 : kgr::SingleService<ServiceBase2>, kgr::Virtual {
+		struct DefinitionBase2 : kgr::single_service<ServiceBase2>, kgr::polymorphic {
 			DefinitionBase2() {
 				base2_instanciated = true;
 			}
 		};
 		
-		struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionBase1, DefinitionBase2> {};
+		struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionBase1, DefinitionBase2> {};
 		
-		kgr::Container c;
+		kgr::container c;
 		
 		(void) c.service<DefinitionBase1>();
 		(void) c.service<DefinitionDerived>();
@@ -159,22 +159,22 @@ TEST_CASE("Definition can override multiple definition", "[virtual]") {
 		static bool base1_instanciated = false;
 		static bool base2_instanciated = false;
 		
-		struct DefinitionBase1 : kgr::SingleService<ServiceBase1>, kgr::Virtual {
+		struct DefinitionBase1 : kgr::single_service<ServiceBase1>, kgr::polymorphic {
 			DefinitionBase1() {
 				base1_instanciated = true;
 			}
 		};
 		
 		
-		struct DefinitionBase2 : kgr::SingleService<ServiceBase2>, kgr::Virtual {
+		struct DefinitionBase2 : kgr::single_service<ServiceBase2>, kgr::polymorphic {
 			DefinitionBase2() {
 				base2_instanciated = true;
 			}
 		};
 		
-		struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionBase1, DefinitionBase2> {};
+		struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionBase1, DefinitionBase2> {};
 		
-		kgr::Container c;
+		kgr::container c;
 		
 		(void) c.service<DefinitionDerived>();
 		(void) c.service<DefinitionBase1>();
@@ -211,51 +211,51 @@ TEST_CASE("Definition can override with multiple level and virtual inheritance",
 	struct ServiceMiddle2 : virtual ServiceBase {};
 	struct ServiceDerived : ServiceMiddle1, ServiceMiddle2 {};
 	
-	struct DefinitionBase : kgr::SingleService<ServiceBase>, kgr::Virtual {
+	struct DefinitionBase : kgr::single_service<ServiceBase>, kgr::polymorphic {
 		DefinitionBase() {
 			base_instanciated = true;
 		}
 		
 		ServiceBase& forward() {
 			base_forward_called++;
-			return SingleService::forward();
+			return single_service::forward();
 		}
 	};
 	
-	struct DefinitionMiddle1 : kgr::SingleService<ServiceMiddle1>, kgr::Overrides<DefinitionBase> {
+	struct DefinitionMiddle1 : kgr::single_service<ServiceMiddle1>, kgr::overrides<DefinitionBase> {
 		DefinitionMiddle1() {
 			middle1_instanciated = true;
 		}
 		
 		ServiceMiddle1& forward() {
 			middle1_forward_called++;
-			return SingleService::forward();
+			return single_service::forward();
 		}
 	};
 	
-	struct DefinitionMiddle2 : kgr::SingleService<ServiceMiddle2>, kgr::Overrides<DefinitionBase> {
+	struct DefinitionMiddle2 : kgr::single_service<ServiceMiddle2>, kgr::overrides<DefinitionBase> {
 		DefinitionMiddle2() {
 			middle2_instanciated = true;
 		}
 		
 		ServiceMiddle2& forward() {
 			middle2_forward_called++;
-			return SingleService::forward();
+			return single_service::forward();
 		}
 	};
 	
-	struct DefinitionDerived : kgr::SingleService<ServiceDerived>, kgr::Overrides<DefinitionMiddle1, DefinitionMiddle2> {
+	struct DefinitionDerived : kgr::single_service<ServiceDerived>, kgr::overrides<DefinitionMiddle1, DefinitionMiddle2> {
 		DefinitionDerived() {
 			derived_instanciated = true;
 		}
 		
 		ServiceDerived& forward() {
 			derived_forward_called++;
-			return SingleService::forward();
+			return single_service::forward();
 		}
 	};
 	
-	kgr::Container c;
+	kgr::container c;
 	
 	SECTION("When derived is instanciated, overriden services are not") {
 		(void) c.service<DefinitionDerived>();

@@ -6,44 +6,44 @@
 
 namespace kgr {
 
-struct Single {
-	Single() = default;
-	~Single() = default;
-	Single(const Single&) = delete;
-	Single& operator=(const Single&) = delete;
-	Single(Single&&) = default;
-	Single& operator=(Single&&) = default;
+struct single {
+	single() = default;
+	~single() = default;
+	single(const single&) = delete;
+	single& operator=(const single&) = delete;
+	single(single&&) = default;
+	single& operator=(single&&) = default;
 };
 
-struct Virtual {};
-struct Final {};
-struct Supplied : Single {};
-struct Abstract : Virtual, Single {};
+struct polymorphic {};
+struct final {};
+struct supplied : single {};
+struct abstract : polymorphic, single {};
 
 template<typename T>
-struct Default {
-	using DefaultService = T;
+struct defaults_to {
+	using default_service = T;
 };
 
 template<typename... Types>
-struct Overrides {
-	using ParentTypes = detail::meta_list<Types...>;
+struct overrides {
+	using parent_types = detail::meta_list<Types...>;
 };
 
 namespace detail {
 
 template<typename, typename = void>
 struct parent_type_helper {
-	using ParentTypes = meta_list<>;
+	using parent_types = meta_list<>;
 };
 
 template<typename T>
-struct parent_type_helper<T, void_t<typename T::ParentTypes>> {
-	using ParentTypes = typename T::ParentTypes;
+struct parent_type_helper<T, void_t<typename T::parent_types>> {
+	using parent_types = typename T::parent_types;
 };
 
 template<typename T>
-using parent_types = typename parent_type_helper<T>::ParentTypes;
+using parent_types = typename parent_type_helper<T>::parent_types;
 
 template<typename, typename = void>
 struct default_type_helper {
@@ -51,31 +51,31 @@ struct default_type_helper {
 };
 
 template<typename T>
-struct default_type_helper<T, void_t<typename T::DefaultService>> {
+struct default_type_helper<T, void_t<typename T::default_service>> {
 	using has_default = std::true_type;
-	using Service = typename T::DefaultService;
+	using service = typename T::default_service;
 };
 
 template<typename T>
-using default_type = typename default_type_helper<T>::Service;
+using default_type = typename default_type_helper<T>::service;
 
 template<typename T>
 using has_default = typename default_type_helper<T>::has_default;
 
 template<typename T>
-using is_abstract_service = std::is_base_of<Abstract, T>;
+using is_abstract_service = std::is_base_of<abstract, T>;
 
 template<typename T>
-using is_single = std::is_base_of<Single, T>;
+using is_single = std::is_base_of<single, T>;
 
 template<typename T>
-using is_supplied_service = std::is_base_of<Supplied, T>;
+using is_supplied_service = std::is_base_of<supplied, T>;
 
 template<typename T>
-using is_final_service = std::is_base_of<Final, T>;
+using is_final_service = std::is_base_of<final, T>;
 
 template<typename T>
-using is_virtual = std::integral_constant<bool, std::is_base_of<Virtual, T>::value || !meta_list_empty<parent_types<T>>::value>;
+using is_virtual = std::integral_constant<bool, std::is_base_of<polymorphic, T>::value || !meta_list_empty<parent_types<T>>::value>;
 
 template<typename Service, typename Overrider>
 using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;

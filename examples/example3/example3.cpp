@@ -36,7 +36,7 @@ struct Studio {
 	string name;
 };
 
-struct AmpService : kgr::Service<Amp> {
+struct AmpService : kgr::service<Amp> {
 	// Here we override the construct function. We are injecting a int into our Amp type.
 	static auto construct() -> decltype(kgr::inject(std::declval<int>())) {
 		static int watts = 0;
@@ -45,12 +45,12 @@ struct AmpService : kgr::Service<Amp> {
 };
 
 // Other service definitions
-struct GuitarService : kgr::Service<Guitar, kgr::Dependency<AmpService>> {};
-struct StudioService : kgr::SingleService<Studio> {};
+struct GuitarService : kgr::service<Guitar, kgr::dependency<AmpService>> {};
+struct StudioService : kgr::single_service<Studio> {};
 
 int main()
 {
-	kgr::Container container;
+	kgr::container container;
 	
 	container.service<StudioService>().name = "The Music Box";
 	

@@ -39,9 +39,9 @@ struct GummyBear {
 };
 
 // Then, we are declaring two service definition for them
-struct SugarService : kgr::SingleService<Sugar> {};
-struct CaramelService : kgr::Service<Caramel, kgr::Dependency<SugarService>> {};
-struct GummyBearService : kgr::Service<GummyBear> {};
+struct SugarService : kgr::single_service<Sugar> {};
+struct CaramelService : kgr::service<Caramel, kgr::dependency<SugarService>> {};
+struct GummyBearService : kgr::service<GummyBear> {};
 
 // We map our services
 auto service_map(Caramel) -> CaramelService;
@@ -50,14 +50,14 @@ auto service_map(GummyBear) -> GummyBearService;
 // CandyFactory, making candies and recepies
 struct CandyFactory {
 	CandyFactory(
-		kgr::Generator<CaramelService> myCaramelGenerator,
-		kgr::Generator<kgr::LazyService<GummyBearService>> myGummyBearGenerator,
-		kgr::Invoker myInvoker
+		kgr::generator<CaramelService> myCaramelGenerator,
+		kgr::generator<kgr::lazy_service<GummyBearService>> myGummyBearGenerator,
+		kgr::invoker myInvoker
 	) : caramelGenerator{myCaramelGenerator},
 		gummyBearGenerator{myGummyBearGenerator},
 		invoker{myInvoker} {}
 	
-	kgr::Lazy<GummyBearService> makeGummyBear() {
+	kgr::lazy<GummyBearService> makeGummyBear() {
 		// this line is making a new GummyBear with it's dependencies injected
 		return gummyBearGenerator();
 	}
@@ -74,15 +74,15 @@ struct CandyFactory {
 	}
 	
 private:
-	kgr::Generator<CaramelService> caramelGenerator;
-	kgr::Generator<kgr::LazyService<GummyBearService>> gummyBearGenerator;
-	kgr::Invoker invoker;
+	kgr::generator<CaramelService> caramelGenerator;
+	kgr::generator<kgr::lazy_service<GummyBearService>> gummyBearGenerator;
+	kgr::invoker invoker;
 };
 
-struct CandyFactoryService : kgr::SingleService<CandyFactory, kgr::Dependency<
-	kgr::GeneratorService<CaramelService>,
-	kgr::GeneratorService<kgr::LazyService<GummyBearService>>,
-	kgr::InvokerService
+struct CandyFactoryService : kgr::single_service<CandyFactory, kgr::dependency<
+	kgr::generator_service<CaramelService>,
+	kgr::generator_service<kgr::lazy_service<GummyBearService>>,
+	kgr::invoker_service
 >> {};
 
 // a recepie
@@ -91,7 +91,7 @@ void recepie(Caramel, GummyBear) {
 }
 
 int main() {
-	kgr::Container container;
+	kgr::container container;
 	
 	// We are making our factory
 	auto& candyFactory = container.service<CandyFactoryService>();

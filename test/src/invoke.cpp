@@ -20,7 +20,7 @@ static std::uniform_real_distribution<double> any_double_distribution{
 };
 
 TEST_CASE("The container can call functions using invoke", "[invoke]") {
-	kgr::Container c;
+	kgr::container c;
 	
 	bool called = false;
 	
@@ -30,7 +30,7 @@ TEST_CASE("The container can call functions using invoke", "[invoke]") {
 }
 
 TEST_CASE("The container returns value from invoked function", "[invoke]") {
-	kgr::Container c;
+	kgr::container c;
 	
 	bool called = false;
 	const static auto value = any_int_distribution(random);
@@ -93,7 +93,7 @@ namespace testcase_arguments {
 	};
 
 	TEST_CASE("The container forwards arguments to the function", "[invoke]") {
-		kgr::Container c;
+		kgr::container c;
 		
 		bool called = false;
 		
@@ -129,9 +129,9 @@ namespace testcase_arguments {
 
 namespace testcase_inject_mapped {
 	struct Service1 {};
-	struct Definition1 : kgr::Service<Service1> {};
+	struct Definition1 : kgr::service<Service1> {};
 	struct Service2 {};
-	struct Definition2 : kgr::SingleService<Service2> {};
+	struct Definition2 : kgr::single_service<Service2> {};
 	
 	auto service_map(const Service1&) -> Definition1;
 	auto service_map(const Service2&) -> Definition2;
@@ -193,7 +193,7 @@ namespace testcase_inject_mapped {
 	};
 
 	TEST_CASE("The container inject service parameters using service map", "[invoke]") {
-		kgr::Container c;
+		kgr::container c;
 		
 		bool called = false;
 		

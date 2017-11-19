@@ -12,8 +12,8 @@ namespace debug {
  * This overload takes a ill formed service and static_assert the detected error.
  */
 template<typename T, typename U, typename... Args>
-auto service(U&& u, Args&&...) -> detail::enable_if_t<std::is_constructible<detail::ServiceError<T, Args...>, U>::value> {
-	(void) detail::ServiceError<T, Args...> {std::forward<U>(u)};
+auto service(U&& u, Args&&...) -> detail::enable_if_t<std::is_constructible<detail::service_error<T, Args...>, U>::value> {
+	(void) detail::service_error<T, Args...> {std::forward<U>(u)};
 }
 
 /*
@@ -22,7 +22,7 @@ auto service(U&& u, Args&&...) -> detail::enable_if_t<std::is_constructible<deta
  * Output as a static assert that no error is detected.
  */
 template<typename T, typename U, typename... Args>
-auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detail::ServiceError<T, Args...>, U>::value> {
+auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detail::service_error<T, Args...>, U>::value> {
 	static_assert(detail::false_t<T>::value, "No known error detected.");
 }
 
@@ -32,8 +32,8 @@ auto service(U&&, Args&&...) -> detail::enable_if_t<!std::is_constructible<detai
  * Outputs the detected error as a static_assert
  */
 template<typename T>
-auto service() -> detail::enable_if_t<std::is_default_constructible<detail::ServiceError<T>>::value> {
-	(void) detail::ServiceError<T> {};
+auto service() -> detail::enable_if_t<std::is_default_constructible<detail::service_error<T>>::value> {
+	(void) detail::service_error<T> {};
 }
 
 /*
@@ -42,7 +42,7 @@ auto service() -> detail::enable_if_t<std::is_default_constructible<detail::Serv
  * Output as a static assert that no error is detected.
  */
 template<typename T>
-auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::ServiceError<T>>::value> {
+auto service() -> detail::enable_if_t<!std::is_default_constructible<detail::service_error<T>>::value> {
 	static_assert(detail::false_t<T>::value, "No known error detected.");
 }
 

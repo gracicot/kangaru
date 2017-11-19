@@ -13,7 +13,7 @@ namespace kgr {
  * This class is simply a list of definition the current service depends on to be constructed.
  */
 template<typename... Args>
-struct Dependency {};
+using Dependency = detail::meta_list<Args...>;
 
 /**
  * This class is the default single service.

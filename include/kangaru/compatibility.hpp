@@ -47,20 +47,20 @@ using ForkService = fork_service;
 template<typename Service>
 using ForkedGenerator = forked_generator<Service>;
 
-template<typename Service>
-using ForkedGeneratorService = forked_generator_service<Service>;
+template<typename Service, typename Predicate = all>
+using ForkedGeneratorService = forked_generator_service<Service, Predicate>;
 
 template<typename Map>
 using ForkedInvoker = forked_mapped_invoker<Map>;
 
-template<typename Map>
-using ForkedInvokerService = forked_mapped_invoker_service<Map>;
+template<typename Map, typename Predicate = all>
+using ForkedInvokerService = forked_mapped_invoker_service<Map, Predicate>;
 
 template<typename Service>
 using ForkedLazy = forked_lazy<Service>;
 
-template<typename Service>
-using ForkedLazyService = forked_lazy_service<Service>;
+template<typename Service, typename Predicate = all>
+using ForkedLazyService = forked_lazy_service<Service, Predicate>;
 
 template<typename Service>
 using Generator = generator<Service>;
@@ -92,6 +92,9 @@ using LazyService = lazy_service<Service>;
 template<typename T>
 using Map = map_t<T>;
 
+template<typename T, T t>
+using Method = method<T, t>;
+
 template<typename... Ts>
 using NoneOf = none_of<Ts...>;
 
@@ -101,18 +104,18 @@ using Overrides = overrides<Ts...>;
 template<typename T>
 using ServiceType = service_type<T>;
 
-template<typename Type, typename Deps>
+template<typename Type, typename Deps = dependency<>>
 using Service = service<Type, Deps>;
 
-template<typename Type, typename Deps>
+template<typename Type, typename Deps = dependency<>>
 using SharedService = shared_service<Type, Deps>;
 
 using Single = single;
 
-template<typename Type, typename Deps>
+template<typename Type, typename Deps = dependency<>>
 using SingleService = single_service<Type, Deps>;
 
-template<typename Type, typename Deps>
+template<typename Type, typename Deps = dependency<>>
 using UniqueService = unique_service<Type, Deps>;
 
 }

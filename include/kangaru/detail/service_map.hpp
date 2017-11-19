@@ -71,7 +71,10 @@ struct is_mapped : std::false_type {};
  * Trait that check if the result of the map is a valid service that forwards something convertible to S.
  */
 template<typename M, typename S>
-using is_valid_entry = std::is_convertible<service_type<map_result_t<S, M>>, S>;
+using is_valid_entry = std::integral_constant<bool,
+	std::is_convertible<typename std::remove_cv<service_type<map_result_t<S, M>>>::type&&, S&>::value ||
+	std::is_convertible<typename std::remove_cv<service_type<map_result_t<S, M>>>::type&&, S&&>::value
+>;
 
 /*
  * Specialization when map M maps the service S

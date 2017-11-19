@@ -7,16 +7,6 @@
 #include "traits.hpp"
 #include "injected.hpp"
 
-#ifndef KGR_KANGARU_MSVC_EXACT_DECLTYPE
-#if _MSC_VER
-#ifndef __clang__
-// MSVC has a defect that makes decltype with the address of a
-// generic lambda not possible unless sending the address to a function.
-#define KGR_KANGARU_MSVC_EXACT_DECLTYPE
-#endif // !__clang__
-#endif // _MSC_VER
-#endif // KGR_KANGARU_MSVC_EXACT_DECLTYPE
-
 namespace kgr {
 namespace detail {
 
@@ -32,18 +22,16 @@ private:
 	 */
 	template<typename U, typename C>
 	struct get_member_autocall {
-		template<typename V, typename Function, typename Map, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
-		static void autocall(inject_t<container_service> cs, V& service) {
-			U::template autocall_helper<V, Map, Function>(detail::function_seq<typename Function::value_type>{}, std::move(cs), service);
-		}
+		template<typename V, typename Function, typename Map>
+		struct function {
+			static void autocall(inject_t<container_service> cs, V& service) {
+				V::template autocall_helper<V, Map, Function>(detail::function_seq<typename Function::value_type>{}, std::move(cs), service);
+			}
+		};
 		
 		using type = std::integral_constant<
-#ifdef KGR_KANGARU_MSVC_EXACT_DECLTYPE
-			decltype(&get_member_autocall::autocall<T, C, typename U::map>),
-#else
-			decltype(exact(&get_member_autocall::autocall<T, C, typename U::map>)),
-#endif
-			&get_member_autocall::autocall<T, C, typename U::map>
+			decltype(&function<U, C, typename U::map>::autocall),
+			&function<U, C, typename U::map>::autocall
 		>;
 	};
 	
@@ -52,18 +40,16 @@ private:
 	 */
 	template<typename U, typename C, std::size_t... S>
 	struct get_invoke_autocall {
-		template<typename V, typename Function, typename... Ts, int_t<enable_if_t<!is_map<F>::value>, enable_if_t<!is_map<Ts>::value>...> = 0>
-		static void autocall(inject_t<Ts>... others, V& service) {
-			service.call(Function::value, std::forward<inject_t<Ts>>(others).forward()...);
-		}
+		template<typename V, typename Function, typename... Ts>
+		struct function {
+			static void autocall(inject_t<Ts>... others, V& service) {
+				service.call(Function::value, std::forward<inject_t<Ts>>(others).forward()...);
+			}
+		};
 		
 		using type = std::integral_constant<
-#ifdef KGR_KANGARU_MSVC_EXACT_DECLTYPE
-			decltype(exact(&get_invoke_autocall::autocall<T, C, detail::meta_list_element_t<S, typename C::parameters>...>)),
-#else
-			decltype(&get_invoke_autocall::autocall<T, C, detail::meta_list_element_t<S, typename C::parameters>...>),
-#endif
-			&get_invoke_autocall::autocall<T, C, detail::meta_list_element_t<S, typename C::parameters>...>
+			decltype(&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall),
+			&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall
 		>;
 	};
 	

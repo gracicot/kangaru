@@ -129,3 +129,5 @@ feel free to contribute!
  * Tests for compile-time errors
  * Better messages for compile-time errors (ongoing)
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
+
+Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!

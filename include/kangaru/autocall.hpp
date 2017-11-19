@@ -17,15 +17,21 @@ struct autocall_function;
 /*
  * This class implements all autocall functions that a definition must implement for autocall.
  * 
- * All AutoCall specialization extends this one.
+ * All autocall specialization extends this one.
+ * 
+ * It extending autocall is only way to enable autocall in a service.
  */
+template<typename Map, typename... Ts>
 struct autocall_base {
+	using autocall_functions = detail::meta_list<Ts...>;
+	using map = Map;
+	
 private:
 	template<typename, typename> friend struct autocall_function;
 	
-	template<typename T, typename Map, typename F, std::size_t... S, enable_if_t<is_map<Map>::value && !is_map<F>::value, int> = 0>
+	template<typename T, typename M, typename F, std::size_t... S>
 	static void autocall_helper(detail::seq<S...>, inject_t<container_service> cs, T& service) {
-		cs.forward().invoke<Map>([&](detail::function_argument_t<S, typename F::value_type>... args){
+		cs.forward().invoke<M>([&](detail::function_argument_t<S, typename F::value_type>... args) {
 			service.call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
@@ -48,28 +54,16 @@ struct invoke : M {
 };
 
 /*
- * The class that defines AutoCall.
- * 
- * It is intended to be extended by user definition.
- * 
- * It should be the only way to enable autocall in a service.
+ * The class that defines autocall with the default map.
  */
 template<typename... Ts>
-struct autocall : detail::autocall_base {
-	using autocall_functions = detail::meta_list<Ts...>;
-	
-	using map = kgr::map<>;
-};
+struct autocall : detail::autocall_base<map<>, Ts...> {};
 
 /*
- * Specialization of AutoCall when a map is sent as first parameter.
+ * Specialization of autocall when a map is sent as first parameter.
  */
 template<typename... Maps, typename... Ts>
-struct autocall<map<Maps...>, Ts...> : detail::autocall_base {
-	using autocall_functions = detail::meta_list<Ts...>;
-	
-	using map = kgr::map<Maps...>;
-};
+struct autocall<map<Maps...>, Ts...> : detail::autocall_base<map<Maps...>, Ts...> {};
 
 } // namespace kgr
 

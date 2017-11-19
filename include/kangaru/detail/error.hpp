@@ -82,10 +82,10 @@ struct service_error {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		is_override_convertible<Service>::value &&
-		!is_override_virtual<Service>::value, int> = 0>
+		!is_override_polymorphic<Service>::value, int> = 0>
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
-			"An overriden service is not virtual, it therefore cannot be overriden."
+			"An overriden service is not polymorphic, it therefore cannot be overriden."
 			"The overriden service should be abstract or extend kgr::Virtual."
 		);
 	}
@@ -93,10 +93,10 @@ struct service_error {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		is_override_convertible<Service>::value &&
-		!is_override_virtual<Service>::value, int> = 0>
+		!is_override_polymorphic<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
-			"An overriden service is not virtual, it therefore cannot be overriden."
+			"An overriden service is not polymorphic, it therefore cannot be overriden."
 			"The overriden service should be abstract or extend kgr::Virtual."
 		);
 	}
@@ -104,24 +104,24 @@ struct service_error {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		is_override_convertible<Service>::value &&
-		is_override_virtual<Service>::value &&
+		is_override_polymorphic<Service>::value &&
 		!is_override_not_final<Service>::value, int> = 0>
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"An overriden service is marked as final, thus this service annot override it."
-			"The overriden service should be virtual or abtrant and not be final."
+			"The overriden service should be polymorphic or abtrant and not be final."
 		);
 	}
 	
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		is_override_convertible<Service>::value &&
-		is_override_virtual<Service>::value &&
+		is_override_polymorphic<Service>::value &&
 		!is_override_not_final<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
 			"An overriden service is marked as final, thus this service annot override it."
-			"The overriden service should be virtual or abtrant and not be final."
+			"The overriden service should be polymorphic or abtrant and not be final."
 		);
 	}
 	
@@ -152,11 +152,11 @@ struct service_error {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service>::value &&
-		!dependency_trait<is_override_virtual, Service>::value &&
+		!dependency_trait<is_override_polymorphic, Service>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
-			"One or more dependencies overrides a non-virtual service. "
+			"One or more dependencies overrides a non-polymorphic service. "
 			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
 		);
 	}
@@ -164,11 +164,11 @@ struct service_error {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service, Arg, Args...>::value &&
-		!dependency_trait<is_override_virtual, Service, Arg, Args...>::value &&
+		!dependency_trait<is_override_polymorphic, Service, Arg, Args...>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
-			"One or more dependencies overrides a non-virtual service. "
+			"One or more dependencies overrides a non-polymorphic service. "
 			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
 		);
 	}
@@ -176,7 +176,7 @@ struct service_error {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service>::value &&
-		dependency_trait<is_override_virtual, Service>::value &&
+		dependency_trait<is_override_polymorphic, Service>::value &&
 		!dependency_trait<is_override_not_final, Service>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	service_error() {
@@ -189,7 +189,7 @@ struct service_error {
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
 		dependency_trait<is_service, Service, Arg, Args...>::value &&
-		dependency_trait<is_override_virtual, Service, Arg, Args...>::value &&
+		dependency_trait<is_override_polymorphic, Service, Arg, Args...>::value &&
 		!dependency_trait<is_override_not_final, Service, Arg, Args...>::value &&
 		is_service_constructible<Service>::value, int> = 0>
 	service_error(Arg&&) {
@@ -504,7 +504,7 @@ struct service_error {
 	
 	template<typename Service = T, enable_if_t<!is_service<Service>::value && has_forward<Service>::value, int> = 0>
 	service_error() {
-		static_assert(false_t<Service>::value, "The service type must not not contain any virtual function or must be abstract.");
+		static_assert(false_t<Service>::value, "The service type must not contain any virtual functions or virtual inheritance.");
 	}
 };
 

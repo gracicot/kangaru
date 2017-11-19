@@ -110,7 +110,7 @@ using service_check = std::integral_constant<bool,
 	is_construct_function_callable<T, Args...>::value &&
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
-	is_override_virtual<T>::value &&
+	is_override_polymorphic<T>::value &&
 	is_override_services<T>::value &&
 	is_override_not_final<T>::value &&
 	is_abstract_not_final<T>::value
@@ -126,6 +126,7 @@ using dependency_check = std::integral_constant<bool,
 	dependency_trait<is_construct_function_callable, T, Args...>::value &&
 	dependency_trait<is_default_service_valid, T, Args...>::value &&
 	dependency_trait<is_override_convertible, T, Args...>::value &&
+	dependency_trait<is_override_polymorphic, T, Args...>::value &&
 	dependency_trait<is_override_services, T, Args...>::value &&
 	dependency_trait<is_override_not_final, T, Args...>::value &&
 	dependency_trait<is_abstract_not_final, T, Args...>::value

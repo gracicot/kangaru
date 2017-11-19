@@ -79,16 +79,16 @@ template<typename T>
 using is_override_services = typename is_override_services_helper<T>::type;
 
 /*
- * Trait that check if all overriden services are virtual
+ * Trait that check if all overriden services are polymorphic
  */
 template<typename T>
-struct is_override_virtual_helper {
+struct is_override_polymorphic_helper {
 private:
 	// This is a workaround for msvc. Expansion in very complex expression
 	// leaves the compiler without clues about what's going on.
 	template<std::size_t I, typename U>
 	struct expander {
-		using type = is_virtual<meta_list_element_t<I, parent_types<U>>>;
+		using type = is_polymorphic<meta_list_element_t<I, parent_types<U>>>;
 	};
 	
 	template<typename...>
@@ -105,7 +105,7 @@ public:
  * Alias for is_override_virtual_helper
  */
 template<typename T>
-using is_override_virtual = typename is_override_virtual_helper<T>::type;
+using is_override_polymorphic = typename is_override_polymorphic_helper<T>::type;
 
 /*
  * Trait that check if no overriden services are final

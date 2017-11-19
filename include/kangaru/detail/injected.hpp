@@ -93,7 +93,7 @@ using injected_service_t = typename injected_service<T>::type;
 template<typename T>
 using injected_wrapper = conditional_t<is_service<T>::value && !is_single<T>::value,
 	injected<T>,
-	conditional_t<is_virtual<T>::value,
+	conditional_t<is_polymorphic<T>::value,
 		virtual_injected<T>,
 		injected<T&>
 	>

@@ -63,12 +63,12 @@ private:
 		};
 	}
 	
-	template<typename T, enable_if<detail::is_virtual<T>> = 0>
+	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
 		return detail::injected_wrapper<T>{instance.cast<T>()};
 	}
 	
-	template<typename T, disable_if<detail::is_virtual<T>> = 0>
+	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
 	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
 		return detail::injected_wrapper<T>{*static_cast<T*>(instance.service)};
 	}
@@ -303,7 +303,7 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		disable_if<detail::is_virtual<T>> = 0,
+		disable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	T& save_new_instance(Args&&... args) {
@@ -320,7 +320,7 @@ private:
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_virtual<T>> = 0,
+		enable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	detail::typed_service_storage<T> save_new_instance(Args&&... args) {
@@ -353,7 +353,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	detail::conditional_t<detail::is_virtual<T>::value, detail::typed_service_storage<T>, T&> save_new_instance(Args&&...) {
+	detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&> save_new_instance(Args&&...) {
 		throw supplied_not_found{};
 	}
 	
@@ -412,7 +412,7 @@ private:
 	 */
 	template<typename Override, typename T>
 	void save_override(T& service) {
-		static_assert(detail::is_virtual<Override>::value,
+		static_assert(detail::is_polymorphic<Override>::value,
 			"The overriden service must be virtual"
 		);
 		
@@ -423,21 +423,21 @@ private:
 		emplace_or_assign<Override>(&service, get_override_forward<Override, T>());
 	}
 	
-	template<typename Override, typename T, enable_if<detail::is_virtual<T>> = 0>
+	template<typename Override, typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	detail::forward_ptr<Override> get_override_forward() {
 		return [](void* s) -> service_type<Override> {
 			return static_cast<service_type<Override>>(static_cast<T*>(s)->forward());
 		};
 	}
 	
-	template<typename T, enable_if<detail::is_virtual<T>> = 0>
+	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	detail::forward_ptr<T> get_forward() {
 		return [](void* service) -> service_type<T> {
 			return static_cast<T*>(service)->forward();
 		};
 	}
 	
-	template<typename T, disable_if<detail::is_virtual<T>> = 0>
+	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
 	detail::forward_ptr<T> get_forward() {
 		return nullptr;
 	}

@@ -17,6 +17,8 @@ The name kangaru comes from the container's feature to inject itself into a serv
 
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
+Searching for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
+
 ```c++
 #include <kangaru/kangaru.hpp>
 #include <iostream>

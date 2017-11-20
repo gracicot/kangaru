@@ -32,7 +32,12 @@ struct Scene {
 
 // This is the configuration of our classes.
 // Structure and dependency graph is defined here.
+
+// Camera is a single service so the service has a shared instance.
 struct CameraService : kgr::single_service<Camera> {};
+
+// Scene is not single, so the container return scenes by value.
+// Also, we depends on a camera to be constructed.
 struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
 
 int main()

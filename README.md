@@ -156,12 +156,8 @@ feel free to contribute!
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
 
-Any sort of feedback is welcome.
-
 Contributing
 ------------
+To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome!
 
-To contribute, simply open a pull request or an issue and we'll discuss together about have to make
-the greatest dependency injection container for C++!
-
-Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)! Any help is appreciated.
+Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)!

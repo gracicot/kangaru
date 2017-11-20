@@ -23,14 +23,15 @@ Searching for the latest stable version? Check out our [release page](https://gi
 #include <kangaru/kangaru.hpp>
 #include <iostream>
 
+// Normal classes with dependency between them
 struct Camera {};
 
 struct Scene {
-    Scene(Camera& c) : camera{c} {}
-    
     Camera& camera;
 };
 
+// This is the configuration of our classes.
+// Structure and dependency graph is defined here.
 struct CameraService : kgr::single_service<Camera> {};
 struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
 
@@ -38,8 +39,9 @@ int main()
 {
     kgr::container container;
     
-    auto scene = container.service<SceneService>();
-    auto& camera = container.service<CameraService>();
+    // The service function return instances of the normal classes.
+    Scene scene = container.service<SceneService>();
+    Camera& camera = container.service<CameraService>();
     
     std::cout
         << std::boolalpha

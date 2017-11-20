@@ -17,7 +17,7 @@ TEST_CASE("Container all each function in autocall", "[autocall]") {
 		
 		struct Definition : kgr::service<Service>, kgr::autocall<METHOD(&Service::function)> {};
 		
-		REQUIRE(kgr::container {}.service<Definition>().called);
+		REQUIRE(kgr::container{}.service<Definition>().called);
 	}
 	
 	SECTION("Multiple method called in order") {
@@ -50,7 +50,7 @@ TEST_CASE("Container all each function in autocall", "[autocall]") {
 			METHOD(&Service::function1), METHOD(&Service::function2), METHOD(&Service::function3)
 		> {};
 		
-		auto service = kgr::container {}.service<Definition>();
+		auto service = kgr::container{}.service<Definition>();
 		
 		REQUIRE(service.called1);
 		REQUIRE(service.called2);
@@ -80,7 +80,7 @@ TEST_CASE("Container inject parameter in autocall function using an invoke call"
 		kgr::invoke<METHOD(&Service::function), InjectedDefinition>
 	> {};
 	
-	REQUIRE(kgr::container {}.service<Definition>().called);
+	REQUIRE(kgr::container{}.service<Definition>().called);
 	REQUIRE(injected_constructed);
 }
 
@@ -110,7 +110,7 @@ namespace testcase_autocall_map {
 	auto service_map(InjectedService const&) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map", "[autocall]") {
-		REQUIRE(kgr::container {}.service<Definition>().called);
+		REQUIRE(kgr::container{}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }
@@ -143,7 +143,7 @@ namespace testcase_autocall_custom_map {
 	auto service_map(InjectedService const&, kgr::map_t<Map>) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map", "[autocall]") {
-		REQUIRE(kgr::container {}.service<Definition>().called);
+		REQUIRE(kgr::container{}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }
@@ -177,7 +177,7 @@ namespace testcase_autocall_custom_map_no_map {
 	auto service_map(InjectedService const&) -> InjectedDefinition;
 		
 	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map fallback to normal map", "[autocall]") {
-		REQUIRE(kgr::container {}.service<Definition>().called);
+		REQUIRE(kgr::container{}.service<Definition>().called);
 		REQUIRE(injected_constructed);
 	}
 }

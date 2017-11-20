@@ -29,7 +29,7 @@ TEST_CASE("The definition can be construct using emplace", "[definition]") {
 	
 	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
 	
-	(void) kgr::container {}.service<Definition>();
+	(void) kgr::container{}.service<Definition>();
 }
 
 TEST_CASE("The definition cannot be construct with emplace differing construct", "[definition]") {
@@ -54,7 +54,7 @@ TEST_CASE("The definition cannot be only be construct with emplace if parameters
 	REQUIRE_FALSE(kgr::detail::is_service_valid<Definition>::value);
 	REQUIRE((kgr::detail::is_service_valid<Definition, double>::value));
 	
-	(void) kgr::container {}.service<Definition>(0.0);
+	(void) kgr::container{}.service<Definition>(0.0);
 }
 
 namespace template_construct {
@@ -197,7 +197,7 @@ struct Definition {
 };
 
 TEST_CASE("The container call the constructor with the in_place_t constructor", "[definition]") {
-	(void) kgr::container {}.service<Definition>();
+	(void) kgr::container{}.service<Definition>();
 	REQUIRE(constructor_called);
 }
 }
@@ -216,7 +216,7 @@ struct Definition {
 };
 
 TEST_CASE("The container call the default if no constructor with the in_place_t constructor is defined", "[definition]") {
-	(void) kgr::container {}.service<Definition>();
+	(void) kgr::container{}.service<Definition>();
 	REQUIRE(emplace_called);
 	REQUIRE(constructor_called);
 }
@@ -236,7 +236,7 @@ struct Definition {
 TEST_CASE("The forward injected parameters to the Definition constructor", "[definition]") {
 	REQUIRE((kgr::detail::is_service_valid<Definition, double&>::value));
 	double a = 0;
-	(void) kgr::container {}.service<Definition>(a);
+	(void) kgr::container{}.service<Definition>(a);
 	REQUIRE(constructor_called);
 }
 }
@@ -260,7 +260,7 @@ struct Definition {
 
 TEST_CASE("The container prefer the in_place_t constructor over emplace function", "[definition]") {
 	double d = 0;
-	(void) kgr::container {}.service<Definition>(0, d);
+	(void) kgr::container{}.service<Definition>(0, d);
 	
 	REQUIRE(constructor_called);
 	REQUIRE_FALSE(emplace_called);

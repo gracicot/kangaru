@@ -28,7 +28,7 @@ TEST_CASE("Container returns a service from a definition", "[service]") {
 		}
 	};
 	
-	REQUIRE(Result::test(kgr::container {}.service<Definition>()));
+	REQUIRE(Result::test(kgr::container{}.service<Definition>()));
 }
 	
 TEST_CASE("Container returns a service by moving it", "[service]") {

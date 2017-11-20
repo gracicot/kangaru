@@ -1,6 +1,12 @@
 kangaru
 =======
 
+[![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru)
+[![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=dev-4.0.x)](https://travis-ci.org/gracicot/kangaru)
+[![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/)
+
+-----
+
 kangaru is a dependency injection container library for C++11 and C++14.
 It manages recursive dependency injection, injection into function parameter, and more.
 The name Kangaru came from the feature of injecting itself as a dependency into a service.

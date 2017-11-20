@@ -5,11 +5,15 @@ kangaru
 [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=dev-4.0.x)](https://travis-ci.org/gracicot/kangaru)
 [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/)
 
------
+Kangaru is an inversion of control container for C++11 and later. We support features like operation between containers,
+injection via function parameter, automatic call of member function on instance creation and much more!
 
-kangaru is a dependency injection container library for C++11 and C++14.
-It manages recursive dependency injection, injection into function parameter, and more.
-The name Kangaru came from the feature of injecting itself as a dependency into a service.
+Our goal is to create a container capable of automatic, recusive dependency injection that do most diagnostics at compile time,
+while keeping the simplest interface possible, and all that without being intrusive into user/library code.
+
+Kangaru is a header only library because of it's extensive use of templates.
+The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
+
 
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
@@ -151,3 +155,13 @@ feel free to contribute!
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
+
+Any sort of feedback is welcome.
+
+Contributing
+------------
+
+To contribute, simply open a pull request or an issue and we'll discuss together about have to make
+the greatest dependency injection container for C++!
+
+Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)! Any help is appreciated.

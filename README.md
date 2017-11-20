@@ -25,22 +25,22 @@ The name Kangaru came from the feature of injecting itself as a dependency into 
 struct Credential {};
 
 struct Connection {
-	// The connect needs some credential
-	void connect(Credential const&) {
-		std::cout << "connection established" << std::endl;
-	}
+    // The connect needs some credential
+    void connect(Credential const&) {
+        std::cout << "connection established" << std::endl;
+    }
 };
 
 struct Database {
-	// A database needs a connection
-	Database(Connection const&) {
-		std::cout << "database created" << std::endl;
-	}
+    // A database needs a connection
+    Database(Connection const&) {
+        std::cout << "database created" << std::endl;
+    }
 
-	// For the sake of having a method to call
-	void commit() {
-		std::cout << "database commited" << std::endl;
-	}
+    // For the sake of having a method to call
+    void commit() {
+        std::cout << "database commited" << std::endl;
+    }
 };
 
 
@@ -54,7 +54,7 @@ struct CredentialService : kgr::service<Credential> {};
 // Connection service is single,
 // and need the connect function to be called on creation
 struct ConnectionService : kgr::single_service<Connection>,
-	kgr::autocall<METHOD(&Connection::connect)> {};
+    kgr::autocall<METHOD(&Connection::connect)> {};
 
 
 // Database is also a single, and has a connection as dependency
@@ -66,28 +66,28 @@ auto service_map(Database const&) -> DatabaseService;
 auto service_map(Credential const&) -> CredentialService;
 
 int main() {
-	kgr::container container;
+    kgr::container container;
 
-	// Get the database.
-	// The database has a connection injected,
-	// and the connection had the connect function called before injection.
-	auto&& database = container.service<DatabaseService>();
+    // Get the database.
+    // The database has a connection injected,
+    // and the connection had the connect function called before injection.
+    auto&& database = container.service<DatabaseService>();
 
-	// Commit the database
-	database.commit();
+    // Commit the database
+    database.commit();
 
-	// Let `function` be a callable object that takes mapped services.
-	auto function = [](Credential c, Database& db) {
-		// Do stuff with credential and database
-	};
+    // Let `function` be a callable object that takes mapped services.
+    auto function = [](Credential c, Database& db) {
+        // Do stuff with credential and database
+    };
 
-	// The function is called with it's parameter injected automatically.
-	container.invoke(function);
+    // The function is called with it's parameter injected automatically.
+    container.invoke(function);
 
-	// The programs outputs:
-	//   connection established
-	//   database created
-	//   database commited
+    // The programs outputs:
+    //   connection established
+    //   database created
+    //   database commited
 }
 
 ```

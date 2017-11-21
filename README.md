@@ -13,11 +13,13 @@ Our goal is to create a container capable of automatic, recusive dependency inje
 Kangaru is a header only library because of it's extensive use of templates.
 The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
 
+----
 
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
 Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
 
+Here's a quick demo to show the very basic usage of this library:
 ```c++
 #include <kangaru/kangaru.hpp>
 #include <iostream>

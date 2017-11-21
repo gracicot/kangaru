@@ -8,8 +8,7 @@ kangaru
 Kangaru is an inversion of control container for C++11 and later. We support features like operation between containers,
 injection via function parameter, automatic call of member function on instance creation and much more!
 
-Our goal is to create a container capable of automatic, recusive dependency injection that do most diagnostics at compile time,
-while keeping the simplest interface possible, and all that without being intrusive into user/library code.
+Our goal is to create a container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
 
 Kangaru is a header only library because of it's extensive use of templates.
 The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
@@ -17,7 +16,7 @@ The name kangaru comes from the container's feature to inject itself into a serv
 
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
-Searching for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
+Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
 
 ```c++
 #include <kangaru/kangaru.hpp>

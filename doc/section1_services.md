@@ -55,9 +55,9 @@ The above example weren't so useful by itself. Let's add another service. Now, w
 
 ```c++
 struct Scene {
-	Camera camera;
-	int width = 800;
-	int height = 600;
+    Camera camera;
+    int width = 800;
+    int height = 600;
 };
 ```
 
@@ -99,13 +99,13 @@ You can define your constructor like we're used to:
 
 ```c++
 struct Scene {
-	Scene(Camera c, int w = 800, int h = 600) :
-		camera{c}, width{w}, height{h} {}
-	
+    Scene(Camera c, int w = 800, int h = 600) :
+        camera{c}, width{w}, height{h} {}
+    
 private:
-	Camera camera;
-	int width;
-	int height;
+    Camera camera;
+    int width;
+    int height;
 };
 ```
 
@@ -143,7 +143,7 @@ Single can be injected as dependencies too. Consider this screen class and defin
 
 ```c++
 struct Screen {
-	Scene& scene;
+    Scene& scene;
 };
 
 struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService>> {};

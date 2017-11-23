@@ -114,13 +114,12 @@ Since our class has the exact same semantics as before, the container will conti
 
 ## Single Services
 
-Single services are kind the point why we need a container to resolve dependencies, and not just free functions.
-
-There are few key difference with single services as opposed to regular services.
-They are created one time at the first call to `service()`, and then contained inside the container.
+Single services are created and saved in the container for reuse.
+They are created one time at the first call to `service()`, and then saved inside the container.
 The container will then reuse the instance for all the next injections.
 
 Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwading is disabled.
+We'll se how to counter this limitation in the section about the container.
 
 Now, let's say we want only one scene in our application. We want the same scene to be injected and returned by the container.
 We will do that by inheriting from the `kgr::single_service` definition.
@@ -136,8 +135,9 @@ That's it! A reference is now returned by the container:
 Scene& scene1 = c.service<SceneService>();
 Scene& scene2 = c.service<SceneService>();
 
-assert(&scene1 == &scene2); // passes! Both scenes are the same object.
+assert(&scene1 == &scene2); // Passes! Both scenes are the same object.
 ```
+
 ## Single as Dependency
 
 Single can be injected as dependencies too. Consider this screen class and definition:

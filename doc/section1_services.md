@@ -95,7 +95,7 @@ Also, the day you need additional dependencies, you won't need to refactor every
 ## Encapsulation
 
 In the previous example, we did not bother making our members private.
-Making them so is not a limitation. We can define our constructor like we're used to:
+Making them so is not a limitation. We can define our class like we're used to:
 
 ```c++
 struct Scene {

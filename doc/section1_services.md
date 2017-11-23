@@ -92,7 +92,7 @@ Now we can clearly see the point of using the container to create classes that h
 The usage site of the scene class don't need an instance of a camera in hand to create a scene.
 Also, the day you need additional dependencies, you won't need to refactor every place we construct a scene!
 
-## Encapsulation
+### Encapsulation
 
 In the previous example, we did not bother making our members private.
 Making them so is not a limitation. We can define our class like we're used to:
@@ -138,19 +138,21 @@ Scene& scene2 = container.service<SceneService>();
 assert(&scene1 == &scene2); // Passes! Both scenes are the same object.
 ```
 
-## Single as Dependency
+## Multiple Dependency
 
-Single can be injected as dependencies too. Consider this screen class and definition:
+A service can have multiple dependencies. `kgr::dependency` can receive as many dependent definition as needed. Consider we want a screen class. A screen both need a scene and it's own camera. Here's how the class and it's definition would look like:
 
 ```c++
 struct Screen {
     Scene& scene;
+    Camera camera;
 };
 
-struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService>> {};
+struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService, CameraService>> {};
 ```
+Here, we can see that the dependency matches the members. In fact, the orders of dependencies must match the order of parameter the `Screen` class constructor have. This is because the container will do the equivalent of calling `Screen{scene, camera}`. As long as there is a matching constructor, to the dependencies, the definition is well formed.
 
-Since a scene is injected by reference, every instance of `Screen` will hold to same scene:
+Also, note that the `scene` member is a reference. This is because `Scene` is a single service, and the injected type of a `kgr::single_service` is a reference. Indeed, every `Screen` will be constructed with the same instance of `Scene`:
 
 ```c++
 Screen screen1 = container.service<ScreenService>();
@@ -164,14 +166,16 @@ The container will first need to create the dependencies of the scene. And recus
  - A camera is first created,
  - Then a scene is created with that camera,
  - We save the scene into the container,
- - Then our screen is created with that scene.
+ - Another camera is created,
+ - Then our screen is created with the scene and the new camera.
 
-For the second call, the service finds the saved camera, so it simply create a screen with that camera.
+For the second call, the service finds the saved camera, so it simply create a screen with that scene and a new camera.
+All this code that do these action (except saving to the container) would have been written without kangaru. Now, we simply configure our classes with service definitions and the container handle the thing automatically.
 
 ---
 
 This is the most basic usage of kangaru. Yet we achieved recursive dependency resolution and single instances.
 With only that, many use cases are covered and may already be useful. But don't stop there! The fun has just begun!
-In the next chapter, we'll see how to manage many containers and perform operation between them.
+In the next chapter, we'll see how to manage multiple containers, and how to perform operation between them.
 
 [Next chapter: Basic usage of the container](section2_container.md)

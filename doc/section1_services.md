@@ -36,16 +36,18 @@ kgr::container container;
 Camera camera = container.service<CameraService>();
 ```
 
-All arguments sent to the `service` function are forwarded to the service's constructor:
+Yay! The container created an instance of `Camera` throught our service definition.
+
+Also, arguments sent to the `service` function are forwarded to the service's constructor:
 
 ```c++
-Camera furterCamera = container.service<CameraService>(14);
+Camera furtherCamera = container.service<CameraService>(14);
 
-// furterCamera.position == 14
+// furtherCamera.position == 14
 ```
 
-You might wonder why we are doing this. Why using an indirect way to construct our simple class.
-As we are using other functionality of kangaru, we'll quickly see why.
+You might wonder why we are doing this. Why using an indirect way to construct our simple classes?
+As we are using other functionalities of kangaru, we'll quickly see why.
 
 ## Dependencies
 
@@ -67,6 +69,8 @@ Let's make our definition:
 ```c++
 struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
 ```
+
+The second argument to the `kgr::service` class is the dependencies of the service.
 
 Now, since we expressed our dependency there, we don't need to explicitly create a camera and send it;
 instead, the container will take of the depdency without the construction site to be aware:

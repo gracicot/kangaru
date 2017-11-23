@@ -81,8 +81,15 @@ A "include kangaru" header file should look like this:
 // #include "sharedservice.h"
 // #include "uniqueservice.h"
 
+// You can optionally include `compatibility.hpp`
+// #include <kangaru/compatibility.hpp>
+
 // declare some needed macros
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+
+// Or if you have C++17 available:
+// template<auto F>
+// using invoke = kgr::invoke<decltype(F), F>;
 ```
 
 This will add a common point between your project and kangaru.

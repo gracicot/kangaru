@@ -1,98 +1,169 @@
 Services
 ========
 
-Every class managed by the container is considered a service, even if it's a single, non-single, abstract or concrete class.
+A service is simply a fancy name for one of your class that can be used by the container.
+Service are thebuilding block of injection with this library. Every injectable type is a service.
 
-#### Single services
-Single services are classes that are meant to have only one instance within the container. For a single service, it's possible to provide your own instance to the container.
+The container won't use your classes directly. It instead uses a proxy called the definition of a service.
+A definition contains the config and metadata for the container to use your class the desired way.
+For example, of you want your class to have a shared instance between injections, you simply opt-in for it in the definition.
 
-#### Non-Single services
-Non-Single services are just services that are constructed every time they are injected or requested.
-In those cases, the container will behave as a fancy factory.
+tl;dr:
+The definition of a service is the place where we define how the service is contained in the container, how it's constructed and how it's injected into other services.
 
-## Declaring a service
-In order to transform a class into a service, you wont need to modify your class. All you have to do, is to declare a new _service definition_.
-The service definition will tell the container how your service should behave. It should be a non-polymorphic class, except for abstract services.
-This is an example of the simplest service definition possible.
-Let's say you have this class and you want it to become a service:
+## Your first service
+
+In order to transform a class into a service, you wont need to modify your class. All you have to do, is to make a new definition, or new config for your class.
+Let's start with a simple case. Let's say we have a camera class we want to turn into a service:
 
 ```c++
-struct FileManager {
-    // lots of code...
+struct Camera {
+    int position = 0;
 };
 ```
 
-All you have to do is declare the following service definition:
+All we have to do is declare the following service definition:
 
 ```c++
-struct FileManagerService : kgr::Service<FileManager> {};
+struct CameraService : kgr::service<Camera> {};
 ```
 
-You made it! Now the container knows that `FileManager` is a service!
-
-### Dependencies
-
-In order to make a service dependent of another service, you have to add the `kgr::Dependency` parameter to the `kgr::Service` class.
-`kgr::Dependency` is a list of every dependency as a template argument. It is used like this:
+We made it! Now we can use the container to create a camera. The container has a function called `service`.
+That function will return an instance of the class specified in `CameraService`, thus `Camera` in our case:
 
 ```c++
-struct FileManagerService : kgr::Service<FileManager, kgr::Dependency<FileSystemService>> {};
+kgr::container container;
+Camera camera = container.service<CameraService>();
 ```
 
-If our service `FileManagerService` needs a `Notification` and a `ClownMaster` service, you just have to add it to the parameter list, like so:
+All arguments sent to the `service` function are forwarded to the service's constructor:
 
 ```c++
-struct FileManagerService : kgr::Service<FileManager, kgr::Dependency<
-    FileSystemService,
-    NotificationService,
-    ClownMasterService
->> {};
+Camera furterCamera = container.service<CameraService>(14);
+
+// furterCamera.position == 14
 ```
 
-Now that your service `FileManager` is dependent of these other services, you have to receive them in your service's constructor:
+You might wonder why we are doing this. Why using an indirect way to construct our simple class.
+As we are using other functionality of kangaru, we'll quickly see why.
+
+## Dependencies
+
+The above example weren't so useful by itself. Let's add another service. Now, we want to make a `Scene` class that uses a camera.
 
 ```c++
-struct FileManager {
-    // FileManager needs FileSystem, Notification and ClownMaster.
-    
-    FileManager(FileSystem _fs, Notification _n, ClownMaster _cm) : fs{_fs}, n{_n}, cm{_cm} {}
-    
-    FileSystem fs;
-    Notification n;
-    ClownMaster cm;
+struct Scene {
+	Camera camera;
+	int width = 800;
+	int height = 600;
 };
 ```
 
-Take note that the order of parameter in the constructor must match the order in the dependencies declaration.
+Now instead of sending an instance of a camera into our scene, let's express this as a dependency between our services.
+This will make the container aware of the link between our classes so the container will create one instance of camera, and inject it into the scene.
 
-### Single Services
-
-Single services are really useful. They are services that the same instance is reused for every injections.
-You can make a single service simply by making the corresponding service definition extend `kgr::SingleService`. Here's an example:
+Let's make our definition:
 
 ```c++
-struct FileManagerService : kgr::SingleService<FileManager> {};
+struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
 ```
 
-Now every instances returned by the container are the same. You can test it like that:
+Now, since we expressed our dependency there, we don't need to explicitly create a camera and send it;
+instead, the container will take of the depdency without the construction site to be aware:
 
 ```c++
-auto& fm1 = container.service<FileManagerService>();
-auto& fm2 = container.service<FileManagerService>();
-
-cout << (&fm1 == &fm2 ? "true":"false") << endl; // the output will be "true"
+// A camera is created and sent into the scene.
+Scene scene = container.service<SceneService>();
 ```
 
-### Available methods
+As before, we can forward arguments to the constructor of `Scene` note that we still don't need to send the camera there.
 
-There is one protected method that is provided by generic services from the kangaru library: `instance()`, which returns a reference to the contained service.
+```c++
+// A camera is created and sent into the scene.
+// The scene has a size of 1920x1080
+Scene scene = container.service<SceneService>(1920, 1080);
+```
 
-### Other Service Types
+Now we can clearly see the point of using the container to create classes that have dependencies.
+The usage site of the scene class don't need an instance of a camera in hand to create a scene.
+Also, the day you need additional dependencies, you won't need to refactor every place we construct a scene!
 
-There are three other service types:
- * `kgr::SharedService`: a single service injected as a `std::shared_ptr`.
- * `kgr::UniqueService`: a service injected as a `std::unique_ptr`.
+## Encapsulation
 
-`kgr::Service` and `kgr::SingleService` require that your classes are destructible.
- 
+In the previous example, we did not bother making our members private. This is not a limitation by kangaru.
+You can define your constructor like we're used to:
+
+```c++
+struct Scene {
+	Scene(Camera c, int w = 800, int h = 600) :
+		camera{c}, width{w}, height{h} {}
+	
+private:
+	Camera camera;
+	int width;
+	int height;
+};
+```
+
+Note that this change in our class have no impact on the definition. The container will continue to call `Scene{camera}` just like before.
+
+## Single Services
+
+Single services are kind the point why we need a container to resolve dependencies, and not just free functions.
+
+There are few key difference with single services as opposed to regular services.
+They are created one time at the first call to `service()`, and then contained inside the container.
+The container will then reuse the instance for all the next injections.
+
+Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwading is disabled.
+
+Now, let's say we want only one scene in our application. We want the same scene to be injected and returned by the container.
+We will do that by inheriting from the `kgr::single_service` definition.
+That definition tells the container to reuse the instance and inject as a reference.
+
+```c++
+struct SceneService : kgr::single_service<Scene, kgr::dependency<CameraService>> {};
+```
+
+That's it! A reference is now returned by the container:
+
+```c++
+Scene& scene1 = c.service<SceneService>();
+Scene& scene2 = c.service<SceneService>();
+
+assert(&scene1 == &scene2); // passes! Both scenes are the same object.
+```
+## Single as Dependency
+
+Single can be injected as dependencies too. Consider this screen class and definition:
+
+```c++
+struct Screen {
+	Scene& scene;
+};
+
+struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService>> {};
+```
+
+Since a scene is injected by reference, every instance of `Screen` will hold to same scene:
+
+```c++
+Screen screen1 = container.service<ScreenService>();
+Screen screen2 = container.service<ScreenService>();
+
+assert(&screen1.scene == &screen2.scene); // Passes! Same scene injected into both screens!
+```
+
+In that code, maky things happened. At the first call of `service()`, a screen must be created.
+The container will first need to create a scene, since no scene has been created yet.
+But for a scene to be created, the container will have to create a camera. So in the end, a camera is first created, then a scene is created with that camera and we save the scene into the container, and then our screen is created with that scene.
+
+For the second call, the service finds the saved camera, so it simply create a screen with that camera.
+
+---
+
+This is the most basic usage of kangaru. We achieved recursive dependency resolution and single instances.
+With only that, many use cases are covered and may already be useful. But don't stop there! The fun has just begun!
+In the next chapter, we'll see how to manage many containers and perform operation between them.
+
 [Next chapter: Basic usage of the container](section2_container.md)

@@ -159,15 +159,18 @@ Screen screen2 = container.service<ScreenService>();
 assert(&screen1.scene == &screen2.scene); // Passes! Same scene injected into both screens!
 ```
 
-In that code, maky things happened. At the first call of `service()`, a screen must be created.
-The container will first need to create a scene, since no scene has been created yet.
-But for a scene to be created, the container will have to create a camera. So in the end, a camera is first created, then a scene is created with that camera and we save the scene into the container, and then our screen is created with that scene.
+In that code, many things happened. At the first call of `service()`, a screen must be created.
+The container will first need to create the dependencies of the scene. And recusively, the dependencies it's dependencies. So in the end, these actions are permormed:
+ - A camera is first created,
+ - Then a scene is created with that camera,
+ - We save the scene into the container,
+ - Then our screen is created with that scene.
 
 For the second call, the service finds the saved camera, so it simply create a screen with that camera.
 
 ---
 
-This is the most basic usage of kangaru. We achieved recursive dependency resolution and single instances.
+This is the most basic usage of kangaru. Yet we achieved recursive dependency resolution and single instances.
 With only that, many use cases are covered and may already be useful. But don't stop there! The fun has just begun!
 In the next chapter, we'll see how to manage many containers and perform operation between them.
 

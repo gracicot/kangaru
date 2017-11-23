@@ -132,8 +132,8 @@ struct SceneService : kgr::single_service<Scene, kgr::dependency<CameraService>>
 That's it! A reference is now returned by the container:
 
 ```c++
-Scene& scene1 = c.service<SceneService>();
-Scene& scene2 = c.service<SceneService>();
+Scene& scene1 = container.service<SceneService>();
+Scene& scene2 = container.service<SceneService>();
 
 assert(&scene1 == &scene2); // Passes! Both scenes are the same object.
 ```

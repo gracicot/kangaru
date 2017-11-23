@@ -2,7 +2,7 @@ Services
 ========
 
 A service is simply a fancy name for one of your class that can be used by the container.
-Service are thebuilding block of injection with this library. Every injectable type is a service.
+Service are the building block of injection with this library. Every injectable type is a service.
 
 The container won't use your classes directly. It instead uses a proxy called the definition of a service.
 A definition contains the config and metadata for the container to use your class the desired way.

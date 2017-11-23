@@ -36,7 +36,7 @@ kgr::container container;
 Camera camera = container.service<CameraService>();
 ```
 
-Yay! The container created an instance of `Camera` throught our service definition.
+Yay! The container created an instance of `Camera` through our service definition.
 
 Also, arguments sent to the `service` function are forwarded to the service's constructor:
 

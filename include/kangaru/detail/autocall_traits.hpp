@@ -7,12 +7,6 @@
 #include "invoke.hpp"
 #include "service_check.hpp"
 
-#ifdef _MSC_VER
-#ifndef __clang__
-#define KGR_KANGARU_MSVC_NO_AUTOCALL_MAP_CHECK
-#endif // !__clang__
-#endif // _MSC_VER
-
 namespace kgr {
 namespace detail {
 
@@ -56,7 +50,6 @@ using autocall_trait = typename autocall_trait_helper<Trait, T>::type;
  */
 template<typename T, typename F>
 struct is_autocall_entry_map_complete_helper {
-#ifndef KGR_KANGARU_MSVC_NO_AUTOCALL_MAP_CHECK
 private:
 	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
 	static std::true_type test(...);
@@ -76,9 +69,6 @@ private:
 	
 public:
 	using type = decltype(test<T, F>(0));
-#else 
-	using type = std::true_type;
-#endif
 };
 
 /*

@@ -89,15 +89,16 @@ using injected_service_t = typename injected_service<T>::type;
 /*
  * This is the contrary of injected_service.
  * We get a service definition type, and we return the wrapper type.
+ * We cannot use the conditional_t alias there for visual studio.
  */
 template<typename T>
-using injected_wrapper = conditional_t<is_service<T>::value && !is_single<T>::value,
+using injected_wrapper = typename std::conditional<is_service<T>::value && !is_single<T>::value,
 	injected<T>,
-	conditional_t<is_polymorphic<T>::value,
+	typename std::conditional<is_polymorphic<T>::value,
 		virtual_injected<T>,
 		injected<T&>
-	>
->;
+	>::type
+>::type;
 
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;

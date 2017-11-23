@@ -5,3 +5,4 @@ build-*
 !.gitignore
 !.gitmodules
 !.travis.yml
+!.appveyor.yml

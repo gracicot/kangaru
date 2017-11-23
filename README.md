@@ -1,75 +1,57 @@
 kangaru
 =======
 
-kangaru is a dependency injection container library for C++11 and C++14.
-It manages recursive dependency injection, injection into function parameter, and more.
-The name Kangaru came from the feature of injecting itself as a dependency into a service.
+[![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru)
+[![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=dev-4.0.x)](https://travis-ci.org/gracicot/kangaru)
+[![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru)
+
+Kangaru is an inversion of control container for C++11 and later. We support features like operation between containers,
+injection via function parameter, automatic call of member function on instance creation and much more!
+
+Our goal is to create a container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
+
+Kangaru is a header only library because of it's extensive use of templates.
+The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
+
+----
 
 [Documentation and tutorial](https://github.com/gracicot/kangaru/wiki) is in the wiki and the `doc` folder!
 
+Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
+
+Here's a quick demo to show the very basic usage of this library:
 ```c++
 #include <kangaru/kangaru.hpp>
+#include <iostream>
 
-// This macro is used as a shortcut to use kgr::Method. Won't be needed in C++17
-#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+// Normal classes with dependency between them
+struct Camera {};
 
-// The following classes are user classes.
-// As you can see, this library is not intrusive and don't require modifications
-struct Credential {};
-
-struct Connection {
-    // The connect needs some credential
-    void connect(Credential const&);
+struct Scene {
+    Camera& camera;
 };
 
-struct Database {
-    // A database needs a connection
-    Database(Connection const&);
+// This is the configuration of our classes.
+// Structure and dependency graph is defined here.
+
+// Camera is a single service so the service has a shared instance.
+struct CameraService : kgr::single_service<Camera> {};
+
+// Scene is not single, so the container return scenes by value.
+// Also, we depends on a camera to be constructed.
+struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
+
+int main()
+{
+    kgr::container container;
     
-    // For the sake of having a method to call
-    void commit();
-};
-
-
-// Service definitions.
-// We define all dependencies between classes,
-// and tell the container how to map function parameter to those definitions.
-
-// Simple injectable service by value
-struct CredentialService : kgr::Service<Credential> {};
-
-// Connection service is single,
-// and need the connect function to be called on creation
-struct ConnectionService : kgr::SingleService<Credential>,
-    kgr::Autocall<METHOD(&Connection::connect)> {};
-
-
-// Database is also a single, and has a connection as dependency
-struct DatabaseService : kgr::SingleService<Database, kgr::Dependency<ConnectionService>> {};
-
-// The service map maps a function parameter type to a service definition
-// We also want to map a Database argument type for the example.
-auto service_map(Database const&) -> DatabaseService;
-auto service_map(Credential const&) -> CredentialService;
-
-int main() {
-    kgr::Container container;
+    // The service function return instances of the normal classes.
+    Scene scene = container.service<SceneService>();
+    Camera& camera = container.service<CameraService>();
     
-    // Get the database.
-    // The database has a connection injected,
-    // and the connection had the connect function called before injection.
-    auto&& database = container.service<DatabaseService>();
-    
-    // Commit the database
-    database.commit();
-    
-    // Let `function` be a callable object that takes mapped services.
-    auto function = [](Credential c, Database& db) {
-        // Do stuff with credential and database
-    };
-    
-    // The function is called with it's parameter injected automatically.
-    container.invoke(function);
+    std::cout
+        << std::boolalpha
+        << (&scene.camera == &camera) << std::endl; // outputs true
 }
 ```
 
@@ -132,3 +114,9 @@ feel free to contribute!
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
+
+Contributing
+------------
+To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome!
+
+Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)!

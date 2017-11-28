@@ -2,147 +2,136 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_AUTOCALL_TRAITS_HPP
 
 #include "meta_list.hpp"
-#include "traits.hpp"
 #include "service_map.hpp"
-#include "invoke.hpp"
-#include "service_check.hpp"
+#include "utils.hpp"
+#include "traits.hpp"
+#include "injected.hpp"
 
 namespace kgr {
 namespace detail {
 
 /*
- * Meta trait to apply a trait over all autocall entry in a autocall list
- */
-template<template<typename...> class Trait, typename T>
-struct autocall_trait_helper {
-private:
-	template<typename U, std::size_t I>
-	struct expand {
-		using type = Trait<U, meta_list_element_t<I, typename U::autocall_functions>>;
-	};
-
-	template<typename>
-	static std::false_type test_helper(...);
-	
-	template<typename U, std::size_t... S, int_t<
-		enable_if_t<expand<U, S>::type::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename>
-	static std::true_type test(...);
-	
-	template<typename U>
-	static decltype(test_helper<U>(detail::tuple_seq<typename U::autocall_functions>{})) test(int);
-	
-public:
-	using type = decltype(test<T>(0));
-};
-
-/*
- * Alias for autocall_trait_helper
- */
-template<template<typename...> class Trait, typename T>
-using autocall_trait = typename autocall_trait_helper<Trait, T>::type;
-
-/*
- * Trait that check if a all injected argument of a particular
- * autocall entry can be found in the service map.
+ * This class will the the member autocall function part of the service definition.
+ * Maybe the autocall function part of the service definition should not exist, and moved to the container.
  */
 template<typename T, typename F>
-struct is_autocall_entry_map_complete_helper {
+struct autocall_function {
 private:
+	/*
+	 * This is used for the case of a regular autocall call.
+	 */
+	template<typename U, typename C>
+	struct get_member_autocall {
+		template<typename V, typename Function, typename Map>
+		struct function {
+			static void autocall(inject_t<container_service> cs, V& service) {
+				V::template autocall_helper<V, Map, Function>(detail::function_seq<typename Function::value_type>{}, std::move(cs), service);
+			}
+		};
+		
+		using type = std::integral_constant<
+			decltype(&function<U, C, typename U::map>::autocall),
+			&function<U, C, typename U::map>::autocall
+		>;
+	};
+	
+	/*
+	 * This is used when a invoke autocall is used.
+	 */
+	template<typename U, typename C, std::size_t... S>
+	struct get_invoke_autocall {
+		template<typename V, typename Function, typename... Ts>
+		struct function {
+			static void autocall(inject_t<Ts>... others, V& service) {
+				service.call(Function::value, std::forward<inject_t<Ts>>(others).forward()...);
+			}
+		};
+		
+		using type = std::integral_constant<
+			decltype(&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall),
+			&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall
+		>;
+	};
+	
+	template<typename U, typename C, std::size_t... S>
+	static get_invoke_autocall<U, C, S...> test_helper(seq<S...>);
+	
 	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
-	static std::true_type test(...);
+	static decltype(test_helper<U, C>(tuple_seq<typename C::parameters>{})) test();
 	
-	template<typename U, typename C, enable_if_t<!is_invoke_call<C>::value, int> = 0>
-	static std::false_type test(...);
+	template<typename U, typename C, enable_if_t<is_member_autocall<U, C>::value && !is_invoke_call<C>::value, int> = 0>
+	static get_member_autocall<U, C> test();
 	
-	template<typename>
-	static std::false_type test_helper(...);
-	
-	template<typename Map, typename U, typename C, std::size_t... S, int_t<
-		mapped_service_t<meta_list_element_t<S, function_arguments_t<typename C::value_type>>, Map>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename U, typename C>
-	static decltype(test_helper<typename U::map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	using inner_type = decltype(test<T, F>());
 	
 public:
-	using type = decltype(test<T, F>(0));
+	using type = typename inner_type::type;
 };
 
 /*
- * Alias for is_autocall_entry_map_complete_helper
+ * This trait extract what arguments are needed in a autocall call.
+ * This is mostly used for other trait to validate an autocall function.
  */
-template<typename T, typename F>
-using is_autocall_entry_map_complete = typename is_autocall_entry_map_complete_helper<T, F>::type;
+template<typename, typename, typename = void>
+struct autocall_arguments;
 
 /*
- * Trait that check if every injected arguments of a particular autocall entry are valid services.
- * 
- * However, we don't validate autocall checks for these injected services.
+ * This is the case for an invoke call.
+ * Since all aguments are listed, we simply take those.
  */
 template<typename T, typename F>
-struct is_autocall_entry_valid_helper {
+struct autocall_arguments<T, F, enable_if_t<is_invoke_call<F>::value>> {
+	using type = typename F::parameters;
+};
+
+/*
+ * This is the case for an autocall member function call.
+ * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
+ */
+template<typename T, typename F>
+struct autocall_arguments<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
 private:
-	// This is workaround for clang. Clang will not interpret the name of the class itself
-	// as a valid template template parameter. using this alias, it forces it to use the name as a template.
-	template<typename U, typename C>
-	using self_t = typename is_autocall_entry_valid_helper<U, C>::type;
-	
-	// Check when it's a method invocation
-	struct invoke_method_condition {
-		template<typename U, typename C, std::size_t I>
-		using type = std::integral_constant<bool,
-			service_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
-			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;
+	template<typename Map>
+	struct mapped_type {
+		template<typename U>
+		using map = mapped_service_t<U, Map>;
 	};
-
-	// Check when it's an invoke call
-	struct invoke_call_condition {
-		template<typename U, typename C, std::size_t I>
-		using type = is_invoke_call<C>;
-	};
-	
-	template<typename U, typename C, std::size_t I>
-	struct expander {
-		// If the map is incomplete, it's either an invalid
-		// autocall entry, or an invoke call
-		using type = typename conditional_t<
-			is_autocall_entry_map_complete<U, C>::value,
-			invoke_method_condition,
-			invoke_call_condition
-		>::template type<U, C, I>::type;
-	};
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, typename C, std::size_t... S, int_t<
-		enable_if_t<expander<U, C, S>::type::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename U, typename C, enable_if_t<is_valid_autocall_function<U, C>::value, int> = 0>
-	static decltype(test_helper<U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
 	
 public:
-	using type = decltype(test_helper<T, F>(tuple_seq<function_arguments_t<typename F::value_type>>{}));
+	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type<typename T::map>::template map>;
 };
 
 /*
- * Alias for is_autocall_entry_valid_helper
+ * This gets the integral_constant found in autocall_function
  */
 template<typename T, typename F>
-using is_autocall_entry_valid = typename is_autocall_entry_valid_helper<T, F>::type;
+using autocall_function_t = typename autocall_function<T, F>::type;
 
 /*
- * Validity check for autocall entries in a service T
+ * This returns the nth autocall function type in the autocall list of a service.
  */
-template<typename T>
-using is_autocall_valid = autocall_trait<is_autocall_entry_valid, T>;
+template<typename T, std::size_t I>
+using autocall_nth_function = detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
+
+/*
+ * This returns the value type of autocall_nth_function
+ */
+template<typename T, std::size_t I>
+using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>::value_type;
+
+/*
+ * This is an alias for the argument list of an autocall function.
+ */
+template<typename T, typename F>
+using autocall_arguments_t = typename autocall_arguments<T, F>::type;
+
+/*
+ * This checks if an entry in the autocall list is actually a valid autocall function type.
+ */
+template<typename T, typename F>
+using is_valid_autocall_function = std::integral_constant<bool,
+	is_invoke_call<F>::value || is_member_autocall<T, F>::value
+>;
 
 } // namespace detail
 } // namespace kgr

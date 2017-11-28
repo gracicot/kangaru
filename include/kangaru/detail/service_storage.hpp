@@ -26,8 +26,15 @@ struct typed_service_storage {
 };
 
 struct service_storage {
+private:
+	using function_pointer = void*(*)(void*);
+	
+public:
 	template<typename T>
 	service_storage(const typed_service_storage<T>& storage) noexcept : service{storage.service} {
+		static_assert(sizeof(function_pointer) >= sizeof(forward_storage<T>), "The forward storage size exceed the size of a function pointer");
+		static_assert(alignof(function_pointer) >= alignof(forward_storage<T>), "The forward storage alignement exceed the alignement of a function pointer");
+		
 		new (&forward_function) forward_storage<T>{storage.forward};
 	}
 	
@@ -39,7 +46,6 @@ struct service_storage {
 	}
 	
 private:
-	using function_pointer = void*(*)(void*);
 	aligned_storage_t<sizeof(function_pointer), alignof(function_pointer)> forward_function;
 };
 

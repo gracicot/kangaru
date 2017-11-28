@@ -5,7 +5,7 @@
 #include "detail/validity_check.hpp"
 #include "detail/utils.hpp"
 #include "detail/container_service.hpp"
-#include "detail/invoke.hpp"
+#include "detail/autocall_traits.hpp"
 #include "detail/single.hpp"
 #include "detail/exception.hpp"
 #include "detail/service_storage.hpp"

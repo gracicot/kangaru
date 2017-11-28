@@ -22,8 +22,6 @@ struct generic_service_destruction<Generic, Type, enable_if_t<std::is_trivially_
 
 template<typename Type>
 struct generic_service : detail::generic_service_destruction<generic_service<Type>, Type> {
-	friend container;
-	
 	generic_service() = default;
 	
 	generic_service(generic_service&& other) noexcept {
@@ -53,7 +51,8 @@ protected:
 	}
 	
 private:
-	friend struct detail::generic_service_destruction<generic_service<Type>, Type>;
+	friend container;
+	friend detail::generic_service_destruction<generic_service<Type>, Type>;
 	template<typename, typename...> friend struct detail::has_emplace_helper;
 	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>

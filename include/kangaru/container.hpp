@@ -138,7 +138,7 @@ public:
 	 * T must not be a polymorphic type.
 	 */
 	template<typename T, typename... Args, enable_if<detail::is_service_valid<T, Args...>> = 0>
-	service_type<T> service(Args&&... args) {
+	auto service(Args&&... args) -> service_type<T> {
 		return definition<T>(std::forward<Args>(args)...).forward();
 	}
 	
@@ -161,7 +161,7 @@ public:
 	template<typename Map = map<>, typename U, typename... Args,
 		enable_if<detail::is_map<Map>> = 0,
 		enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
-	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke(U&& function, Args&&... args) {
+	auto invoke(U&& function, Args&&... args) -> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> {
 		return invoke_helper<Map>(
 			detail::tuple_seq_minus<detail::invoke_function_arguments_t<Map, detail::decay_t<U>, Args...>, sizeof...(Args)>{},
 			std::forward<U>(function),
@@ -210,7 +210,7 @@ public:
 	 * It will call fork() with a predicate as parameter.
 	 */
 	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
-	container fork() const {
+	auto fork() const -> container {
 		return fork(Predicate{});
 	}
 	
@@ -223,7 +223,7 @@ public:
 	 * It takes a predicate as argument.
 	 */
 	template<typename Predicate>
-	container fork(Predicate predicate) const {
+	auto fork(Predicate predicate) const -> container {
 		container c;
 		
 		c._services.reserve(_services.size());
@@ -261,8 +261,8 @@ public:
 	 * It will call rebase() with a predicate as parameter.
 	 */
 	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
-	container rebase(const container& other) const {
-		return rebase(other, Predicate{});
+	void rebase(const container& other) const {
+		rebase(other, Predicate{});
 	}
 	
 	/**
@@ -323,7 +323,7 @@ private:
 		enable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	detail::typed_service_storage<T> save_new_instance(Args&&... args) {
+	auto save_new_instance(Args&&... args) -> detail::typed_service_storage<T> {
 		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
 		
 		autocall(service);
@@ -341,7 +341,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
-	detail::typed_service_storage<T> save_new_instance(Args&&...) {
+	auto save_new_instance(Args&&...) -> detail::typed_service_storage<T> {
 		throw abstract_not_found{};
 	}
 	
@@ -353,7 +353,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&> save_new_instance(Args&&...) {
+	auto save_new_instance(Args&&...) -> detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&> {
 		throw supplied_not_found{};
 	}
 	
@@ -366,7 +366,7 @@ private:
 		disable_if<detail::is_supplied_service<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
-	detail::typed_service_storage<T> save_new_instance(Args&&...) {
+	auto save_new_instance(Args&&...) -> detail::typed_service_storage<T> {
 		auto&& storage = save_new_instance<detail::default_type<T>>();
 		
 		// The static assert is still required here, if other checks fails and allow
@@ -424,21 +424,21 @@ private:
 	}
 	
 	template<typename Override, typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	detail::forward_ptr<Override> get_override_forward() {
+	auto get_override_forward() -> detail::forward_ptr<Override> {
 		return [](void* s) -> service_type<Override> {
 			return static_cast<service_type<Override>>(static_cast<T*>(s)->forward());
 		};
 	}
 	
 	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	detail::forward_ptr<T> get_forward() {
+	auto get_forward() -> detail::forward_ptr<T> {
 		return [](void* service) -> service_type<T> {
 			return static_cast<T*>(service)->forward();
 		};
 	}
 	
 	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
-	detail::forward_ptr<T> get_forward() {
+	auto get_forward() -> detail::forward_ptr<T> {
 		return nullptr;
 	}
 	
@@ -462,7 +462,7 @@ private:
 	 * It forward the work to make_service_instance_helper with an integer sequence.
 	 */
 	template<typename T, typename... Args>
-	contained_service_t<T> make_service_instance(Args&&... args) {
+	auto make_service_instance(Args&&... args) -> contained_service_t<T> {
 		return make_service_instance_helper<T>(detail::construct_result_seq<T, Args...>{}, std::forward<Args>(args)...);
 	}
 	
@@ -472,7 +472,7 @@ private:
 	 * It forward it's work to make_contained_service.
 	 */
 	template<typename T, typename... Args, std::size_t... S>
-	contained_service_t<T> make_service_instance_helper(detail::seq<S...>, Args&&... args) {
+	auto make_service_instance_helper(detail::seq<S...>, Args&&... args) -> contained_service_t<T> {
 		auto constructArgs = invoke_raw(detail::construct_function<T, Args...>::value, std::forward<Args>(args)...);
 		
 		// This line is used to shut unused-variable warning, since S can be empty.
@@ -488,7 +488,7 @@ private:
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
+	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
 		return make_instance_ptr<T>(detail::in_place, std::forward<Args>(args)...);
 	}
 	
@@ -499,7 +499,7 @@ private:
 	template<typename T, typename... Args,
 		disable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
+	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
 		return T{detail::in_place, std::forward<Args>(args)...};
 	}
 	
@@ -513,7 +513,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
+	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
 		auto service = make_instance_ptr<T>();
 		
 		service->emplace(std::forward<Args>(args)...);
@@ -531,7 +531,7 @@ private:
 		disable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
-	contained_service_t<T> make_contained_service(Args&&... args) {
+	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
 		T service;
 		
 		service.emplace(std::forward<Args>(args)...);
@@ -561,7 +561,7 @@ private:
 	 * This version of this function create the service each time it is called.
 	 */
 	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition(Args&&... args) {
+	auto definition(Args&&... args) -> detail::injected_wrapper<T> {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		
 		autocall(service);
@@ -574,7 +574,7 @@ private:
 	 * This version of this function is specific to a container service.
 	 */
 	template<typename T, enable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition() {
+	auto definition() -> detail::injected_wrapper<T> {
 		return detail::injected<container_service>{container_service{*this}};
 	}
 	
@@ -586,7 +586,7 @@ private:
 	template<typename T,
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_container_service<T>> = 0>
-	detail::injected_wrapper<T> definition() {
+	auto definition() -> detail::injected_wrapper<T> {
 		auto it = _services.find(type_id<T>());
 		
 		if (it != _services.end()) {
@@ -605,7 +605,7 @@ private:
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
 	template<typename Map, typename U, typename... Args, std::size_t... S>
-	detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> invoke_helper(detail::seq<S...>, U&& function, Args&&... args) {
+	auto invoke_helper(detail::seq<S...>, U&& function, Args&&... args) -> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> {
 		return std::forward<U>(function)(
 			mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()...,
 			std::forward<Args>(args)...
@@ -617,7 +617,7 @@ private:
 	 * It is called with some autocall function and the make_service_instance function.
 	 */
 	template<typename U, typename... Args>
-	detail::function_result_t<U> invoke_raw(U function, Args&&... args) {
+	auto invoke_raw(U function, Args&&... args) -> detail::function_result_t<U> {
 		return invoke_raw_helper(
 			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
 			function,
@@ -630,7 +630,7 @@ private:
 	 * It unpacks arguments of the function U with an integer sequence.
 	 */
 	template<typename U, typename... Args, std::size_t... S>
-	detail::function_result_t<U> invoke_raw_helper(detail::seq<S...>, U function, Args&&... args) {
+	auto invoke_raw_helper(detail::seq<S...>, U function, Args&&... args) -> detail::function_result_t<U> {
 		return function(definition<detail::injected_argument_t<S, U>>()..., std::forward<Args>(args)...);
 	}
 	

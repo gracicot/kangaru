@@ -66,7 +66,7 @@ struct forked_mapped_invoker : detail::invoker_base<forked_mapped_invoker<Map>, 
 	explicit forked_mapped_invoker(kgr::container container) : _container{std::move(container)} {}
 	
 	template<typename M>
-	forked_mapped_invoker(const forked_mapped_invoker<M>& other) : _container{std::move(other._container)} {}
+	forked_mapped_invoker(forked_mapped_invoker<M>&& other) : _container{std::move(other._container)} {}
 	
 private:
 	friend struct detail::invoker_base<forked_mapped_invoker<Map>, Map>;

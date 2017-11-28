@@ -41,7 +41,13 @@ template<typename Map>
 struct mapped_invoker : detail::invoker_base<mapped_invoker<Map>, Map> {
 	explicit mapped_invoker(kgr::container& container) : _container{&container} {}
 	
+	template<typename M>
+	mapped_invoker(const mapped_invoker<M>& other) : _container{other._container} {}
+	
 private:
+	friend struct detail::invoker_base<mapped_invoker<Map>, Map>;
+	template<typename> friend struct mapped_invoker;
+	
 	kgr::container& container() {
 		return *_container;
 	}
@@ -50,7 +56,6 @@ private:
 		return *_container;
 	}
 	
-	friend struct detail::invoker_base<mapped_invoker<Map>, Map>;
 	kgr::container* _container;
 };
 
@@ -60,7 +65,13 @@ template<typename Map>
 struct forked_mapped_invoker : detail::invoker_base<forked_mapped_invoker<Map>, Map> {
 	explicit forked_mapped_invoker(kgr::container container) : _container{std::move(container)} {}
 	
+	template<typename M>
+	forked_mapped_invoker(const forked_mapped_invoker<M>& other) : _container{std::move(other._container)} {}
+	
 private:
+	friend struct detail::invoker_base<forked_mapped_invoker<Map>, Map>;
+	template<typename> friend struct forked_mapped_invoker;
+	
 	kgr::container& container() {
 		return _container;
 	}
@@ -69,7 +80,6 @@ private:
 		return _container;
 	}
 	
-	friend struct detail::invoker_base<forked_mapped_invoker<Map>, Map>;
 	kgr::container _container;
 };
 
@@ -80,6 +90,8 @@ struct generator : detail::generator_base<generator<T>, T> {
 	explicit generator(kgr::container& container) : _container{&container} {}
 	
 private:
+	friend struct detail::generator_base<generator<T>, T>;
+	
 	kgr::container& container() {
 		return *_container;
 	}
@@ -88,7 +100,6 @@ private:
 		return *_container;
 	}
 	
-	friend struct detail::generator_base<generator<T>, T>;
 	kgr::container* _container;
 };
 
@@ -97,6 +108,8 @@ struct forked_generator : detail::generator_base<forked_generator<T>, T> {
 	explicit forked_generator(kgr::container container) : _container{std::move(container)} {}
 	
 private:
+	friend struct detail::generator_base<forked_generator<T>, T>;
+	
 	kgr::container& container() {
 		return _container;
 	}
@@ -105,7 +118,6 @@ private:
 		return _container;
 	}
 	
-	friend struct detail::generator_base<forked_generator<T>, T>;
 	kgr::container _container;
 };
 
@@ -114,6 +126,8 @@ struct lazy : detail::lazy_base<lazy<T>, T> {
 	explicit lazy(kgr::container& container) : _container{&container} {}
 	
 private:
+	friend struct detail::lazy_base<lazy<T>, T>;
+	
 	kgr::container& container() {
 		return *_container;
 	}
@@ -122,7 +136,6 @@ private:
 		return *_container;
 	}
 	
-	friend struct detail::lazy_base<lazy<T>, T>;
 	kgr::container* _container;
 };
 
@@ -131,6 +144,8 @@ struct forked_lazy : detail::lazy_base<forked_lazy<T>, T> {
 	explicit forked_lazy(kgr::container container) : _container{std::move(container)} {}
 	
 private:
+	friend struct detail::lazy_base<forked_lazy<T>, T>;
+	
 	kgr::container& container() {
 		return _container;
 	}
@@ -139,7 +154,6 @@ private:
 		return _container;
 	}
 	
-	friend struct detail::lazy_base<forked_lazy<T>, T>;
 	kgr::container _container;
 };
 

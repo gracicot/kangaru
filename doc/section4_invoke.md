@@ -93,13 +93,13 @@ int quantity = container.invoke(function, 32); // quantity == 42
 C++14 generic lambda are also supported. The only restriction is that all `auto` must be at the end. Just like this:
 
 ```c++
-auto function = [](Window& window, MessageBus& bus, int a, auto&& b) {
+auto function = [](Window& window, MessageBus& bus, int a, auto b) { // b to be deduced
     return 10 + data + b;
 };
 
-double quantity = container.invoke(function, 30, 2.1); // quantity == 42.1
+double quantity = container.invoke(function, 30, 2.1); // quantity == 42.1, b deduced as double
 ```
 
-> WARNING: We suggest using forwarding reference `auto&&` when using deduced parameter to avoid confusion. To inspect the parameter types, the container must instanciate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instanciate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual.
+> WARNING: To inspect the parameter types, the container must instanciate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instanciate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instanciate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instanciated one time with the right types.
 
 [Next chapter: Operator services](section5_operator.md)

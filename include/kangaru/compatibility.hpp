@@ -14,6 +14,7 @@ using AbstractService = abstract_service<T>;
 template<typename T>
 using AbstractSharedService = abstract_shared_service<T>;
 
+using AdlMap = map<>;
 using All = all;
 
 template<typename... Ts>

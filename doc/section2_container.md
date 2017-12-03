@@ -1,193 +1,112 @@
 The container
 =============
 
-The container is the central piece of the library, it's where the magic is done.
+The container can be seen as a repository of services.
+It's possible to manage many container and operate between them with several operation.
 
-It offers the following seven methods:
+We will use these operation to scope the lifetime of single services, and extend it.
 
- * `instance<T>`
- * `service<T>`
- * `invoke<T>`
- * `contains<T>`
- * `clear`
- * `fork`
- * `merge`
+## Fork
 
-## instance
-This function will instanciate the service definition in the template parameter with the sended arguments.
+This operation creates a new container from a container. That new container will observe all instances contained in the source one.
 
 ```c++
-// Will instanciate a ShopService within the container with a shop as argument.
-container.instance<ShopService>(Shop{items...});
+kgr::container container1;
+
+container1.emplace<SingleService1>();
+container1.emplace<SingleService2>();
+
+auto container2 = container1.fork();
+
+container1.emplace<SingleService3>();
+container2.emplace<SingleService3>();
 ```
 
-Here, we ask the container to construct the service named `ShopService` with `Shop{items...}` as arguments.
+In this example, `container1` first create and saves `Single1` and `Single2`. Then, we fork `container1` to create `container2`.
+At that point both container 1 and 2 references the same services.
 
-You can pass as the first argument the `kgr::no_autocall` variable. That will tell the container to not call functions in autocall after the service construction.
-You can read more about autocall on the page [AutoCall](section6_autocall.md)
+Then, in both container, we creates `Single3` in both containers. Since we forked the container, these two containers now have separated instances of `Single3`.
 
-## service
-Service is the most crucial function of the container. It returns a service and constructs it if needed.
-The function's template parameter corresponds to the service definition of the service you want to retrieve.
+Here's a graph to represent that:
+
+    container1  ---o---o---*---o
+                            \
+    container2               ---o
+
+Note that the lifetime of the `container2` must not extend the lifetime of `container1`.
+This is because the first container is owner of `Single1` and `Single2`.
+
+## Merge
+
+The merge operation is the contrary of the fork. It will take all instances of one container and move them all into another container.
+This is useful when you forked the container, created some services in the new container, and want to bring those services into the original before dropping the fork.
+In this operation, the merged container will no longer be owner of any instances. You can drop that empty container without having any invalidated services.
+
+In case of conflict, the original container will prefer it's own services over the merged container services.
 
 ```c++
-Shop myShop = container.service<ShopService>(); // I just got a fully constructed Shop!
+kgr::container container1;
+
+container1.emplace<SingleService1>();
+
+{
+	auto container2 = container1.fork();
+	
+	container1.emplace<SingleService2>();
+	container2.emplace<SingleService2>();
+	container2.emplace<SingleService3>();
+	
+	// At that point, both containers have thier own SingleService2 instance.
+	// Only container2 has SingleService3
+	// container1 is owner of SingleService1, and container2 observes it.
+	
+	container1.merge(std::move(container2));
+}
+
+// At that point, no services are deleted yet.
+// container1 is owner of all instances created so far.
+// Since both containers had thier own version of SingleService2, container1 kept his own instance.
+// Now container1 has a SingleService3 that came from the merging of container2 into it.
 ```
-        
-If your constructor has to take more parameters, you can send it to the `service()` function and the container will forward the argument after dependencies.
+
+A graph of this example look like this:
+
+    container1  ---o---*---o----------*---
+                        \            /
+    container2           ---o---o---
+
+## Rebase
+
+Just like with git branches, we can rebase a container from another one.
+This will make the forked container observe any new singles added in the original container since the fork.
 
 ```c++
-struct Shop {
-    Shop(Notification& n, int numberOfItems);
-    
-    // ...
-};
+kgr::container container1;
 
-Shop myShop = container.service<ShopService>(42); // I just got a fully constructed Shop with 42 items!
+container1.emplace<SingleService1>();
+
+auto container2 = container1.fork();
+
+container2.contains<SingleService1>(); // true
+container2.contains<SingleService2>(); // false
+
+container1.emplace<SingleService2>();
+
+container2.rebase(container1); // rebase from container1
+
+container2.contains<SingleService1>(); // true
+container2.contains<SingleService2>(); // true
 ```
 
-## invoke
-The `invoke` method is here to help you call functions that need services as parameters.
-Let's say we have the following services: `Notification`, `FileManager` and `Shop`.
-Also, let's say we have this function:
+Here's the graph for it:
 
-```c++
-int someOperation(Notification&, FileManager& b, Shop c);
-```
+    container1  ---o---*---o---*---
+                        \       \
+    container2           --------*---
 
-You can make the call to this function easier with the invoke function, like so:
+## Conclusion
 
-```c++
-int result = container.invoke<ServiceMap>(someOperation);
-```
-
-As long as the `Notification`, `FileManager` and `Shop` service definitions are configured correctly, the container will call the function `someOperation` with the right set of parameters.
-We will cover the `invoke` functionnality in detail in a later chapter.
-
-## contains
-
-This function is used to check if the container currently contains a specific service.
-This function take a single service type as template parameter and returns a boolean.
-
-```c++
-kgr::Container c;
-
-cout << boolalpha << c.contains<NotificationService>() << ", ";
-
-c.service<NotificationService>();
-
-cout << c.contains<NotificationService>() << endl;
-
-// outputs the following: false, true
-```
-
-## clear
-This function clears the container state. In other words, it deletes every single services that are contained within the container.
-
-```c++
-// FileManagerService is a single service.
-
-auto& fileManager = container.service<FileManagerService>();
-
-container.clear();
-
-// now fileManager is a dangling reference.
-```
-        
-## fork
-Single service are not singletons. They are single within an instance of a container.
-To ease this mechanism, there's a method called `fork()` that create a copy of the container.
-
-The forked container is not a complete copy of the original container. It will hold non-owning reference of services that are contained in the original.
-That way, the forked container will act just as the original, but every new instances of single service will be known only by the forked container.
-
-Here's a code snippet that shows it's usage:
-
-```c++
-kgr::Container c1;
-
-// File manager is single
-auto& fileManager1 = c1.service<FileManagerService>();
-
-// here fork is creating a new container
-kgr::Container c2 = c1.fork();
-
-auto& fileManager2 = c2.service<FileManagerService>();
-
-cout << boolalpha << (&fileManager1 == &fileManager2) << endl; // prints true
-
-// shop is also single
-// shop1 and shop2 are different instance, even if they are single.
-auto& shop1 = c1.service<ShopService>();
-auto& shop2 = c2.service<ShopService>();
-
-cout << boolalpha << (&shop1 == &shop2) << endl; // prints false
-```
-    
-### Inject the fork
-You can as well inject the container into a service as a fork. There's the class `ForkService` that do just that.
-Here's a usage of this service definition:
-
-```c++
-kgr::Container fork = container.service<ForkService>(); // another way to fork
-```
-
-### Fork with some instances
-
-Alternatively, you can fork the container but keeping reference only to some service that was in the original container.
-The `fork()` function takes a template parameter that is the predicate to pick.
-
-#### All
-
-By default, `kgr::All` is used as the predicate. It returns true for all service.
-
-#### AnyOf
-
-The predicate `kgr::AnyOf<Ts...>` will make that only the specified services get to be known to the new container. It a sort of a whitelist for services.
-
-```c++
-auto fork = container.fork<kgr::AnyOf<ShopService, FileManagerService>>();
-// or kgr::Container fork = container.service<ForkService<kgr::AnyOf<ShopService, FileManagerService>>>();
-
-cout << boolalpha << fork.contains<NotificationService>() << endl; // prints false, even if `container` had one.
-```
-
-#### NoneOf
-
-The predicate `kgr::NoneOf<Ts...>` is the contrary of `kgr::AnyOf<Ts...>`. It will take every services except those specified. It's like a blacklist.
-
-```c++
-auto fork = container.fork<kgr::NoneOf<ShopService>>();
-// or kgr::Container fork = container.service<ForkService<kgr::NoneOf<ShopService>>>();
-
-// fork has every services contained in `container` except `ShopService`
-```
-### Inject the fork with some instance
-
-You can use your predicates with for service using the `kgr::FilteredForkService<Predicate>`. The usage is pretty much the same as `kgr::ForkService`, but with a predicate as an argument.
-
-#### lambda
-
-If neither of those provided by kangaru suits your needs, you can send a lambda as predicate.
-The lambda must receive a `kgr::type_id_t` as parameter and return a boolean. You can get the `type_id_t` for a type using `kgr::type_id<T>`.
-The implementation of those two construct are considered implementation defined.
-
-```c++
-auto fork = container.fork([](kgr::type_id_t id){
-    return id == &kgr::type_id<NotificationService>;
-});
-```
-
-## merge
-You can as well merge containers. One container is merge into another. In case of collisions, the merger keep it's own instances.
-
-```c++
-// c1 and c2 are both containers
-
-// c1 now holds all instance that was contained in c2.
-c1.merge(std::move(c2));
-```
-    
-After the container is merged, no services are invalidated. Any change to this behaviour are considered breaking.
+As we can see, containers are not just a class that contains every instances that should be singletons.
+They can be used to manage multiple states of an application, and operate on these state just like branches with git.
 
 [Next chapter: Override Services](section3_override.md)

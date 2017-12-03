@@ -74,46 +74,63 @@ To make the ADL map more extensible and more powerful, we decided to make it the
 Yet, we wanted to keep the possibility to have many maps to organize services.
 
 So code that used multiple map will have to adapt the service map to use advanced mapping.
-+------------------------------------------------------+-----------------------------------------------------------------+
-|                        Before                        |                               After                             |
-+======================================================+=================================================================+
-| ```c++                                               | ```c++                                                          |
-| template<typename>                                   | struct MyMap1;                                                  |
-| struct MyMap1;                                       | struct MyMap2;                                                  |
-|                                                      |                                                                 |
-| template<typename>                                   | auto service_map(Class1,  kgr::map_t<MyMap1>) -> Class1Service; |
-| struct MyMap2;                                       | auto service_map(Class2&, kgr::map_t<MyMap2>) -> Class2Service; |
-|                                                      |                                                                 |
-| template<>                                           | container.invoke<kgr::map<MyMap1>>(someFunction1);              |
-| struct MyMap1<Class1> : kgr::Map<Class1Service> {};  | container.invoke<kgr::map<MyMap2>>(someFunction2);              |
-|                                                      | ```                                                             |
-| template<>                                           |                                                                 |
-| struct MyMap2<Class2&> : kgr::Map<Class2Service> {}; |                                                                 |
-|                                                      |                                                                 |
-| container.invoke<MyMap1>(someFunction1);             |                                                                 |
-| container.invoke<MyMap2>(someFunction2);             |                                                                 |
-| ```                                                  |                                                                 |
-+------------------------------------------------------+-----------------------------------------------------------------+
+
+**Before:**
+```c++
+template<typename>
+struct MyMap1;
+
+template<typename>
+struct MyMap2;
+
+template<>
+struct MyMap1<Class1> : kgr::Map<Class1Service> {};
+
+template<>
+struct MyMap2<Class2&> : kgr::Map<Class2Service> {};
+
+container.invoke<MyMap1>(someFunction1);
+container.invoke<MyMap2>(someFunction2);
+```
+
+**After:**
+```c++
+struct MyMap1;
+struct MyMap2;
+
+auto service_map(Class1,  kgr::map_t<MyMap1>) -> Class1Service;
+auto service_map(Class2&, kgr::map_t<MyMap2>) -> Class2Service;
+
+container.invoke<kgr::map<MyMap1>>(someFunction1);
+container.invoke<kgr::map<MyMap2>>(someFunction2);
+```
 
 Also, note that there's the concept of a default map. So that also changed how global service map worked.
 
-+------------------------------------------------------+--------------------------------------------------+
-|                          Before                           |                     After                   |
-+===========================================================+=============================================+
-| ```c++                                                    | ```c++                                      |
-| template<typename>                                        | auto service_map(Class1)  -> Class1Service; |
-| struct MyGlobalMap;                                       | auto service_map(Class2&) -> Class2Service; |
-|                                                           |                                             |
-| template<>                                                | container.invoke(someFunction1);            |
-| struct MyGlobalMap<Class1> : kgr::Map<Class1Service> {};  | container.invoke(someFunction2);            |
-|                                                           | ```                                         |
-| template<>                                                |                                             |
-| struct MyGlobalMap<Class2&> : kgr::Map<Class2Service> {}; |                                             |
-|                                                           |                                             |
-| container.invoke<MyGlobalMap>(someFunction1);             |                                             |
-| container.invoke<MyGlobalMap>(someFunction2);             |                                             |
-| ```                                                       |                                             |
-+-----------------------------------------------------------+---------------------------------------------+
+
+**Before:**
+```c++
+template<typename>
+struct MyGlobalMap;
+
+template<>
+struct MyGlobalMap<Class1> : kgr::Map<Class1Service> {};
+
+template<>
+struct MyGlobalMap<Class2&> : kgr::Map<Class2Service> {};
+
+container.invoke<MyGlobalMap>(someFunction1);
+container.invoke<MyGlobalMap>(someFunction2);
+```
+
+**After:**
+```c++
+auto service_map(Class1)  -> Class1Service;
+auto service_map(Class2&) -> Class2Service;
+
+container.invoke(someFunction1);
+container.invoke(someFunction2);
+```
 
 ### Inspecting The Service Map
 
@@ -121,19 +138,25 @@ Since the service map was defined by the user, one could inspect the service map
 
 We now obtain the mapping through ADL, so inspecting the map now require a tool provided by kangaru.
 
-+--------------------------------------------------+------------------------------------------------------------+
-|                     Before                       |                            After                           |
-+==================================================+============================================================+
-| ```c++                                           | ```c++                                                     |
-| template<typename>                               | struct MyMap;                                              |
-| struct MyMap;                                    | auto service_map(Class, kgr::map<MyMap>) -> ClassService;  |
-|                                                  |                                                            |
-| template<>                                       | using MappedService = kgr::mapped_service_t<Class, MyMap>; |
-| struct MyMap<Class> : kgr::Map<ClassService> {}; | ```                                                        |
-|                                                  |                                                            |
-| using MappedService = MyMap<Class>::Service;     |                                                            |
-| ```                                              |                                                            |
-+--------------------------------------------------+------------------------------------------------------------+
+**Before:**
+```c++
+template<typename>
+struct MyMap;
+
+template<>
+struct MyMap<Class> : kgr::Map<ClassService> {};
+
+using MappedService = MyMap<Class>::Service;
+```
+
+**After:**
+```c++
+struct MyMap;
+
+auto service_map(Class, kgr::map<MyMap>) -> ClassService;
+
+using MappedService = kgr::mapped_service_t<Class, MyMap>;
+```
 
 Note that of the default map is used, we can omit the second parameter: `kgr::mapped_service_t<Class>`
 
@@ -142,7 +165,7 @@ Note that of the default map is used, we can omit the second parameter: `kgr::ma
 If you have defined generic services and used `kgr::GenericService`, you code will break.
 This is because `kgr::GenericService` has became much simpler, and don't need CRTP anymore.
 
-If you had code like that:
+**Before:**
 ```c++
 template<typename, typename = kgr::Dependency<>>
 struct MyGenericService;
@@ -153,8 +176,7 @@ struct MyGenericService<T, kgr::Dependency<Deps...>> : kgr::GenericService<MyGen
 };
 ```
 
-It will translate to:
-
+**After:**
 ```c++
 template<typename, typename = kgr::Dependency<>>
 struct MyGenericService;

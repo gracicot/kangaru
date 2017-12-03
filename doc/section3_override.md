@@ -1,88 +1,152 @@
-Override Services
-=================
+Polymorphic Services
+====================
 
-What would be a dependency injection container without the ability to dispatch services polymorphically with interfaces and stuff?
-Overriding services in kangaru could not be simpler! Just make your service definitions extend from the `kgr::Overrides<Parents...>` class!
+Until now, we've seen how to inject classes into other one in many ways. However, every type were static.
+For example, we did not have a subclass for `Camera` we can inject instead of a camera.
 
-```c++
-struct FileManagerService : kgr::SingleService<FileManager>, kgr::Overrides<IFileManagerService> {};
-```
-    
-That's it! Now we must tell the container that `FileManagerService` exists.
+In this section, we will see how to override a single service to make the container call the subclass's service instead of the base class one.
 
-```c++
-container.instance<FileManagerService>();
-```
-    
- If we want to use a `FileManager`, we can request it from the container like that:
- 
-```c++
-IFileManager& fm = container.service<IFileManagerService>();
-```
-    
-As long as the overrider's service type is convertible to the parent's service type, the service override will work.
-     
-### Order matters
+## How Overriding Services Works
 
-Let's take a look at this particuliar case:
+When querying for a service, the container will check in his collection of definitions.
+After that, it simply ask the definition to extract the service from it to return it to the caller.
+
+For a service that can be overriden, the container will do the same process, but the function that extract the data from the definition polymorphically using function pointers.
+That way, when we save a derived service into the container, it will also save itself as a base. So when searching for the base, it will find derived instance.
+
+## A Hierarchy of Cameras
+
+Until now, our camera class was a regular object, not tied to a hierarchy. We will change that to include two other camera type.
 
 ```c++
-struct FileManagerService : kgr::SingleService<FileManager>, kgr::Overrides<IFileManagerService> {};
-struct ClownMasterService : kgr::SingleService<ClownMaster>, kgr::Overrides<IFileManagerService> {};
+struct Camera {
+	virtual void projection() {
+		std::cout << "default projection" << std::endl;
+	}
+};
+
+struct PerspectiveCamera : Camera {
+	void projection() override {
+		std::cout << "perspective projection" << std::endl;
+	}
+};
+
+struct OrthogonalCamera : Camera {
+	void projection() override {
+		std::cout << "orthogonal projection" << std::endl;
+	}
+};
+```
+Now, we need to reflect that in kangaru service definitions. By default, the container won't assume you need polymorphic behaviour.
+The container will simply get the service you asked for and get the data inside. This allows the container to optimize querying services.
+
+To make the container aware of the polymorphic setting, you must tag the definition as polymorphic, as well as marking derived as overriders:
+
+```c++
+struct CameraService : kgr::single_service<Camera>, kgr::polymorphic {};
+
+struct PerspectiveCameraService : kgr::single_service<PerspectiveCamera>, kgr::overrides<CameraService> {};
+struct OrthogonalCameraService  : kgr::single_service<OrthogonalCamera>,  kgr::overrides<CameraService> {};
 ```
 
-Ouch! Which one is chosen by the container?
-It depends.
+With these tags on, the container knows to treat the camera as polymorphic, and will properly override the `CameraService` when any of the other camera are saved into the container.
 
-In fact, the rule that defines which one will be taken is **the last one registered is the one which overrides**
+## Using Services Polymorphically
 
-Yes. Look at these two cases:
+Services can be used polymorphically when instances are involved.
+The mechanism is this: when the instance of an overrider is created, it will register itself as it's parent service.
+
+Here's one example of polymorphic usage and the container:
+
+```c++
+kgr::container c;
+
+// Camera is returned
+Camera& camera1 = container.service<CameraService>();
+camera1.projection(); // prints `default projection`
+
+// PerspectiveCamera is registered as Camera
+container.emplace<PerspectiveCameraService>();
+
+// PerspectiveCamera is returned
+Camera& camera2 = container.service<CameraService>();
+camera2.projection(); // prints `perspective projection`
+```
+
+## Order matters
+
+Let's take a look at the case where both `PerspectiveCamera` and `OrthogonalCamera` are used.
+Since services that overrides simply register itself as the service it overrides, it may replace a service that was already overriden before.
+So for example I have two services that overrides `CameraService`, the last one inserted into the container will effectively override `CameraService`
+
+Look at these two cases:
 
 ```c++
 {
-    kgr::Container c;
+    kgr::container container;
     
-    c.service<ClownMasterService>();
-    c.service<FileManagerService>();
+    container.service<PerspectiveCameraService>();
+    container.service<OrthogonalCameraService>();
     
-    // auto is a FileManager
-    auto& fm = c.service<IFileManagerService>();
+    // instance of OrthogonalCamera returned
+    Camera& fm = container.service<CameraService>();
 }
 
 {
-    kgr::Container c;
+    kgr::container container;
     
-    c.service<FileManagerService>();
-    c.service<ClownMasterService>();
+    container.service<OrthogonalCameraService>();
+    container.service<PerspectiveCameraService>();
     
-    // auto is a ClownMaster
-    auto& fm = c.service<IFileManagerService>();
+    // instance of PerspectiveCamera returned
+    Camera& fm = container.service<CameraService>();
 }
 ```
 
-### Abstract Service
+As we can see, when using polymorphic service, the order of insertion into the container can change behavior.
 
-If you want to make a service definition for an abstract type, you may extend from `kgr::AbstractService<T>`:
+## Abstract Service
+
+If you want to make a service definition for an abstract type, or simply make a service only instanciable using derived services, you may inherit from `kgr::abstract_service<T>`:
 
 ```c++
-struct IFileManagerService : kgr::AbstractService<IFileManager>;
+struct IFileManagerService : kgr::abstract_service<IFileManager>;
 ```
 
-Note that for shared service types there's `kgr::AbstractSharedService`.
+Abstract services are service that cannot be constructed by themselves, to have in instance of it we must first create an instance of a service that overrides it.
 
-#### Default Service Type
-
-If you ask the container for an abstract service and the container has no instance that could be used for that abstract service, the container dill throw.
-
-If that's not the correct behaviour, you can also specify a default service to instantiate instead of throwing.
+If the container cannot find the instance of an abstract service, it will throw a `kgr::abstract_not_found`.
 
 ```c++
-struct IFileManagerService : kgr::AbstractService<IFileManager>, kgr::Default<TreeFileManagerService> {};
+{
+	kgr::container container;
+	
+	// throws kgr::abstract_not_found
+	IFileManager& fm = container.service<IFileManagerService>();
+}
 
-kgr::Container c;
+{
+	kgr::container container;
+
+	container.emplace<TreeFileManagerService>();
+	
+	// returns the TreeFileManager instance
+	IFileManager& fm = container.service<IFileManagerService>();
+}
+```
+
+### Default Service Type
+
+If we cannot afford to throw, and yet want to use abstract services, we can define a default service.
+When asking the container for an abstract service and no instance is found, it will fallback to the default service instead of throwing.
+
+```c++
+struct IFileManagerService : kgr::abstract_service<IFileManager>, kgr::defaults_to<TreeFileManagerService> {};
+
+kgr::container c;
 
 // Will instantiate a TreeFileManager and return a IFileManager.
-auto& fileManager = c.service<IFileManagerService>();
+IFileManager& fileManager = c.service<IFileManagerService>();
 ```
- 
+
 [Next chapter: Invoke](section4_invoke.md)

@@ -110,4 +110,4 @@ double quantity = container.invoke(function, 30, 2.1); // quantity == 42.1, b de
 
 > WARNING: To inspect the parameter types, the container must instanciate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instanciate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instanciate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instanciated one time with the right types.
 
-[Next chapter: Operator services](section5_operator.md)
+[Next chapter: Polymorphic Services](section5_operator.md)

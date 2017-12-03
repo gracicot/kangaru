@@ -1,5 +1,5 @@
-The container
-=============
+Managing Containers
+===================
 
 The container can be seen as a repository of services.
 It's possible to manage many container and operate between them with several operation.
@@ -91,7 +91,6 @@ container2.contains<SingleService1>(); // true
 container2.contains<SingleService2>(); // false
 
 container1.emplace<SingleService2>();
-
 container2.rebase(container1); // rebase from container1
 
 container2.contains<SingleService1>(); // true

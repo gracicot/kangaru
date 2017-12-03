@@ -179,4 +179,4 @@ With only that, many use cases are covered and may already be useful. But don't 
 In the next chapter, we'll see how to use injection into function parameter.
 Just like with classes, function can also benefit from dependency injection.
 
-[Next chapter: Basic usage of the container](section2_invoke.md)
+[Next chapter: Invoke](section2_invoke.md)

@@ -176,6 +176,7 @@ All this code that do these action (except saving to the container) would have b
 
 This is the most basic usage of kangaru. Yet we achieved recursive dependency resolution and single instances.
 With only that, many use cases are covered and may already be useful. But don't stop there! The fun has just begun!
-In the next chapter, we'll see how to manage multiple containers, and how to perform operation between them.
+In the next chapter, we'll see how to use injection into function parameter.
+Just like with classes, function can also benefit from dependency injection.
 
-[Next chapter: Basic usage of the container](section2_container.md)
+[Next chapter: Basic usage of the container](section2_invoke.md)

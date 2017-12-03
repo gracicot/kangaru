@@ -149,4 +149,4 @@ kgr::container c;
 IFileManager& fileManager = c.service<IFileManagerService>();
 ```
 
-[Next chapter: Managing Containers](section4_container.md)
+[Next chapter: Managing Containers](section04_container.md)

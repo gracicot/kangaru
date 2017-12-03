@@ -68,15 +68,20 @@ Macros defined by the library are not part of it's interface.
  - GCC: 5.4 or better
  - Clang: 3.6 or better
 
+### Migration Guide
+
+Since many breaking changes has been introduced in `v4.0.0`, we decided to write a [migration guide from the `3.x.y` series to `v4.0.0`](migration_guide_3xy.md).
+We also added a compatibility header to make the transition smoother between the two versions.
+
 Index
 -----
- * [Services](section1_services.md)
- * [Basic usage of the container](section2_container.md)
- * [Override Services](section3_override.md)
- * [Invoke](section4_invoke.md)
- * [Operator services](section5_operator.md)
- * [Autocall](section6_setters.md)
- * [Custom service definitions](section7_definitions.md)
- * [Debugging](section8_debug.md)
- * [Generic Services](section9_generic.md)
- * [Structure for large projects](section10_structure.md)
+ * [Services](section01_services.md)
+ * [Invoke](section02_invoke.md)
+ * [Polymorphic Services](section03_polymorphic.md)
+ * [Managing Containers](section04_container.md)
+ * [Operator services](section05_operator.md)
+ * [Autocall](section06_autocall.md)
+ * [Custom service definitions](section07_definitions.md)
+ * [Debugging](section08_debug.md)
+ * [Generic Services](section09_generic.md)
+ * [Structuring projects](section10_structure.md)

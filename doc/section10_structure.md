@@ -1,5 +1,5 @@
-Structuring your projects
-=========================
+Structuring projects
+====================
 
 Have a large codebase? Want to structure your code correctly and scale better?
 Here's some suggestions to keep usage of kangaru in your projects well organised!

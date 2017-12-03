@@ -26,7 +26,7 @@ namespace kgr {
  * The kangaru container class.
  * 
  * This class will construct services and share single instances for a given definition.
- * It is the class that parses and manage dependency graphs and call autocall functions.
+ * It is the class that parses and manage dependency graphs and calls autocall functions.
  */
 struct container final {
 private:
@@ -204,7 +204,7 @@ public:
 	 * The new container must exist within the lifetime of the original container.
 	 * 
 	 * It takes a predicate type as template argument.
-	 * The default predicate is kgr::All.
+	 * The default predicate is kgr::all.
 	 * 
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call fork() with a predicate as parameter.
@@ -255,7 +255,7 @@ public:
 	 * If the container you rebase from won't live long enough, consider using the merge function.
 	 * 
 	 * It takes a predicate type as template argument.
-	 * The default predicate is kgr::All.
+	 * The default predicate is kgr::all.
 	 * 
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call rebase() with a predicate as parameter.
@@ -284,7 +284,7 @@ public:
 	}
 	
 	/*
-	 * This function return true if the container contains the service T.
+	 * This function return true if the container contains the service T. Returns false otherwise.
 	 * T nust be a single service.
 	 */
 	template<typename T, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_single<T>> = 0>

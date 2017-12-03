@@ -12,7 +12,10 @@ bool result = process_inputs(
 );
 ```
 
-The idea behind this is you give the container a function to call, and the container will match parameters to services as automatically as possible, giving a nice shortcut for this kind of code. This is what `kgr::container::invoke` is all about. It recieves a function to call, and it call it with injected services.
+We want to make that kind of code less painful. 
+The idea behind this is you give the container a function to call, and the container will match
+parameters to services as automatically as possible, giving a nice shortcut for this kind of code.
+This is what `kgr::container::invoke` is all about. It recieves a function to call, and it call it with injected services.
 
 ## Specifying Definitions
 
@@ -32,7 +35,8 @@ Then you can use the container to call the function, specifying each needed serv
 bool result = container.invoke<KeyboardStateService, MessageBusService>(process_inputs);
 ```
 
-Of course, all additional parameters sent to `invoke`. We can change our function to send a `bool` parameter. Just like with constructors, additional parameters are forwarded after injected parameters:
+Of course, all additional parameters sent to `invoke`. We can change our function to send a `bool` parameter.
+Just like with constructors, additional parameters are forwarded after injected parameters:
 
 ```c++
 bool process_inputs_mod(KeyboardState& ks, MessageBus& mb, bool check_modifiers);
@@ -42,14 +46,16 @@ bool result = container.invoke<KeyboardStateService, MessageBusService>(process_
 
 ## Mapped Service
 
-While the utilities shown above is a great shortcut for calling `container.service` for each parameter, we can do even better. If we can tell the service how to match each parameter to a corresponding service, we could omit listing every needed definitions.
+While the utilities shown above is a great shortcut for calling `container.service` for each parameter, we can do even better.
+If we can tell the service how to match each parameter to a corresponding service, we could omit listing every needed definitions.
 
-We will associate a parameter to a specific service definition using the service map. The form of a mapping look like this:
+We will associate a parameter to a specific service definition using the service map.
+The form of a mapping look like this:
 
 ```
 auto service_map(<parameter>) -> <definition>;
 ```
-So for `KeyboardState` and `MessageBus` it will look like this:
+So for `KeyboardState` and `MessageBus` the mapping is done as follow:
 
 ```c++
 auto service_map(KeyboardState const&) -> KeyboardStateService;
@@ -65,7 +71,9 @@ bool result = container.invoke(process_inputs);
 bool result = container.invoke(process_inputs_mod, true);
 ```
 
-Neat! Now the container will match every injected parameters automatically. The great thing about this is that if one day our function signature change to take another injected parameter, the calling site won't need to get refactored. So for example, we change the function signature to this:
+Neat! Now the container will match every injected parameters automatically.
+The great thing about this is that if one day our function signature change to take another injected parameter,
+the calling site won't need to get refactored. So for example, we change the function signature to this:
 
 ```c++
 bool process_inputs(KeyboardState& ks, MessageBus& mb, Scene newScene);

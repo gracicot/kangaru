@@ -130,6 +130,88 @@ struct function_traits_helper<R(*)(Args...)> : base_non_member_function_traits<R
 template <typename R, typename... Args>
 struct function_traits_helper<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
 
+#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) const volatile && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args...) volatile && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile & noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) const volatile && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename Type, typename R, typename... Args>
+struct function_traits<R(Type::*)(Args..., ...) volatile && noexcept> : base_function_traits<Type, R, Args...> {};
+
+template <typename R, typename... Args>
+struct function_traits<R(*)(Args...) noexcept> : base_non_member_function_traits<R, Args...> {};
+
+template <typename R, typename... Args>
+struct function_traits<R(*)(Args..., ...) noexcept> : base_non_member_function_traits<R, Args...> {};
+
+#endif
+
 /*
  * For any type, extends function_traits_helper to extract signature of the function.
  */

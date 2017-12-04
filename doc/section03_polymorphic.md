@@ -20,21 +20,21 @@ Until now, our camera class was a regular object, not tied to a hierarchy. We wi
 
 ```c++
 struct Camera {
-	virtual void projection() {
-		std::cout << "default projection" << std::endl;
-	}
+    virtual void projection() {
+        std::cout << "default projection" << std::endl;
+    }
 };
 
 struct PerspectiveCamera : Camera {
-	void projection() override {
-		std::cout << "perspective projection" << std::endl;
-	}
+    void projection() override {
+        std::cout << "perspective projection" << std::endl;
+    }
 };
 
 struct OrthogonalCamera : Camera {
-	void projection() override {
-		std::cout << "orthogonal projection" << std::endl;
-	}
+    void projection() override {
+        std::cout << "orthogonal projection" << std::endl;
+    }
 };
 ```
 Now, we need to reflect that in kangaru service definitions. By default, the container won't assume you need polymorphic behaviour.
@@ -119,19 +119,19 @@ If the container cannot find the instance of an abstract service, it will throw 
 
 ```c++
 {
-	kgr::container container;
-	
-	// throws kgr::abstract_not_found
-	IFileManager& fm = container.service<IFileManagerService>();
+    kgr::container container;
+    
+    // throws kgr::abstract_not_found
+    IFileManager& fm = container.service<IFileManagerService>();
 }
 
 {
-	kgr::container container;
+    kgr::container container;
 
-	container.emplace<TreeFileManagerService>();
-	
-	// returns the TreeFileManager instance
-	IFileManager& fm = container.service<IFileManagerService>();
+    container.emplace<TreeFileManagerService>();
+    
+    // returns the TreeFileManager instance
+    IFileManager& fm = container.service<IFileManagerService>();
 }
 ```
 

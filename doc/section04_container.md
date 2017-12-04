@@ -50,17 +50,17 @@ kgr::container container1;
 container1.emplace<SingleService1>();
 
 {
-	auto container2 = container1.fork();
-	
-	container1.emplace<SingleService2>();
-	container2.emplace<SingleService2>();
-	container2.emplace<SingleService3>();
-	
-	// At that point, both containers have thier own SingleService2 instance.
-	// Only container2 has SingleService3
-	// container1 is owner of SingleService1, and container2 observes it.
-	
-	container1.merge(std::move(container2));
+    auto container2 = container1.fork();
+    
+    container1.emplace<SingleService2>();
+    container2.emplace<SingleService2>();
+    container2.emplace<SingleService3>();
+    
+    // At that point, both containers have thier own SingleService2 instance.
+    // Only container2 has SingleService3
+    // container1 is owner of SingleService1, and container2 observes it.
+    
+    container1.merge(std::move(container2));
 }
 
 // At that point, no services are deleted yet.

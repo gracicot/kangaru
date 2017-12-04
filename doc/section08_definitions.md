@@ -56,7 +56,7 @@ struct FileManagerService {
     FileManagerService(kgr::in_place_t, Window& w, Camera c) : instance{w, std::move(c)} {}
     
     static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs)
-	    -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>>
+        -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>>
     {
         return kgr::inject(ws.forward(), cs.forward());
     }

@@ -105,15 +105,34 @@ Look at these two cases:
 
 As we can see, when using polymorphic service, the order of insertion into the container can change behavior.
 
-## Abstract Service
+## Final Services
 
-If you want to make a service definition for an abstract type, or simply make a service only instanciable using derived services, you may inherit from `kgr::abstract_service<T>`:
+Overriding a service is useful but sometimes, you have a polymorphic service that is supposed to be the leaf of the hierarchy.
+When that happen, you wnt to prevent further overriding of your service. This can be done by tagging your definition as final.
+
+To do that, simply inherit from `kgr::final`:
 
 ```c++
-struct IFileManagerService : kgr::abstract_service<IFileManager>;
+struct PerspectiveCameraService : kgr::single_service<PerspectiveCamera>, kgr::overrides<CameraService>, kgr::final {};
 ```
 
-Abstract services are service that cannot be constructed by themselves, to have in instance of it we must first create an instance of a service that overrides it.
+Any attempt to override that service will result in a compile time error.
+
+## Abstract Service
+
+If you want to make a service definition for an abstract type, or simply make a service only instanciable using derived services, you may inherit from `kgr::abstract_service`.
+
+Let's say we don't want a default camera anymore, and instead want `Camera` to be an interface:
+
+```c++
+struct Camera {
+    virtual void projection() = 0;
+};
+
+struct CameraService : kgr::abstract_service<Camera>;
+```
+
+Abstract services are service that cannot be constructed by themselves, to have an instance of it we must first create an instance of a service that overrides it.
 
 If the container cannot find the instance of an abstract service, it will throw a `kgr::abstract_not_found`.
 
@@ -122,16 +141,16 @@ If the container cannot find the instance of an abstract service, it will throw 
     kgr::container container;
     
     // throws kgr::abstract_not_found
-    IFileManager& fm = container.service<IFileManagerService>();
+    Camera& camera = container.service<CameraService>();
 }
 
 {
     kgr::container container;
 
-    container.emplace<TreeFileManagerService>();
+    container.emplace<PerspectiveCameraService>();
     
-    // returns the TreeFileManager instance
-    IFileManager& fm = container.service<IFileManagerService>();
+    // returns the PerspectiveCamera instance
+    Camera& camera = container.service<CameraService>();
 }
 ```
 
@@ -141,12 +160,12 @@ If we cannot afford to throw, and yet want to use abstract services, we can defi
 When asking the container for an abstract service and no instance is found, it will fallback to the default service instead of throwing.
 
 ```c++
-struct IFileManagerService : kgr::abstract_service<IFileManager>, kgr::defaults_to<TreeFileManagerService> {};
+struct CameraService : kgr::abstract_service<CameraService>, kgr::defaults_to<PerspectiveCameraService> {};
 
 kgr::container container;
 
-// Will instantiate a TreeFileManager and return a IFileManager.
-IFileManager& fileManager = container.service<IFileManagerService>();
+// Will instantiate a PerspectiveCamera and return it as our camera.
+Camera& camera = container.service<CameraService>();
 ```
 
 [Next chapter: Managing Containers](section04_container.md)

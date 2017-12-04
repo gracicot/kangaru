@@ -65,7 +65,7 @@ struct FlourBagService {
 	FlourBagService(kgr::in_place_t, Args&&... args) : flour{std::forward<Args>(args)...} {}
 	
 	// construct method. Receives dependencies of a FlourBag. In this case none.
-	static auto construct() -> decltype(kgr::inject(std::unique_ptr<FlourBag>{})) {
+	static auto construct() -> kgr::inject_result<std::unique_ptr<FlourBag>> {
 		return kgr::inject(std::unique_ptr<FlourBag>{new FlourBag});
 	}
 	
@@ -85,7 +85,7 @@ struct OvenService : kgr::single {
 	OvenService(kgr::in_place_t, Args&&... args) : oven{new Oven{std::forward<Args>(args)...}} {}
 	
 	// construct method. Receives dependencies of a Oven. In this case none.
-	static auto construct() -> decltype(kgr::inject()) {
+	static auto construct() -> kgr::inject_result<> {
 		return kgr::inject();
 	}
 	
@@ -105,7 +105,7 @@ struct BakerService : kgr::single {
 	BakerService(kgr::in_place_t, Args&&... args) : baker{std::make_shared<Baker>(std::forward<Args>(args)...)} {}
 	
 	// construct method. Receives dependencies of a Baker.
-	static auto construct(kgr::inject_t<FlourBagService> flourBag) -> decltype(kgr::inject(flourBag.forward())) {
+	static auto construct(kgr::inject_t<FlourBagService> flourBag) -> kgr::inject_result<kgr::service_type<FlourBagService>> {
 		// dependencies are injected with the forward method.
 		return kgr::inject(flourBag.forward());
 	}
@@ -127,7 +127,7 @@ struct BakeryService {
 	
 	// construct method. Receives dependencies of a Baker.
 	// We have to receive the OvenService has a reference because it's single.
-	static auto construct(kgr::inject_t<OvenService> oven) -> decltype(kgr::inject(oven.forward())) {
+	static auto construct(kgr::inject_t<OvenService> oven) -> kgr::inject_result<kgr::service_type<OvenService>> {
 		// dependencies are injected with the forward method.
 		return kgr::inject(oven.forward());
 	}

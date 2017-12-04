@@ -1,139 +1,164 @@
 Custom Service Definitions
 ==========================
 
-Previously, each time we did a service definition, we extended the `kgr::Service` or the `kgr::SingleService` structs. But it is important to note that we are not limited to that.
+Previously, each time we did a service definition, we extended the `kgr::service` or the `kgr::single_service` classes.
+But it is important to note that we are not limited to that.
 
-Writing a service definition is pretty easy. You only need to define three functions for it to work:
+Writing a service definition is pretty easy. We only need to define three functions for it to work with the container:
 
  * `construct`
  * `forward`
  * A constructor that takes at least `kgr::in_place_t` as parameter.
 
-The `construct` function is static and returns the arguments that should be used to construct your service definition. It can take any other service definition as a parameter.
-This is where dependencies are resolved. This function must return values using the `kgr::inject` function. The return type is a special tuple made for the container to handle your arguments correctly.
+The `construct` function is static and returns the arguments that should be used to construct your service definition.
+It can take any other service definition as a parameter.
+This is where dependencies are resolved.
+This function must return values using the `kgr::inject` function.
+The return type is a special tuple made for the container to handle your arguments correctly.
 
-The `forward` function takes no parameters and returns the service. The return type of this function defines how your service should be injected. Note that this function can invalidate the service definition in the case of a non single service.
+The `forward` function takes no parameters and returns the service.
+The return type of this function defines how your service should be injected.
+Note that this function can invalidate the service definition in the case of a non single service.
 
-The container will instanciate your struct given these tools. However, it must call a constructor. The container will call a constructor that takes a `kgr::in_place_t` and the variables returned by `construct`.
+The container will instanciate your definition given these tools.
+However, it must call a constructor. The container will call a constructor that takes a `kgr::in_place_t`
+and the variables returned by `construct`.
 
 Normally, your service definition should contain your service.
 
-Please note that the following example will use C++14 for the sake of simplicity and readability. Kangaru only require C++11 to work.
 A basic service definition looks like this:
 
 ```c++
 struct FileManagerService {
-    FileManagerService(kgr::in_place_t) : fm{} {}
+    FileManagerService(kgr::in_place_t) : instance{} {}
 
-    static decltype(auto) construct() {
+    static auto construct() -> inject_result<> {
         return kgr::inject();
     }
     
+    // return as move, invalidating the service definition is okay since it's not single and won't be reused.
     FileManager forward() {
-        return std::move(fm);
+        return std::move(instance);
     }
     
 private:
-    FileManager fm;
+    FileManager instance;
 };
 ```
 
 In this case, `construct` injects nothing to our constructor.
 
-If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters. To add a parameter that must be injected, you must use the wrapper class `kgr::Inject<Definition>`:
+If the class `FileManager` has dependencies, you can add them in the `construct` function as parameters.
+To add a parameter that must be injected, you must use the wrapper class `kgr::inject_t<Definition>`:
 
 ```c++
 struct FileManagerService {
-    FileManagerService(kgr::in_place_t, Notification& n, ClownManster cm) : fm{n, std::move(cm)} {}
+    FileManagerService(kgr::in_place_t, Window& w, Camera c) : instance{w, std::move(c)} {}
     
-    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms) {
-        return kgr::inject(ns.forward(), cms.forward());
+    static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs)
+	    -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>>
+    {
+        return kgr::inject(ws.forward(), cs.forward());
     }
     
-    // return as move, invalidating the service definition is okay.
     FileManager forward() {
-        return std::move(fm);
+        return std::move(instance);
     }
     
 private:
-    FileManager fm;
+    FileManager instance;
 };
 ```
     
-The `kgr::Inject<Definition>` will not only tell the container that this arguments must be injected, but ensure that singles are not copied and overrides are working correctly.
+The `kgr::inject_t<Definition>` will not only tell the container that this arguments must be injected,
+but ensure that singles are not copied and overrides are working correctly.
 The container will call `construct` with the right set of parameters, automatically.
 The `kgr::inject` function will forward the arguments to be sent to your constructor that receive a `kgr::in_place_t`.
 
+The return type `kgr::inject_result` is an alias to the return type of the `kgr::inject` function.
+Note that if you're using C++14 and later, you can use return type deduction `auto`, since `kgr::inject` always return a value.
+
 #### Additional parameters
 
-Sometimes, a type requires a parameter like a double or a string. The `construct` function can take as many additional parameters as you want. Just make the construct function a template instead:
+You may have a service that requires a parameters to be sent fwom the call site.
+The `construct` function can take as many additional parameters as you want.
+In fact, the forwarded parameters sent to `container.service<T>(...)` are directly sent to the construct function.
 
-For this service definition:
+To be able to forward any parameter from the `container.service<T>(...)` to our constructor, we can simply define the construct as a template function:
 
 ```c++
 struct FileManagerService {
     template<typename... Args>
-    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    FileManagerService(kgr::in_place_t, Args&&... args) : instance{std::forward<Args>(args)...} {}
     
     template<typename... Args>
-    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args) {
-        return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
+    static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs, Args&&... args)
+        -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>, Args...>
+    {
+        return kgr::inject(ws.forward(), cs.forward(), std::forward<Args>(args)...);
     }
     
-    // return as move, invalidating the service definition is okay.
     FileManager forward() {
-        return std::move(fm);
+        return std::move(instance);
     }
     
 private:
-    FileManager fm;
+    FileManager instance;
 };
 ```
 
-You have to call it that way:
+Then, we can send additional parameters to the service function:
 
 ```c++
-auto fm = container.service<FileManagerService>("potatos", 34);
+auto fm = container.service<FileManagerService>("another parameter", 34);
 ```
 
 ### Singles
 
-There are two steps required in order to make `FileManagerService` single. First, we need to make our struct inherit from `kgr::Single`. Secondly, we also need to adapt the `forward` function by returning a reference or a copy in order to not invalidate the contained service.
+There are two steps required in order to make `FileManagerService` single.
 
-Note: single services can forward copies too, but you rarely want to do that. Returning a reference or pointer is a much better idea when it comes to single service, what would be the point of a single instance if you copy the service everywhere?
+First, we need to make our struct inherit from `kgr::single`.
+That class is simply a tag that tell the container that our definition is single.
 
-So let's make our sevice a Single:
+Secondly, we also need to adapt the `forward` function by returning a reference or a copy
+in order to not invalidate the contained service, since the definition may be reused.
+
+So let's make our sevice a single:
 
 ```c++
-struct FileManagerService : Single {
+struct FileManagerService : kgr::single {
     template<typename... Args>
-    FileManagerService(kgr::in_place_t, Args&&... args) : fm{std::forward<Args>(args)...} {}
+    FileManagerService(kgr::in_place_t, Args&&... args) : instance{std::forward<Args>(args)...} {}
     
     template<typename... Args>
-    static decltype(auto) construct(kgr::Inject<NotificationService> ns, kgr::Inject<ClownMasterService> cms, Args&&.. args) {
-        return kgr::inject(ns.forward(), cms.forward(), std::forward<Args>(args)...);
+    static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs, Args&&... args)
+        -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>, Args...>
+    {
+        return kgr::inject(ws.forward(), cs.forward(), std::forward<Args>(args)...);
     }
     
-    // return as pointer because we want. Must not invalidate the service because it's a single.
+    // return as pointer because we want our service to be injected as a pointer into other services
     FileManager* forward() {
-        return &fm;
+        return &instance;
     }
     
 private:
-    FileManager fm;
+    FileManager instance;
 };
 ```
 
 ### Abstract Services
 
-Abstract services are the simplest ones to implement. They have only one pure virtual method called `forward`:
+Abstract services are the simplest ones to implement. They have only one method called `forward`, which is undefined, and they inherits from `kgr::abstract`:
 
 ```c++
-struct IFileManagerService {
-    virtual IFileManager& forward() = 0;
+struct IFileManagerService : kgr::abstract {
+    IFileManager& forward();
 }
 ```
 
-Abstract services are implicitly single.
+You can see many example of custom service definition in example5
+
+Abstract services are implicitly single and polymorphic.
 
 [Next chapter: Advanced Mapping](section09_mapping.md)

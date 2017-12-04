@@ -29,7 +29,7 @@ The `kgr::autocall` type is a list of method to call in your class. More specifi
 Let's see an example of it's usage. So we have this class:
 
 ```c++
-struct MessageDispatcher {
+struct MessageBus {
     void init() {
         max_delay = 42;
     }
@@ -42,14 +42,14 @@ private:
 If we want `init()` to be called at the service's construction, we need our definition to extends `kgr::autocall`:
 
 ```c++
-struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::AutoCall<METHOD(&MessageDispatcher::init)> {};
+struct MessageBusService : kgr::service<MessageBus>, kgr::AutoCall<METHOD(&MessageBus::init)> {};
 ```
 
 Great! Now creating the service will call that function:
 
 ```c++
-// MessageDispatcher::init is called before returning
-MessageDispatcher md = container.service<MessageDispatcherService>();
+// MessageBus::init is called before returning
+MessageBus md = container.service<MessageBusService>();
 ```
 
 ## Parameters
@@ -61,7 +61,7 @@ For example, we need `max_delay` to be calculated with values that comes from ot
 So here's our class according to the new need:
 
 ```c++
-struct MessageDispatcher {
+struct MessageBus {
     void init(Window& window) {
         max_delay = 3 * window.get_framerate();
     }
@@ -77,7 +77,7 @@ That's it! You can add any number of parameter as you wish, the definition will 
 
 As said before, `kgr::autocall` is a list of method to call. You can have as many method to call as you wish
 ```c++
-struct MessageDispatcher {
+struct MessageBus {
     void init(Window& window, Camera& camera) {
          max_delay = 3 * window.get_framerate();
     }
@@ -91,9 +91,9 @@ private:
     int max_delay;
 };
 
-struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
-    METHOD(&MessageDispatcher::init),
-    METHOD(&MessageDispatcher::set_scene)
+struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
+    METHOD(&MessageBus::init),
+    METHOD(&MessageBus::set_scene)
 > {};
 ```
 
@@ -101,16 +101,16 @@ The functions are called in the order that are listed in `kgr::autocall`.
 
 ## Specifying The Service Map
 
-In previous examples, we used the default service map. If you deal with advanced mapping, you might want to specity which map to use.
+In previous examples, we used the default service map. If you deal with advanced mapping, you might want to specity which maps to use.
 You can set the default map to use in the first parameter of autocall:
 
 ```c++
 struct MyMap;
 
-struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
-    kgr::map<MyMap>,
-    METHOD(&MessageDispatcher::init),
-    METHOD(&MessageDispatcher::set_scene)
+struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
+    kgr::map<MyMap1, MyMap2>,
+    METHOD(&MessageBus::init),
+    METHOD(&MessageBus::set_scene)
 > {};
 ```
 
@@ -119,9 +119,9 @@ struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall
 Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::invoke` class:
 
 ```c++
-struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
-    kgr::invoke<METHOD(&MessageDispatcher::init), WindowService, CameraService>,
-    METHOD(&MessageDispatcher::set_scene)
+struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
+    kgr::invoke<METHOD(&MessageBus::init), WindowService, CameraService>,
+    METHOD(&MessageBus::set_scene)
 > {};
 ```
 

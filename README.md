@@ -14,7 +14,7 @@ The name kangaru comes from the container's feature to inject itself into a serv
 
 Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
 
-Here's a quick demo to show a basic usage of this library:
+Here's a quick demo to show usage of this library:
 ```c++
 #include <kangaru/kangaru.hpp>
 #include <iostream>

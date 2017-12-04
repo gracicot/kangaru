@@ -106,4 +106,4 @@ A "include kangaru" header file should look like this:
 This will add a common point between your project and kangaru.
 Feel free to copy this header into your project. Just replace the macro name to fit your needs and you're ready to hack!
 
-[Next chapter: API Reference](section12_api_reference.md)
+[Next chapter: API Reference](section13_api_reference.md)

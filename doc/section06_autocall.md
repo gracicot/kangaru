@@ -1,106 +1,127 @@
-AutoCall
+Autocall
 ========
 
-AutoCall is a way to automatically call a function of the constructed service right after the construction. This feature can also be used to perform injection using setters.
+Sometime only constructing a service is not enough. Some classes needs configuration, or some function to be called initially, or even call some setters.
 
-Sadly, since [N4469](http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4469.html) has still not been accepted yet, we recommend you to declare a macros similar to this one:
+The autocall feature is doing exacly that. It's a list of function to call upon the construction of a service.
+The container will invoke all function in that list.
 
+First of all, we recommend defining a shortcut for using `kgr::invoke`. Of you have C++17 enabled, you can define that shortcut like that:
+```c++
+template<auto m>
+using method = kgr::method<decltype(m), m>;
+```
+
+Alternatively, if you only have C++11 or C++14 on hand, you can use a macro:
 ```c++
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
 ```
 
 Of course, you are free to name them as you want.
-Once your macros are declared, it's time for the interesting things!
+One your shotcut is declared, let's get started!
 
-## The `AutoCall` type
+## Enabling Autocall
 
-Any service can extends the class `kgr::AutoCall`. This class enable the needed metadata for the container to call the methods you want to be called.
+Any service can extends the class `kgr::autocall`. This class enable the needed metadata for the container to call the methods you want to be called.
 
-The `kgr::AutoCall` struct has the service map as it's first parameter, and has a parameter pack that is the list of methods you want the container to call when the service is constructed.
+The `kgr::autocall` type is a list of method to call in your class. More specifically, a list of `kgr::method`.
 
 Let's see an example of it's usage. So we have this class:
 
 ```c++
-struct ClownMaster {
+struct MessageDispatcher {
     void init() {
-        n = 42;
+        max_delay = 42;
     }
     
 private:
-    int n = 0;
+    int max_delay;
 };
 ```
     
-If we want `init()` to be called at the service's construction, we need our definition to extends autocall:
+If we want `init()` to be called at the service's construction, we need our definition to extends `kgr::autocall`:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap, METHOD(&ClownMaster::init)> {};
+struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::AutoCall<METHOD(&MessageDispatcher::init)> {};
 ```
-    
-But wait, there's more!
 
-What if the needed value of `n` comes from another service?
-
-Here comes the fancy thing. Method called by `kgr::AutoCall` can receive dependencies. So here's our class according to the new need:
+Great! Now creating the service will call that function:
 
 ```c++
-struct ClownMaster {
-    void init(Shop& s) {
-        n = s.countItems();
+// MessageDispatcher::init is called before returning
+MessageDispatcher md = container.service<MessageDispatcherService>();
+```
+
+## Parameters
+
+Here comes the fancy thing. Functions listed in `kgr::autocall` can receive other services.
+In fact, the container will call these functions using the `invoke` function. So you can receive any other services.
+
+For example, we need `max_delay` to be calculated with values that comes from other service.
+So here's our class according to the new need:
+
+```c++
+struct MessageDispatcher {
+    void init(Window& window) {
+        max_delay = 3 * window.get_framerate();
     }
     
 private:
-    int n = 0;
+    int max_delay;
 };
 ```
 
 That's it! You can add any number of parameter as you wish, the definition will stay the same and the method will receive what you ask for.
-We can have multiple method call with multiple parameter:
 
+## Multiple methods
+
+As said before, `kgr::autocall` is a list of method to call. You can have as many method to call as you wish
 ```c++
-struct ClownMaster {
-    void init(Shop& s, FileManager& theFm) {
-         n = s.countItems() + fm.countFiles();
+struct MessageDispatcher {
+    void init(Window& window, Camera& camera) {
+         max_delay = 3 * window.get_framerate();
     }
     
-    void setFileManager(FileManager& theFm) {
-        fm = &theFm;
+    void set_scene(Scene& scene) {
+        this->scene = &scene;
     }
     
 private:
-    FileManager* fm;
-    int n = 0;
+    Scene* scene;
+    int max_delay;
 };
-```
-    
-Now we want to add `setFileManager` to the list of method to call:
 
-```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap,
-    METHOD(&ClownMaster::init),
-    METHOD(&ClownMaster::setFileManager)
+struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
+    METHOD(&MessageDispatcher::init),
+    METHOD(&MessageDispatcher::set_scene)
 > {};
 ```
 
-The method are called in the order that are listed in `AutoCall`.
+The functions are called in the order that are listed in `kgr::autocall`.
 
-### Without the service map
+## Specifying The Service Map
 
-Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::Invoke` class:
+In previous examples, we used the default service map. If you deal with advanced mapping, you might want to specity which map to use.
+You can set the default map to use in the first parameter of autocall:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCall<kgr::AdlMap,
-    kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-    METHOD(&ClownMaster::setFileManager)
+struct MyMap;
+
+struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
+    kgr::map<MyMap>,
+    METHOD(&MessageDispatcher::init),
+    METHOD(&MessageDispatcher::set_scene)
 > {};
 ```
 
-If you don't want to use the service map at all, you can exdends `kgr::AutoCallNoMap` instead:
+## Specifying Services
+
+Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::invoke` class:
 
 ```c++
-struct ClownMasterService : kgr::Service<ClownMaster>, kgr::AutoCallNoMap<
-    kgr::Invoke<METHOD(&ClownMaster::init), ShopService, FileManagerService>,
-    kgr::Invoke<METHOD(&ClownMaster::setFileManager), FileManagerService>
+struct MessageDispatcherService : kgr::service<MessageDispatcher>, kgr::autocall<
+    kgr::invoke<METHOD(&MessageDispatcher::init), WindowService, CameraService>,
+    METHOD(&MessageDispatcher::set_scene)
 > {};
 ```
 

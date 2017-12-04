@@ -65,4 +65,4 @@ As you can see, the compiler is effectively stating that the service is not cons
 If `kgr::debug::service<T>(Args...)` Detects no error, it will output `"No known error detected."` as a static assert.
 If you have found a case whene it does not compile and yet no error is detected, just let me know and report a bug in our issue tracker.
 
-[Next chapter: Generic Services](section10_generic.md)
+[Next chapter: Generic Services](section11_generic.md)

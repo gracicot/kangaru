@@ -119,7 +119,7 @@ They are created one time at the first call to `service()`, and then saved insid
 The container will then reuse the instance for all the next injections.
 
 Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwading is disabled.
-We'll se how to counter this limitation in the section about the container.
+We'll se how to counter this limitation in the section about [supplied services](section05_supplied.md).
 
 Now, let's say we want only one scene in our application. We want the same scene to be injected and returned by the container.
 We will do that by inheriting from the `kgr::single_service` definition.

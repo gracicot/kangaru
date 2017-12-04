@@ -4,7 +4,8 @@ Autocall
 Sometime only constructing a service is not enough. Some classes needs configuration, or some function to be called initially, or even call some setters.
 
 The autocall feature is doing exacly that. It's a list of function to call upon the construction of a service.
-The container will invoke all function in that list.
+The container will invoke all function in that list. You can use this feature to perform injection through setters.
+
 
 First of all, we recommend defining a shortcut for using `kgr::invoke`. Of you have C++17 enabled, you can define that shortcut like that:
 ```c++

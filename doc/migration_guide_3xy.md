@@ -158,7 +158,7 @@ auto service_map(Class, kgr::map<MyMap>) -> ClassService;
 using MappedService = kgr::mapped_service_t<Class, MyMap>;
 ```
 
-Note that of the default map is used, we can omit the second parameter: `kgr::mapped_service_t<Class>`
+Note that if the default map is used, we can omit the second parameter: `kgr::mapped_service_t<Class>`
 
 ## Generic Service
 

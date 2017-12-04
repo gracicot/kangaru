@@ -35,8 +35,8 @@ Then you can use the container to call the function, specifying each needed serv
 bool result = container.invoke<KeyboardStateService, MessageBusService>(process_inputs);
 ```
 
-Of course, all additional parameters sent to `invoke`. We can change our function to send a `bool` parameter.
-Just like with constructors, additional parameters are forwarded after injected parameters:
+Of course, all additional parameters sent to `invoke` are forwarded to the invoked function. We can change our function to send a `bool` parameter.
+Just like with constructors, additional parameters are forwarded only after injected parameters:
 
 ```c++
 bool process_inputs_mod(KeyboardState& ks, MessageBus& mb, bool check_modifiers);

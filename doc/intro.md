@@ -46,7 +46,7 @@ Take note that you will need to add the library to your include paths.
 All declarations are made in the namespace `kgr`. Additionnaly, the namespace `kgr` contains the namespace `detail`, which itself contains implementation details.
 Note that the `detail` namespace is not considered as a part of the API and its content might be subject to changes.
 
-### Concepts
+### Services, Definition, Oh My!
 
 In this documentation, many classes will be refered as services or service definitions.
 

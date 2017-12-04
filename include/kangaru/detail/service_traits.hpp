@@ -315,6 +315,37 @@ public:
 template<typename T>
 using is_override_services = typename is_override_services_helper<T>::type;
 
+template<typename T>
+struct is_override_not_final_helper {
+private:
+	// This is a workaround for msvc. Expansion in very complex expression
+	// leaves the compiler without clues about what's going on.
+	template<std::size_t I, typename U>
+	struct expander {
+		using type = is_final_service<meta_list_element_t<I, parent_types<U>>>;
+	};
+	
+	template<typename...>
+	static std::false_type test(...);
+	
+	template<typename U, std::size_t... S, int_t<enable_if_t<!expander<S, U>::type::value>...> = 0>
+	static std::true_type test(seq<S...>);
+	
+public:
+	using type = decltype(test<T>(tuple_seq<parent_types<T>>{}));
+};
+
+/*
+ * Alias for is_override_virtual_helper
+ */
+template<typename T>
+using is_override_not_final = typename is_override_not_final_helper<T>::type;
+
+template<typename T>
+using is_abstract_not_final = std::integral_constant<bool,
+	!is_abstract_service<T>::value || !is_final_service<T>::value
+>;
+
 template<typename T, typename... Args>
 using is_single_no_args = std::integral_constant<bool,
 	!is_single<T>::value || meta_list_empty<meta_list<Args...>>::value
@@ -372,7 +403,9 @@ using service_check = std::integral_constant<bool,
 	is_construct_function_callable<T, Args...>::value &&
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
-	is_override_services<T>::value
+	is_override_services<T>::value &&
+	is_override_not_final<T>::value &&
+	is_abstract_not_final<T>::value
 >;
 
 template<typename T, typename... Args>
@@ -382,7 +415,9 @@ using dependency_check = std::integral_constant<bool,
 	dependency_trait<is_construct_function_callable, T, Args...>::value &&
 	dependency_trait<is_default_service_valid, T, Args...>::value &&
 	dependency_trait<is_override_convertible, T, Args...>::value &&
-	dependency_trait<is_override_services, T, Args...>::value
+	dependency_trait<is_override_services, T, Args...>::value &&
+	dependency_trait<is_override_not_final, T, Args...>::value &&
+	dependency_trait<is_abstract_not_final, T, Args...>::value
 >;
 
 template<template<typename> class Map, typename T, typename P, typename... Args>

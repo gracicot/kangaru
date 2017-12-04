@@ -323,6 +323,10 @@ private:
 			"the override service must be the type instance_ptr<detail::BaseInjected<Override>>"
 		);
 		
+		static_assert(!detail::is_final_service<Override>::value,
+			"A final service cannot be overriden"
+		);
+		
 		_services[type_id<Override>] = overrideService.get();
 		_instances.emplace_back(std::move(overrideService));
 		

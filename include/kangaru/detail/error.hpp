@@ -32,6 +32,52 @@ struct ServiceError {
 	
 	template<typename Arg, typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		!is_override_not_final<Service>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"An overriden service is marked as final, thus this service cannot override it."
+			"The overriden service should be polymorphic or abtrant and not be final."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		!is_override_not_final<Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"An overriden service is marked as final, thus this service cannot override it."
+			"The overriden service should be polymorphic or abtrant and not be final."
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		is_override_not_final<Service>::value &&
+		!dependency_trait<is_override_not_final, Service, Arg, Args...>::value, int> = 0>
+	ServiceError(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"A dependency is overriding a final service."
+			"Final services cannot be overriden, check the overrides of this service's dependencies"
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		is_override_convertible<Service>::value &&
+		is_override_not_final<Service>::value &&
+		!dependency_trait<is_override_not_final, Service>::value, int> = 0>
+	ServiceError() {
+		static_assert(false_t<Service>::value,
+			"A dependency is overriding a final service."
+			"Final services cannot be overriden, check the overrides of this service's dependencies"
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
 		!is_autocall_valid<Service>::value, int> = 0>
 	ServiceError(Arg&&) {
 		static_assert(false_t<Service>::value,

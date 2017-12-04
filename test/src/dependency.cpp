@@ -85,7 +85,7 @@ TEST_CASE("Injected arguments can be single and non single", "[dependency]") {
 		Service3 service;
 	};
 	
-	(void) kgr::container {}.service<Definition3>();
+	(void) kgr::container{}.service<Definition3>();
 	
 	REQUIRE(constructor_called);
 }
@@ -130,7 +130,7 @@ TEST_CASE("Container injects arguments recursively", "[dependency]") {
 	struct Definition4 : kgr::service<Service4, kgr::dependency<Definition3Two>> {};
 	
 	SECTION("Injected service can have dependencies") {
-		(void) kgr::container {}.service<Definition3One>();
+		(void) kgr::container{}.service<Definition3One>();
 		
 		CHECK(service1_constructed);
 		CHECK(service2_constructed);
@@ -140,7 +140,7 @@ TEST_CASE("Container injects arguments recursively", "[dependency]") {
 	}
 	
 	SECTION("Injected service can have multiple dependencies") {
-		(void) kgr::container {}.service<Definition4>();
+		(void) kgr::container{}.service<Definition4>();
 		
 		CHECK(service1_constructed);
 		CHECK(service2_constructed);

@@ -163,7 +163,7 @@ Note that if the default map is used, we can omit the second parameter: `kgr::ma
 ## Generic Service
 
 If you have defined generic services and used `kgr::GenericService`, you code will break.
-This is because `kgr::GenericService` has became much simpler, and don't need CRTP anymore.
+This is because the generic service has became much simpler, and don't need CRTP anymore.
 
 **Before:**
 ```c++
@@ -178,7 +178,7 @@ struct MyGenericService<T, kgr::Dependency<Deps...>> : kgr::GenericService<MyGen
 
 **After:**
 ```c++
-template<typename, typename = kgr::Dependency<>>
+template<typename, typename = kgr::dependency<>>
 struct MyGenericService;
 
 template<typename T, typename... Deps>

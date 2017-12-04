@@ -84,5 +84,15 @@ kgr::Container c;
 // Will instantiate a TreeFileManager and return a IFileManager.
 auto& fileManager = c.service<IFileManagerService>();
 ```
- 
+
+### Final Services
+
+Any Service can be marked as final to avoid being overriden. To make a service final, simply inherit from the `kgr::Final` tag:
+
+```c++
+struct FileManagerService : kgr::SingleService<FileManager>, kgr::Overrides<IFileManagerService>, kgr::Final {};
+```
+
+Tempting to override that service will result in a compile time error.
+
 [Next chapter: Invoke](section4_invoke.md)

@@ -108,7 +108,7 @@ struct service_error {
 		!is_override_not_final<Service>::value, int> = 0>
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
-			"An overriden service is marked as final, thus this service annot override it."
+			"An overriden service is marked as final, thus this service cannot override it."
 			"The overriden service should be polymorphic or abtrant and not be final."
 		);
 	}
@@ -120,7 +120,7 @@ struct service_error {
 		!is_override_not_final<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
-			"An overriden service is marked as final, thus this service annot override it."
+			"An overriden service is marked as final, thus this service cannot override it."
 			"The overriden service should be polymorphic or abtrant and not be final."
 		);
 	}

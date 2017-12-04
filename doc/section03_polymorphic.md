@@ -143,10 +143,10 @@ When asking the container for an abstract service and no instance is found, it w
 ```c++
 struct IFileManagerService : kgr::abstract_service<IFileManager>, kgr::defaults_to<TreeFileManagerService> {};
 
-kgr::container c;
+kgr::container container;
 
 // Will instantiate a TreeFileManager and return a IFileManager.
-IFileManager& fileManager = c.service<IFileManagerService>();
+IFileManager& fileManager = container.service<IFileManagerService>();
 ```
 
 [Next chapter: Managing Containers](section04_container.md)

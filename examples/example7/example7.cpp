@@ -5,128 +5,114 @@
 
 /**
  * This example explains advanced use of kangaru and it's components.
- * It covers invoke and autocall (injection by setters) through service map.
+ * It covers invoker, lazy and generator.
  */
 
-// This is a utility macro to workaround the lack of type inference for non-type template parameter
-// Will not be needed once this library upgrade to C++17
-#define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
-
-using std::string;
 using std::cout;
 using std::endl;
 
-struct Keyboard {
-	string switchColor;
+struct Sugar {
+	int quantity = 100;
 };
 
-struct Monitor {
-	double size;
-};
-
-struct Mouse {
-	int nbButton;
-};
-
-struct Speakers {
-	int maxDb;
-};
-
-struct Computer {
-	Computer(Keyboard& myKeyboard) : keyboard{myKeyboard} {}
-	
-	void setAccessories(Mouse& aMouse, Speakers& someSpeakers) {
-		mouse = &aMouse;
-		speakers = &someSpeakers;
+// Here we are declaring two candy types
+struct Caramel {
+	// we need sugar
+	Caramel(Sugar& s) {
+		s.quantity -= 10;
+		cout << "Caramel made" << endl;
 	}
 	
-	void setMonitor(Monitor& aMonitor) {
-		monitor = &aMonitor;
+	void eat() {
+		cout << "yummy! Caramel!" << endl;
+	}
+};
+
+struct GummyBear {
+	GummyBear() {
+		cout << "GummyBear made" << endl;
 	}
 	
-	void printGear() const {
-		cout << "This computer has a keyboard with " << keyboard.switchColor << " switches. " << endl;
-		
-		if (monitor) {
-			cout << "    It got a " << monitor->size << " inch monitor." << endl;
-		}
-		
-		if (mouse) {
-			cout << "    It got a mouse with " << mouse->nbButton << " buttons." << endl;
-		}
-		
-		if (speakers) {
-			cout << "    It got speakers with a maximum of " << speakers->maxDb << " decibels." << endl;
-		}
-		
-		cout << endl;
+	void eat() {
+		cout << "yummy! GummyBear!" << endl;
+	}
+};
+
+// Then, we are declaring two service definition for them
+struct SugarService : kgr::single_service<Sugar> {};
+struct CaramelService : kgr::service<Caramel, kgr::dependency<SugarService>> {};
+struct GummyBearService : kgr::service<GummyBear> {};
+
+// We map our services
+auto service_map(Caramel) -> CaramelService;
+auto service_map(GummyBear) -> GummyBearService;
+
+// CandyFactory, making candies and recepies
+struct CandyFactory {
+	CandyFactory(
+		kgr::generator<CaramelService> myCaramelGenerator,
+		kgr::generator<kgr::lazy_service<GummyBearService>> myGummyBearGenerator,
+		kgr::invoker myInvoker
+	) : caramelGenerator{myCaramelGenerator},
+		gummyBearGenerator{myGummyBearGenerator},
+		invoker{myInvoker} {}
+	
+	kgr::lazy<GummyBearService> makeGummyBear() {
+		// this line is making a new GummyBear with it's dependencies injected
+		return gummyBearGenerator();
+	}
+	
+	Caramel makeCaramel() {
+		// this line is making a new Caramel with it's dependencies injected
+		return caramelGenerator();
+	}
+	
+	template<typename T>
+	void mix(T function) {
+		// calls the function sent as parameter
+		invoker(function);
 	}
 	
 private:
-	Keyboard& keyboard;
-	Monitor* monitor = nullptr;
-	Mouse* mouse = nullptr;
-	Speakers* speakers = nullptr;
+	kgr::generator<CaramelService> caramelGenerator;
+	kgr::generator<kgr::lazy_service<GummyBearService>> gummyBearGenerator;
+	kgr::invoker invoker;
 };
 
-// service definitions
-struct KeyboardService : kgr::single_service<Keyboard> {};
-struct MonitorService : kgr::single_service<Monitor> {};
-struct MouseService : kgr::single_service<Mouse> {};
-struct SpeakersService : kgr::single_service<Speakers> {};
+struct CandyFactoryService : kgr::single_service<CandyFactory, kgr::dependency<
+	kgr::generator_service<CaramelService>,
+	kgr::generator_service<kgr::lazy_service<GummyBearService>>,
+	kgr::invoker_service
+>> {};
 
-struct MinimalComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>> {};
-
-struct EquippedComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>>, kgr::autocall<
-	METHOD(&Computer::setMonitor),
-	METHOD(&Computer::setAccessories)
-> {};
-
-// To which service definition do we refer when the function parameter 'Keyboard' is found?
-auto service_map(Keyboard) -> KeyboardService;
-
-// The same for other definitions
-auto service_map(Monitor) -> MonitorService;
-auto service_map(Mouse) -> MouseService;
-auto service_map(Speakers) -> SpeakersService;
-
-// A funtion to wash our favourite monitor and keyboard.
-// A service will be needed to be used with invoke.
-double washMonitorAndKeyboard(Monitor& monitor, Keyboard& keyboard) {
-	cout << "Monitor of size of " << monitor.size 
-		 << " inch and a keyboard with " << keyboard.switchColor
-		 << " switches has been washed." << endl;
-		 
-	return 9.8;
+// a recepie
+void recepie(Caramel, GummyBear) {
+	cout << "A sweet recepie mixing Caramel and GummyBear completed" << endl;
 }
 
-int main()
-{
+int main() {
 	kgr::container container;
 	
-	// getting our four pieces of hardware
-	auto& keyboard = container.service<KeyboardService>();
-	auto& monitor = container.service<MonitorService>();
-	auto& mouse = container.service<MouseService>();
-	auto& speakers = container.service<SpeakersService>();
+	// We are making our factory
+	auto& candyFactory = container.service<CandyFactoryService>();
 	
-	// and give them values.
-	keyboard.switchColor = "blue";
-	monitor.size = 19.5;
-	mouse.nbButton = 3;
-	speakers.maxDb = 80;
+	// this will print nothing, as there is no candy constructed
+	auto lazyGummyBear = candyFactory.makeGummyBear();
 	
-	// make two computers
-	auto computer1 = container.service<EquippedComputerService>();
-	auto computer2 = container.service<MinimalComputerService>();
+	// this will print "Caramel made"
+	auto caramel = candyFactory.makeCaramel();
 	
-	// computer 1 will print everything.
-	computer1.printGear();
-	// computer 2 will print only about the keyboard.
-	computer2.printGear();
+	// This will print both "GummyBear made" and "yummy! GummyBear!"
+	lazyGummyBear->eat();
 	
-	// will call 'washMonitorAndKeyboard' with the right set of parameters.
-	double result = container.invoke(washMonitorAndKeyboard);
+	// This will print "yummy! Caramel!"
+	caramel.eat();
 	
-	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
+	cout << endl << "== Let's make a recepie ==" << endl;
+	
+	// As there are new candy made, this will print:
+	// > Caramel made
+	// > GummyBear made
+	// > A sweet recepie mixing Caramel and GummyBear completed
+	candyFactory.mix(recepie);
 }

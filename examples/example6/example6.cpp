@@ -5,14 +5,16 @@
 
 /**
  * This example explains advanced use of kangaru and it's components.
- * It covers autocall (injection by setters)
+ * It covers invoke and autocall (injection by setters) through service map.
  */
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter
 // Will not be needed once this library upgrade to C++17
 #define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 
-using namespace std;
+using std::string;
+using std::cout;
+using std::endl;
 
 struct Keyboard {
 	string switchColor;
@@ -76,9 +78,22 @@ struct SpeakersService : kgr::single_service<Speakers> {};
 struct MinimalComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>> {};
 
 struct EquippedComputerService : kgr::service<Computer, kgr::dependency<KeyboardService>>, kgr::autocall<
+	METHOD(&Computer::setMonitor),
+	METHOD(&Computer::setAccessories)
+> {};
+
+struct EquippedComputerServiceInvoke : kgr::service<Computer, kgr::dependency<KeyboardService>>, kgr::autocall<
 	kgr::invoke<METHOD(&Computer::setAccessories), MouseService, SpeakersService>,
 	kgr::invoke<METHOD(&Computer::setMonitor), MonitorService>
 > {};
+
+// To which service definition do we refer when the function parameter 'Keyboard' is found?
+auto service_map(Keyboard) -> KeyboardService;
+
+// The same for other definitions
+auto service_map(Monitor) -> MonitorService;
+auto service_map(Mouse) -> MouseService;
+auto service_map(Speakers) -> SpeakersService;
 
 // A funtion to wash our favourite monitor and keyboard.
 // A service will be needed to be used with invoke.
@@ -106,17 +121,28 @@ int main()
 	mouse.nbButton = 3;
 	speakers.maxDb = 80;
 	
-	// make two computers
+	// make three computers
 	auto computer1 = container.service<EquippedComputerService>();
 	auto computer2 = container.service<MinimalComputerService>();
+	auto computer3 = container.service<EquippedComputerServiceInvoke>();
 	
 	// computer 1 will print everything.
+	std::cout << "EquippedComputerService:\n";
 	computer1.printGear();
+	
 	// computer 2 will print only about the keyboard.
+	std::cout << "MinimalComputerService:\n";
 	computer2.printGear();
 	
-	// will call 'washMonitorAndKeyboard' with the right parameters.
-	double result = container.invoke<MonitorService, KeyboardService>(washMonitorAndKeyboard);
+	// computer 3 will print everything, like computer1.
+	std::cout << "EquippedComputerServiceInvoke:\n";
+	computer3.printGear();
+	
+	// will call 'washMonitorAndKeyboard' with the right set of parameters.
+	double result = container.invoke(washMonitorAndKeyboard);
+	
+	// will call 'washMonitorAndKeyboard' with specified services
+	container.invoke<MonitorService, KeyboardService>(washMonitorAndKeyboard);
 	
 	cout << "Result of washMonitorAndKeyboard is " << result << "!" << endl;
 }

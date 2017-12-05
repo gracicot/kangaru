@@ -9,6 +9,7 @@ endfunction()
 
 add_kgr_test(autocall)
 add_kgr_test(basic)
+add_kgr_test(container)
 add_kgr_test(definition)
 add_kgr_test(dependency)
 add_kgr_test(invoke)

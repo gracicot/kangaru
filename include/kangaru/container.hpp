@@ -261,7 +261,7 @@ public:
 	 * It will call rebase() with a predicate as parameter.
 	 */
 	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
-	void rebase(const container& other) const {
+	void rebase(const container& other) {
 		rebase(other, Predicate{});
 	}
 	

@@ -19,6 +19,7 @@
 #include <tuple>
 #include <algorithm>
 #include <vector>
+#include <iterator>
 
 namespace kgr {
 

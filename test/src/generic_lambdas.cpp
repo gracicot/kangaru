@@ -48,10 +48,11 @@ namespace testcase_generic_inject_mapped {
 				called = true;
 				
 				REQUIRE((std::is_same<decltype(a), const int&>::value));
-				CHECK(a == arg1);
+				
+				return a + 1;
 			};
 			
-			c.invoke(function, arg1);
+			CHECK(c.invoke(function, arg1) == arg1 + 1);
 			
 			REQUIRE(called);
 		}
@@ -65,11 +66,14 @@ namespace testcase_generic_inject_mapped {
 				
 				REQUIRE((std::is_same<decltype(a), const int&>::value));
 				REQUIRE((std::is_same<decltype(b), const double&>::value));
-				CHECK(a == arg1);
-				CHECK(b == arg2);
+				
+				return std::make_pair(a + 1, b + 9.3);
 			};
 			
-			c.invoke(function, arg1, arg2);
+			auto pair = c.invoke(function, arg1, arg2);
+			
+			CHECK(pair.first == arg1 + 1);
+			CHECK(pair.second == arg2 + 9.3);
 			
 			REQUIRE(called);
 		}

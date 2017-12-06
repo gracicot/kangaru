@@ -248,6 +248,15 @@ public:
 		_services.insert(other._services.begin(), other._services.end());
 	}
 	
+	/*
+	 * This function merges a container with another.
+	 * The receiving container will prefer it's own instances in a case of conflicts.
+	 */
+	inline void merge(container& other) {
+		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
+		_services.insert(other._services.begin(), other._services.end());
+	}
+	
 	
 	/**
 	 * This function will add all services form the container sent as parameter into this one.

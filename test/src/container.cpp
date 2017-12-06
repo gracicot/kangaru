@@ -156,6 +156,18 @@ TEST_CASE("Container can merge", "[container]") {
 		REQUIRE_FALSE(c1.contains<Definition>());
 		REQUIRE(c2.contains<Definition>());
 		
+		c1.merge(c2);
+		
+		REQUIRE(c1.contains<Definition>());
+		REQUIRE(c2.contains<Definition>());
+	}
+	
+	SECTION("Merge will bring all service to the target by move") {
+		c2.emplace<Definition>();
+		
+		REQUIRE_FALSE(c1.contains<Definition>());
+		REQUIRE(c2.contains<Definition>());
+		
 		c1.merge(std::move(c2));
 		
 		REQUIRE(c1.contains<Definition>());
@@ -174,7 +186,7 @@ TEST_CASE("Container can merge", "[container]") {
 		
 		REQUIRE(service1 != service2);
 		
-		c1.merge(std::move(c2));
+		c1.merge(c2);
 		
 		REQUIRE(c1.contains<Definition>());
 		REQUIRE(c2.contains<Definition>());

@@ -49,10 +49,10 @@ namespace testcase_generic_inject_mapped {
 				
 				REQUIRE((std::is_same<decltype(a), const int&>::value));
 				
-				return a + 1;
+				return a;
 			};
 			
-			CHECK(c.invoke(function, arg1) == arg1 + 1);
+			CHECK(c.invoke(function, arg1) == arg1);
 			
 			REQUIRE(called);
 		}
@@ -67,13 +67,13 @@ namespace testcase_generic_inject_mapped {
 				REQUIRE((std::is_same<decltype(a), const int&>::value));
 				REQUIRE((std::is_same<decltype(b), const double&>::value));
 				
-				return std::make_pair(a + 1, b + 9.3);
+				return std::make_pair(a, b);
 			};
 			
 			auto pair = c.invoke(function, arg1, arg2);
 			
-			CHECK(pair.first == arg1 + 1);
-			CHECK(pair.second == arg2 + 9.3);
+			CHECK(pair.first == arg1);
+			CHECK(pair.second == arg2);
 			
 			REQUIRE(called);
 		}
@@ -92,14 +92,19 @@ namespace testcase_generic_inject_mapped {
 		
 		SECTION("Forward mix of deduced and regular parameter after injection") {
 			const auto arg1 = any_int_distribution(random);
+			const auto arg2 = any_double_distribution(random);
 			
 			auto function = [&](Service1, Service2&, int a, auto b) {
 				called = true;
 				REQUIRE((std::is_same<std::decay_t<decltype(b)>, double>::value));
-				CHECK(a == arg1);
+				
+				return std::make_pair(a, b);
 			};
 			
-			c.invoke(function, arg1, 9.3);
+			auto pair = c.invoke(function, arg1, arg2);
+			
+			CHECK(pair.first == arg1);
+			CHECK(pair.second == arg2);
 			
 			REQUIRE(called);
 			REQUIRE(c.contains<Definition2>());
@@ -111,10 +116,10 @@ namespace testcase_generic_inject_mapped {
 			auto function = [&](Service1, Service2&, int a, auto... b) {
 				called = true;
 				REQUIRE(sizeof...(b) == 4);
-				CHECK(a == arg1);
+				return a;
 			};
 			
-			c.invoke(function, arg1, 9.3, "test", 3, std::tuple<>{});
+			CHECK(c.invoke(function, arg1, 9.3, "test", 3, std::tuple<>{}) == arg1);
 			
 			REQUIRE(called);
 			REQUIRE(c.contains<Definition2>());

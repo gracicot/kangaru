@@ -14,6 +14,7 @@ option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 option(KANGARU_TEST "Build test binaries" false)
 option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
+option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
 
 if(${KANGARU_TEST_CXX14} OR ${KANGARU_TEST})
 	set(KANGARU_ENABLE_TESTS true)

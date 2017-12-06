@@ -60,7 +60,7 @@ container1.emplace<SingleService1>();
     // Only container2 has SingleService3
     // container1 is owner of SingleService1, and container2 observes it.
     
-    container1.merge(std::move(container2));
+    container1.merge(container2);
     
     // container2 is still valid, but is no longer owner of any services.
     // We can still use the container and will still observe every service it was owner before.

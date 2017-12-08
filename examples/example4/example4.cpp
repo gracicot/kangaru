@@ -8,108 +8,108 @@
  * It covers overriding services
  */
 
-using std::cout;
-using std::endl;
+struct Service {};
 
-struct Wand {
-	virtual void doTrick() = 0;
-};
-
-struct MagicWand : Wand {
-	void doTrick() override {
-		cout << "It's doing magic tricks!" << endl;
-	}
-};
-
-struct FireWand : MagicWand {
-	void doTrick() override {
-		cout << "It's doing fire tricks!" << endl;
-	}
-};
-
-struct LavaWand : FireWand {
-	void doTrick() override {
-		cout << "It's doing lava tricks!" << endl;
-	}
-};
-
-struct Trickster {
-	Trickster(Wand& _wand) : wand{_wand} {}
-	
-	void doTrick() {
-		wand.doTrick();
-	}
-	
-private:
-	Wand& wand;
-};
-
-struct Wizard {
-	Wizard(MagicWand& _wand) : wand{_wand} {}
-	
-	void doTrick() {
-		wand.doTrick();
-	}
-	
-private:
-	MagicWand& wand;
-};
-
-struct FireMage {
-	FireMage(FireWand& _wand) : wand{_wand} {}
-	
-	void doTrick() {
-		wand.doTrick();
-	}
-	
-private:
-	FireWand& wand;
-};
-
-struct MagicWandService;
-
-struct WandService : kgr::abstract_service<Wand>, kgr::defaults_to<MagicWandService> {};
-
-struct MagicWandService : kgr::single_service<MagicWand>, kgr::overrides<WandService> {};
-struct FireWandService : kgr::single_service<FireWand>, kgr::overrides<MagicWandService> {};
-struct LavaWandService : kgr::single_service<LavaWand>, kgr::overrides<FireWandService, MagicWandService> {};
-
-struct TricksterService : kgr::service<Trickster, kgr::dependency<WandService>> {};
-struct WizardService : kgr::service<Wizard, kgr::dependency<MagicWandService>> {};
-struct FireMageService : kgr::service<FireMage, kgr::dependency<FireWandService>> {};
+struct SingleService1 : kgr::single_service<Service> {};
+struct SingleService2 : kgr::single_service<Service> {};
+struct SingleService3 : kgr::single_service<Service> {};
 
 int main()
 {
-	kgr::container container;
+	{
+		kgr::container container1;
+		
+		container1.emplace<SingleService1>();
+		container1.emplace<SingleService2>();
+		
+		auto container2 = container1.fork();
+		
+		std::cout << "container2 has SingleService1, SingleService2? ";
+		std::cout << std::boolalpha << container2.contains<SingleService1>() << ", ";
+		std::cout << std::boolalpha << container2.contains<SingleService2>() << '\n';
+		
+		container1.emplace<SingleService3>();
+		container2.emplace<SingleService3>();
+		
+		bool are_same = &container1.service<SingleService3>() == &container2.service<SingleService3>();
+		
+		std::cout << "container1 and container2 has the same SingleService3? ";
+		std::cout << std::boolalpha << are_same << '\n';
+		
+		// container1  ---o---o---*---o
+		//                         \
+		// container2               ---o
+	}
 	
-	// Here, because of the default service type of WandService, MagicWandService is chosen.
-	// MagicWand is the first, because it's the highest non-abstract service in the hierarchy.
-	// If WandService didn't had that default service type, it would be a runtime error.
-	container.service<WandService>();
+	std::cout << '\n';
 	
-	// FireWand is the second, because it's the second service in the hierarchy.
-	container.service<FireWandService>();
+	{
+		kgr::container container1;
+		
+		container1.emplace<SingleService1>();
+		
+		{
+			auto container2 = container1.fork();
+			
+			container1.emplace<SingleService2>();
+			container2.emplace<SingleService2>();
+			container2.emplace<SingleService3>();
+			
+			bool are_same2 = &container1.service<SingleService2>() == &container2.service<SingleService2>();
+			
+			std::cout << "container1 and container2 has the same SingleService2? ";
+			std::cout << std::boolalpha << are_same2 << '\n';
+			
+			// At that point, both containers have thier own SingleService2 instance.
+			// Only container2 has SingleService3
+			// container1 is owner of SingleService1, and container2 observes it.
+			
+			container1.merge(container2);
+			
+			// container2 is still valid, but is no longer owner of any services.
+			// We can still use the container and will still observe every service it was owner before.
+			are_same2 = &container1.service<SingleService2>() != &container2.service<SingleService2>();
+			
+			std::cout << "has container1 kept his own instance of SingleService2 after merge? ";
+			std::cout << std::boolalpha << are_same2 << '\n';
+			
+			std::cout << "do container1 contains container2's SingleService3 instance? ";
+			std::cout << std::boolalpha << container1.contains<SingleService3>() << '\n';
+		}
+		
+		// container1  ---o---*---o----------*---
+		//                     \            /
+		// container2           ---o---o---
+	}
 	
-	// LavaWand is the last, because it's the last service in the hierarchy.
-	container.service<LavaWandService>();
+	std::cout << '\n';
 	
-	auto trickster = container.service<TricksterService>();
-	auto wizard = container.service<WizardService>();
-	auto fireMage = container.service<FireMageService>();
-	
-	// The trickster will show "It's doing magic tricks!"
-	// because the only service that overrides Wand is MagicWand.
-	// Even if another service is overriding MagicWand, it does not overrides Wand.
-	trickster.doTrick();
-	
-	// The trickster will show "It's doing lava tricks!"
-	// because LavaWand overrides MagicWand, which was the Wizard's dependency.
-	// Even if FireWand is overriding MagicWand, LavaWand is lower in the hierarchy,
-	// which grants it priority.
-	// A misconfigured hierarchy may lead to incorrect result. Invert instance calls and see by yourself.
-	wizard.doTrick();
-	
-	// The trickster will show "It's doing lava tricks!"
-	// because LavaWand is overriding FireWand.
-	fireMage.doTrick();
+	{
+		kgr::container container1;
+		
+		container1.emplace<SingleService1>();
+		
+		auto container2 = container1.fork();
+		
+		container2.contains<SingleService1>(); // true
+		container2.contains<SingleService2>(); // false
+			
+		std::cout << "do container2 has instances of SingleService1, SingleService2? ";
+		std::cout << std::boolalpha << container2.contains<SingleService1>() << ", ";
+		std::cout << std::boolalpha << container2.contains<SingleService2>() << '\n';
+		
+		std::cout << "Creating SingleService2 in container1...\n";
+		container1.emplace<SingleService2>();
+		
+		std::cout << "Rebasing container2 from container1...\n";
+		container2.rebase(container1); // rebase from container1
+		
+		std::cout << "do container2 has instances of SingleService1, SingleService2? ";
+		std::cout << std::boolalpha << container2.contains<SingleService1>() << ", ";
+		std::cout << std::boolalpha << container2.contains<SingleService2>() << '\n';
+		
+		// container1  ---o---*---o---*---
+		//                     \       \
+		// container2           --------*---
+	}
 }

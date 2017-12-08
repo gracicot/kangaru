@@ -8,111 +8,106 @@
  * It covers invoker, lazy and generator.
  */
 
-using std::cout;
-using std::endl;
 
-struct Sugar {
-	int quantity = 100;
+// User classes
+struct Window {};
+struct Type {
+	kgr::container& container;
 };
 
-// Here we are declaring two candy types
-struct Caramel {
-	// we need sugar
-	Caramel(Sugar& s) {
-		s.quantity -= 10;
-		cout << "Caramel made" << endl;
-	}
-	
-	void eat() {
-		cout << "yummy! Caramel!" << endl;
+struct MessageBus {
+	void process_messages() {
+		std::cout << "Messages processed\n";
 	}
 };
 
-struct GummyBear {
-	GummyBear() {
-		cout << "GummyBear made" << endl;
+struct Scene {
+	explicit Scene(char const* n = "") noexcept : name{n} {
+		std::cout << "Scene created\n";
 	}
 	
-	void eat() {
-		cout << "yummy! GummyBear!" << endl;
-	}
+	char const* name;
 };
 
-// Then, we are declaring two service definition for them
-struct SugarService : kgr::single_service<Sugar> {};
-struct CaramelService : kgr::service<Caramel, kgr::dependency<SugarService>> {};
-struct GummyBearService : kgr::service<GummyBear> {};
+// Services declarations
+struct MessageBusService : kgr::single_service<MessageBus> {};
+struct WindowService : kgr::single_service<Window> {};
+struct SceneService : kgr::service<Scene> {};
+struct TypeService : kgr::service<Type, kgr::dependency<kgr::container_service>> {};
 
-// We map our services
-auto service_map(Caramel) -> CaramelService;
-auto service_map(GummyBear) -> GummyBearService;
+// Service map
+auto service_map(Type const&) -> TypeService;
+auto service_map(Window const&) -> WindowService;
+auto service_map(MessageBus const&) -> MessageBusService;
 
-// CandyFactory, making candies and recepies
-struct CandyFactory {
-	CandyFactory(
-		kgr::generator<CaramelService> myCaramelGenerator,
-		kgr::generator<kgr::lazy_service<GummyBearService>> myGummyBearGenerator,
-		kgr::invoker myInvoker
-	) : caramelGenerator{myCaramelGenerator},
-		gummyBearGenerator{myGummyBearGenerator},
-		invoker{myInvoker} {}
-	
-	kgr::lazy<GummyBearService> makeGummyBear() {
-		// this line is making a new GummyBear with it's dependencies injected
-		return gummyBearGenerator();
-	}
-	
-	Caramel makeCaramel() {
-		// this line is making a new Caramel with it's dependencies injected
-		return caramelGenerator();
-	}
-	
-	template<typename T>
-	void mix(T function) {
-		// calls the function sent as parameter
-		invoker(function);
-	}
-	
-private:
-	kgr::generator<CaramelService> caramelGenerator;
-	kgr::generator<kgr::lazy_service<GummyBearService>> gummyBearGenerator;
-	kgr::invoker invoker;
-};
 
-struct CandyFactoryService : kgr::single_service<CandyFactory, kgr::dependency<
-	kgr::generator_service<CaramelService>,
-	kgr::generator_service<kgr::lazy_service<GummyBearService>>,
-	kgr::invoker_service
->> {};
-
-// a recepie
-void recepie(Caramel, GummyBear) {
-	cout << "A sweet recepie mixing Caramel and GummyBear completed" << endl;
+// A function to be invoked
+int send_message(MessageBus&, Window&, double timeout) {
+	std::cout << "Message sent with a timeout of " << timeout << '\n';
 }
 
 int main() {
-	kgr::container container;
+	// Container
+	{
+		kgr::container container1;
+		kgr::container& container2 = container1.service<kgr::container_service>();
+		
+		std::cout << std::boolalpha << "Both containers are the same? " << (&container1 == &container2) << '\n'; 
+		
+		container1.invoke([&](kgr::container& container3, Type type) {
+			std::cout << std::boolalpha << "Both container1 and container3 are the same? ";
+			std::cout << (&container1 == &container3) << '\n';
+		
+			std::cout << std::boolalpha << "Both container3 and type.container are the same? ";
+			std::cout << (&container3 == &type.container) << '\n';
+		});
+	}
 	
-	// We are making our factory
-	auto& candyFactory = container.service<CandyFactoryService>();
+	std::cout << '\n';
 	
-	// this will print nothing, as there is no candy constructed
-	auto lazyGummyBear = candyFactory.makeGummyBear();
+	// Fork
+	{
+		kgr::container container1;
+		kgr::container container2 = container1.service<kgr::fork_service>();
+		
+		std::cout << std::boolalpha << "Both containers are the same? " << (&container1 == &container2) << '\n'; 
+		
+		container1.invoke([&](kgr::container container3) {
+			std::cout << std::boolalpha << "Is container3 a fork? ";
+			std::cout << (&container1 != &container3) << '\n';
+		});
+	}
 	
-	// this will print "Caramel made"
-	auto caramel = candyFactory.makeCaramel();
+	std::cout << '\n';
 	
-	// This will print both "GummyBear made" and "yummy! GummyBear!"
-	lazyGummyBear->eat();
+	// Generator
+	{
+		kgr::container container;
+		kgr::generator<SceneService> scene_generator = container.service<kgr::generator_service<SceneService>>();
+		
+		Scene scene1 = scene_generator();
+		Scene scene2 = scene_generator();
+		Scene scene3 = scene_generator("special parameter");
+	}
 	
-	// This will print "yummy! Caramel!"
-	caramel.eat();
+	std::cout << '\n';
 	
-	cout << endl << "== Let's make a recepie ==" << endl;
+	// Invoker
+	{
+		kgr::container container;
+		kgr::invoker invoker = container.service<kgr::invoker_service>();
+		
+		invoker(send_message, 10); // calls send_message with 10 as it's timeout
+	}
 	
-	// As there are new candy made, this will print:
-	// > Caramel made
-	// > GummyBear made
-	// > A sweet recepie mixing Caramel and GummyBear completed
-	candyFactory.mix(recepie);
+	std::cout << '\n';
+	
+	// Lazy
+	{
+		kgr::container container;
+		kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
+		
+		// MessageBus constructed here at `->` usage
+		lazy_message_bus->process_messages();
+	}
 }

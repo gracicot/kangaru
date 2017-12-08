@@ -9,73 +9,64 @@
  * It covers providing instances to the container, self-injection
  */
 
-using std::string;
-using std::cout;
-using std::endl;
-using std::move;
+// Uncomment this to reciece the scene in process_inputs_mod
+// #define HAS_SCENE_PARAMETER
 
-struct WoodStack {
-	int planks;
-};
+struct KeyboardState {};
+struct MessageBus {};
+struct Camera {};
 
-struct Product {
-	Product(WoodStack& stack) {
-		stack.planks--;
+// This is the definition for our classes
+struct KeyboardStateService : kgr::single_service<KeyboardState> {};
+struct MessageBusService    : kgr::single_service<MessageBus> {};
+struct CameraService        : kgr::service<Camera> {};
+
+// This is the service map. We map a parameter type to a service definition.
+auto service_map(KeyboardState const&) -> KeyboardStateService;
+auto service_map(MessageBus const&)    -> MessageBusService;
+auto service_map(Camera const&)        -> CameraService;
+
+// These are functions we will call with invoke
+bool process_inputs(KeyboardState& ks, MessageBus& mb) {
+	std::cout << "processing inputs...\n";
+	return true;
+}
+
+#ifndef HAS_SCENE_PARAMETER
+
+	bool process_inputs_mod(KeyboardState& ks, MessageBus& mb, bool check_modifiers) {
+		std::cout << "process inputs " << (check_modifiers ? "with" : "without") << " modifiers\n";
+		return !check_modifiers;
 	}
-	
-	string name;
-};
 
-// This is our wood stack service definition
-struct WoodStackService : kgr::single_service<WoodStack> {};
+#else
 
-// This is our product service definition
-struct ProductService : kgr::service<Product, kgr::dependency<WoodStackService>> {};
-
-struct Carpenter {
-	Carpenter(kgr::container& _container, WoodStack& _stack) : container{_container}, stack{_stack} {}
-	
-	// We are using ServiceType, which in this case is an alias to unique_ptr<Product>.
-	void makeProduct(string name) {
-		if (stack.planks > 0) {
-			cout << "Another " << name << " made, but only " << stack.planks << " planks left!" << endl;
-			
-			auto product = container.service<ProductService>();
-			product.name = name;
-			
-			products.emplace_back(move(product));
-		} else {
-			cout << "No planks left, no product made." << endl;
-		}
+	bool process_inputs_mod(KeyboardState& ks, MessageBus& mb, Camera scene, bool check_modifiers) {
+		std::cout << "process inputs " << (check_modifiers ? "with" : "without") << " modifiers\n";
+		std::cout << "got the scene!\n";
+		return !check_modifiers;
 	}
-	
-private:
-	std::vector<Product> products;
-	kgr::container& container;
-	WoodStack& stack;
-};
 
-// This is our carpenter service definition
-struct CarpenterService : kgr::service<Carpenter, kgr::dependency<kgr::container_service, WoodStackService>> {};
+#endif
 
 int main()
 {
 	kgr::container container;
 	
-	// We made the stack ourself and set the number of planks to 2
-	container.emplace<WoodStackService>(2);
+	// We invoke a function specifying services
+	bool result1 = container.invoke<KeyboardStateService, MessageBusService>(process_inputs);
 	
+	// We invoke a function using the service map
+	bool result2 = container.invoke(process_inputs);
+	bool result3 = container.invoke(process_inputs_mod, true);
 	
-	// It has the Container and the WoodStack injected.
-	auto gerald = container.service<CarpenterService>();
+	std::cout << '\n';
 	
-	// Will print: Another computer desk made, but only 1 planks left!
-	gerald.makeProduct("computer desk");
+	std::cout << "Invoke results: \n  1: " << result1;
+	std::cout << "\n  2: " << result2;
+	std::cout << "\n  3: " << result3 << '\n';
 	
-	// Will print: Another chair made, but only 0 planks left!
-	gerald.makeProduct("chair");
-	
-	// Will print: No planks left, no product made.
-	// As a result, product3 is not made.
-	gerald.makeProduct("table");
+	container.invoke([](Camera camera) {
+		std::cout << "Lambda called." << std::endl;
+	});
 }

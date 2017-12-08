@@ -99,26 +99,28 @@ int main() {
 	astra2.setFuel(&premium);
 
 	std::cout << std::boolalpha << std::fixed << std::setprecision(2);
-	std::cout << "`astra1` and `astra2` is the same auto:  " <<
-		(&astra1 == &astra2) <<
-		"\n`hrv` and `hrv_diesel` is the same auto: " <<
-		(&hrv == &hrv_diesel) <<
-		"\npremium petrol is single:                " << 
-		(&premium == &garage.service<PremiumPetrolService>()) <<
-		"\nPremium petrol costs " << premium.getPrice() <<
-		" per litre"
-		"\n\nRefuel costs:"
-		"\n\tOpel Astra(1),   50 litres: " << astra1.refuel(50) <<
-		"\n\tOpel Astra(2),   50 litres: " << astra2.refuel(50) <<
-		"\n\tNissan Quashqai, 30 litres: " << quashqai.refuel(30) <<
-		"\n\tHonda"
-		"\n\t  HR-V,          30 litres: " << hrv.refuel(30) <<
-		"\n\t  HR-V Diesel,   30 litres: " << hrv_diesel.refuel(30) <<
-		'\n';
+	std::cout << "`astra1` and `astra2` is the same auto:  "
+		<< (&astra1 == &astra2)
+		<< "\n`hrv` and `hrv_diesel` is the same auto: "
+		<< (&hrv == &hrv_diesel)
+		<< "\npremium petrol is single:                "
+		<< (&premium == &garage.service<PremiumPetrolService>())
+		<< "\nPremium petrol costs " << premium.getPrice()
+		<< " per litre"
+		<< "\n\nRefuel costs:"
+		<< "\n\tOpel Astra(1),   50 litres: " << astra1.refuel(50)
+		<< "\n\tOpel Astra(2),   50 litres: " << astra2.refuel(50)
+		<< "\n\tNissan Quashqai, 30 litres: " << quashqai.refuel(30)
+		<< "\n\tHonda"
+		<< "\n\t  HR-V,          30 litres: " << hrv.refuel(30)
+		<< "\n\t  HR-V Diesel,   30 litres: " << hrv_diesel.refuel(30)
+		<< '\n';
+		
 	premium.setPrice(147.20);
-	std::cout << "Update premium petrol price to " << premium.getPrice() <<
-		"\nNow refuel of Honda HR-V (30 litres) costs " <<
-		hrv.refuel(30) << 
-		'\n';
+	
+	std::cout << "Update premium petrol price to " << premium.getPrice()
+		<< "\nNow refuel of Honda HR-V (30 litres) costs "
+		<< hrv.refuel(30)
+		<< '\n';
 }
 

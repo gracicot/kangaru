@@ -13,7 +13,7 @@ TEST_CASE("The definition may not contain virtual members", "[definition]") {
 
 TEST_CASE("The definition may not forward void", "[definition]") {
 	struct Definition : kgr::abstract {
-		void forward();
+		void forward() {}
 	};
 	
 	REQUIRE_FALSE(kgr::detail::is_service<Definition>::value);

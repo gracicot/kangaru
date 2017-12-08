@@ -9,48 +9,48 @@
  * It covers dependencies, Single services and basic use of the container.
  */
 
-using std::string;
-using std::cout;
-using std::endl;
-
-struct PathProvider {
-	string path;
+// Camera is a user class.
+struct Camera {
+	int position;
 };
 
-struct PathPrinter {
-	// PathPrinter needs a PathProvider
-	PathPrinter(PathProvider& _pathProvider) : pathProvider{_pathProvider} {}
-	
-	void print() {
-		cout << pathProvider.path << endl;
-	}
+// Scene too. User class.
+struct Scene {
+	Scene(Camera c, int w = 800, int h = 600) :
+		camera{c}, width{w}, height{h} {}
 	
 private:
-	PathProvider& pathProvider;
+	Camera camera;
+	int width;
+	int height;
+};
+
+struct Screen {
+	Scene& scene;
+	Camera camera;
 };
 
 // This is our service definitions
-// PathProviderService is a single service of PathProvider
-struct PathProviderService : kgr::single_service<PathProvider> {};
+struct CameraService : kgr::service<Camera> {};
 
-// PathPrinterService is a (not single) service of PathProvider and has a PathProviderService as dependency
-struct PathPrinterService : kgr::service<PathPrinter, kgr::dependency<PathProviderService>> {};
+// SceneService is a single service of Scene, that depends on a camera
+struct SceneService : kgr::single_service<Scene, kgr::dependency<CameraService>> {};
+
+// ScreenService is a single service of Screen, that depends on a scene and camera
+struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService, CameraService>> {};
 
 int main()
 {
 	kgr::container container;
 	
-	// a PathProvider is provided for every printer
-	auto printer1 = container.service<PathPrinterService>();
-	auto printer2 = container.service<PathPrinterService>();
-	auto printer3 = container.service<PathPrinterService>();
+	Camera camera = container.service<CameraService>();
+	Camera furtherCamera = container.service<CameraService>(14);
 	
-	auto& provider = container.service<PathProviderService>();
+	std::cout << "Camera Position: " << camera.position << '\n';
+	std::cout << "Further Camera Position: " << furtherCamera.position << '\n';
 	
-	provider.path = "/home/test";
+	Screen screen1 = container.service<ScreenService>();
+	Screen screen2 = container.service<ScreenService>();
 	
-	// every printer will print /home/test, because every printer has the same instance of PathProvider
-	printer1.print();
-	printer2.print();
-	printer3.print();
+	std::cout << "Is both scene the same? " << (&screen1.scene == &screen2.scene ? "yes" : "no") << '\n';
 }

@@ -9,66 +9,112 @@
  * It covers overriding the construct method
  */
 
-using std::string;
-using std::cout;
-using std::endl;
-
-struct Amp {
-	Amp(int myWatts = 0) : watts{myWatts} {};
-	
-	int watts;
+struct AbstractCamera {
+	virtual void projection() = 0;
 };
 
-struct Guitar {
-	Guitar(Amp myAmp, std::string myModel) : amp{myAmp}, model{std::move(myModel)} {};
-	
-	Amp amp;
-	string model;
-};
-
-struct Studio {
-	Studio(string myName = "") : name{myName} {};
-	
-	void record(const Guitar& guitar) {
-		cout << "The studio \"" << name << "\" records a " << guitar.model << " with a " << guitar.amp.watts << " watt amp." << endl;
-	}
-	
-	string name;
-};
-
-struct AmpService : kgr::service<Amp> {
-	// Here we override the construct function. We are injecting a int into our Amp type.
-	static auto construct() -> decltype(kgr::inject(std::declval<int>())) {
-		static int watts = 0;
-		return kgr::inject(watts += 48);
+struct Camera : AbstractCamera {
+	void projection() override {
+		std::cout << "default projection" << std::endl;
 	}
 };
 
-// Other service definitions
-struct GuitarService : kgr::service<Guitar, kgr::dependency<AmpService>> {};
-struct StudioService : kgr::single_service<Studio> {};
+struct PerspectiveCamera : Camera {
+	void projection() override {
+		std::cout << "perspective projection" << std::endl;
+	}
+};
+
+struct OrthogonalCamera : Camera {
+	void projection() override {
+		std::cout << "orthogonal projection" << std::endl;
+	}
+};
+
+
+struct AbstractCameraService :
+	kgr::abstract_service<AbstractCamera> {};
+	
+struct AbstractCameraServiceDefault :
+	kgr::abstract_service<AbstractCamera>,
+	kgr::defaults_to<struct PerspectiveCameraService> {};
+	
+struct CameraService :
+	kgr::single_service<Camera>,
+	kgr::polymorphic {};
+
+// Multiple overrides are supported
+struct PerspectiveCameraService :
+	kgr::single_service<PerspectiveCamera>,
+	kgr::overrides<CameraService, AbstractCameraServiceDefault> {};
+	
+struct OrthogonalCameraService :
+	kgr::single_service<OrthogonalCamera>,
+	kgr::overrides<CameraService>,
+	kgr::final {};
 
 int main()
 {
-	kgr::container container;
+	{
+		kgr::container container;
+		
+		// Camera is returned
+		Camera& camera1 = container.service<CameraService>();
+		camera1.projection(); // prints `default projection`
+		
+		// PerspectiveCamera is registered as Camera
+		container.emplace<PerspectiveCameraService>();
+		
+		// PerspectiveCamera is returned
+		Camera& camera2 = container.service<CameraService>();
+		camera2.projection(); // prints `perspective projection`
+	}
 	
-	container.service<StudioService>().name = "The Music Box";
+	std::cout << '\n';
 	
-	// Here we are sending an additional argument to the constructor.
-	// As you can see, the Guitar constructor takes a string as second argument.
-	auto guitar1 = container.service<GuitarService>("Gibson");
-	auto guitar2 = container.service<GuitarService>("Fender");
-	auto guitar3 = container.service<GuitarService>("Ibanez");
+	{
+		kgr::container container;
+		
+		container.service<PerspectiveCameraService>();
+		container.service<OrthogonalCameraService>();
+		
+		// instance of OrthogonalCamera returned
+		Camera& camera = container.service<CameraService>();
+		camera.projection();
+	}
 	
-	auto& studio = container.service<StudioService>();
+	std::cout << '\n';
 	
-	// Output:
-	// The studio "The Music Box" records a Gibson with a 48 watt amp.
-	studio.record(guitar1);
+	{
+		kgr::container container;
+		
+		container.service<OrthogonalCameraService>();
+		container.service<PerspectiveCameraService>();
+		
+		// instance of PerspectiveCamera returned
+		Camera& camera = container.service<CameraService>();
+		camera.projection();
+	}
 	
-	// The studio "The Music Box" records a Fender with a 96 watt amp.
-	studio.record(guitar2);
+	std::cout << '\n';
 	
-	// The studio "The Music Box" records a Ibanez with a 144 watt amp.
-	studio.record(guitar3);
+	try {
+		kgr::container container;
+		
+		container.service<AbstractCameraServiceDefault>();
+		
+		std::cout << "No exceptions thrown\n";
+	} catch(kgr::abstract_not_found const& e) {
+		std::cout << "abstract_not_found thrown, what(): " << e.what() << std::endl;
+	}
+	
+	try {
+		kgr::container container;
+		
+		container.service<AbstractCameraService>();
+		
+		std::cout << "No exceptions thrown\n";
+	} catch(kgr::abstract_not_found const& e) {
+		std::cout << "abstract_not_found thrown, what(): " << e.what() << std::endl;
+	}
 }

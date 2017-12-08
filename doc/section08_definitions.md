@@ -32,7 +32,7 @@ A basic service definition looks like this:
 struct FileManagerService {
     FileManagerService(kgr::in_place_t) : instance{} {}
 
-    static auto construct() -> inject_result<> {
+    static auto construct() -> kgr::inject_result<> {
         return kgr::inject();
     }
     
@@ -55,8 +55,8 @@ To add a parameter that must be injected, you must use the wrapper class `kgr::i
 struct FileManagerService {
     FileManagerService(kgr::in_place_t, Window& w, Camera c) : instance{w, std::move(c)} {}
     
-    static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs)
-        -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>>
+    static auto construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs)
+        -> kgr::inject_result<kgr::service_type<WindowService>, kgr::service_type<CameraService>>
     {
         return kgr::inject(ws.forward(), cs.forward());
     }

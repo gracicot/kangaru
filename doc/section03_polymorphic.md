@@ -89,7 +89,7 @@ Look at these two cases:
     container.service<OrthogonalCameraService>();
     
     // instance of OrthogonalCamera returned
-    Camera& fm = container.service<CameraService>();
+    Camera& camera = container.service<CameraService>();
 }
 
 {
@@ -99,7 +99,7 @@ Look at these two cases:
     container.service<PerspectiveCameraService>();
     
     // instance of PerspectiveCamera returned
-    Camera& fm = container.service<CameraService>();
+    Camera& camera = container.service<CameraService>();
 }
 ```
 

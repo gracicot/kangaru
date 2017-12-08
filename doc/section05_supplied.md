@@ -71,6 +71,6 @@ container.emplace<SceneService>(1920, 1080); // contruct a scene in the containe
 Scene& scene = container.service<SceneService>(); // works, won't try to construct it.
 ```
 
-Note that if the instance is not found, the container won't be able to construct it and will throw instead.
+Note that if the instance is not found, the container won't be able to construct it and will throw a `kgr::supplied_not_found` instead.
 
 [Next chapter: Autocall](section06_autocall.md)

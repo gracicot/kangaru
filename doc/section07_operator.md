@@ -6,6 +6,60 @@ They help encapsulate which jobs on the container a class is able to do.
 
 They generaly wrap the container and allow only an operation to do with the container.
 
+## Container
+
+There's a service called `kgr::container_service`. It's a special service that inject a reference to the container itself.
+
+You can call it directly, use it in invoke or as dependency:
+
+```c++
+struct Type {
+    kgr::container& container;
+};
+
+struct TypeService : kgr::service<Type, kgr::dependency<kgr::container_service>> {};
+
+kgr::container container1;
+kgr::container& container2 = conatiner1.service<container_service>();
+
+assert(&container1 == &container2); // passes, both are the same
+
+container1.invoke([&](kgr::container& container3, Type type) {
+    // Both passes
+    assert(&container1 == &container3);
+    assert(&container3 == &type.container);
+});
+```
+
+## Fork
+
+There's a service called `kgr::container_service`. It's a special service that inject a reference to the container itself.
+
+You can call it directly, use it in invoke or as dependency:
+
+```c++
+kgr::container container1;
+
+// equivalent to:
+// kgr::container container2 = container1.fork();
+kgr::container container2 = container1.service<fork_service>();
+
+container.invoke([](kgr::container fork) {
+	// fork is a forked container, we recieved by value.
+});
+```
+
+The fork service has another version called `kgr::filtered_fork_service<F>`, where `F` is a predicate to filter services:
+
+```c++
+kgr::container container1;
+
+// equivalent to:
+// kgr::container container2 = container1.fork<kgr::none_of<Service1, Service2>>();
+// Every service from container1 are observed by the fork except Service1 and Service2
+kgr::container container2 = container1.service<filtered_fork_service<kgr::none_of<Service1, Service2>>>();
+```
+
 ## Generator
 
 A generator is an object that it's purpose is to create other object. It's kind of a factory.
@@ -19,7 +73,7 @@ It will forward every arguments to the service function.
 Here's an example:
     
     // SceneService is a non-single service.
-    auto sceneGenerator = container.service<kgr::GeneratorService<SceneService>>();
+    auto sceneGenerator = container.service<kgr::generator_service<SceneService>>();
     
     auto scene1 = sceneGenerator();
     auto scene2 = sceneGenerator();
@@ -38,7 +92,7 @@ Here's a code snippet using `kgr::invoker`:
 
     int send_message(MessageBus&, Window&, double timeout);
     
-    auto invoker = container.service<kgr::invoker_service>();
+    kgr::invoker invoker = container.service<kgr::invoker_service>();
     
     invoker(send_message, 10); // calls send_message with 10 as it's timeout
     
@@ -66,7 +120,7 @@ You can use it like this:
     kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
     
     // MessageBusService is constructed here, the operator* is used.
-    cout << *lazy_message_bus;
+    std::cout << *lazy_message_bus;
     
     // The same instance is reused again and returned by operator->
     lazy_message_bus->process_messages();

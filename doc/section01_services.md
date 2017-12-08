@@ -18,7 +18,7 @@ Let's start with a simple case. Let's say we have a camera class we want to turn
 
 ```c++
 struct Camera {
-    int position = 0;
+    int position;
 };
 ```
 

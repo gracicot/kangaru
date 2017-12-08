@@ -67,8 +67,8 @@ Each entry must be in the same namespace as the argument it receives. The contai
 
 Now calling our `process_inputs` will look like this:
 ```c++
-bool result = container.invoke(process_inputs);
-bool result = container.invoke(process_inputs_mod, true);
+bool result1 = container.invoke(process_inputs);
+bool result2 = container.invoke(process_inputs_mod, true);
 ```
 
 Neat! Now the container will match every injected parameters automatically.

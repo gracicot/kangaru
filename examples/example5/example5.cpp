@@ -12,7 +12,7 @@ struct Camera {
 
 struct Scene {
 	Scene(Camera c, int w, int h) :
-		camera{c}, width{w}, height{h} {}
+		camera{c.position}, width{w}, height{h} {}
 	
 private:
 	Camera camera;

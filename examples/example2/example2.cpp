@@ -4,12 +4,7 @@
 
 #include <kangaru/kangaru.hpp>
 
-/**
- * This example explains moderate use of kangaru and it's components.
- * It covers providing instances to the container, self-injection
- */
-
-// Uncomment this to reciece the scene in process_inputs_mod
+// Uncomment this to receive the scene in process_inputs_mod
 // #define HAS_SCENE_PARAMETER
 
 struct KeyboardState {};
@@ -53,19 +48,30 @@ int main()
 {
 	kgr::container container;
 	
+	
 	// We invoke a function specifying services
 	bool result1 = container.invoke<KeyboardStateService, MessageBusService>(process_inputs);
 	
-	// We invoke a function using the service map
+	// The code above is equivalent to this:
+	//
+	//    process_inputs(
+	//        container.service<KeyboardStateService>(),
+	//        container.service<MessageBusService>()
+	//    );
+	//
+	
+	// We can also let the container match parameters itself with the service map.
 	bool result2 = container.invoke(process_inputs);
 	bool result3 = container.invoke(process_inputs_mod, true);
 	
 	std::cout << '\n';
 	
+	// 1: true, 2: true, 3: false
 	std::cout << "Invoke results: \n  1: " << result1;
 	std::cout << "\n  2: " << result2;
 	std::cout << "\n  3: " << result3 << '\n';
 	
+	// We call a lambda with injected parameter using invoke.
 	container.invoke([](Camera camera) {
 		std::cout << "Lambda called." << std::endl;
 	});

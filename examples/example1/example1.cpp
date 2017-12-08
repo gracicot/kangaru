@@ -4,11 +4,6 @@
 
 #include <kangaru/kangaru.hpp>
 
-/**
- * This example explains the very basic use of kangaru.
- * It covers dependencies, Single services and basic use of the container.
- */
-
 // Camera is a user class.
 struct Camera {
 	int position;
@@ -43,14 +38,20 @@ int main()
 {
 	kgr::container container;
 	
+	// We create two cameras.
 	Camera camera = container.service<CameraService>();
 	Camera furtherCamera = container.service<CameraService>(14);
 	
+	// prints 0
 	std::cout << "Camera Position: " << camera.position << '\n';
+	
+	// prints 14
 	std::cout << "Further Camera Position: " << furtherCamera.position << '\n';
 	
+	// A Screen has a Scene and a Camera injected in it.
 	Screen screen1 = container.service<ScreenService>();
 	Screen screen2 = container.service<ScreenService>();
 	
+	// Spoiler: yes they are the same
 	std::cout << "Is both scene the same? " << (&screen1.scene == &screen2.scene ? "yes" : "no") << '\n';
 }

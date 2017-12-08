@@ -42,7 +42,7 @@ auto service_map(MessageBus const&) -> MessageBusService;
 
 
 // A function to be invoked
-int send_message(MessageBus&, Window&, double timeout) {
+void send_message(MessageBus&, Window&, double timeout) {
 	std::cout << "Message sent with a timeout of " << timeout << '\n';
 }
 

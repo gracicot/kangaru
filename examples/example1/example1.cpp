@@ -12,7 +12,7 @@ struct Camera {
 // Scene too. User class.
 struct Scene {
 	Scene(Camera c, int w = 800, int h = 600) :
-		camera{c}, width{w}, height{h} {}
+		camera{c.position}, width{w}, height{h} {}
 	
 private:
 	Camera camera;

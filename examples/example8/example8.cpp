@@ -4,8 +4,8 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example explains advanced use of kangaru and it's components.
- * It covers invoker, lazy and generator.
+ * This example refect snippets of code found in the documentation section 8: Custom Definitions
+ * It explains how to make your own service definition without using generic ones from kangaru.
  */
 
 // User classes.

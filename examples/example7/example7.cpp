@@ -4,10 +4,9 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example explains advanced use of kangaru and it's components.
- * It covers invoker, lazy and generator.
+ * This example refect snippets of code found in the documentation section 7: Operator Services
+ * It explains how to use services bundled with kangaru that helps making specific operation on the container.
  */
-
 
 // User classes
 struct Window {};

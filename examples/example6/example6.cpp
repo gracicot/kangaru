@@ -4,8 +4,8 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example explains advanced use of kangaru and it's components.
- * It covers invoke and autocall (injection by setters) through service map.
+ * This example refect snippets of code found in the documentation section 6: Autocall
+ * It explains how to call member functions of a service upen construction and injection by setters.
  */
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter

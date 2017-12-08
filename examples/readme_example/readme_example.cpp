@@ -1,6 +1,10 @@
 #include <kangaru/kangaru.hpp>
 #include <iostream>
 
+/**
+ * This example only show basic usage of services and the conatainer.
+ */
+
 // Normal classes with dependency between them
 struct Camera {};
 

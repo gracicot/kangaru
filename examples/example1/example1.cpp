@@ -1,8 +1,11 @@
-#include <iostream>
-#include <string>
-#include <memory>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
+
+/**
+ * This example refect snippets of code found in the documentation section 1: Services
+ * It explains how to branch containers and operate between them.
+ */
+
 
 // Camera is a user class.
 struct Camera {

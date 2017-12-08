@@ -1,11 +1,9 @@
-#include <iostream>
-#include <string>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
 
 /**
- * This example explains advanced use of kangaru and it's components.
- * It covers overriding services
+ * This example refect snippets of code found in the documentation section 4: Managing Containers
+ * It explains how to branch containers and operate between them.
  */
 
 struct Service {};

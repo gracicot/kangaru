@@ -1,13 +1,9 @@
-#include <iostream>
-#include <string>
-#include <memory>
-#include <tuple>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
 
 /**
- * This example explains advanced use of kangaru and it's components.
- * It covers custom service definition
+ * This example refect snippets of code found in the documentation section 5: Supplied Services
+ * It explains how to make single services not constructible implicitly by the container.
  */
 
 struct Camera {

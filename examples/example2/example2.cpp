@@ -1,8 +1,10 @@
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
+
+/**
+ * This example refect snippets of code found in the documentation section 2: Invoke
+ * It explains how to do service injection through the parameters of a function.
+ */
 
 // Uncomment this to receive the scene in process_inputs_mod
 // #define HAS_SCENE_PARAMETER

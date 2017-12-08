@@ -1,12 +1,9 @@
-#include <iostream>
-#include <string>
-#include <tuple>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
 
 /**
- * This example explains moderate use of kangaru and it's components.
- * It covers overriding the construct method
+ * This example refect snippets of code found in the documentation section 3: Polymorphic Services
+ * It explains how to override services and use them polymorphically.
  */
 
 struct AbstractCamera {

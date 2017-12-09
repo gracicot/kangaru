@@ -199,3 +199,52 @@ TEST_CASE("Container can merge", "[container]") {
 		REQUIRE(service2after == service2);
 	}
 }
+
+TEST_CASE("the container can fork with a predicate", "[container]") {
+	struct Service {};
+	struct Definition1 : kgr::single_service<Service> {};
+	struct Definition2 : kgr::single_service<Service> {};
+	
+	kgr::container c;
+	REQUIRE(c.emplace<Definition1>());
+	REQUIRE(c.emplace<Definition2>());
+	
+	SECTION("only some services") {
+		auto c2 = c.fork<kgr::only<Definition1>>();
+		
+		REQUIRE(c2.contains<Definition1>());
+		REQUIRE_FALSE(c2.contains<Definition2>());
+	}
+	
+	SECTION("except some services") {
+		auto c2 = c.fork<kgr::except<Definition1>>();
+		
+		REQUIRE_FALSE(c2.contains<Definition1>());
+		REQUIRE(c2.contains<Definition2>());
+	}
+}
+
+TEST_CASE("the container can rebase with a predicate", "[container]") {
+	struct Service {};
+	struct Definition1 : kgr::single_service<Service> {};
+	struct Definition2 : kgr::single_service<Service> {};
+	
+	kgr::container c;
+	kgr::container c2;
+	REQUIRE(c.emplace<Definition1>());
+	REQUIRE(c.emplace<Definition2>());
+	
+	SECTION("only some services") {
+		c2.rebase<kgr::only<Definition1>>(c);
+		
+		REQUIRE(c2.contains<Definition1>());
+		REQUIRE_FALSE(c2.contains<Definition2>());
+	}
+	
+	SECTION("except some services") {
+		c2.rebase<kgr::except<Definition1>>(c);
+		
+		REQUIRE_FALSE(c2.contains<Definition1>());
+		REQUIRE(c2.contains<Definition2>());
+	}
+}

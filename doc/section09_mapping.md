@@ -2,11 +2,11 @@ Advanced Mapping
 ================
 
 Until now, we only used basic mapping in other examples. The service map was a simple parameter to service mapping.
-But there's a mechanism to make mulitple maps, prioritize them, and use many of them.
+But there's a mechanism to make multiple maps, prioritize them, and use many of them.
 
 ## The Map Parameter
 
-In a mapping expression, you can acually put a second parameter. That parameter is `kgr::map_t<>`.
+In a mapping expression, you can actually put a second parameter. That parameter is `kgr::map_t<>`.
 
 So here's an example of a service map with that parameter:
 
@@ -15,7 +15,7 @@ auto service_map(Service, kgr::map_t<>) -> Definition;
 ```
 
 What is it doing? What that parameter for? Well, except for disambiguation for that declaration, not a lot.
-It will simply make the container prefer this one. Condider this:
+It will simply make the container prefer this one. Consider this:
 
 ```c++
 auto service_map(Service)               -> Definition1;
@@ -30,7 +30,7 @@ The additional parameter can be feeded with a name. This is how to make a map wi
 
 A named map in not gonna be used unless to tell the container to use that map.
 
-Every function or metafunction that deal with the service map can have a named map specified. Here are some examples of thier usage:
+Every function or metafunction that deal with the service map can have a named map specified. Here are some examples of their usage:
 
 ```c++
 struct MyMap;
@@ -54,11 +54,11 @@ container.invoke<kgr::map<MyMap>>(function); // Definition2 used
 
 ## Multiple Maps
 
-The map name parameter we used with other functionalities, the `kgr::map<...>`, can in fact recieve many named map to pick from.
+The map name parameter we used with other functionalities, the `kgr::map<...>`, can in fact receive many named map to pick from.
 The leftmost names will have higher priority. If a map with that name cannot be found, the container will fallback to the next name.
 If it has no named map left to try, it will try the default map.
 
-Here's an example of mulitple maps:
+Here's an example of multiple maps:
 
 ```c++
 struct MyMap1;

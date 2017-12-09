@@ -64,17 +64,17 @@ Here's an example of multiple maps:
 struct MyMap1;
 struct MyMap2;
 
-auto service_map(Service1, kgr::map_t<MyMap1>) -> Serivce1_Definition1;
-auto service_map(Service1, kgr::map_t<MyMap2>) -> Serivce1_Definition2;
+auto service_map(Service1, kgr::map_t<MyMap1>) -> Service1_Definition1;
+auto service_map(Service1, kgr::map_t<MyMap2>) -> Service1_Definition2;
 
-auto service_map(Service2, kgr::map_t<MyMap2>) -> Serivce2_Definition1;
-auto service_map(Service2)                     -> Serivce2_Definition2;
+auto service_map(Service2, kgr::map_t<MyMap2>) -> Service1_Definition1;
+auto service_map(Service2)                     -> Service1_Definition2;
 
 auto function = [](Service1, Service2) {};
 
-container.invoke<kgr::map<MyMap1>>(function); // Serivce1_Definition1 and Serivce2_Definition2 used
-container.invoke<kgr::map<MyMap2>>(function); // Serivce1_Definition2 and Serivce2_Definition2 used
-container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Serivce1_Definition1 and Serivce2_Definition1 used
+container.invoke<kgr::map<MyMap1>>(function); // Service1_Definition1 and Service1_Definition2 used
+container.invoke<kgr::map<MyMap2>>(function); // Service1_Definition2 and Service1_Definition2 used
+container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Service1_Definition1 and Service1_Definition1 used
 ```
 
 [Next chapter: Debugging](section10_debug.md)

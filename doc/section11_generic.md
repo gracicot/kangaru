@@ -5,12 +5,10 @@ This section shows you how to create your own generic service class just like `k
 It's the most advanced part of this documentation, and optional for everyday use of this library.
 You won't have to do this unless you have very specific needs.
 
-Well... Let's dive into it, shall we?
-
 First, our generic service usually have two template parameter: The service class and a dependency class.
 
 ```c++
-template<typename, typename>
+template<typename Type, typename Deps = kgr::dependency<>>
 struct MyUniqueService;
 ```
 
@@ -22,7 +20,7 @@ This will make user definition able to omit inheriting constructors.
 To use generic service, we only need to pass one parameter, the contained service type. It can be the service, a pointer to the service or any other way you want to contain the service type.
 
 ```c++
-template<typename, typename>
+template<typename Type, typename Deps = kgr::dependency<>>
 struct MyUniqueService;
 
 template<typename Type, typename... Deps>

@@ -3,7 +3,7 @@ Autocall
 
 Sometime only constructing a service is not enough. Some classes needs configuration, or some function to be called initially, or even call some setters.
 
-The autocall feature is doing exacly that. It's a list of function to call upon the construction of a service.
+The autocall feature is doing exactly that. It's a list of function to call upon the construction of a service.
 The container will invoke all function in that list. You can use this feature to perform injection through setters.
 
 
@@ -19,7 +19,7 @@ Alternatively, if you only have C++11 or C++14 on hand, you can use a macro:
 ```
 
 Of course, you are free to name them as you want.
-One your shotcut is declared, let's get started!
+Once your shotcut is declared, let's get started!
 
 ## Enabling Autocall
 
@@ -117,7 +117,7 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 
 ## Specifying Services
 
-Alternatively, you can list needed sevices for every methods. Parameters are grouped within the `kgr::invoke` class:
+Alternatively, you can list needed services for every methods. Parameters are grouped within the `kgr::invoke` class:
 
 ```c++
 struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<

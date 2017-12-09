@@ -1,5 +1,7 @@
-API reference
-=========
+API Reference
+=============
+
+> NOTE: This section is still incomplete and a work in progress.
 
 ## Container
 

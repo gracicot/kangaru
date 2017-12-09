@@ -1,8 +1,6 @@
 Supplied Services
 =================
 
-## Single and Arguments
-
 Indeed, when a service is single, `service()` won't accept argument to forward to the constructor.
 This is because only the first call to `service()` creates an instance. Consider this code (bad example):
 

@@ -18,7 +18,7 @@ using AdlMap = map<>;
 using All = all;
 
 template<typename... Ts>
-using AnyOf = any_of<Ts...>;
+using AnyOf = only<Ts...>;
 
 template<typename... Ts>
 using AutoCall = autocall<Ts...>;
@@ -97,7 +97,7 @@ template<typename T, T t>
 using Method = method<T, t>;
 
 template<typename... Ts>
-using NoneOf = none_of<Ts...>;
+using NoneOf = except<Ts...>;
 
 template<typename... Ts>
 using Overrides = overrides<Ts...>;

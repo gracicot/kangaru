@@ -1,12 +1,12 @@
 Migration Guide From 3.x.y series to v4.0.0
 ===========================================
 
-A lot of changes occured between `3.x.y` series and `4.0.0`.
+A lot of changes occurred between `3.x.y` series and `4.0.0`.
 Many breaking changes has been introduced, and we want the migration to be as smooth as possible.
 
 ## Class Names
 
-In kangaru `4.0.0`, we decided to change the naming convension of classes and aliases.
+In kangaru `4.0.0`, we decided to change the naming convention of classes and aliases.
 In previous versions of kangaru, it was unclear where `PascalCase` or `snake_case` was used.
 
 Now, every classes and aliases tries to follow the naming scheme of the STL and Boost, so classes and aliases are now in `snake_case`.
@@ -19,7 +19,7 @@ Here's a list of all classes and public aliases that changed:
     AbstractSharedService       --> abstract_shared_service
     AdlMap                      --> (deleted)
     All                         --> all
-    AnyOf                       --> any_of
+    AnyOf                       --> only
     AutoCall                    --> autocall
     AutoCallNoMap               --> autocall
     Container                   --> container
@@ -48,7 +48,7 @@ Here's a list of all classes and public aliases that changed:
     Lazy                        --> lazy
     LazyService                 --> lazy_service
     Map                         --> map_t
-    NoneOf                      --> none_of
+    NoneOf                      --> except
     Overrides                   --> override
     ServiceType                 --> service_type
     Service                     --> service
@@ -191,9 +191,9 @@ Note that this change is not needed when using the `kangaru/compatibility.hpp` h
 
 ## Instance
 
-The Instance functionality has been removed. Now, ot has been replaced by `kgr::container::emplace` and `kgr::container::replace`.
+The Instance functionality has been removed. Now, or has been replaced by `kgr::container::emplace` and `kgr::container::replace`.
 Thier functionaly is much more clearly defined and prevent misusing the container.
 
 In `v4.0.0`, you can no longer call the constructor directly, but you can send parameters to the single services construct function using `emplace` or `replace`.
 
-If there's something that cannot be possibly done with only `emplace` or `replace`, please open an issue and we'll dicuss a solution for your case.
+If there's something that cannot be possibly done with only `emplace` or `replace`, please open an issue and we'll discuss a solution for your case.

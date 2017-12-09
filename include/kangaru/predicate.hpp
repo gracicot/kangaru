@@ -20,7 +20,7 @@ struct all {
  * This predicate returns true for all services except those specified.
  */
 template<typename First, typename... Ts>
-struct none_of {
+struct except {
 	constexpr bool operator()(type_id_t id) const noexcept {
 		return !compare<First, Ts...>(id);
 	}
@@ -41,7 +41,7 @@ private:
  * Predicate that returns false for all services, except those passed as argument.
  */
 template<typename First, typename... Ts>
-struct any_of {
+struct only {
 	constexpr bool operator()(type_id_t id) const noexcept {
 		return compare<First, Ts...>(id);
 	}

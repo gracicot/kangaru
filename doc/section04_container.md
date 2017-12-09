@@ -111,4 +111,6 @@ Here's the graph for it:
 As we can see, containers are not just a class that contains every instances that should be singletons.
 They can be used to manage multiple states of an application, and operate on these state just like branches with git.
 
+To see this in action, check out [example4](../examples/example4/example4.cpp), which shows more usage related to the snippets found on this page.
+
 [Next chapter: Supplied Services](section05_supplied.md)

@@ -161,4 +161,6 @@ You can see many example of custom service definition in example5
 
 Abstract services are implicitly single and polymorphic.
 
+To see more implementation of custom services, check out [example8](../examples/example8/example8.cpp).
+
 [Next chapter: Advanced Mapping](section09_mapping.md)

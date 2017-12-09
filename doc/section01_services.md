@@ -179,4 +179,6 @@ With only that, many use cases are covered and may already be useful. But don't 
 In the next chapter, we'll see how to use injection into function parameter.
 Just like with classes, function can also benefit from dependency injection.
 
+You can go check [example1](../examples/example1/example1.cpp), which covers everything related to this chapter.
+
 [Next chapter: Invoke](section02_invoke.md)

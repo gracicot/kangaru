@@ -73,4 +73,6 @@ Scene& scene = container.service<SceneService>(); // works, won't try to constru
 
 Note that if the instance is not found, the container won't be able to construct it and will throw a `kgr::supplied_not_found` instead.
 
+To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
+
 [Next chapter: Autocall](section06_autocall.md)

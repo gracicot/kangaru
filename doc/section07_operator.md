@@ -127,6 +127,6 @@ You can use it like this:
 
 And again, there's the equivalent of lazy with a forked container, named `forked_lazy<T>` and `forked_lazy_service<T>`
 
-You can see extended examples of operator services in example8.
+Please visit [example7](../examples/example7/example7.cpp) to see more of operator service usage.
 
 [Next chapter: Custom Service Definitions](section08_definitions.md)

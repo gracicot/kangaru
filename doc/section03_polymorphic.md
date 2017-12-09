@@ -168,4 +168,6 @@ kgr::container container;
 Camera& camera = container.service<CameraService>();
 ```
 
+The [example3](../examples/example3/example3.cpp) will show behavior of polymorphic services explained in this chapter.
+
 [Next chapter: Managing Containers](section04_container.md)

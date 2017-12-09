@@ -126,4 +126,6 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 > {};
 ```
 
+To see those snippets in action, go check [example6](../examples/example6/example6.cpp).
+
 [Next chapter: Operator Services](section07_operator.md)

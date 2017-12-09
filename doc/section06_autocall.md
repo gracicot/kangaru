@@ -19,7 +19,7 @@ Alternatively, if you only have C++11 or C++14 on hand, you can use a macro:
 ```
 
 Of course, you are free to name them as you want.
-One your shotcut is declared, let's get started!
+Once your shotcut is declared, let's get started!
 
 ## Enabling Autocall
 

@@ -1,5 +1,5 @@
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wmain")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-comment")
 endif()
 
 add_subdirectory(abstract_factory)

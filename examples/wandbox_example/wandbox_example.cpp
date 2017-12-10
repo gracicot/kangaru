@@ -46,8 +46,8 @@ struct DatabaseService : kgr::single_service<Database, kgr::dependency<Connectio
 
 // The service map maps a function parameter type to a service definition
 // We also want to map a Database argument type for the example.
-auto service_map(Database const&)->DatabaseService;
-auto service_map(Credential const&)->CredentialService;
+auto service_map(Database const&) -> DatabaseService;
+auto service_map(Credential const&) -> CredentialService;
 
 int main() {
 	kgr::container container;

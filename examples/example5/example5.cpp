@@ -36,6 +36,8 @@ int main()
 		std::cout << std::boolalpha << "Is inserted a second time? " << inserted << '\n';
 
 		Scene& scene = container.service<SceneService>(); // works, won't try to construct it.
+		
+		(void) scene;
 	}
 	
 	try {

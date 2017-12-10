@@ -17,7 +17,7 @@ struct single {
 
 struct polymorphic {};
 struct final {};
-struct supplied : single {};
+struct supplied {};
 struct abstract : polymorphic, single {};
 
 template<typename T>

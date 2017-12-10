@@ -49,6 +49,7 @@ int main()
         << (&scene.camera == &camera) << std::endl; // outputs true
 }
 ```
+[Try this example online](https://wandbox.org/permlink/pM984NaaT4YnVgiF) too see how it runs.
 
 Features
 --------

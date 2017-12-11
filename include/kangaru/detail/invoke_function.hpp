@@ -182,7 +182,7 @@ using invoke_function_arguments_t = typename invoke_function<Map, T, Args...>::a
  * Alias for invoke_function::argument_type, the type of the nth argument.
  */
 template<std::size_t n, typename Map, typename T, typename... Args>
-using invoke_function_argument_t = typename invoke_function<Map, T, Args...>::template argument_type<n>;
+using invoke_function_argument_t = meta_list_element_t<n, typename invoke_function<Map, T, Args...>::argument_types>;
 
 template<typename Map, typename T, typename... Args>
 using invoke_function_result_t = typename invoke_function<Map, T, Args...>::return_type;

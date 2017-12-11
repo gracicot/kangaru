@@ -35,7 +35,6 @@ struct base_function_traits {
 	using object_type = Type;
 	using return_type = R;
 	using argument_types = meta_list<Args...>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
 /*
@@ -46,7 +45,6 @@ template <typename R, typename... Args>
 struct base_non_member_function_traits {
 	using return_type = R;
 	using argument_types = meta_list<Args...>;
-	template<std::size_t n> using argument_type = meta_list_element_t<n, argument_types>;
 };
 
 /*
@@ -246,7 +244,7 @@ using object_type_t = typename function_traits<F>::object_type;
  * Alias for the type of the nth argument.
  */
 template <std::size_t n, typename F>
-using function_argument_t = typename function_traits<F>::template argument_type<n>;
+using function_argument_t = meta_list_element_t<n, typename function_traits<F>::argument_types>;
 
 } // namespace detail
 } // namespace kgr

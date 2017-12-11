@@ -1,9 +1,9 @@
 # kangaru [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/4yPPofe503MUNyGP)
 
-Kangaru is an inversion of control container for C++11 and later. We support features like operation between containers,
-injection via function parameter, automatic call of member function on instance creation and much more!
+Kangaru is an inversion of control container for C++11 and later. It supports features like operation between containers,
+injection via function parameter, automatic call of member functions on instance creation and much more!
 
-Our goal is to create a container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
+Our goal is to create a DI container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
 
 Kangaru is a header only library because of it's extensive use of templates.
 The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.

@@ -62,18 +62,18 @@ template<typename T, typename F>
 using autocall_function = typename autocall_function_helper<T, F>::type;
 
 /*
- * This trait extract what arguments are needed in a autocall call.
+ * This trait extract what services are needed for calling an autocall function.
  * This is mostly used for other trait to validate an autocall function.
  */
 template<typename, typename, typename = void>
-struct autocall_arguments;
+struct autocall_services_helper;
 
 /*
  * This is the case for an invoke call.
- * Since all aguments are listed, we simply take those.
+ * Since all required services are listed, we simply take those.
  */
 template<typename T, typename F>
-struct autocall_arguments<T, F, enable_if_t<is_invoke_call<F>::value>> {
+struct autocall_services_helper<T, F, enable_if_t<is_invoke_call<F>::value>> {
 	using type = typename F::parameters;
 };
 
@@ -82,16 +82,13 @@ struct autocall_arguments<T, F, enable_if_t<is_invoke_call<F>::value>> {
  * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
  */
 template<typename T, typename F>
-struct autocall_arguments<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
+struct autocall_services_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
 private:
-	template<typename Map>
-	struct mapped_type {
-		template<typename U>
-		using map = mapped_service_t<U, Map>;
-	};
+	template<typename U>
+	using mapped_type = mapped_service_t<U, typename T::map>;
 	
 public:
-	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type<typename T::map>::template map>;
+	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type>;
 };
 
 /*
@@ -116,7 +113,7 @@ using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::
  * This is an alias for the argument list of an autocall function.
  */
 template<typename T, typename F>
-using autocall_arguments_t = typename autocall_arguments<T, F>::type;
+using autocall_services = typename autocall_services_helper<T, F>::type;
 
 /*
  * This checks if an entry in the autocall list is actually a valid autocall function type.

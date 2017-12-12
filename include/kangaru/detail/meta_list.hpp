@@ -115,7 +115,7 @@ struct meta_list_size<meta_list<Types...>> {
 /*
  * This trait apply a metafunction on each element in the list, and return the transformed list.
  */
-template<typename, template<typename...> class>
+template<typename, template<typename> class>
 struct meta_list_transform;
 
 template<typename... Types, template<typename> class F>
@@ -126,7 +126,7 @@ struct meta_list_transform<meta_list<Types...>, F> {
 /*
  * This is an alias for the transformed list made by meta_list_transform.
  */
-template<typename List, template<typename...> class F>
+template<typename List, template<typename> class F>
 using meta_list_transform_t = typename meta_list_transform<List, F>::type;
 
 /*

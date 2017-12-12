@@ -162,6 +162,21 @@ public:
 	using type = decltype(test<T, Args...>(0));
 };
 
+template<typename F, typename... Args>
+struct is_callable {
+private:
+	template<typename...>
+	static std::false_type test(...);
+
+	template<typename U, typename... As, int_t<decltype(std::declval<U>()(std::declval<As>()...))> = 0>
+	static std::true_type test(int);
+
+	using type = decltype(test<F, Args...>(0));
+	
+public:
+	static constexpr bool value = type::value;
+};
+
 template<typename T>
 using is_service_embeddable = std::integral_constant<bool,
 	std::is_trivially_destructible<T>::value &&

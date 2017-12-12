@@ -194,30 +194,13 @@ private:
 	struct expand {
 		using type = invoke_function_argument_t<I, Map, U, Args...>;
 	};
-
-	// This sub trait is for visual studio
-	// The constraint can be simplified because every argument are simple template argument
-	template<typename U, typename... As>
-	struct call_test {
-	private:
-		template<typename...>
-		static std::false_type test(...);
-
-		template<typename V, typename... A2s, int_t<decltype(std::declval<V>()(std::declval<A2s>()...))> = 0>
-		static std::true_type test(int);
-
-		using type = decltype(test<U, As...>(0));
-		
-	public:
-		static constexpr bool value = type::value;
-	};
 	
 	// Alias for not using a template template argument in the next expression, will help simplify the expression and MSVC to parse it.
 	template<typename U>
 	using map_t = mapped_service_t<U, Map>;
 	
 	// We forward injected argument types (from expand) and additional arguments (As) to the sub trait call_test
-	template<typename U, typename... As, std::size_t... S, enable_if_t<call_test<U, service_type<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>
+	template<typename U, typename... As, std::size_t... S, enable_if_t<is_callable<U, service_type<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
 	template<typename...>

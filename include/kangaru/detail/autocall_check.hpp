@@ -85,17 +85,12 @@ using is_autocall_entry_map_complete = typename is_autocall_entry_map_complete_h
 template<typename T, typename F>
 struct is_autocall_entry_valid_helper {
 private:
-	// This is workaround for clang. Clang will not interpret the name of the class itself
-	// as a valid template template parameter. using this alias, it forces it to use the name as a template.
-	template<typename U, typename C>
-	using self_t = typename is_autocall_entry_valid_helper<U, C>::type;
-	
 	// Check when it's a method invocation
 	struct invoke_method_condition {
 		template<typename U, typename C, std::size_t I>
 		using type = std::integral_constant<bool,
-			service_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value &&
-			dependency_check<meta_list_element_t<I, autocall_arguments_t<U, C>>>::value>;
+			service_check<meta_list_element_t<I, autocall_services<U, C>>>::value &&
+			dependency_check<meta_list_element_t<I, autocall_services<U, C>>>::value>;
 	};
 
 	// Check when it's an invoke call

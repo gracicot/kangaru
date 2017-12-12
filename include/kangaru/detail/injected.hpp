@@ -17,18 +17,22 @@ namespace detail {
  */
 template<typename T>
 struct injected {
-	template<typename... Args, enable_if_t<is_brace_constructible<T, Args...>::value, int> = 0>
+private:
+	using Type = conditional_t<is_single<T>::value, T&, T>;
+	
+public:
+	template<typename... Args, enable_if_t<is_brace_constructible<Type, Args...>::value, int> = 0>
 	explicit injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
 	
-	template<typename... Args, enable_if_t<!is_brace_constructible<T, Args...>::value && std::is_constructible<T, Args...>::value, int> = 0>
+	template<typename... Args, enable_if_t<!is_brace_constructible<Type, Args...>::value && std::is_constructible<Type, Args...>::value, int> = 0>
 	explicit injected(Args&&... args) : _service(std::forward<Args>(args)...) {}
 	
-	service_type<decay_t<T>> forward() {
+	service_type<T> forward() {
 		return _service.forward();
 	}
 	
 private:
-	T _service;
+	Type _service;
 };
 
 /*
@@ -89,16 +93,12 @@ using injected_service_t = typename injected_service<T>::type;
 /*
  * This is the contrary of injected_service.
  * We get a service definition type, and we return the wrapper type.
- * We cannot use the conditional_t alias there for visual studio.
  */
 template<typename T>
-using injected_wrapper = typename std::conditional<is_service<T>::value && !is_single<T>::value,
-	injected<T>,
-	typename std::conditional<is_polymorphic<T>::value,
-		virtual_injected<T>,
-		injected<T&>
-	>::type
->::type;
+using injected_wrapper = conditional_t<is_polymorphic<T>::value,
+	virtual_injected<T>,
+	injected<T>
+>;
 
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
@@ -123,6 +123,10 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
 	return std::tuple<detail::remove_rvalue_reference_t<Args>...>{std::forward<Args>(args)...};
 }
 
+/*
+ * Alias to help write a return type for construct functions.
+ * Yield the return type of inject(Ts...)
+ */
 template<typename... Ts>
 using inject_result = std::tuple<detail::remove_rvalue_reference_t<Ts>...>;
 

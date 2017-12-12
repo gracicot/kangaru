@@ -11,8 +11,8 @@
 namespace kgr {
 namespace detail {
 
-template<typename, typename>
-struct autocall_function;
+template<typename, typename, typename>
+struct autocall_function_helper;
 
 /*
  * This class implements all autocall functions that a definition must implement for autocall.
@@ -27,8 +27,9 @@ struct autocall_base {
 	using map = Map;
 	
 private:
-	template<typename, typename> friend struct autocall_function;
+	template<typename, typename, typename> friend struct autocall_function_helper;
 	
+	// TODO: Remove this function since it doesnit belong here anymore.
 	template<typename T, typename M, typename F, std::size_t... S>
 	static void autocall_helper(detail::seq<S...>, inject_t<container_service> cs, T& service) {
 		cs.forward().invoke<M>([&](detail::function_argument_t<S, typename F::value_type>... args) {

@@ -14,59 +14,52 @@ namespace detail {
  * This class will the the member autocall function part of the service definition.
  * Maybe the autocall function part of the service definition should not exist, and moved to the container.
  */
+template<typename, typename, typename = void>
+struct autocall_function_helper;
+
 template<typename T, typename F>
-struct autocall_function {
+struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
 private:
-	/*
-	 * This is used for the case of a regular autocall call.
-	 */
-	template<typename U, typename C>
-	struct get_member_autocall {
-		template<typename V, typename Function, typename Map>
-		struct function {
-			static void autocall(inject_t<container_service> cs, V& service) {
-				V::template autocall_helper<V, Map, Function>(detail::function_seq<typename Function::value_type>{}, std::move(cs), service);
-			}
-		};
-		
-		using type = std::integral_constant<
-			decltype(&function<U, C, typename U::map>::autocall),
-			&function<U, C, typename U::map>::autocall
-		>;
-	};
-	
-	/*
-	 * This is used when a invoke autocall is used.
-	 */
-	template<typename U, typename C, std::size_t... S>
-	struct get_invoke_autocall {
-		template<typename V, typename Function, typename... Ts>
-		struct function {
-			static void autocall(inject_t<Ts>... others, V& service) {
-				service.call(Function::value, std::forward<inject_t<Ts>>(others).forward()...);
-			}
-		};
-		
-		using type = std::integral_constant<
-			decltype(&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall),
-			&function<U, C, detail::meta_list_element_t<S, typename C::parameters>...>::autocall
-		>;
-	};
-	
-	template<typename U, typename C, std::size_t... S>
-	static get_invoke_autocall<U, C, S...> test_helper(seq<S...>);
-	
-	template<typename U, typename C, enable_if_t<is_invoke_call<C>::value, int> = 0>
-	static decltype(test_helper<U, C>(tuple_seq<typename C::parameters>{})) test();
-	
-	template<typename U, typename C, enable_if_t<is_member_autocall<U, C>::value && !is_invoke_call<C>::value, int> = 0>
-	static get_member_autocall<U, C> test();
-	
-	using inner_type = decltype(test<T, F>());
+	static void autocall(inject_t<container_service> cs, T& service) {
+		T::template autocall_helper<T, typename T::map, F>(
+			detail::function_seq<typename F::value_type>{},
+			std::move(cs),
+			service
+		);
+	}
 	
 public:
-	using type = typename inner_type::type;
+	using type = std::integral_constant<
+		decltype(&autocall_function_helper::autocall),
+		&autocall_function_helper::autocall
+	>;
 };
+
+template<typename T, typename F>
+struct autocall_function_helper<T, F, enable_if_t<is_invoke_call<F>::value>> {
+private:
+	template<typename... Args>
+	struct function {
+		static void autocall(inject_t<Args>... others, T& service) {
+			service.call(F::value, std::forward<inject_t<Args>>(others).forward()...);
+		}
+	};
+	
+	template<std::size_t... S>
+	using function_constant = std::integral_constant<
+		decltype(&function<detail::meta_list_element_t<S, typename F::parameters>...>::autocall),
+		&function<detail::meta_list_element_t<S, typename F::parameters>...>::autocall
+	>;
+	
+	template<std::size_t... S>
+	static auto get_function(seq<S...>) -> function_constant<S...>;
+	
+public:
+	using type = decltype(get_function(tuple_seq<typename F::parameters>{}));
+};
+
+template<typename T, typename F>
+using autocall_function = typename autocall_function_helper<T, F>::type;
 
 /*
  * This trait extract what arguments are needed in a autocall call.
@@ -105,19 +98,19 @@ public:
  * This gets the integral_constant found in autocall_function
  */
 template<typename T, typename F>
-using autocall_function_t = typename autocall_function<T, F>::type;
+using autocall_function_t = typename autocall_function<T, F>::value_type;
 
 /*
  * This returns the nth autocall function type in the autocall list of a service.
  */
 template<typename T, std::size_t I>
-using autocall_nth_function = detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
+using autocall_nth_function = detail::autocall_function<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
 
 /*
  * This returns the value type of autocall_nth_function
  */
 template<typename T, std::size_t I>
-using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>::value_type;
+using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
 
 /*
  * This is an alias for the argument list of an autocall function.

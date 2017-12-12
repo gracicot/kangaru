@@ -30,6 +30,7 @@ struct Scene {
 // Structure and dependency graph is defined here.
 
 // Camera is a single service so the service has a shared instance.
+// It will be injected and returned as a reference.
 struct CameraService : kgr::single_service<Camera> {};
 
 // Scene is not single, so the container return scenes by value.

@@ -178,7 +178,9 @@ public:
 		enable_if<detail::is_service_valid<Services>>...,
 		disable_if<detail::is_map<Services>>...,
 		detail::enable_if_t<(sizeof...(Services) > 0)>> = 0>
-	auto invoke(U&& function, Args&&... args) -> decltype(std::declval<U>()(std::declval<service_type<Services>>()..., std::declval<Args>()...)) {
+	auto invoke(U&& function, Args&&... args)
+		-> decltype(std::declval<U>()(std::declval<service_type<Services>>()..., std::declval<Args>()...))
+	{
 		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
 	}
 	
@@ -245,8 +247,12 @@ public:
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
 	inline void merge(container&& other) {
-		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
 		_services.insert(other._services.begin(), other._services.end());
+		_instances.insert(
+			_instances.end(),
+			std::make_move_iterator(other._instances.begin()),
+			std::make_move_iterator(other._instances.end())
+		);
 	}
 	
 	/*
@@ -254,8 +260,12 @@ public:
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
 	inline void merge(container& other) {
-		_instances.insert(_instances.end(), std::make_move_iterator(other._instances.begin()), std::make_move_iterator(other._instances.end()));
 		_services.insert(other._services.begin(), other._services.end());
+		_instances.insert(
+			_instances.end(),
+			std::make_move_iterator(other._instances.begin()),
+			std::make_move_iterator(other._instances.end())
+		);
 	}
 	
 	
@@ -338,7 +348,10 @@ private:
 		
 		autocall(service);
 		
-		static_assert(std::is_same<decltype(service), T&>::value, "save_instance returned a different service type than the required one!");
+		static_assert(
+			std::is_same<decltype(service), T&>::value,
+			"save_instance returned a different service type than the required one!"
+		);
 		
 		return detail::typed_service_storage<T>{&service, get_forward<T>()};
 	}
@@ -363,7 +376,9 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	auto save_new_instance(Args&&...) -> detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&> {
+	auto save_new_instance(Args&&...)
+		-> detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&>
+	{
 		throw supplied_not_found{};
 	}
 	
@@ -488,7 +503,9 @@ private:
 		// This line is used to shut unused-variable warning, since S can be empty.
 		static_cast<void>(constructArgs);
 		
-		return make_contained_service<T>(std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))...);
+		return make_contained_service<T>(
+			std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))...
+		);
 	}
 	
 	/*
@@ -570,7 +587,9 @@ private:
 	 * This function returns a service definition.
 	 * This version of this function create the service each time it is called.
 	 */
-	template<typename T, typename... Args, disable_if<detail::is_single<T>> = 0, disable_if<detail::is_container_service<T>> = 0>
+	template<typename T, typename... Args,
+		disable_if<detail::is_single<T>> = 0,
+		disable_if<detail::is_container_service<T>> = 0>
 	auto definition(Args&&... args) -> detail::injected_wrapper<T> {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		
@@ -615,7 +634,9 @@ private:
 	 * It unpacks arguments of the function with an integer sequence.
 	 */
 	template<typename Map, typename U, typename... Args, std::size_t... S>
-	auto invoke_helper(detail::seq<S...>, U&& function, Args&&... args) -> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> {
+	auto invoke_helper(detail::seq<S...>, U&& function, Args&&... args)
+		-> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...>
+	{
 		return std::forward<U>(function)(
 			mapped_service<Map, detail::invoke_function_argument_t<S, Map, detail::decay_t<U>, Args...>>()...,
 			std::forward<Args>(args)...

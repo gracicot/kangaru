@@ -22,7 +22,7 @@ auto service_map(Service)               -> Definition1;
 auto service_map(Service, kgr::map_t<>) -> Definition2;
 ```
 
-When using `mapped_service_t<Service>`, that will yield `Definition2`. Because it has higher priority for the service map.
+When using `kgr::mapped_service_t<Service>`, that will yield `Definition2`. Because it has higher priority for the service map.
 
 ## Named Map
 
@@ -39,10 +39,10 @@ auto service_map(Service)                    -> Definition1;
 auto service_map(Service, kgr::map_t<MyMap>) -> Definition2;
 
 // Without named parameter, yields Definition1
-using UsedDefinition1 = mapped_service_t<Service>;
+using UsedDefinition1 = kgr::mapped_service_t<Service>;
 
 // With the named parameter, yields Definition2
-using UsedDefinition2 = mapped_service_t<Service, kgr::map<MyMap>>;
+using UsedDefinition2 = kgr::mapped_service_t<Service, kgr::map<MyMap>>;
 
 kgr::container container;
 

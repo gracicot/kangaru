@@ -650,7 +650,7 @@ private:
 	template<typename U, typename... Args>
 	auto invoke_raw(U function, Args&&... args) -> detail::function_result_t<U> {
 		return invoke_raw_helper(
-			detail::tuple_seq_minus<detail::function_arguments_t<detail::decay_t<U>>, sizeof...(Args)>{},
+			detail::tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{},
 			function,
 			std::forward<Args>(args)...
 		);

@@ -661,18 +661,9 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<T>> = 0>
 	void autocall(detail::seq<S...>, T& service) {
-		(void)unpack{(invoke_autocall(
-			detail::function_seq<detail::autocall_nth_function_t<T, S>>{}, service, detail::autocall_nth_function<T, S>::value
-		), 0)..., 0};
-	}
-	
-	/*
-	 * This function is the invoke_autocall that take the method to invoke as parameter.
-	 * It invokes the function sent as parameter.
-	 */
-	template<typename T, typename F, std::size_t... S>
-	void invoke_autocall(detail::seq<S...>, T& service, F function) {
-		invoke_raw(function, service);
+		(void)unpack{(
+			invoke_raw(detail::autocall_nth_function<T, S>::value, service)
+		, void(), 0)..., 0};
 	}
 	
 	/*

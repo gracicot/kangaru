@@ -1,7 +1,6 @@
 Invoke
 ======
-
-In the previous tutorial, we were doing injection wia class constructors. Kangaru offers another way to inject services, that is through function calls.
+In the previous tutorial, we were doing injection via class constructors. Kangaru offers another way to inject services, that is through function calls.
 
 For example, let's say you have this kind of code:
 
@@ -12,10 +11,15 @@ bool result = process_inputs(
 );
 ```
 
-We want to make that kind of code less painful. 
+We want to make that kind of code less painful. Imagine doing this instead, and let the container figure out how to call your function:
+
+```c++
+bool result = container.invoke(process_inputs);
+```
+
 The idea behind this is you give the container a function to call, and the container will match
 parameters to services as automatically as possible, giving a nice shortcut for this kind of code.
-This is what `kgr::container::invoke` is all about. It recieves a function to call, and it call it with injected services.
+This is what `kgr::container::invoke` is all about. It receives a function to call, and it call it with injected services.
 
 ## Specifying Definitions
 
@@ -63,7 +67,7 @@ auto service_map(MessageBus const&)    -> MessageBusService;
 ```
     
 The service map is a function that takes a parameter to be mapped, and has the associated service definition as return type.
-Each entry must be in the same namespace as the argument it receives. The container will search the right `service_map` declaration through ADL.
+Each entry must be in the same namespace as the argument it receives. The container will search the right `service_map` declaration through [ADL](http://en.cppreference.com/w/cpp/language/adl).
 
 Now calling our `process_inputs` will look like this:
 ```c++
@@ -85,6 +89,8 @@ Just like changing the dependencies of a service constructor, the calling site s
 bool result = container.invoke(process_inputs);
 ```
 
+As long as every service definition are written and their service map, the container will be able to resolve injected parameters automatically.
+
 ## Callable Objects
 
 Just like function pointer, callable objects like lambdas are supported too:
@@ -102,13 +108,13 @@ C++14 generic lambda are also supported. The only restriction is that all `auto`
 
 ```c++
 auto function = [](Window& window, MessageBus& bus, int a, auto b) { // b to be deduced
-    return 10 + data + b;
+    return 10 + a + b;
 };
 
 double quantity = container.invoke(function, 30, 2.1); // quantity == 42.1, b deduced as double
 ```
 
-> WARNING: To inspect the parameter types, the container must instanciate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instanciate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instanciate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instanciated one time with the right types.
+> WARNING: To inspect the parameter types, the container must instantiate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instantiate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instantiate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instantiated one time with the right types.
 
 To see more about invoke, I welcome you to check [example2](../examples/example2/example2.cpp) and
 [abstract factory example](../examples/abstract_factory/abstract_factory.cpp).

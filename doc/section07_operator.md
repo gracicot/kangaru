@@ -33,7 +33,7 @@ container1.invoke([&](kgr::container& container3, Type type) {
 
 ## Fork
 
-There's a service called `kgr::container_service`. It's a special service that inject a reference to the container itself.
+There's a service called `kgr::container_service`. It's a service that will call `container.fork()`, and then inject the fork.
 
 You can call it directly, use it in invoke or as dependency:
 
@@ -45,7 +45,7 @@ kgr::container container1;
 kgr::container container2 = container1.service<fork_service>();
 
 container.invoke([](kgr::container fork) {
-	// fork is a forked container, we recieved by value.
+    // fork is a forked container, we recieved by value.
 });
 ```
 
@@ -62,7 +62,7 @@ kgr::container container2 = container1.service<filtered_fork_service<kgr::none_o
 
 ## Generator
 
-A generator is an object that it's purpose is to create other object. It's kind of a factory.
+A generator is an object that it's purpose is to create a specific service. It's kind of a factory that internally uses the container.
 The class `generator<T>` is a template class where `T` is a service definition.
 
 The `generator` class has a service definition named `generator_service`.
@@ -72,13 +72,14 @@ It will forward every arguments to the service function.
 
 Here's an example:
     
-    // SceneService is a non-single service.
-    auto sceneGenerator = container.service<kgr::generator_service<SceneService>>();
-    
-    auto scene1 = sceneGenerator();
-    auto scene2 = sceneGenerator();
-    auto scene3 = sceneGenerator("special parameter");
-    
+```c++
+// SceneService is a non-single service.
+kgr::generator<SceneService> sceneGenerator = container.service<kgr::generator_service<SceneService>>();
+
+auto scene1 = sceneGenerator();
+auto scene2 = sceneGenerator();
+auto scene3 = sceneGenerator("special parameter");
+```
 
 There's another version of the generator for a forked container. It's called `forked_generator`, and it's definition `forked_generator_service`.
 
@@ -86,46 +87,57 @@ There's another version of the generator for a forked container. It's called `fo
 
 As it's name says, this class serves the purpose of calling the `invoke` function from the container.
 Why using `kgr::invoker` when you can just use `container.invoke`?
-Because again, it encapsulate what you can do with the container, and express your intent of calling `invoke` on it.
+Because again, it encapsulate what you can do with the container, and express your intent of only calling `invoke` on it.
 
 Here's a code snippet using `kgr::invoker`:
 
-    int send_message(MessageBus&, Window&, double timeout);
-    
-    kgr::invoker invoker = container.service<kgr::invoker_service>();
-    
-    invoker(send_message, 10); // calls send_message with 10 as it's timeout
+```c++
+int send_message(MessageBus&, Window&, double timeout);
+
+kgr::invoker invoker = container.service<kgr::invoker_service>();
+
+invoker(send_message, 10); // calls send_message with 10 as it's timeout
+```
     
 As other thing related to service map, there is a way to specify which maps to use in case of advanced mapping.
 
-    auto invoker = container.service<kgr::mapped_invoker_service<kgr::map<MyMap1, MyMap2>>>();
+```c++
+kgr::mapped_invoker<kgr::map<MyMap1, MyMap2>> invoker =
+    container.service<kgr::mapped_invoker_service<kgr::map<MyMap1, MyMap2>>>();
+```
 
 Also, just like the generator, another version of the invoker for a forked container is provided, called `kgr::forked_invoker`, and it's definition `kgr::forked_invoker_service`.
     
 ## Lazy
 
-The lazy class is used to represent an object that will be there later. The type `lazy<T>` takes a service definition as parameter.
-That service definition will be used with the container to instanciate your object.
+The lazy class is used to represent a service that will be constructed later. The type `lazy<T>` takes a service definition as parameter.
+That service definition will be used with the container to instantiate your object.
 
 The lazy class has the dereference operator `*` and the arrow operator `->` to access the contained object.
-Additionnaly, it has a `get()` method that returns a reference to the contained object.
+Additionally, it has a `get()` method that returns a reference to the contained object.
 
-The object is first instanciated when the first access operator of function is called. The instance is then reused after.
+The object is first instantiated when the first access operator of function is called. The instance is then reused after.
 
 Lazy is provided with a service definition named `lazy_service<T>` where `T` is a service definition.
 
 You can use it like this:
 
-    // The contained 'MessageBus&' is not constructed yet.
-    kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
-    
-    // MessageBusService is constructed here, the operator* is used.
-    std::cout << *lazy_message_bus;
-    
-    // The same instance is reused again and returned by operator->
-    lazy_message_bus->process_messages();
+```c++
+// The contained 'MessageBus&' is not constructed yet.
+kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
+
+// MessageBusService is constructed here, the operator* is used.
+std::cout << *lazy_message_bus;
+
+// The same instance is reused again and returned by operator->
+lazy_message_bus->process_messages();
+```
 
 And again, there's the equivalent of lazy with a forked container, named `forked_lazy<T>` and `forked_lazy_service<T>`
+
+## Conclusion
+
+While you can use the container directly everywhere, you can also be more fined grained over what a particular piece of code should be able to do with the container. It eventually reduces coupling with kangaru and help expressing your intent with other programmer about what you will do with the container.
 
 Please visit [example7](../examples/example7/example7.cpp) to see more of operator service usage.
 

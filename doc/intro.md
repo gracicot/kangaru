@@ -32,7 +32,7 @@ Then use cmake to generate the makefile and export the package informations:
 
     $ cmake ..
 
-Tou can then use cmake to find the package and add include paths: 
+You can then use cmake to find the package and add include paths: 
 
     find_package(kangaru REQUIRED)
     target_link_libraries(<YOUR TARGET> PUBLIC kangaru)
@@ -46,7 +46,7 @@ Take note that you will need to add the library to your include paths.
 All declarations are made in the namespace `kgr`. Additionnaly, the namespace `kgr` contains the namespace `detail`, which itself contains implementation details.
 Note that the `detail` namespace is not considered as a part of the API and its content might be subject to changes.
 
-### Services, Definition, Oh My!
+### Services, Definitions, Oh My!
 
 In this documentation, many classes will be refered as services or service definitions.
 
@@ -54,13 +54,13 @@ _Services_ are classes that are either injected by the container or have other c
 
 _Service Definitions_ are classes that contain a service and tell the container how this particular service should behave within the container.
 
-### Macros
+### About Macros
 
-This library does not make use of macros to prevent multiple inclusion.
-Every macros that starts with `KGR_KANGARU_` is considered reserved.
-Note that some features of this library are easier to use with macros, and we recommend you to use those that are defined in the documentation.
-
+This library make use of macros to prevent multiple inclusion.
+Every macros that starts with `KGR_KANGARU_` is considered reserved for implementation.
 Macros defined by the library are not part of it's interface.
+
+Note that [some features](section06_autocall.md) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
 
 ### Compiler Support
 

@@ -71,6 +71,25 @@ Scene& scene = container.service<SceneService>(); // works, won't try to constru
 
 Note that if the instance is not found, the container won't be able to construct it and will throw a `kgr::supplied_not_found` instead.
 
+## Replace Services
+
+The `emplace` function will only construct a service is it's not in the container yet. But what if you wanted to replace an existing service?
+
+The container give you a way to explicitly replace a single service to it would be used in future injection. It's usage is similar to emplace:
+
+```c++
+kgr::container container;
+
+container.emplace<SceneService>(640, 480);
+Scene& scene1 = container.service<SceneService>();
+container.replace<SceneService>(1920, 1080);
+Scene& scene2 = container.service<SceneService>();
+
+assert(&scene1 != &scene2); // passes, these are different instances of scenes
+```
+
+Note that when replacing, the container will not destroy the old service. In our example, `scene1` is still valid after `replace` has been called.
+
 To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
 
 [Next chapter: Autocall](section06_autocall.md)

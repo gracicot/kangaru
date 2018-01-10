@@ -49,7 +49,7 @@ Here's a list of all classes and public aliases that changed:
     LazyService                 --> lazy_service
     Map                         --> map_t
     NoneOf                      --> except
-    Overrides                   --> override
+    Overrides                   --> overrides
     ServiceType                 --> service_type
     Service                     --> service
     SharedSrevice               --> shared_service

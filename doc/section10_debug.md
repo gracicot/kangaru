@@ -9,7 +9,7 @@ With kangaru we decided to emulate concepts to provide better error messages the
 Most of kangaru function are guarded by a constraints. It will recursively detect errors in constructors, dependencies, definitions, and others.
 For GCC, we used a small trick with templated constructors and default values that allows us to call a static assertation when a deleted function is invoked.
 
-This is the aclual GCC output when we wrongly send too many parameter in `PathprinterService` in example1:
+This is the aclual GCC output when we wrongly send too many parameter on a non-single service:
 
 ```
 examples/example1/example1.cpp: In function 'int main()':

@@ -4,23 +4,24 @@ Custom Service Definitions
 Previously, each time we did a service definition, we extended the `kgr::service` or the `kgr::single_service` classes.
 But it is important to note that we are not limited to that.
 
-Writing a service definition is pretty easy. We only need to define three functions for it to work with the container:
+To defined a custom service definition, we only need to define three functions. The container will look for those three and inspect their signature.
 
  * `construct`
  * `forward`
  * A constructor that takes at least `kgr::in_place_t` as parameter.
 
-The `construct` function is static and returns the arguments that should be used to construct your service definition.
-It can take any other service definition as a parameter.
-This is where dependencies are resolved.
-This function must return values using the `kgr::inject` function.
+The `construct` function is static and returns the arguments that should be used to instantiate your service definition.
+It can take any other service definition as injected parameters, using `kgr::inject_t`.
+This is actually where dependencies are resolved between services.
+
+The construct function must return values using the `kgr::inject` function.
 The return type is a special tuple made for the container to handle your arguments correctly.
 
-The `forward` function takes no parameters and returns the service.
+The `forward` function takes no parameters and returns the service. This is where the service is resolved.
 The return type of this function defines how your service should be injected.
 Note that this function can invalidate the service definition in the case of a non single service.
 
-The container will instanciate your definition given these tools.
+The container will instantiate your definition given these tools.
 However, it must call a constructor. The container will call a constructor that takes a `kgr::in_place_t`
 and the variables returned by `construct`.
 
@@ -78,7 +79,7 @@ The `kgr::inject` function will forward the arguments to be sent to your constru
 The return type `kgr::inject_result` is an alias to the return type of the `kgr::inject` function.
 Note that if you're using C++14 and later, you can use return type deduction `auto`, since `kgr::inject` always return a value.
 
-#### Additional parameters
+## Additional parameters
 
 You may have a service that requires a parameters to be sent fwom the call site.
 The `construct` function can take as many additional parameters as you want.
@@ -93,7 +94,7 @@ struct FileManagerService {
     
     template<typename... Args>
     static construct(kgr::inject_t<WindowService> ws, kgr::inject_t<CameraService> cs, Args&&... args)
-        -> kgr::inject_result<service_type<WindowService>, service_type<CameraService>, Args...>
+        -> kgr::inject_result<kgr::service_type<WindowService>, kgr::service_type<CameraService>, Args...>
     {
         return kgr::inject(ws.forward(), cs.forward(), std::forward<Args>(args)...);
     }
@@ -113,7 +114,7 @@ Then, we can send additional parameters to the service function:
 auto fm = container.service<FileManagerService>("another parameter", 34);
 ```
 
-### Singles
+## Singles
 
 There are two steps required in order to make `FileManagerService` single.
 
@@ -147,7 +148,7 @@ private:
 };
 ```
 
-### Abstract Services
+## Abstract Services
 
 Abstract services are the simplest ones to implement. They have only one method called `forward`, which is undefined, and they inherits from `kgr::abstract`:
 

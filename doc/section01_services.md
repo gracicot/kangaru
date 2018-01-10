@@ -1,7 +1,9 @@
 Services
 ========
 
-A service is simply a fancy name for one of your class that can be used by the container.
+Every type that should be managed by this library is considered a service, even if it's a single, non-single, abstract or concrete type. Those types considered service will be manageable by the dependency injection container provided with kangaru.
+
+A service is simply a fancy name for a type that can be used with the container.
 Service are the building block of injection with this library. Every injectable type is a service.
 
 The container won't use your classes directly. It instead uses a proxy called the definition of a service.
@@ -72,8 +74,8 @@ struct SceneService : kgr::service<Scene, kgr::dependency<CameraService>> {};
 
 The second argument to the `kgr::service` class is the dependencies of the service.
 
-Now, since we expressed our dependency there, we don't need to explicitly create a camera and send it;
-instead, the container will take of the depdency without the construction site to be aware:
+Now, since we expressed our dependency there, we don't need to explicitly create a camera and send it.
+Instead, the container will take care of the dependencies without the call site to be aware of them:
 
 ```c++
 // A camera is created and sent into the scene.
@@ -116,10 +118,10 @@ Since our class has the exact same semantics as before, the container will conti
 
 Single services are created and saved in the container for reuse.
 They are created one time at the first call to `service()`, and then saved inside the container.
-The container will then reuse the instance for all the next injections.
+The container will then reuse the instance for all future injections.
 
 Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwading is disabled.
-We'll se how to counter this limitation in the section about [supplied services](section05_supplied.md).
+We'll see how to counter this limitation in the section about [supplied services](section05_supplied.md).
 
 Now, let's say we want only one scene in our application. We want the same scene to be injected and returned by the container.
 We will do that by inheriting from the `kgr::single_service` definition.
@@ -162,7 +164,7 @@ assert(&screen1.scene == &screen2.scene); // Passes! Same scene injected into bo
 ```
 
 In that code, many things happened. At the first call of `service()`, a screen must be created.
-The container will first need to create the dependencies of the scene. And recusively, the dependencies it's dependencies. So in the end, these actions are permormed:
+The container will first need to create the dependencies of the scene. And recursively, the dependencies it's dependencies. So in the end, these actions are performed:
  - A camera is first created,
  - Then a scene is created with that camera,
  - We save the scene into the container,

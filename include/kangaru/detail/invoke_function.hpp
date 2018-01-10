@@ -112,7 +112,7 @@ struct get_template_call<
 	Map, T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<is_template_call_callable<Map, T, meta_list<TArgs...>, meta_list<Args...>>::value>
 > {
-	// Some MSVC vesions cannoet parse the valid syntax corretly. We must write
+	// Some MSVC vesions cannot parse the valid syntax corretly. We must write
 	// the expression in that way in order to compile.
 #ifdef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 	using type = decltype(exact(&T::operator()<TArgs...>));

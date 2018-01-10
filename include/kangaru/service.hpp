@@ -107,8 +107,9 @@ public:
 	
 	template<typename... Args>
 	static auto construct(inject_t<Deps>... deps, Args&&... args)
-	-> decltype(inject(std::unique_ptr<Type>{new Type{std::declval<Deps>().forward()..., std::declval<Args>()...}})) {
-		return inject(std::unique_ptr<Type>{new Type{deps.forward()..., std::forward<Args>(args)...}});
+		-> detail::enable_if_t<std::is_constructible<Type, service_type<Deps>..., Args...>::value, inject_result<std::unique_ptr<Type>>>
+	{
+		return inject(std::unique_ptr<Type>{new Type(deps.forward()..., std::forward<Args>(args)...)});
 	}
 	
 	std::unique_ptr<Type> forward() {
@@ -140,8 +141,11 @@ protected:
 public:
 	using parent::parent;
 
-	static auto construct(inject_t<Deps>... deps) -> decltype(inject(std::make_shared<Type>(std::declval<Deps>().forward()...))) {
-		return inject(std::make_shared<Type>(deps.forward()...));
+	template<typename... Args>
+	static auto construct(inject_t<Deps>... deps, Args&&... args)
+		-> detail::enable_if_t<std::is_constructible<Type, service_type<Deps>..., Args...>::value, inject_result<std::shared_ptr<Type>>>
+	{
+		return inject(std::make_shared<Type>(deps.forward()..., std::forward<Args>(args)...));
 	}
 	
 	std::shared_ptr<Type> forward() {

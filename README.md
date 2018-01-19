@@ -86,7 +86,6 @@ Optionally, you can also install kangaru on your system:
 
 Adding Include Path
 -------------------
-
 You must use the `find_package` function: 
 
     find_package(kangaru REQUIRED)
@@ -101,7 +100,6 @@ Then you can include the library as follow:
 
 What's next?
 ------------
-
 There is some feature I would like to see become real. Here's a list of those,
 feel free to contribute!
 
@@ -129,5 +127,4 @@ Let me know of your projects that uses kangaru! I'll be glad to fill the list ab
 
 Acknowledgements
 ----------------
-
-A big thanks to Louis-Alexandre Vallières-Lavoie for reviewing and proposing various improvement to our documentation.
+A big thanks to [Louis-Alexandre Vallières-Lavoie](https://github.com/Louis-Alexandre) for reviewing and proposing various improvement to our documentation.

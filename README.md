@@ -126,3 +126,8 @@ Here's a list of projets making use of kangaru
 #### Using kangaru?
 
 Let me know of your projects that uses kangaru! I'll be glad to fill the list above with your project's name.
+
+Acknowledgements
+----------------
+
+A big thanks to Louis-Alexandre Vallières-Lavoie for reviewing and proposing various improvement to our documentation.

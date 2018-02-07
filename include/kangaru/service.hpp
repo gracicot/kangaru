@@ -118,7 +118,7 @@ public:
 	
 	template<typename T, typename... Args>
 	detail::function_result_t<T> call(T method, Args&&... args) {
-		return (instance()->*method)(std::forward<Args>(args)...);
+		return ((*instance()).*method)(std::forward<Args>(args)...);
 	}
 };
 
@@ -154,7 +154,7 @@ public:
 	
 	template<typename T, typename... Args>
 	detail::function_result_t<T> call(T method, Args&&... args) {
-		return (instance()->*method)(std::forward<Args>(args)...);
+		return ((*instance()).*method)(std::forward<Args>(args)...);
 	}
 };
 

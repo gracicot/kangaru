@@ -271,3 +271,36 @@ TEST_CASE("kgr::unique_service must be constructible with dependencies", "[defau
 	(void) kgr::container{}.service<Definition3>(1);
 	(void) kgr::container{}.service<Definition3>(1, 1.f);
 }
+
+TEST_CASE("Default services must work with kgr::autocall", "[default_services]") {
+	static bool service_called;
+	service_called = false;
+	
+	struct Service { void call() { service_called = true; } };
+	
+	using autocall = kgr::autocall<kgr::method<decltype(&Service::call), &Service::call>>;
+	
+	SECTION("kgr::service must work with autocall") {
+		struct Definition : kgr::service<Service>, autocall {};
+		kgr::container{}.service<Definition>();
+		REQUIRE(service_called);
+	}
+	
+	SECTION("kgr::single_service must work with autocall") {
+		struct Definition : kgr::single_service<Service>, autocall {};
+		kgr::container{}.service<Definition>();
+		REQUIRE(service_called);
+	}
+	
+	SECTION("kgr::shared_service must work with autocall") {
+		struct Definition : kgr::shared_service<Service>, autocall {};
+		kgr::container{}.service<Definition>();
+		REQUIRE(service_called);
+	}
+	
+	SECTION("kgr::unique_service must work with autocall") {
+		struct Definition : kgr::unique_service<Service>, autocall {};
+		kgr::container{}.service<Definition>();
+		REQUIRE(service_called);
+	}
+}

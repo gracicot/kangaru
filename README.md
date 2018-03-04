@@ -19,14 +19,14 @@ Here's a quick demo to show usage of this library:
 #include <kangaru/kangaru.hpp>
 #include <iostream>
 
-// Normal classes with dependency between them
+// We define some normal classes with dependencies between them
 struct Camera {};
 
 struct Scene {
     Camera& camera;
 };
 
-// This is the configuration of our classes.
+// The following is the configuration of our classes.
 // Structure and dependency graph is defined here.
 
 // Camera is a single service so the service has a shared instance.
@@ -45,9 +45,7 @@ int main()
     Scene scene = container.service<SceneService>();
     Camera& camera = container.service<CameraService>();
     
-    std::cout
-        << std::boolalpha
-        << (&scene.camera == &camera) << std::endl; // outputs true
+    std::cout << std::boolalpha << (&scene.camera == &camera); // outputs true
 }
 ```
 [Try this example online](https://wandbox.org/permlink/rCfQY4LqysmgXVXV) too see how it runs.

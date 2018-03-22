@@ -134,11 +134,11 @@ using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...
 /*
  * Trait that tells if the class T has a callable template call operator
  */
-template<typename, typename, typename, typename = void>
+template<bool, typename, typename, typename, typename = void>
 struct has_template_call_operator : std::false_type {};
 
 template<typename Map, typename T, typename... Args>
-struct has_template_call_operator<Map, T, meta_list<Args...>, void_t<get_template_call_t<Map, T, Args...>>> : std::true_type {};
+struct has_template_call_operator<true, Map, T, meta_list<Args...>, void_t<get_template_call_t<Map, T, Args...>>> : std::true_type {};
 
 /*
  * function_trait equivalent for an invoke function. It has to choose if it's a lambda, generic lambda or a function.
@@ -163,14 +163,14 @@ struct invoke_function_helper<
 template<typename Map, typename T, typename... Args>
 struct invoke_function_helper<
 	Map, T, meta_list<Args...>,
-	enable_if_t<!has_call_operator<T>::value && !std::is_pointer<T>::value && has_template_call_operator<Map, T, meta_list<Args...>>::value>
+	enable_if_t<has_template_call_operator<!has_call_operator<T>::value && !std::is_pointer<T>::value, Map, T, meta_list<Args...>>::value>
 > : function_traits<get_template_call_t<Map, T, Args...>> {};
 
 /*
  * Alias for invoke_function_helper
  */
 template<typename Map, typename T, typename... Args>
-struct invoke_function : invoke_function_helper<Map, T, meta_list<Args...>> {};
+using invoke_function = invoke_function_helper<Map, T, meta_list<Args...>>;
 
 /*
  * Alias for invoke_function::argument_types, a meta list of argument types.
@@ -207,7 +207,7 @@ private:
 	static std::false_type test_helper(...);
 	
 	template<typename U, typename... As>
-	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(Args)>{})) test(int);
+	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(As)>{})) test(int);
 	
 	template<typename...>
 	static std::false_type test(...);

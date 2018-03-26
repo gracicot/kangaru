@@ -60,7 +60,7 @@ This library make use of macros to prevent multiple inclusion.
 Every macros that starts with `KGR_KANGARU_` is considered reserved for implementation.
 Macros defined by the library are not part of it's interface.
 
-Note that [some features](section06_autocall.md) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
+Note that [some features](06.-Autocall) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
 
 ### Compiler Support
 
@@ -68,9 +68,19 @@ Note that [some features](section06_autocall.md) of this library may be easier t
  - GCC: 5.4 or better
  - Clang: 3.6 or better
 
+### Backward Compatibility
+
+In between minor versions, we make our best to remain source compatible and not break any code using kangaru. Our continuous integration tests is our primary mean to guarantee this statement. If a breaking change is introduced in a non-breaking release, please submit an issue and we'll discuss how we can solve this.
+
+Note that we don't recommend forward declaring types from the `kgr` namespace, as we reserve the right to change a type to an alias in minor vesions. Since forward declaring an alias is not a thing in C++, this may create some incompatibility. Some details in the build system might also change between minor version, but we will not break documented usage of the kangaru cmake package or it's generation. 
+
+In between major versions, we still try our best to make the transition to future version as smooth as possible. To do this, we provide a migration guide to help developpers and we make our best to not break basic usage of the library.
+
+Breaking versions might bump compiler requirements and might also bump language version requirement. Note that when this happen, we are willing to offer support for older versions if there's a demand for it.
+
 ### Migration Guide
 
-Since many breaking changes has been introduced in `v4.0.0`, we decided to write a [migration guide from the `3.x.y` series to `v4.0.0`](migration_guide_3xy.md).
+Since many breaking changes has been introduced in `v4.0.0`, we decided to write a [migration guide from the `3.x.y` series to `v4.0.0`](Migration-Guide-From-3.x.y-series-to-v4.0.0).
 We also added a compatibility header to make the transition smoother between the two versions.
 
 Index

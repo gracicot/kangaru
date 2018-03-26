@@ -171,7 +171,7 @@ The container will first need to create the dependencies of the scene. And recur
  - Another camera is created,
  - Then our screen is created with the scene and the new camera.
 
-For the second call, the service finds the saved camera, so it simply create a screen with that scene and a new camera.
+For the second call, the service finds the saved scene, so it simply create a screen with that scene and a new camera.
 All this code that do these action (except saving to the container) would have been written without kangaru. Now, we simply configure our classes with service definitions and the container handle the thing automatically.
 
 ---

@@ -28,7 +28,7 @@ assert(inserted); // Fires, not created two times.
 Scene& scene = container.service<SceneService>(); // Returns the instance created at (1)
 ```
 
-As we can see, `emplace` only constructs of the element is not found.
+As we can see, `emplace` only constructs if the element is not found.
 But as opposed to `service`, it can reports if it has already been inserted before.
 This gives us the opportunity to handle those case correctly.
 

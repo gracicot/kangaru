@@ -5,9 +5,9 @@
 TEST_CASE("kgr::service must be constructible", "[default_services]") {
 	struct Service {};
 	struct Definition : kgr::service<Service> {};
-	
+
 	using return_value = decltype(kgr::container{}.service<Definition>());
-	
+
 	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
 	REQUIRE((std::is_same<return_value, Service>::value));
 	(void) kgr::container{}.service<Definition>();
@@ -99,6 +99,29 @@ TEST_CASE("kgr::single_service must be emplaceable with arguments optionaly", "[
 	(void) kgr::container{}.emplace<Definition>();
 	(void) kgr::container{}.emplace<Definition>(1);
 	(void) kgr::container{}.emplace<Definition>(1, 1.f);
+}
+
+TEST_CASE("kgr::single_service must accept references", "[default_services]") {
+	struct Service {} s;
+	struct Definition : kgr::single_service<Service&>, kgr::supplied {};
+
+	using return_value = decltype(kgr::container{}.service<Definition>());
+
+	kgr::container container;
+
+	container.emplace<Definition>(s);
+
+	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
+	REQUIRE((std::is_same<return_value, Service&>::value));
+	REQUIRE(&s == &container.service<Definition>());
+}
+
+TEST_CASE("kgr::single_service with reference must not be constructible", "[default_services]") {
+	struct Service {};
+	struct Definition : kgr::single_service<Service&> {};
+
+	REQUIRE(!kgr::detail::is_service_valid<Definition>::value);
+	REQUIRE((std::is_same<kgr::service_type<Definition>, Service&>::value));
 }
 
 TEST_CASE("kgr::single_service must be constructible with dependencies", "[default_services]") {
@@ -282,25 +305,32 @@ TEST_CASE("Default services must work with kgr::autocall", "[default_services]")
 	
 	SECTION("kgr::service must work with autocall") {
 		struct Definition : kgr::service<Service>, autocall {};
-		kgr::container{}.service<Definition>();
+		(void) kgr::container{}.service<Definition>();
 		REQUIRE(service_called);
 	}
-	
+
 	SECTION("kgr::single_service must work with autocall") {
 		struct Definition : kgr::single_service<Service>, autocall {};
-		kgr::container{}.service<Definition>();
+		(void) kgr::container{}.service<Definition>();
+		REQUIRE(service_called);
+	}
+
+	SECTION("kgr::single_service with reference must work with autocall") {
+		struct Definition : kgr::single_service<Service&>, kgr::supplied, autocall {};
+		Service s;
+		kgr::container{}.emplace<Definition>(s);
 		REQUIRE(service_called);
 	}
 	
 	SECTION("kgr::shared_service must work with autocall") {
 		struct Definition : kgr::shared_service<Service>, autocall {};
-		kgr::container{}.service<Definition>();
+		(void) kgr::container{}.service<Definition>();
 		REQUIRE(service_called);
 	}
-	
+
 	SECTION("kgr::unique_service must work with autocall") {
 		struct Definition : kgr::unique_service<Service>, autocall {};
-		kgr::container{}.service<Definition>();
+		(void) kgr::container{}.service<Definition>();
 		REQUIRE(service_called);
 	}
 }

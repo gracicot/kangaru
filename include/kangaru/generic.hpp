@@ -68,6 +68,44 @@ private:
 	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
 
+template<typename Type>
+struct generic_service<Type&> {
+	generic_service() = default;
+	~generic_service() = default;
+	
+	generic_service(generic_service&& other) = default;
+	generic_service& operator=(generic_service&& other) = default;
+	
+	generic_service(const generic_service& other) = delete;
+	generic_service& operator=(const generic_service& other) = delete;
+	
+	generic_service(in_place_t, Type& ref) {
+		emplace(ref);
+	}
+	
+	generic_service(in_place_t, Type&& ref) = delete;
+	
+protected:
+	Type& instance() {
+		return *_instance;
+	}
+	
+	const Type& instance() const {
+		return *_instance;
+	}
+	
+private:
+	friend container;
+	friend detail::generic_service_destruction<generic_service<Type>, Type>;
+	template<typename, typename...> friend struct detail::has_emplace_helper;
+	
+	void emplace(Type& ref) {
+		_instance = &ref;
+	}
+	
+	Type* _instance;
+};
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_GENERIC_HPP

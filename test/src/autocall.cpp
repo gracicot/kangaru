@@ -250,7 +250,6 @@ namespace testcase_autocall_invoke_call {
 	> {};
 
 	TEST_CASE("Container inject parameter in autocall function using the specified service in invoke", "[autocall]") {
-		Service::called_static = false;
 		auto&& s = kgr::container{}.service<Definition>();
 		REQUIRE(s.called_member);
 		REQUIRE(s.called_static);

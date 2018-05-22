@@ -115,6 +115,22 @@ TEST_CASE("kgr::single_service must accept references", "[default_services]") {
 	REQUIRE(&s == &container.service<Definition>());
 }
 
+TEST_CASE("kgr::extern_service is supplied and holds a reference", "[default_services]") {
+	struct Service {} s;
+	struct Definition : kgr::extern_service<Service> {};
+
+	kgr::container container;
+
+	using return_value = decltype(container.service<Definition>());
+
+	container.emplace<Definition>(s);
+
+	REQUIRE(kgr::detail::is_supplied_service<Definition>::value);
+	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
+	REQUIRE((std::is_same<return_value, Service&>::value));
+	REQUIRE(&s == &container.service<Definition>());
+}
+
 TEST_CASE("kgr::single_service with reference must not be constructible", "[default_services]") {
 	struct Service {};
 	struct Definition : kgr::single_service<Service&> {};

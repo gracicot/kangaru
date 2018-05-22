@@ -50,6 +50,14 @@ public:
 };
 
 /**
+ * This class is a service definition for a single service managed by an external system.
+ * 
+ * It hold the service as a reference to the instance, and returns it by reference.
+ */
+template<typename Type, typename Deps = dependency<>>
+struct extern_service : single_service<Type&, Deps>, supplied {};
+
+/**
  * This is the default non-single service.
  * 
  * It hold and return the service by value.

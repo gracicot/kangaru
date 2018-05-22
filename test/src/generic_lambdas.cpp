@@ -1,4 +1,3 @@
-#define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 #include "kangaru/kangaru.hpp"
 
@@ -112,14 +111,15 @@ namespace testcase_generic_inject_mapped {
 		
 		SECTION("Forward mix of variadic deduced and regular parameter after injection") {
 			const auto arg1 = any_int_distribution(random);
+			const auto arg2 = any_int_distribution(random);
 			
-			auto function = [&](Service1, Service2&, int a, auto... b) {
+			auto function = [&](Service1, Service2&, int a, int b, auto... c) {
 				called = true;
-				REQUIRE(sizeof...(b) == 4);
-				return a;
+				REQUIRE(sizeof...(c) == 4);
+				return std::make_pair(a, b);
 			};
 			
-			CHECK(c.invoke(function, arg1, 9.3, "test", 3, std::tuple<>{}) == arg1);
+			CHECK(c.invoke(function, arg1, arg2, 9.3, "test", 3, std::tuple<>{}) == std::make_pair(arg1, arg2));
 			
 			REQUIRE(called);
 			REQUIRE(c.contains<Definition2>());

@@ -3,6 +3,7 @@ find_package(catch REQUIRED)
 function(add_kgr_test TEST_NAME)
 	add_executable("${TEST_NAME}_test" "src/${TEST_NAME}.cpp")
 	target_link_libraries("${TEST_NAME}_test" PUBLIC catch kangaru)
+	target_compile_definitions("${TEST_NAME}_test" PRIVATE CATCH_CONFIG_MAIN)
 	
 	add_test(${TEST_NAME} "${TEST_NAME}_test")
 endfunction()

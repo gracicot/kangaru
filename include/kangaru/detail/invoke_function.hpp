@@ -36,19 +36,19 @@ namespace detail {
 template<typename Map, typename T, typename P, typename... Args>
 struct is_pointer_invokable_helper {
 private:
-	template<typename U, typename V, typename... As, std::size_t... S, int_t<decltype(
-		(std::declval<U>().*std::declval<V>())(
+	template<typename U, typename V, typename... As, std::size_t... S>
+	static decltype(
+		void((std::declval<U>().*std::declval<V>())(
 			std::declval<service_type<mapped_service_t<function_argument_t<S, V>, Map>>>()...,
 			std::declval<As>()...
-		)
-	)> = 0>
-	static std::true_type test(seq<S...>);
+		)), std::true_type{}
+	) test(seq<S...>, int);
 	
-	template<typename...>
-	static std::false_type test(...);
+	template<typename..., typename U>
+	static std::false_type test(U const&, void*);
 	
 public:
-	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}));
+	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}, 0));
 };
 
 /*

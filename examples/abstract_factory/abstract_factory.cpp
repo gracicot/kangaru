@@ -37,7 +37,7 @@ struct Circle : Shape {
 	
 	int area() override {
 		std::cout << "Circle!\n";
-		return 3.14 * radius * radius;
+		return int(3.14 * radius * radius);
 	}
 };
 

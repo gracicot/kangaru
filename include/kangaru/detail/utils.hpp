@@ -4,6 +4,7 @@
 #include "void_t.hpp"
 
 #include <type_traits>
+#include <utility>
 
 namespace kgr {
 namespace detail {

@@ -59,6 +59,12 @@ matrix:
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
+    - os: linux
+      env:
+        - COMPILER=g++-8
+        - ENABLE_CXX17=true
+      addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
+
 install:
   ############################################################################
   # All the dependencies are installed in ${TRAVIS_BUILD_DIR}/deps/

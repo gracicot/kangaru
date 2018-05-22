@@ -102,8 +102,8 @@ template <typename T, typename... Tail>
 struct meta_list_unique<T, meta_list<T, Tail...>> : std::integral_constant<bool, !meta_list_contains<T, meta_list<Tail...>>::value> {};
 
 /*
- * This trait simply return the size of the list.
- */
+* This trait simply return the size of the list.
+*/
 template <typename>
 struct meta_list_size;
 
@@ -111,6 +111,20 @@ template <typename... Types>
 struct meta_list_size<meta_list<Types...>> {
 	static constexpr std::size_t value = sizeof...(Types);
 };
+
+/*
+* This trait simply return the size of the list.
+*/
+template <typename>
+struct meta_list_pop_front;
+
+template <typename First, typename... Types>
+struct meta_list_pop_front<meta_list<First, Types...>> {
+	using type = meta_list<Types...>;
+};
+
+template <typename First, typename... Types>
+using meta_list_pop_front_t = typename meta_list_pop_front<meta_list<First, Types...>>::type;
 
 /*
  * This trait apply a metafunction on each element in the list, and return the transformed list.

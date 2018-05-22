@@ -229,24 +229,28 @@ namespace testcase_autocall_invoke_call {
 
 	struct Service {
 		bool called_member = false;
-		bool called_static = false;
+		static bool called_static;
 
 		void function(InjectedService) {
 			called_member = true;
 		}
 
-		void static_function(Service&, InjectedService) {
+		static void static_function(Service&, InjectedService) {
 			called_static = true;
 		}
 	};
+	
+	bool Service::called_static = false;
 
 	struct InjectedDefinition : kgr::service<InjectedService> {};
 
 	struct Definition : kgr::service<Service>, kgr::autocall<
-		kgr::invoke<METHOD(&Service::function), InjectedDefinition>
+		kgr::invoke<METHOD(&Service::function), InjectedDefinition>,
+		kgr::invoke<METHOD(&Service::static_function), InjectedDefinition>
 	> {};
 
 	TEST_CASE("Container inject parameter in autocall function using the specified service in invoke", "[autocall]") {
+		Service::called_static = false;
 		auto&& s = kgr::container{}.service<Definition>();
 		REQUIRE(s.called_member);
 		REQUIRE(s.called_static);

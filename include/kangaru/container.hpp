@@ -682,9 +682,9 @@ private:
 	 */
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<T>> = 0>
 	void autocall(detail::seq<S...>, T& service) {
-		(void)unpack{(
+		(void)unpack{(void(
 			invoke_raw(detail::autocall_nth_function<T, S>::value, service)
-		, void(), 0)..., 0};
+		), 0)..., 0};
 	}
 	
 	/*

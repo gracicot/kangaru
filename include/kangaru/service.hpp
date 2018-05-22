@@ -44,8 +44,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	detail::function_result_t<T> call(T method, Args&&... args) {
-		return (instance().*method)(std::forward<Args>(args)...);
+	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
+		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
 	}
 };
 
@@ -78,8 +78,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	detail::function_result_t<T> call(T method, Args&&... args) {
-		return (instance().*method)(std::forward<Args>(args)...);
+	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
+		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
 	}
 };
 
@@ -117,8 +117,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	detail::function_result_t<T> call(T method, Args&&... args) {
-		return ((*instance()).*method)(std::forward<Args>(args)...);
+	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
+		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
 	}
 };
 
@@ -153,8 +153,8 @@ public:
 	}
 	
 	template<typename T, typename... Args>
-	detail::function_result_t<T> call(T method, Args&&... args) {
-		return ((*instance()).*method)(std::forward<Args>(args)...);
+	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
+		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
 	}
 };
 

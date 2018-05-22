@@ -18,11 +18,29 @@ template<typename, typename, typename = void>
 struct autocall_function_helper;
 
 template<typename T, typename F>
-struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
+struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value && !is_nonmember_autocall<T, F>::value>> {
 private:
 	static void autocall(inject_t<container_service> cs, T& service) {
 		T::template autocall_helper<T, typename T::map, F>(
 			detail::function_seq<typename F::value_type>{},
+			std::move(cs),
+			service
+		);
+	}
+	
+public:
+	using type = std::integral_constant<
+		decltype(&autocall_function_helper::autocall),
+		&autocall_function_helper::autocall
+	>;
+};
+
+template<typename T, typename F>
+struct autocall_function_helper<T, F, enable_if_t<is_nonmember_autocall<T, F>::value && !is_invoke_call<F>::value && !is_member_autocall<T, F>::value>> {
+private:
+	static void autocall(inject_t<container_service> cs, T& service) {
+		T::template autocall_helper<T, typename T::map, F>(
+			seq_drop_first_t<detail::function_seq<typename F::value_type>>{},
 			std::move(cs),
 			service
 		);
@@ -82,13 +100,27 @@ struct autocall_services_helper<T, F, enable_if_t<is_invoke_call<F>::value>> {
  * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
  */
 template<typename T, typename F>
-struct autocall_services_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value>> {
+struct autocall_services_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value && !is_nonmember_autocall<T, F>::value>> {
 private:
 	template<typename U>
 	using mapped_type = mapped_service_t<U, typename T::map>;
 	
 public:
 	using type = meta_list_transform_t<function_arguments_t<typename F::value_type>, mapped_type>;
+};
+
+/*
+ * This is the case for an autocall member function call.
+ * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
+ */
+template<typename T, typename F>
+struct autocall_services_helper<T, F, enable_if_t<!is_member_autocall<T, F>::value && !is_invoke_call<F>::value && is_nonmember_autocall<T, F>::value>> {
+private:
+	template<typename U>
+	using mapped_type = mapped_service_t<U, typename T::map>;
+	
+public:
+	using type = meta_list_transform_t<meta_list_pop_front_t<function_arguments_t<typename F::value_type>>, mapped_type>;
 };
 
 /*
@@ -120,7 +152,7 @@ using autocall_services = typename autocall_services_helper<T, F>::type;
  */
 template<typename T, typename F>
 using is_valid_autocall_function = std::integral_constant<bool,
-	is_invoke_call<F>::value || is_member_autocall<T, F>::value
+	is_invoke_call<F>::value || is_member_autocall<T, F>::value || is_nonmember_autocall<T, F>::value
 >;
 
 } // namespace detail

@@ -29,7 +29,7 @@ struct autocall_base {
 private:
 	template<typename, typename, typename> friend struct autocall_function_helper;
 	
-	// TODO: Remove this function since it doesnit belong here anymore.
+	// TODO: Remove this function since it doesn't belong here anymore.
 	template<typename T, typename M, typename F, std::size_t... S>
 	static void autocall_helper(detail::seq<S...>, inject_t<container_service> cs, T& service) {
 		cs.forward().invoke<M>([&](detail::function_argument_t<S, typename F::value_type>... args) {
@@ -43,8 +43,8 @@ private:
 /*
  * This alias simply to transform a member function address to a type.
  */
-template<typename T, T t>
-using method = std::integral_constant<T, t>;
+template<typename T, typename std::decay<T>::type t>
+using method = std::integral_constant<typename std::decay<T>::type, t>;
 
 /*
  * This class wraps a method and tell explicitly which services are needed.

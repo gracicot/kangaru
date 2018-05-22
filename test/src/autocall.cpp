@@ -4,19 +4,21 @@
 
 #define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 
-TEST_CASE("Container all each function in autocall", "[autocall]") {
+
+
+TEST_CASE("Container call each function in autocall", "[autocall]") {
 	SECTION("One method called") {
 		struct Service {
 			bool called = false;
-			
+
 			void function() {
 				CHECK(!called);
 				called = true;
 			}
 		};
-		
+
 		struct Definition : kgr::service<Service>, kgr::autocall<METHOD(&Service::function)> {};
-		
+
 		REQUIRE(kgr::container{}.service<Definition>().called);
 	}
 	
@@ -56,6 +58,42 @@ TEST_CASE("Container all each function in autocall", "[autocall]") {
 		REQUIRE(service.called2);
 		REQUIRE(service.called3);
 	}
+}
+
+namespace testcase_autocall_many_function_type {
+
+struct Service {
+	bool called = false;
+
+	void static static_function(Service& s) {
+		s.called = true;
+	}
+};
+
+void nonmember_function(Service& s) {
+	s.called = true;
+}
+
+TEST_CASE("Container call each different function type", "[autocall]") {
+	SECTION("Non member function called") {
+		struct Definition : kgr::service<Service>, kgr::autocall<METHOD(nonmember_function)> {};
+
+		REQUIRE(kgr::container{}.service<Definition>().called);
+	}
+
+	SECTION("Non member function called") {
+		struct Definition : kgr::service<Service>, kgr::autocall<METHOD(&Service::static_function)> {};
+
+		REQUIRE(kgr::container{}.service<Definition>().called);
+	}
+
+	SECTION("Non member function called") {
+		struct BadDefinition : kgr::service<Service>, kgr::autocall<METHOD(&Service::called)> {};
+
+		REQUIRE((!kgr::detail::is_valid_autocall_function<BadDefinition, METHOD(&Service::called)>::value));
+		REQUIRE(!kgr::detail::is_service_valid<BadDefinition>::value);
+	}
+}
 }
 
 TEST_CASE("Container inject parameter in autocall function using an invoke call", "[autocall]") {
@@ -148,7 +186,6 @@ namespace testcase_autocall_custom_map {
 	}
 }
 
-
 namespace testcase_autocall_custom_map_no_map {
 	static bool injected_constructed = false;
 	
@@ -179,5 +216,75 @@ namespace testcase_autocall_custom_map_no_map {
 	TEST_CASE("Container inject parameter in autocall function using the service map with a custom map fallback to normal map", "[autocall]") {
 		REQUIRE(kgr::container{}.service<Definition>().called);
 		REQUIRE(injected_constructed);
+	}
+}
+
+namespace testcase_autocall_invoke_call {
+	static bool injected_constructed = false;
+
+	struct InjectedService {
+		InjectedService() {
+			injected_constructed = true;
+		}
+	};
+
+	struct Service {
+		bool called_member = false;
+		bool called_static = false;
+
+		void function(InjectedService) {
+			called_member = true;
+		}
+
+		void static_function(Service&, InjectedService) {
+			called_static = true;
+		}
+	};
+
+	struct InjectedDefinition : kgr::service<InjectedService> {};
+
+	struct Definition : kgr::service<Service>, kgr::autocall<
+		kgr::invoke<METHOD(&Service::function), InjectedDefinition>
+	> {};
+
+	TEST_CASE("Container inject parameter in autocall function using the specified service in invoke", "[autocall]") {
+		auto&& s = kgr::container{}.service<Definition>();
+		REQUIRE(s.called_member);
+		REQUIRE(s.called_static);
+		REQUIRE(injected_constructed);
+	}
+}
+
+namespace testcase_autocall_invoke_call_multiple {
+	static bool injected_constructed = false;
+	static bool injected_definition1_constructed = false;
+	static bool injected_definition2_constructed = false;
+
+	struct InjectedService {
+		InjectedService() {
+			injected_constructed = true;
+		}
+	};
+
+	struct Service {
+		bool called = false;
+
+		void function(InjectedService, InjectedService) {
+			called = true;
+		}
+	};
+
+	struct InjectedDefinition1 : kgr::service<InjectedService> { InjectedDefinition1() { injected_definition1_constructed = true; } };
+	struct InjectedDefinition2 : kgr::service<InjectedService> { InjectedDefinition2() { injected_definition2_constructed = true; } };
+
+	struct Definition : kgr::service<Service>, kgr::autocall<
+		kgr::invoke<METHOD(&Service::function), InjectedDefinition1, InjectedDefinition2>
+	> {};
+
+	TEST_CASE("Container inject multiple parameter in autocall function using the specified service in invoke", "[autocall]") {
+		REQUIRE(kgr::container{}.service<Definition>().called);
+		REQUIRE(injected_constructed);
+		REQUIRE(injected_definition1_constructed);
+		REQUIRE(injected_definition2_constructed);
 	}
 }

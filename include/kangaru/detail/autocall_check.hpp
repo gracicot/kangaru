@@ -61,8 +61,14 @@ private:
 	static std::false_type test_helper(...);
 	
 	template<typename Map, typename U, typename C, std::size_t... S, int_t<
+		enable_if_t<is_member_autocall<U, C>::value>,
 		mapped_service_t<meta_list_element_t<S, function_arguments_t<typename C::value_type>>, Map>...> = 0>
 	static std::true_type test_helper(seq<S...>);
+	
+	template<typename Map, typename U, typename C, std::size_t... S, int_t<
+		enable_if_t<is_nonmember_autocall<U, C>::value>,
+		mapped_service_t<meta_list_element_t<S, function_arguments_t<typename C::value_type>>, Map>...> = 0>
+	static std::true_type test_helper(seq<0, S...>);
 	
 	template<typename U, typename C>
 	static decltype(test_helper<typename U::map, U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
@@ -111,20 +117,20 @@ private:
 	};
 	
 	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename...>
 	static std::false_type test_helper(...);
+
+	template<typename...>
+	static std::false_type test(...);
 	
 	template<typename U, typename C, std::size_t... S, int_t<
 		enable_if_t<expander<U, C, S>::type::value>...> = 0>
 	static std::true_type test_helper(seq<S...>);
 	
-	template<typename U, typename C, enable_if_t<is_valid_autocall_function<U, C>::value, int> = 0>
-	static decltype(test_helper<U, C>(tuple_seq<function_arguments_t<typename C::value_type>>{})) test(int);
+	template<typename U, typename C>
+	static decltype(test_helper<U, C>(tuple_seq<autocall_services<U, C>>{})) test(int);
 	
 public:
-	using type = decltype(test_helper<T, F>(tuple_seq<function_arguments_t<typename F::value_type>>{}));
+	using type = decltype(test<T, F>(0));
 };
 
 /*

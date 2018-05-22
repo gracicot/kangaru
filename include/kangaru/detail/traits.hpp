@@ -80,6 +80,17 @@ using tuple_seq = typename TupleSeqGen<Tuple>::type;
 template<typename F>
 using function_seq = tuple_seq<function_arguments_t<F>>;
 
+template<typename>
+struct seq_drop_first;
+
+template<std::size_t... S>
+struct seq_drop_first<seq<0, S...>> {
+	using type = seq<S...>;
+};
+
+template<typename S>
+using seq_drop_first_t = typename seq_drop_first<S>::type;
+
 template<typename List, int n>
 using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (n > meta_list_size<List>::value ? meta_list_size<List>::value : n)>::type;
 
@@ -123,7 +134,13 @@ template<typename T>
 struct is_invoke_call<T, void_t<typename T::parameters>> : std::true_type {};
 
 template<typename T, typename F>
-using is_member_autocall = std::integral_constant<bool, !is_invoke_call<F>::value>;
+using is_member_autocall = std::is_member_function_pointer<typename F::value_type>;
+
+template<typename T, typename F>
+using is_nonmember_autocall = std::integral_constant<bool,
+	std::is_function<typename std::remove_pointer<typename F::value_type>::type>::value &&
+	std::is_pointer<typename F::value_type>::value
+>;
 
 struct Sink {
 	constexpr Sink() = default;

@@ -45,7 +45,7 @@ private:
 	) test(seq<S...>, int);
 	
 	template<typename..., typename U>
-	static std::false_type test(U const&, void*);
+	static std::false_type test(U const&, ...);
 	
 public:
 	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}, 0));

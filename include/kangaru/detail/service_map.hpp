@@ -21,6 +21,12 @@ struct map_t {};
 
 namespace detail {
 
+template<typename S>
+struct probe {
+	template<typename T, enable_if_t<std::is_same<decay_t<T>, decay_t<S>>::value, int> = 0>
+	operator T () const;
+};
+
 /*
  * Trait that determines if a type is a map type.
  */
@@ -33,6 +39,25 @@ struct is_map : std::false_type {};
 template<typename... Ts>
 struct is_map<map<Ts...>> : std::true_type {};
 
+template<typename R>
+struct is_mapped_function_helper {
+private:
+	template<template<typename> class>
+	static auto test_helper() -> std::true_type;
+	
+	template<typename T>
+	static auto test(int) -> decltype(test_helper<T::template mapped_service>());
+	
+	template<typename>
+	static auto test(...) -> std::false_type;
+	
+public:
+	using type = decltype(test<R>(0));
+};
+
+template<typename R>
+using is_mapped_function = typename is_mapped_function_helper<R>::type;
+
 /*
  * Trait that returns the return type of the service_map function
  */
@@ -43,7 +68,7 @@ struct map_result {};
 * Specialization of map_result when service_map() exist for S with the map M.
 */
 template<typename S, typename M>
-struct map_result<S, M, void_t<decltype(service_map(std::declval<S>(), std::declval<M>()))>> {
+struct map_result<S, M, enable_if_t<!is_mapped_function<decltype(service_map(std::declval<S>(), std::declval<M>()))>::value>> {
 	using type = decltype(service_map(std::declval<S>(), std::declval<M>()));
 };
 
@@ -51,8 +76,24 @@ struct map_result<S, M, void_t<decltype(service_map(std::declval<S>(), std::decl
 * Specialization of map_result when service_map() exist for S with no map.
 */
 template<typename S>
-struct map_result<S, void, void_t<decltype(service_map(std::declval<S>()))>> {
+struct map_result<S, void, enable_if_t<!is_mapped_function<decltype(service_map(std::declval<S>()))>::value>> {
 	using type = decltype(service_map(std::declval<S>()));
+};
+
+/*
+* Specialization of map_result when service_map() exist for S with the map M.
+*/
+template<typename S, typename M>
+struct map_result<S, M, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))>::value>> {
+	using type = typename decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))::template mapped_service<decay_t<S>>;
+};
+
+/*
+* Specialization of map_result when service_map() exist for S with no map.
+*/
+template<typename S>
+struct map_result<S, void, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>()))>::value>> {
+	using type = typename decltype(service_map(std::declval<probe<S>>()))::template mapped_service<decay_t<S>>;
 };
 
 /*

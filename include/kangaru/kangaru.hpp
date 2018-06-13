@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
 
 #include "autocall.hpp"
+#include "autowire.hpp"
 #include "container.hpp"
 #include "generic.hpp"
 #include "operator.hpp"

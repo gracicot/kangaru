@@ -7,27 +7,44 @@
 namespace kgr {
 namespace detail {
 
+template<typename For>
 struct deducer {
-	explicit deducer(container& c) noexcept : _container{c} {}
+	explicit deducer(container& c) noexcept : _container{&c} {}
 	
-	template<typename T>
+	template<typename T, enable_if_t<
+		!std::is_same<T, For>::value &&
+		!std::is_reference<service_type<mapped_service_t<T>>>::value, int> = 0>
 	operator T () {
-		return _container.service<mapped_service_t<T>>();
+		return _container->service<mapped_service_t<T>>();
+	}
+	
+	template<typename T, enable_if_t<
+		!std::is_same<T, For>::value &&
+		std::is_lvalue_reference<service_type<mapped_service_t<T&>>>::value, int> = 0>
+	operator T& () const {
+		return _container->service<mapped_service_t<T&>>();
+	}
+	
+	template<typename T, enable_if_t<
+		!std::is_same<T, For>::value &&
+		std::is_rvalue_reference<service_type<mapped_service_t<T&&>>>::value, int> = 0>
+	operator T&& () const {
+		return _container->service<mapped_service_t<T&&>>();
 	}
 	
 private:
-	container& _container;
+	container* _container;
 };
 
-template<std::size_t>
-using deducer_expand_t = deducer;
+template<typename For, std::size_t>
+using deducer_expand_t = deducer<For>;
 
 template<typename T, std::size_t n, typename, typename = typename seq_gen<n>::type, typename = void>
 struct amount_of_deductible_service_helper : std::false_type {};
 
 template<typename T, typename... Args, std::size_t... S, std::size_t n>
-struct amount_of_deductible_service_helper<T, n, meta_list<Args...>, seq<S...>, enable_if_t<is_someway_constructible<T, deducer_expand_t<S>..., Args...>::value>> : std::true_type {
-	using result_t = inject_result<deducer_expand_t<S>..., Args...>;
+struct amount_of_deductible_service_helper<T, n, meta_list<Args...>, seq<S...>, enable_if_t<is_someway_constructible<T, deducer_expand_t<T, S>..., Args...>::value>> : std::true_type {
+	using result_t = inject_result<deducer_expand_t<T, S>..., Args...>;
 };
 
 template<typename T, typename, std::size_t max, std::size_t n = 0, typename = void>

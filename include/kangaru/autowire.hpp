@@ -12,24 +12,41 @@
 #include "detail/autowire_traits.hpp"
 
 namespace kgr {
+
+template<typename, typename>
+struct service;
+
+template<typename, typename>
+struct single_service;
+
+template<typename, typename>
+struct unique_service;
+
+template<typename, typename>
+struct shared_service;
+
 namespace detail {
 
 template<typename Type, std::size_t... S, typename... Args>
-inline auto deduce_construct(seq<S...>, inject_t<container_service> cont, Args&&... args) -> inject_result<deducer_expand_t<S>..., Args...> {
+inline auto deduce_construct(seq<S...>, inject_t<container_service> cont, Args&&... args) -> inject_result<deducer_expand_t<Type, S>..., Args...> {
 	auto& container = cont.forward();
-	return kgr::inject((void(S), deducer{container})..., std::forward<Args>(args)...);
+	return kgr::inject((void(S), deducer<Type>{container})..., std::forward<Args>(args)...);
 }
 
-template<template<typename, typename, std::size_t> class service_type, typename Map, std::size_t max_dependencies>
+template<template<typename, typename> class service_type, typename Map, std::size_t max_dependencies>
 struct autowire_tag {
 	template<typename T>
-	using mapped_service = service_type<T, Map, max_dependencies>;
+	using mapped_service = service_type<T, autowire_tag<service, Map, max_dependencies>>;
+	
 };
 
 } // namespace detail
 
-template<typename Type, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
-struct autowire_service : generic_service<Type> {
+template<typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
+using autowire_tag = detail::autowire_tag<service, Map, max_dependencies>;
+
+template<typename Type, typename Map, std::size_t max_dependencies>
+struct service<Type, autowire_tag<Map, max_dependencies>> : generic_service<Type> {
 private:
 	using parent = generic_service<Type>;
 	
@@ -59,8 +76,8 @@ public:
 	}
 };
 
-template<typename Type, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
-struct autowire_single_service : generic_service<Type>, single {
+template<typename Type, typename Map, std::size_t max_dependencies>
+struct single_service<Type, autowire_tag<Map, max_dependencies>> : generic_service<Type>, single {
 private:
 	using parent = generic_service<Type>;
 	
@@ -90,15 +107,23 @@ public:
 	}
 };
 
-using autowire = detail::autowire_tag<autowire_service, map<>, detail::default_max_dependency>;
-using autowire_single = detail::autowire_tag<autowire_single_service, map<>, detail::default_max_dependency>;
+using autowire = detail::autowire_tag<service, map<>, detail::default_max_dependency>;
+using autowire_single = detail::autowire_tag<single_service, map<>, detail::default_max_dependency>;
 
-template<typename Map>
-using mapped_autowire = detail::autowire_tag<autowire_service, Map, detail::default_max_dependency>;
+template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
+using mapped_autowire = detail::autowire_tag<service, Map, max_dependencies>;
 
-template<typename Map>
-using mapped_autowire_single = detail::autowire_tag<autowire_single_service, Map, detail::default_max_dependency>;
+template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
+using mapped_autowire_single = detail::autowire_tag<single_service, Map, max_dependencies>;
 
+template<typename T, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
+using autowire_service = single_service<T, kgr::mapped_autowire<Map, max_dependencies>>;
+
+template<typename T, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
+using autowire_single_service = single_service<T, kgr::mapped_autowire<Map, max_dependencies>>;
+
+template<typename T, typename Map = map<>>
+using autowired = mapped_service_t<T, Map>;
 
 } // namespace kgr
 

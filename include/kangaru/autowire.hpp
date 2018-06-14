@@ -3,6 +3,7 @@
 
 #include "container.hpp"
 #include "generic.hpp"
+#include "service.hpp"
 
 #include "detail/service_map.hpp"
 #include "detail/utils.hpp"
@@ -12,18 +13,6 @@
 #include "detail/autowire_traits.hpp"
 
 namespace kgr {
-
-template<typename, typename>
-struct service;
-
-template<typename, typename>
-struct single_service;
-
-template<typename, typename>
-struct unique_service;
-
-template<typename, typename>
-struct shared_service;
 
 namespace detail {
 

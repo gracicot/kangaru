@@ -1,11 +1,12 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_SERVICE_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_SERVICE_HPP
 
-#include <type_traits>
+#include "generic.hpp"
 
 #include "detail/utils.hpp"
 #include "detail/single.hpp"
-#include "generic.hpp"
+
+#include <type_traits>
 
 namespace kgr {
 
@@ -166,7 +167,7 @@ public:
 	}
 };
 
-/*
+/**
  * This class is a abstract service that a kgr::SingleService can override.
  * 
  * It cannot be constructed, but only overrided.
@@ -176,7 +177,7 @@ struct abstract_service : abstract {
 	T& forward();
 };
 
-/*
+/**
  * This class is an abstract service that can be overrided by kgr::SharedService
  * 
  * As it is abstract, a service that overrides it must be instanciated by the container before usage.

@@ -10,6 +10,7 @@ endfunction()
 
 if(${KANGARU_TEST})
 	add_kgr_test(autocall)
+	add_kgr_test(autowire)
 	add_kgr_test(basic)
 	add_kgr_test(container)
 	add_kgr_test(default_services)

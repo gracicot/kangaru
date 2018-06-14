@@ -9,6 +9,7 @@
 // These are the classes we want to create with our factory.
 struct Shape {
 	virtual int area() = 0;
+	virtual ~Shape() = default;
 };
 
 struct Square : Shape {

@@ -16,17 +16,20 @@ namespace kgr {
 
 namespace detail {
 
-template<typename Type, std::size_t... S, typename... Args>
-inline auto deduce_construct(seq<S...>, inject_t<container_service> cont, Args&&... args) -> inject_result<deducer_expand_t<Type, S>..., Args...> {
+template<typename Self, typename Map, std::size_t... S, typename... Args>
+inline auto deduce_construct(seq<S...>, inject_t<container_service> cont, Args&&... args) -> inject_result<deducer_expand_t<Self, Map, S>..., Args...> {
 	auto& container = cont.forward();
-	return kgr::inject((void(S), deducer<Type>{container})..., std::forward<Args>(args)...);
+	return kgr::inject((void(S), deducer<Self, Map>{container})..., std::forward<Args>(args)...);
 }
 
-template<template<typename, typename> class service_type, typename Map, std::size_t max_dependencies>
-struct autowire_tag {
+template<template<typename, typename> class, typename, std::size_t>
+struct autowire_tag;
+
+
+template<template<typename, typename> class service_type, typename... Maps, std::size_t max_dependencies>
+struct autowire_tag<service_type, kgr::map<Maps...>, max_dependencies> {
 	template<typename T>
-	using mapped_service = service_type<T, autowire_tag<service, Map, max_dependencies>>;
-	
+	using mapped_service = service_type<T, autowire_tag<service, kgr::map<Maps...>, max_dependencies>>;
 };
 
 } // namespace detail
@@ -40,7 +43,7 @@ private:
 	using parent = generic_service<Type>;
 	
 	template<typename... Args>
-	using amount_deduced = detail::amount_of_deductible_service<Type, detail::meta_list<Args...>, max_dependencies>;
+	using amount_deduced = detail::amount_of_deductible_service<service, Type, Map, detail::meta_list<Args...>, max_dependencies>;
 	
 protected:
 	using parent::instance;
@@ -52,7 +55,7 @@ public:
 	static auto construct(inject_t<container_service> cont, Args&&... args)
 		-> detail::enable_if_t<amount_deduced<Args...>::deductible, typename amount_deduced<Args...>::result_t>
 	{
-		return detail::deduce_construct<Type>(amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...);
+		return detail::deduce_construct<service, Map>(amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...);
 	}
 	
 	Type forward() {
@@ -71,7 +74,7 @@ private:
 	using parent = generic_service<Type>;
 	
 	template<typename... Args>
-	using amount_deduced = detail::amount_of_deductible_service<Type, detail::meta_list<Args...>, max_dependencies>;
+	using amount_deduced = detail::amount_of_deductible_service<single_service, Type, Map, detail::meta_list<Args...>, max_dependencies>;
 	
 protected:
 	using parent::instance;
@@ -83,7 +86,7 @@ public:
 	static auto construct(inject_t<container_service> cont, Args&&... args)
 		-> detail::enable_if_t<amount_deduced<Args...>::deductible, typename amount_deduced<Args...>::result_t>
 	{
-		return detail::deduce_construct<Type>(amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...);
+		return detail::deduce_construct<single_service, Map>(amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...);
 	}
 	
 	Type& forward() {

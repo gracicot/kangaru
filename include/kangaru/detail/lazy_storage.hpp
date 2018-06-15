@@ -386,7 +386,7 @@ public:
 	~lazy_storage() = default;
 	
 	explicit operator bool() const noexcept {
-		return data();
+		return data() != nullptr;
 	}
 	
 	void construct(T& value) noexcept(std::is_nothrow_constructible<type, type*>::value) {

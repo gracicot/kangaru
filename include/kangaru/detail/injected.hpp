@@ -129,7 +129,7 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
  * Yield the return type of inject(Ts...)
  */
 template<typename... Ts>
-using inject_result = std::tuple<detail::remove_rvalue_reference_t<Ts>...>;
+using inject_result = typename std::decay<decltype(std::declval<std::tuple<detail::remove_rvalue_reference_t<Ts>...>>())>::type;
 
 } // namespace kgr
 

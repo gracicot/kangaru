@@ -62,6 +62,12 @@ namespace test_autowire_single {
 		friend auto service_map(service2 const&) -> kgr::autowire;
 	};
 
+	struct service3 {
+		service3& s3;
+
+		friend auto service_map(service3 const&) -> kgr::autowire_single;
+	};
+
 	TEST_CASE("autowire single behave as a single service", "[autowire]") {
 		nb_s1_constructed = 0;
 	
@@ -79,6 +85,10 @@ namespace test_autowire_single {
 			CHECK(nb_s1_constructed == 1);
 		
 			REQUIRE(&s1 == &s2.s1);
+		}
+
+		SECTION("Cannot inject itself into itself") {
+			REQUIRE(!kgr::detail::is_service_valid<kgr::autowired<service3>>::value);
 		}
 	}
 }

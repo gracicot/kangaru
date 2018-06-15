@@ -26,7 +26,8 @@ private:
 public:
 	ref get() noexcept(nothrow_get()) {
 		if (!_service) {
-			_service.construct(static_cast<CRTP*>(this)->container().template service<T>());
+			container& container = static_cast<CRTP*>(this)->container();
+			_service.construct(container.service<T>());
 		}
 		
 		return _service.value();

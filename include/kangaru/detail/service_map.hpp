@@ -85,7 +85,14 @@ struct map_result<S, void, enable_if_t<!is_mapped_function<decltype(service_map(
 */
 template<typename S, typename M>
 struct map_result<S, M, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))>::value>> {
-	using type = typename decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))::template mapped_service<decay_t<S>>;
+private:
+	template<typename Mapped, typename Service>
+	struct expand {
+		using type = typename Mapped::template mapped_service<Service>;
+	};
+
+public:
+	using type = typename expand<decltype(service_map(std::declval<probe<S>>(), std::declval<M>())), decay_t<S>>::type;
 };
 
 /*
@@ -93,7 +100,14 @@ struct map_result<S, M, enable_if_t<is_mapped_function<decltype(service_map(std:
 */
 template<typename S>
 struct map_result<S, void, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>()))>::value>> {
-	using type = typename decltype(service_map(std::declval<probe<S>>()))::template mapped_service<decay_t<S>>;
+private:
+	template<typename Mapped, typename Service>
+	struct expand {
+		using type = typename Mapped::template mapped_service<Service>;
+	};
+
+public:
+	using type = typename expand<decltype(service_map(std::declval<probe<S>>())), decay_t<S>>::type;
 };
 
 /*

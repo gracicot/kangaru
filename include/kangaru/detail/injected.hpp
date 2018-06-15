@@ -104,6 +104,11 @@ using injected_wrapper = typename std::conditional<is_polymorphic<T>::value,
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
 
+template<typename... Ts>
+struct inject_result_helper {
+	using type = std::tuple<typename detail::remove_rvalue_reference<Ts>::type...>;
+};
+
 } // namespace detail
 
 /*
@@ -129,7 +134,7 @@ std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
  * Yield the return type of inject(Ts...)
  */
 template<typename... Ts>
-using inject_result = typename std::decay<decltype(std::declval<std::tuple<detail::remove_rvalue_reference_t<Ts>...>>())>::type;
+using inject_result = typename detail::inject_result_helper<Ts...>::type;
 
 } // namespace kgr
 

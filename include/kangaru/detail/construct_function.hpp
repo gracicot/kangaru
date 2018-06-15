@@ -133,7 +133,7 @@ template<typename T, typename... Args>
 struct get_any_template_construct_helper<
 	T, meta_list<Args...>,
 	enable_if_t<template_construct_exist<T, meta_list<Args...>>::value>
-> : std::integral_constant<decltype(&T::template construct<Args...>), &T::template construct<Args...>> {};
+> : std::integral_constant<decltype(exact(&T::template construct<Args...>)), &T::template construct<Args...>> {};
 
 /*
  * Alias for get_any_template_construct_helper

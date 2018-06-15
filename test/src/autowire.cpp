@@ -72,6 +72,7 @@ struct service3 {
 };
 
 struct service4 {
+	service4(kgr::container f, service2 s) : forked{std::move(f)}, s2{std::move(s)} {}
 	kgr::container forked;
 	service2 s2;
 	

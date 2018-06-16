@@ -141,8 +141,8 @@ using is_nonmember_autocall = std::integral_constant<bool,
 	std::is_pointer<typename F::value_type>::value
 >;
 
-struct Sink {
-	constexpr Sink() = default;
+struct sink {
+	constexpr sink() = default;
 	
 	template<typename T>
 	operator T ();

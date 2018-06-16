@@ -15,7 +15,7 @@ struct invoker_base {
 		return c.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	
-	Sink operator()(not_invokable_error = {}, ...) = delete;
+	sink operator()(not_invokable_error = {}, ...) = delete;
 };
 
 template<typename CRTP, typename T>
@@ -29,10 +29,10 @@ struct generator_base {
 	}
 	
 	template<typename U = T, enable_if_t<std::is_default_constructible<service_error<U>>::value, int> = 0>
-	Sink operator()(service_error<U> = {}) = delete;
+	sink operator()(service_error<U> = {}) = delete;
 	
 	template<typename... Args>
-	Sink operator()(service_error<T, identity_t<Args>...>, Args&&...) = delete;
+	sink operator()(service_error<T, identity_t<Args>...>, Args&&...) = delete;
 };
 
 } // namespace detail

@@ -149,10 +149,10 @@ public:
 	 * In GCC, a diagnostic is provided.
 	 */
 	template<typename T, typename... Args>
-	void service(detail::service_error<T, detail::identity_t<Args>...>, Args&&...) = delete;
+	auto service(detail::service_error<T, detail::identity_t<Args>...>, Args&&...) -> detail::sink = delete;
 	
 	template<typename T, enable_if<std::is_default_constructible<detail::service_error<T>>> = 0>
-	void service(detail::service_error<T> = {}) = delete;
+	auto service(detail::service_error<T> = {}) -> detail::sink = delete;
 	
 	/*
 	 * This function returns the result of the callable object of type U.
@@ -189,7 +189,7 @@ public:
 	 * It will provide diagnostic on GCC.
 	 */
 	template<typename... Services>
-	void invoke(detail::not_invokable_error = {}, ...) = delete;
+	auto invoke(detail::not_invokable_error = {}, ...) -> detail::sink = delete;
 	
 	/*
 	 * This function clears this container.
@@ -488,7 +488,10 @@ private:
 	 */
 	template<typename T, typename... Args>
 	auto make_service_instance(Args&&... args) -> contained_service_t<T> {
-		return make_service_instance_helper<T>(detail::construct_result_seq<T, Args...>{}, std::forward<Args>(args)...);
+		return make_service_instance_helper<T>(
+			detail::construct_result_seq<T, Args...>{},
+			std::forward<Args>(args)...
+		);
 	}
 	
 	/*
@@ -498,13 +501,13 @@ private:
 	 */
 	template<typename T, typename... Args, std::size_t... S>
 	auto make_service_instance_helper(detail::seq<S...>, Args&&... args) -> contained_service_t<T> {
-		auto constructArgs = invoke_raw(detail::construct_function<T, Args...>::value, std::forward<Args>(args)...);
+		auto construct_args = invoke_raw(detail::construct_function<T, Args...>::value, std::forward<Args>(args)...);
 		
 		// This line is used to shut unused-variable warning, since S can be empty.
-		static_cast<void>(constructArgs);
+		static_cast<void>(construct_args);
 		
 		return make_contained_service<T>(
-			std::forward<detail::tuple_element_t<S, decltype(constructArgs)>>(std::get<S>(constructArgs))...
+			std::forward<detail::tuple_element_t<S, decltype(construct_args)>>(std::get<S>(construct_args))...
 		);
 	}
 	

@@ -13,13 +13,13 @@ namespace detail {
  */
 namespace detail_detection {
 
-template <typename Default, typename AlwaysVoid, template<typename...> typename Op, typename... Args>
+template <typename Default, typename AlwaysVoid, template<typename...> class Op, typename... Args>
 struct detector {
 	using value_t = std::false_type;
 	using type = Default;
 };
 
-template <typename Default, template<typename...> typename Op, typename... Args>
+template <typename Default, template<typename...> class Op, typename... Args>
 struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
 	using value_t = std::true_type;
 	using type = Op<Args...>;

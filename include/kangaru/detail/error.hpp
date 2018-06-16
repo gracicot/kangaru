@@ -17,11 +17,23 @@ template<typename T, typename... Args>
 struct service_error {
 	template<typename Service = T, enable_if_t<
 		is_service<Service>::value &&
+		is_override_services<Service>::value &&
+		is_override_polymorphic<Service>::value &&
 		!is_override_convertible<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
 			"The service injected type cannot be converted to the overriding type. "
 			"Check if the service is overriding the right service and if types are compatible."
+		);
+	}
+	
+	template<typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		!is_override_services<Service>::value, int> = 0>
+	service_error() {
+		static_assert(false_t<Service>::value,
+			"The service is overriding a non service type. Be careful to only specify services kgr::overrides<...> "
+			"and not the injected types."
 		);
 	}
 	
@@ -86,7 +98,7 @@ struct service_error {
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"An overriden service is not polymorphic, it therefore cannot be overriden."
-			"The overriden service should be abstract or extend kgr::Virtual."
+			"The overriden service should be abstract or extend kgr::polymorphic."
 		);
 	}
 	
@@ -97,7 +109,7 @@ struct service_error {
 	service_error() {
 		static_assert(false_t<Service>::value,
 			"An overriden service is not polymorphic, it therefore cannot be overriden."
-			"The overriden service should be abstract or extend kgr::Virtual."
+			"The overriden service should be abstract or extend kgr::polymorphic."
 		);
 	}
 	
@@ -157,7 +169,7 @@ struct service_error {
 	service_error() {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies overrides a non-polymorphic service. "
-			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
+			"Check if every dependencies overrides an abstract service or a service that extends kgr::polymorphic."
 		);
 	}
 	
@@ -169,7 +181,7 @@ struct service_error {
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies overrides a non-polymorphic service. "
-			"Check if every dependencies overrides an abstract service or a service that extends kgr::Virtual."
+			"Check if every dependencies overrides an abstract service or a service that extends kgr::polymorphic."
 		);
 	}
 	
@@ -196,6 +208,18 @@ struct service_error {
 		static_assert(false_t<Service>::value,
 			"One or more dependencies overrides a final service. "
 			"Check if every dependencies overrides a non final service"
+		);
+	}
+	
+	template<typename Arg, typename Service = T, enable_if_t<
+		is_service<Service>::value &&
+		dependency_trait<is_service, Service, Arg, Args...>::value &&
+		dependency_trait<is_override_services, Service, Arg, Args...>::value &&
+		is_service_constructible<Service>::value, int> = 0>
+	service_error(Arg&&) {
+		static_assert(false_t<Service>::value,
+			"One or more dependencies overrides a non service type. "
+			"Check if every dependencies overrides a valid service definition."
 		);
 	}
 	

@@ -23,7 +23,7 @@ struct autocall_function_helper;
  */
 template<typename Map, typename... Ts>
 struct autocall_base {
-	using autocall_functions = detail::meta_list<Ts...>;
+	using autocall_functions = meta_list<Ts...>;
 	using map = Map;
 	
 private:
@@ -31,9 +31,9 @@ private:
 	
 	// TODO: Remove this function since it doesn't belong here anymore.
 	template<typename T, typename M, typename F, std::size_t... S>
-	static void autocall_helper(detail::seq<S...>, inject_t<container_service> cs, T& service) {
-		cs.forward().invoke<M>([&](detail::function_argument_t<S, typename F::value_type>... args) {
-			service.call(F::value, std::forward<detail::function_argument_t<S, typename F::value_type>>(args)...);
+	static void autocall_helper(seq<S...>, inject_t<container_service> cs, T& service) {
+		cs.forward().invoke<M>([&](function_argument_t<S, typename F::value_type>... args) {
+			service.call(F::value, std::forward<function_argument_t<S, typename F::value_type>>(args)...);
 		});
 	}
 };

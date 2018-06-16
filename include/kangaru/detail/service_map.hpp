@@ -204,7 +204,7 @@ struct is_complete_map : std::false_type {};
 * Specialization of is_complete_map when the service T is mapped in Map
 */
 template<typename Map, typename T>
-struct is_complete_map<Map, T, void_t<typename detail::map_entry<Map, T>::mapped_service>> : std::true_type {};
+struct is_complete_map<Map, T, void_t<typename map_entry<Map, T>::mapped_service>> : std::true_type {};
 
 } // namespace detail
 

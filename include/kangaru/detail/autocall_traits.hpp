@@ -22,7 +22,7 @@ struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::valu
 private:
 	static void autocall(inject_t<container_service> cs, T& service) {
 		T::template autocall_helper<T, typename T::map, F>(
-			detail::function_seq<typename F::value_type>{},
+			function_seq<typename F::value_type>{},
 			std::move(cs),
 			service
 		);
@@ -40,7 +40,7 @@ struct autocall_function_helper<T, F, enable_if_t<is_nonmember_autocall<T, F>::v
 private:
 	static void autocall(inject_t<container_service> cs, T& service) {
 		T::template autocall_helper<T, typename T::map, F>(
-			seq_drop_first_t<detail::function_seq<typename F::value_type>>{},
+			seq_drop_first_t<function_seq<typename F::value_type>>{},
 			std::move(cs),
 			service
 		);
@@ -65,8 +65,8 @@ private:
 	
 	template<std::size_t... S>
 	using function_constant = std::integral_constant<
-		decltype(&function<detail::meta_list_element_t<S, typename F::parameters>...>::autocall),
-		&function<detail::meta_list_element_t<S, typename F::parameters>...>::autocall
+		decltype(&function<meta_list_element_t<S, typename F::parameters>...>::autocall),
+		&function<meta_list_element_t<S, typename F::parameters>...>::autocall
 	>;
 	
 	template<std::size_t... S>
@@ -133,13 +133,13 @@ using autocall_function_t = typename autocall_function<T, F>::value_type;
  * This returns the nth autocall function type in the autocall list of a service.
  */
 template<typename T, std::size_t I>
-using autocall_nth_function = detail::autocall_function<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
+using autocall_nth_function = autocall_function<T, meta_list_element_t<I, typename T::autocall_functions>>;
 
 /*
  * This returns the value type of autocall_nth_function
  */
 template<typename T, std::size_t I>
-using autocall_nth_function_t = typename detail::autocall_function_t<T, detail::meta_list_element_t<I, typename T::autocall_functions>>;
+using autocall_nth_function_t = autocall_function_t<T, meta_list_element_t<I, typename T::autocall_functions>>;
 
 /*
  * This is an alias for the argument list of an autocall function.

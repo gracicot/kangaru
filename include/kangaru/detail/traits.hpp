@@ -66,16 +66,16 @@ struct seq_gen<0, S...> {
 };
 
 template<typename>
-struct TupleSeqGen;
+struct tuple_seq_gen;
 
 template<typename... Types>
-struct TupleSeqGen<std::tuple<Types...>> : seq_gen<sizeof...(Types)> {};
+struct tuple_seq_gen<std::tuple<Types...>> : seq_gen<sizeof...(Types)> {};
 
 template<typename... Types>
-struct TupleSeqGen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
+struct tuple_seq_gen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
 
 template<typename Tuple>
-using tuple_seq = typename TupleSeqGen<Tuple>::type;
+using tuple_seq = typename tuple_seq_gen<Tuple>::type;
 
 template<typename F>
 using function_seq = tuple_seq<function_arguments_t<F>>;
@@ -94,7 +94,6 @@ using seq_drop_first_t = typename seq_drop_first<S>::type;
 template<typename List, int n>
 using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (n > meta_list_size<List>::value ? meta_list_size<List>::value : n)>::type;
 
-// SFINAE utilities
 template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 
@@ -146,10 +145,13 @@ struct Sink {
 	constexpr Sink() = default;
 	
 	template<typename T>
-	constexpr operator T&& () const;
+	operator T ();
 	
 	template<typename T>
-	constexpr operator const T& () const;
+	operator T&& () const;
+	
+	template<typename T>
+	operator T& () const;
 };
 
 template<typename T, typename... Args>
@@ -222,6 +224,7 @@ using is_emplaceable = std::integral_constant<bool, std::is_default_constructibl
 
 template<typename T, typename... Args>
 using is_service_instantiable = std::integral_constant<bool, is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
+
 
 } // namespace detail
 } // namespace kgr

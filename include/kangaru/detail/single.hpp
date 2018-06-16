@@ -3,6 +3,7 @@
 
 #include "traits.hpp"
 #include "meta_list.hpp"
+#include "detection.hpp"
 
 namespace kgr {
 
@@ -73,6 +74,9 @@ using is_supplied_service = std::is_base_of<supplied, T>;
 
 template<typename T>
 using is_final_service = std::is_base_of<final, T>;
+
+template<typename T>
+using is_not_final_service = negation<is_final_service<T>>;
 
 template<typename T>
 using is_polymorphic = std::integral_constant<bool, std::is_base_of<polymorphic, T>::value || !meta_list_empty<parent_types<T>>::value>;

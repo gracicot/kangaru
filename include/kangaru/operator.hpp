@@ -15,7 +15,7 @@ struct invoker_base {
 		return c.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	
-	Sink operator()(detail::not_invokable_error = {}, ...) = delete;
+	Sink operator()(not_invokable_error = {}, ...) = delete;
 };
 
 template<typename CRTP, typename T>

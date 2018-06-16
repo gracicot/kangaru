@@ -32,7 +32,7 @@ private:
 	static std::true_type test(...);
 	
 	template<typename U>
-	static decltype(test_helper<U>(detail::tuple_seq<typename U::autocall_functions>{})) test(int);
+	static decltype(test_helper<U>(tuple_seq<typename U::autocall_functions>{})) test(int);
 	
 public:
 	using type = decltype(test<T>(0));

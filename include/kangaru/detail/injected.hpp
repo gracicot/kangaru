@@ -106,7 +106,7 @@ using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
 
 template<typename... Ts>
 struct inject_result_helper {
-	using type = std::tuple<typename detail::remove_rvalue_reference<Ts>::type...>;
+	using type = std::tuple<typename remove_rvalue_reference<Ts>::type...>;
 };
 
 } // namespace detail

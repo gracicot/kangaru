@@ -19,7 +19,7 @@ using is_override_services = all_of_traits<parent_types<T>, is_service>;
  * one override's service definitions can be converted to the service type of the service T definition.
  */
 template<typename T, typename Parent>
-using is_one_override_convertible = is_explicitly_convertible<service_type<T>, detected_t<service_type, Parent>>;
+using is_one_override_convertible = is_explicitly_convertible<detected_t<service_type, T>, detected_t<service_type, Parent>>;
 
 /*
  * Trait that check if the service type returned by

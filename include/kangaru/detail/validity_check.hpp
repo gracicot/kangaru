@@ -23,7 +23,6 @@ using is_single_no_args = std::integral_constant<bool,
 template<typename T, typename... Args>
 struct is_construction_valid : std::integral_constant<bool,
 	service_check<T, Args...>::value &&
-	dependency_check<T, Args...>::value &&
 	is_autocall_valid<T>::value &&
 	dependency_trait<is_autocall_valid, T, Args...>::value
 > {};

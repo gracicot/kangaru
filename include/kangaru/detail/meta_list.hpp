@@ -123,8 +123,8 @@ struct meta_list_pop_front<meta_list<First, Types...>> {
 	using type = meta_list<Types...>;
 };
 
-template <typename First, typename... Types>
-using meta_list_pop_front_t = typename meta_list_pop_front<meta_list<First, Types...>>::type;
+template <typename List>
+using meta_list_pop_front_t = typename meta_list_pop_front<List>::type;
 
 /*
  * This trait apply a metafunction on each element in the list, and return the transformed list.

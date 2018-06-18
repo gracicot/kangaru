@@ -97,49 +97,8 @@ using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (
 template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 
-template<typename T, typename = void>
-struct has_autocall : std::false_type {};
-
 template<typename T>
-struct has_autocall<T, void_t<typename T::autocall_functions>> : std::true_type {};
-
-template<typename T, typename = void>
-struct is_service : std::false_type {};
-
-template<typename T>
-struct is_service<T, enable_if_t<!std::is_polymorphic<T>::value && has_forward<T>::value>> : std::true_type {};
-
-// Here, usual traits using void_t don't quite work with visual studio for this particular case.
-template<typename T>
-struct has_construct_helper {
-private:
-	template<typename U, typename V = decltype(&U::construct)>
-	static std::true_type test(int);
-
-	template<typename>
-	static std::false_type test(...);
-
-public:
-	using type = decltype(test<T>(0));
-};
-
-template<typename T>
-using has_construct = typename has_construct_helper<T>::type;
-
-template<typename T, typename = void>
-struct is_invoke_call : std::false_type {};
-
-template<typename T>
-struct is_invoke_call<T, void_t<typename T::parameters>> : std::true_type {};
-
-template<typename T, typename F>
-using is_member_autocall = std::is_member_function_pointer<typename F::value_type>;
-
-template<typename T, typename F>
-using is_nonmember_autocall = std::integral_constant<bool,
-	std::is_function<typename std::remove_pointer<typename F::value_type>::type>::value &&
-	std::is_pointer<typename F::value_type>::value
->;
+using is_service = bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value>;
 
 struct sink {
 	constexpr sink() = default;

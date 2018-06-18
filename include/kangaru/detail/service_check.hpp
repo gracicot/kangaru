@@ -104,7 +104,7 @@ using is_abstract_not_final = std::integral_constant<bool,
  * Validity check for a service, without it's dependencies
  */
 template<typename T, typename... Args>
-using service_check = std::integral_constant<bool,
+using shallow_service_check = std::integral_constant<bool,
 	is_service<T>::value &&
 	is_service_constructible<T, Args...>::value &&
 	is_construct_function_callable<T, Args...>::value &&
@@ -120,16 +120,11 @@ using service_check = std::integral_constant<bool,
  * Validity check for dependencies of a service
  */
 template<typename T, typename... Args>
-using dependency_check = std::integral_constant<bool,
-	dependency_trait<is_service, T, Args...>::value &&
-	dependency_trait<is_service_constructible, T, Args...>::value &&
-	dependency_trait<is_construct_function_callable, T, Args...>::value &&
-	dependency_trait<is_default_service_valid, T, Args...>::value &&
-	dependency_trait<is_override_convertible, T, Args...>::value &&
-	dependency_trait<is_override_polymorphic, T, Args...>::value &&
-	dependency_trait<is_override_services, T, Args...>::value &&
-	dependency_trait<is_override_not_final, T, Args...>::value &&
-	dependency_trait<is_abstract_not_final, T, Args...>::value
+using dependency_check = dependency_trait<shallow_service_check, T, Args...>;
+
+template<typename T, typename... Args>
+using service_check = bool_constant<
+	shallow_service_check<T, Args...>::value && dependency_check<T, Args...>::value
 >;
 
 } // namespace detail

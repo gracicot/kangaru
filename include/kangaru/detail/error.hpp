@@ -42,7 +42,7 @@ struct service_error {
 		!is_autocall_valid<Service>::value, int> = 0>
 	service_error() {
 		static_assert(false_t<Service>::value,
-			"The service has problem with autocall. Injected services can be invalid, or the service map can be incoplete. "
+			"The service has problem with autocall. Injected services can be invalid, or the service map can be incomplete. "
 			"Check if all required services are included and if every services are valid."
 		);
 	}
@@ -52,7 +52,7 @@ struct service_error {
 		!is_autocall_valid<Service>::value, int> = 0>
 	service_error(Arg&&) {
 		static_assert(false_t<Service>::value,
-			"The service has problem with autocall. Injected services can be invalid, or the service map can be incoplete. "
+			"The service has problem with autocall. Injected services can be invalid, or the service map can be incomplete. "
 			"Check if all required services are included and if every services are valid."
 		);
 	}

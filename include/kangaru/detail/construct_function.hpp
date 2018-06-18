@@ -9,6 +9,23 @@
 namespace kgr {
 namespace detail {
 
+// Here, usual traits using void_t don't quite work with visual studio for this particular case.
+template<typename T>
+struct has_construct_helper {
+private:
+	template<typename U, typename V = decltype(&U::construct)>
+	static std::true_type test(int);
+
+	template<typename>
+	static std::false_type test(...);
+
+public:
+	using type = decltype(test<T>(0));
+};
+
+template<typename T>
+using has_construct = typename has_construct_helper<T>::type;
+
 /*
  * Type trait that tell if the construct function F can be called with given arguments Args
  */

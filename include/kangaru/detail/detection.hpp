@@ -51,7 +51,7 @@ template <template<class...> class Op, class... Args>
 using detected_t = typename detail_detection::detector<nonesuch, void, Op, Args...>::type;
 
 template <class Default, template<class...> class Op, class... Args>
-using detected_or = detail_detection::detector<Default, void, Op, Args...>;
+using detected_or = typename detail_detection::detector<Default, void, Op, Args...>::type;
 
 template<typename B>
 struct negation : bool_constant<!bool(B::value)> {};
@@ -62,13 +62,18 @@ template<typename B1, typename... Bn>
 struct conjunction<B1, Bn...> : std::conditional<bool(B1::value), conjunction<Bn...>, B1>::type {};
 
 template<typename T, template<typename...> class, typename...>
-struct all_of_traits : std::false_type {};
+struct all_of_traits : std::false_type {
+	static_assert(false_t<T>::value, "Incorrect usage of all_of_traits. The first parameter must be a meta_list, a tuple or nonesuch");
+};
+
+template<template<typename...> class Trait, typename... Args>
+struct all_of_traits<nonesuch, Trait, Args...> : std::false_type {};
 
 template<typename... Types, template<typename...> class Trait, typename... Args>
-struct all_of_traits<meta_list<Types...>, Trait, Args...> : conjunction<Trait<Types, Args...>...> {};
+struct all_of_traits<meta_list<Types...>, Trait, Args...> : conjunction<Trait<Args..., Types>...> {};
 
 template<typename... Types, template<typename...> class Trait, typename... Args>
-struct all_of_traits<std::tuple<Types...>, Trait, Args...> : conjunction<Trait<Types, Args...>...> {};
+struct all_of_traits<std::tuple<Types...>, Trait, Args...> : conjunction<Trait<Args..., Types>...> {};
 
 } // namespace detail
 } // namespace kgr

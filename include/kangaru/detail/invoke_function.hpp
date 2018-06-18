@@ -5,6 +5,7 @@
 #include "void_t.hpp"
 #include "traits.hpp"
 #include "service_map.hpp"
+#include "detection.hpp"
 
 #ifndef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
 #if _MSC_VER == 1900
@@ -28,34 +29,31 @@
 namespace kgr {
 namespace detail {
 
+template<typename Map, typename T, typename P, typename... Args>
+struct curry_pointer_invokable {
+	template<typename... Services>
+	using call_expression = decltype(
+		(std::declval<T>().*std::declval<P>())(
+			std::declval<service_type<mapped_service_t<Services, Map>>>()...,
+			std::declval<Args>()...
+		)
+	);
+	
+	template<typename... Services>
+	using trait = is_detected<call_expression, Services...>;
+};
+
 /*
  * Checks if some given pointer to member function is invokable
  * 
  * Assumes that P is a reflectable function type.
  */
 template<typename Map, typename T, typename P, typename... Args>
-struct is_pointer_invokable_helper {
-private:
-	template<typename U, typename V, typename... As, std::size_t... S>
-	static decltype(
-		void((std::declval<U>().*std::declval<V>())(
-			std::declval<service_type<mapped_service_t<function_argument_t<S, V>, Map>>>()...,
-			std::declval<As>()...
-		)), std::true_type{}
-	) test(seq<S...>, int);
-	
-	template<typename..., typename U>
-	static std::false_type test(U const&, ...);
-	
-public:
-	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}, 0));
-};
-
-/*
- * Alias for the is_pointer_invokable_helper trait
- */
-template<typename Map, typename T, typename P, typename... Args>
-struct is_pointer_invokable : is_pointer_invokable_helper<Map, T, P, Args...>::type {};
+using is_pointer_invokable = expand_n<
+	safe_minus(meta_list_size<function_arguments_t<P>>::value, sizeof...(Args)),
+	function_arguments_t<P>,
+	curry_pointer_invokable<Map, T, P, Args...>::template trait
+>;
 
 /*
  * Trait that checks if a class T has a call operator callable using given service map
@@ -132,45 +130,18 @@ template<typename Map, typename T, typename... Args>
 using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...>, meta_list<Args...>>::type;
 
 /*
- * Trait that tells if the class T has a callable template call operator
- */
-template<bool, typename, typename, typename, typename = void>
-struct has_template_call_operator : std::false_type {};
-
-template<typename Map, typename T, typename... Args>
-struct has_template_call_operator<true, Map, T, meta_list<Args...>, void_t<get_template_call_t<Map, T, Args...>>> : std::true_type {};
-
-/*
- * function_trait equivalent for an invoke function. It has to choose if it's a lambda, generic lambda or a function.
- */
-template<typename, typename, typename, typename = void>
-struct invoke_function_helper {};
-
-/*
- * Specialization of invoke_function_helper for function types and ordinary lambda.
- * Will extract correctly argument types and return type.
+ * function_trait equivalent for an invoke function.
+ * It has to choose if it's a lambda, generic lambda or a function.
  */
 template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	enable_if_t<has_call_operator<T>::value || std::is_pointer<T>::value>
-> : function_traits<T> {};
-
-/*
- * Specialization of invoke_function_helper for generic lambda.
- * Will extract correctly argument types and return type.
- */
-template<typename Map, typename T, typename... Args>
-struct invoke_function_helper<
-	Map, T, meta_list<Args...>,
-	enable_if_t<has_template_call_operator<!has_call_operator<T>::value && !std::is_pointer<T>::value, Map, T, meta_list<Args...>>::value>
-> : function_traits<get_template_call_t<Map, T, Args...>> {};
-
-/*
- * Alias for invoke_function_helper
- */
-template<typename Map, typename T, typename... Args>
-using invoke_function = invoke_function_helper<Map, T, meta_list<Args...>>;
+using invoke_function = conditional_t<
+	has_call_operator<T>::value || std::is_pointer<T>::value,
+	function_traits<T>,
+	function_traits<instanciate_if_t<
+		!has_call_operator<T>::value && !std::is_pointer<T>::value,
+		get_template_call_t, Map, T, Args...>
+	>
+>;
 
 /*
  * Alias for invoke_function::argument_types, a meta list of argument types.
@@ -188,40 +159,23 @@ template<typename Map, typename T, typename... Args>
 using invoke_function_result_t = typename invoke_function<Map, T, Args...>::return_type;
 
 template<typename Map, typename T, typename... Args>
-struct is_invokable_helper {
-private:
-	template<std::size_t I, typename U>
-	struct expand {
-		using type = invoke_function_argument_t<I, Map, U, Args...>;
-	};
-	
-	// Alias for not using a template template argument in the next expression, will help simplify the expression and MSVC to parse it.
-	template<typename U>
-	using map_t = mapped_service_t<U, Map>;
-	
-	// We forward injected argument types (from expand) and additional arguments (As) to the sub trait call_test
-	template<typename U, typename... As, std::size_t... S, enable_if_t<is_callable<U, service_type<map_t<typename expand<S, U>::type>>..., As...>::value, int> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, typename... As>
-	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(As)>{})) test(int);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(0));
+struct curry_is_invokable {
+	template<typename... Services>
+	using trait = is_callable<T, detected_t<service_type, detected_t<mapped_service_t, Services, Map>>..., Args...>;
 };
 
 /*
- * Alias for is_invokable_helper
- * Using inheritance here helped msvc in some cases.
+ * Checks if the function T can be invoked by the container given Map as the
+ * service map and Args as additional arguments.
+ * 
+ * Assumes that T is a reflectable function type.
  */
 template<typename Map, typename T, typename... Args>
-struct is_invokable : is_invokable_helper<Map, T, Args...>::type {};
+using is_invokable = expand_n<
+	safe_minus(meta_list_size<invoke_function_arguments_t<Map, T, Args...>>::value, sizeof...(Args)),
+	invoke_function_arguments_t<Map, T, Args...>,
+	curry_is_invokable<Map, T, Args...>::template trait
+>;
 
 } // namespace detail
 } // namespace kgr

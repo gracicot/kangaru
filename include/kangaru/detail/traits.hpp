@@ -88,11 +88,15 @@ struct seq_drop_first<seq<0, S...>> {
 	using type = seq<S...>;
 };
 
+inline constexpr auto safe_minus(std::size_t lhs, std::size_t rhs) -> std::size_t {
+	return lhs - (lhs > rhs ? rhs : lhs);
+}
+
 template<typename S>
 using seq_drop_first_t = typename seq_drop_first<S>::type;
 
 template<typename List, int n>
-using tuple_seq_minus = typename detail::seq_gen<meta_list_size<List>::value - (n > meta_list_size<List>::value ? meta_list_size<List>::value : n)>::type;
+using tuple_seq_minus = typename detail::seq_gen<safe_minus(meta_list_size<List>::value, n)>::type;
 
 template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;

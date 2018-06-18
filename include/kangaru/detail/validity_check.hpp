@@ -4,7 +4,7 @@
 #include "invoke_function.hpp"
 #include "single.hpp"
 #include "service_check.hpp"
-#include "autocall_check.hpp"
+#include "autocall_traits.hpp"
 
 namespace kgr {
 namespace detail {

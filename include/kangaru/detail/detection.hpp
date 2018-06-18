@@ -35,6 +35,16 @@ struct enabled_detector<Default, false, void, C, Args...> {
 	using type = Default;
 };
 
+template<bool, typename Default, template<typename...> class, typename...>
+struct instanciate_if {
+	using type = Default;
+};
+
+template<typename Default, template<typename...> class Template, typename... Args>
+struct instanciate_if<true, Default, Template, Args...> {
+	using type = typename detector<Default, void, Template, Args...>::type;
+};
+
 } // namespace detail
 
 struct nonesuch {
@@ -44,14 +54,20 @@ struct nonesuch {
 	void operator=(nonesuch const&) = delete;
 };
 
-template <template<class...> class Op, class... Args>
+template <template<class...> class Op, typename... Args>
 using is_detected = typename detail_detection::detector<nonesuch, void, Op, Args...>::value_t;
 
-template <template<class...> class Op, class... Args>
+template <template<class...> class Op, typename... Args>
 using detected_t = typename detail_detection::detector<nonesuch, void, Op, Args...>::type;
 
-template <class Default, template<class...> class Op, class... Args>
+template <typename Default, template<class...> class Op, typename... Args>
 using detected_or = typename detail_detection::detector<Default, void, Op, Args...>::type;
+
+template <bool b, template<class...> class Template, typename... Args>
+using instanciate_if_t = typename detail_detection::instanciate_if<b, nonesuch, Template, Args...>::type;
+
+template <bool b, typename Default, template<class...> class Template, typename... Args>
+using instanciate_if_or = typename detail_detection::instanciate_if<b, Default, Template, Args...>::type;
 
 template<typename B>
 struct negation : bool_constant<!bool(B::value)> {};
@@ -74,6 +90,15 @@ struct all_of_traits<meta_list<Types...>, Trait, Args...> : conjunction<Trait<Ar
 
 template<typename... Types, template<typename...> class Trait, typename... Args>
 struct all_of_traits<std::tuple<Types...>, Trait, Args...> : conjunction<Trait<Args..., Types>...> {};
+
+template<typename, typename, template<typename...> class, typename... Args>
+struct expand_n_helper;
+
+template<std::size_t... S, typename List, template<typename...> class Trait, typename... Args>
+struct expand_n_helper<seq<S...>, List, Trait, Args...> : Trait<meta_list_element_t<S, List>..., Args...> {};
+
+template<std::size_t N, typename List, template<typename...> class Trait, typename... Args>
+using expand_n = expand_n_helper<typename seq_gen<N>::type, List, Trait, Args...>;
 
 } // namespace detail
 } // namespace kgr

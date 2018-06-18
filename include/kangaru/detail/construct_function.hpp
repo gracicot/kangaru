@@ -9,58 +9,30 @@
 namespace kgr {
 namespace detail {
 
-// Here, usual traits using void_t don't quite work with visual studio for this particular case.
 template<typename T>
-struct has_construct_helper {
-private:
-	template<typename U, typename V = decltype(&U::construct)>
-	static std::true_type test(int);
-
-	template<typename>
-	static std::false_type test(...);
-
-public:
-	using type = decltype(test<T>(0));
-};
+using nontemplate_constuct_function = decltype(&T::construct);
 
 template<typename T>
-using has_construct = typename has_construct_helper<T>::type;
+using has_construct = is_detected<nontemplate_constuct_function, T>;
 
-/*
- * Type trait that tell if the construct function F can be called with given arguments Args
- */
 template<typename F, typename... Args>
-struct is_construct_invokable_helper {
-private:
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	/*
-	 * Test if the function type C can be called with the S... first arguments, followed by arguments As...
-	 * 
-	 * Also, we test if the S... first arguments are injected arguments, and really are services.
-	 */
-	template<typename C, typename... As, std::size_t... S, int_t<
-		decltype(std::declval<C>()(std::declval<function_argument_t<S, C>>()..., std::declval<As>()...)),
-		enable_if_t<is_service<injected_argument_t<S, C>>::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	// We call test helper with a sequence of the number of parameter minus the number of provided arguments.
-	template<typename C, typename... As>
-	static decltype(test_helper<C, As...>(tuple_seq_minus<function_arguments_t<C>, sizeof...(As)>{})) test(int);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<F, Args...>(0));
+struct curry_is_construct_invokable {
+	template<typename... Services>
+	using trait = bool_constant<
+		kgr::detail::is_callable<F, Services..., Args...>::value &&
+		conjunction<is_service<Services>...>::value
+	>;
 };
 
-/*
- * Alias for is_construct_invokable_helper
- */
 template<typename F, typename... Args>
-using is_construct_invokable = typename is_construct_invokable_helper<F, Args...>::type;
+using is_construct_invokable = bool_constant<
+	is_detected<function_arguments_t, F>::value &&
+	expand_n<
+		safe_minus(meta_list_size<detected_or<meta_list<>, function_arguments_t, F>>::value, sizeof...(Args)),
+		detected_or<meta_list<>, function_arguments_t, F>,
+		curry_is_construct_invokable<F, Args...>::template trait
+	>::value
+>;
 
 /*
  * has_callable_template_construct
@@ -196,40 +168,22 @@ struct has_any_construct {
 	constexpr static bool value = has_any_template_construct<T, Args...>::value || has_construct<T>::value;
 };
 
-template<typename T, typename... Args>
-struct construct_function_helper {
-private:
-	template<typename U>
-	struct get_construct {
-		// We do not use integral_constant here, &U::construct might have no linkage.
-		struct type {
-			using value_type = decltype(&U::construct);
-			constexpr static value_type value = &U::construct;
-		};
-	};
-
-	struct no_construct {};
-	
-	template<typename U, typename... As, enable_if_t<
-		has_construct<U>::value &&
-		!has_template_construct<U, As...>::value, int> = 0>
-	static typename get_construct<U>::type test(int);
-
-	template<typename U, typename... As, enable_if_t<has_any_template_construct<U, As...>::value, int> = 0>
-	static get_template_construct<U, As...> test(int);
-
-	template<typename U, typename... As>
-	static no_construct test(...);
-
-public:
-	using type = decltype(test<T, Args...>(0));
+template<typename T>
+struct get_nontemplate_construct {
+	// We do not use integral_constant here, &T::construct might have no linkage.
+	using value_type = decltype(&T::construct);
+	constexpr static value_type value = &T::construct;
 };
 
 /*
- * An alias to the selected construct function
+ * Metafunction that returns the construct function as an integral_constant
  */
 template<typename T, typename... Args>
-using construct_function = typename construct_function_helper<T, Args...>::type;
+using construct_function = conditional_t<
+	has_any_template_construct<T, Args...>::value,
+	get_template_construct<T, Args...>,
+	instanciate_if_t<has_construct<T>::value, get_nontemplate_construct, T>
+>;
 
 /*
  * The type of the selected construct function 

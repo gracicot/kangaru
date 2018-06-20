@@ -128,7 +128,7 @@ struct function_traits_helper<R(*)(Args...)> : base_non_member_function_traits<R
 template <typename R, typename... Args>
 struct function_traits_helper<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
 
-#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L
+#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L
 
 template <typename Type, typename R, typename... Args>
 struct function_traits_helper<R(Type::*)(Args...) const noexcept> : base_function_traits<Type, R, Args...> {};

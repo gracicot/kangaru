@@ -76,10 +76,10 @@ struct is_invoke_service_valid : is_invoke_service_valid_helper<Map, T, Args...>
  * Validity check for a invoke expression
  */
 template<typename Map, typename T, typename... Args>
-using is_invoke_valid = std::integral_constant<bool,
+struct is_invoke_valid : bool_constant<
 	is_invoke_service_valid<Map, T, Args...>::value &&
 	is_invokable<Map, T, Args...>::value
->;
+> {};
 
 } // namespace detail
 } // namespace kgr

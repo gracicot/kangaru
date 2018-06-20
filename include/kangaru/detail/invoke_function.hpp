@@ -29,31 +29,34 @@
 namespace kgr {
 namespace detail {
 
-template<typename Map, typename T, typename P, typename... Args>
-struct curry_pointer_invokable {
-	template<typename... Services>
-	using call_expression = decltype(
-		(std::declval<T>().*std::declval<P>())(
-			std::declval<service_type<mapped_service_t<Services, Map>>>()...,
-			std::declval<Args>()...
-		)
-	);
-	
-	template<typename... Services>
-	using trait = is_detected<call_expression, Services...>;
-};
-
 /*
  * Checks if some given pointer to member function is invokable
  * 
  * Assumes that P is a reflectable function type.
  */
 template<typename Map, typename T, typename P, typename... Args>
-using is_pointer_invokable = expand_n<
-	safe_minus(meta_list_size<function_arguments_t<P>>::value, sizeof...(Args)),
-	function_arguments_t<P>,
-	curry_pointer_invokable<Map, T, P, Args...>::template trait
->;
+struct is_pointer_invokable_helper {
+private:
+	template<typename U, typename V, typename... As, std::size_t... S>
+	static decltype(
+		void((std::declval<U>().*std::declval<V>())(
+			std::declval<service_type<mapped_service_t<function_argument_t<S, V>, Map>>>()...,
+			std::declval<As>()...
+		)), std::true_type{}
+	) test(seq<S...>, int);
+	
+	template<typename..., typename U>
+	static std::false_type test(U const&, void*);
+	
+public:
+	using type = decltype(test<T, P, Args...>(tuple_seq_minus<function_arguments_t<P>, sizeof...(Args)>{}, 0));
+};
+
+/*
+ * Alias for the is_pointer_invokable_helper trait
+ */
+template<typename Map, typename T, typename P, typename... Args>
+struct is_pointer_invokable : is_pointer_invokable_helper<Map, T, P, Args...>::type {};
 
 /*
  * Trait that checks if a class T has a call operator callable using given service map
@@ -130,9 +133,9 @@ template<typename Map, typename T, typename... Args>
 using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...>, meta_list<Args...>>::type;
 
 /*
- * function_trait equivalent for an invoke function.
- * It has to choose if it's a lambda, generic lambda or a function.
- */
+* function_trait equivalent for an invoke function.
+* It has to choose if it's a lambda, generic lambda or a function.
+*/
 template<typename Map, typename T, typename... Args>
 using invoke_function = conditional_t<
 	has_call_operator<T>::value || std::is_pointer<T>::value,
@@ -171,10 +174,13 @@ struct curry_is_invokable {
  * Assumes that T is a reflectable function type.
  */
 template<typename Map, typename T, typename... Args>
-using is_invokable = expand_n<
-	safe_minus(meta_list_size<invoke_function_arguments_t<Map, T, Args...>>::value, sizeof...(Args)),
-	invoke_function_arguments_t<Map, T, Args...>,
-	curry_is_invokable<Map, T, Args...>::template trait
+using is_invokable = bool_constant<
+	is_detected<invoke_function_arguments_t, Map, T, Args...>::value &&
+	expand_n<
+		safe_minus(meta_list_size<detected_or<meta_list<>, invoke_function_arguments_t, Map, T, Args...>>::value, sizeof...(Args)),
+		detected_or<meta_list<>, invoke_function_arguments_t, Map, T, Args...>,
+		curry_is_invokable<Map, T, Args...>::template trait
+	>::value
 >;
 
 } // namespace detail

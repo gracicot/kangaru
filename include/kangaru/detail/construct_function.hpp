@@ -10,10 +10,13 @@ namespace kgr {
 namespace detail {
 
 template<typename T>
-using nontemplate_constuct_function = decltype(&T::construct);
+using nontemplate_constuct_function_pointer_t = decltype(&T::construct);
+
+template<typename T, typename... Args>
+using template_constuct_function_pointer_t = decltype(&T::template construct<Args...>);
 
 template<typename T>
-using has_construct = is_detected<nontemplate_constuct_function, T>;
+using has_construct = is_detected<nontemplate_constuct_function_pointer_t, T>;
 
 template<typename F, typename... Args>
 struct curry_is_construct_invokable {
@@ -51,8 +54,8 @@ struct has_callable_template_construct : std::false_type {};
 template<typename T, typename... TArgs, typename... Args>
 struct has_callable_template_construct<
 	T, meta_list<TArgs...>, meta_list<Args...>,
-	enable_if_t<is_construct_invokable<decltype(&T::template construct<TArgs...>), Args...>::value>
-> : std::true_type {};
+	enable_if_t<is_detected<template_constuct_function_pointer_t, T, TArgs...>::value>
+> : is_construct_invokable<template_constuct_function_pointer_t<T, TArgs...>, Args...> {};
 
 /*
  * This trait will extract the first matching construct function that is callable.
@@ -214,31 +217,12 @@ using has_valid_construct = std::integral_constant<bool, has_template_construct<
  * 
  * If there is no construct function required for that service, returns true
  */
-template<typename, typename, typename = void>
-struct is_construct_function_callable_helper : std::false_type {};
-
 template<typename T, typename... Args>
-struct is_construct_function_callable_helper<
-	T, meta_list<Args...>,
-	enable_if_t<is_construct_invokable<construct_function_t<T, Args...>, Args...>::value && !(is_supplied_service<T>::value && sizeof...(Args) == 0)>
-> : std::true_type {};
-
-/*
- * Returns if a construct function is callable given a set of parameter if there should be a construct function
- * 
- * If there is no construct function required for that service, returns true
- */
-template<typename T, typename... Args>
-struct is_construct_function_callable_helper<
-	T, meta_list<Args...>,
-	enable_if_t<is_container_service<T>::value || is_abstract_service<T>::value || (is_supplied_service<T>::value && sizeof...(Args) == 0)>
-> : std::true_type {};
-
-/*
- * Alias for is_construct_function_callable_helper
- */
-template<typename T, typename... Args>
-using is_construct_function_callable = is_construct_function_callable_helper<T, meta_list<Args...>>;
+struct is_construct_function_callable : bool_constant<
+	is_construct_invokable<detected_t<construct_function_t, T, Args...>, Args...>::value ||
+	is_container_service<T>::value || is_abstract_service<T>::value ||
+	(is_supplied_service<T>::value && sizeof...(Args) == 0)
+> {};
 
 } // namespace detail
 } // namespace kgr

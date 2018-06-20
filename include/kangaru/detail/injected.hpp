@@ -58,7 +58,7 @@ private:
  * and extract the definition type.
  */
 template<typename>
-struct injected_service;
+struct injected_service {};
 
 /*
  * This is for non-single, non-virtual services.

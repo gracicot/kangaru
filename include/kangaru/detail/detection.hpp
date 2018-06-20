@@ -25,16 +25,6 @@ struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
 	using type = Op<Args...>;
 };
 
-template<typename Default, bool b, typename AlwaysVoid, template<typename...> class C, typename... Args>
-struct enabled_detector {
-	using type = Default;
-};
-
-template<typename Default, template<typename...> class C, typename... Args>
-struct enabled_detector<Default, false, void, C, Args...> {
-	using type = Default;
-};
-
 template<bool, typename Default, template<typename...> class, typename...>
 struct instanciate_if {
 	using type = Default;
@@ -94,11 +84,13 @@ struct all_of_traits<std::tuple<Types...>, Trait, Args...> : conjunction<Trait<A
 template<typename, typename, template<typename...> class, typename... Args>
 struct expand_n_helper;
 
-template<std::size_t... S, typename List, template<typename...> class Trait, typename... Args>
-struct expand_n_helper<seq<S...>, List, Trait, Args...> : Trait<meta_list_element_t<S, List>..., Args...> {};
+template<std::size_t... S, typename List, template<typename...> class Trait>
+struct expand_n_helper<seq<S...>, List, Trait> {
+	using type = Trait<meta_list_element_t<S, List>...>;
+};
 
-template<std::size_t N, typename List, template<typename...> class Trait, typename... Args>
-using expand_n = expand_n_helper<typename seq_gen<N>::type, List, Trait, Args...>;
+template<std::size_t N, typename List, template<typename...> class Trait>
+using expand_n = typename expand_n_helper<typename seq_gen<N>::type, List, Trait>::type;
 
 } // namespace detail
 } // namespace kgr

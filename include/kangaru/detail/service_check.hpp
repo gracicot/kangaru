@@ -36,7 +36,7 @@ private:
 	
 	// The enable if is required here or else the function call will be ambiguous on visual studio.
 	template<typename U, typename... As, enable_if_t<!is_supplied_service<U>::value && has_any_construct<U, As...>::value, int> = 0>
-	static decltype(test<U, As...>(tuple_seq<function_result_t<construct_function_t<U, As...>>>{})) test_helper(int);
+	static auto test_helper(int) -> decltype(test<U, As...>(tuple_seq<function_result_t<construct_function_t<U, As...>>>{}));
 	
 public:
 	using type = decltype(test_helper<T, Args...>(0));
@@ -48,42 +48,27 @@ public:
 template<typename T, typename... Args>
 using is_service_constructible = typename is_service_constructible_helper<T, Args...>::type;
 
+
+
 /*
  * Meta trait that applies a trait recursively for each dependencies and thier dependencies.
  */
 template<template<typename...> class Trait, typename T, typename... Args>
-struct dependency_trait_helper {
-	template<typename U, std::size_t I, typename... As>
-	struct expand {
-		using type = Trait<injected_argument_t<I, construct_function_t<U, As...>>>;
-	};
+struct dependency_trait {
+	template<typename... Service>
+	using service_check_dependencies = conjunction<
+		Trait<detected_t<injected_service_t, Service>>...,
+		dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
+	>;
 
-	template<typename U, typename... As, std::size_t... S, int_t<
-		enable_if_t<dependency_trait_helper<Trait, injected_argument_t<S, construct_function_t<U, As...>>>::type::value>...,
-		enable_if_t<expand<U, S, As...>::type::value>...> = 0>
-		static std::true_type test(seq<S...>);
-
-	template<typename U, typename... As, enable_if_t<is_supplied_service<U>::value || !has_any_construct<U, As... >::value, int> = 0>
-	static std::true_type test_helper(int);
-
-	template<typename...>
-	static std::false_type test(...);
-
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, typename... As, enable_if_t<!is_supplied_service<U>::value && has_any_construct<U, As... >::value, int> = 0>
-	static decltype(test<U, As...>(tuple_seq_minus<function_arguments_t<construct_function_t<U, As...>>, sizeof...(As)>{})) test_helper(int);
-	
-public:
-	using type = decltype(test_helper<T, Args...>(0));
+	static constexpr bool value =
+		is_supplied_service<T>::value ||
+		expand_n<
+			safe_minus(detected_or<std::integral_constant<int, 0>, meta_list_size, detected_or<meta_list<>, function_arguments_t, detected_t<construct_function_t, T, Args...>>>::value, sizeof...(Args)),
+			detected_or<meta_list<>, function_arguments_t, detected_t<construct_function_t, T, Args...>>,
+			service_check_dependencies
+		>::value;
 };
-
-/*
- * Alias for dependency_trait_helper
- */
-template<template<typename...> class Trait, typename T, typename... Args>
-using dependency_trait = typename dependency_trait_helper<Trait, T, Args...>::type;
 
 /*
  * Validity check for default services

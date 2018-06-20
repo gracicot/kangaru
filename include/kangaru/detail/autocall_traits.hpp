@@ -10,21 +10,36 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Alias to the parameter list of an invoke call expression in autocall.
+ */
 template<typename T>
 using invoke_call_parameters = typename T::parameters;
 
+/*
+ * Trait that check if an autocall entry is an invoke call expression.
+ */
 template<typename T>
 using is_invoke_call = is_detected<invoke_call_parameters, T>;
 
+/*
+ * Trait that check if the autocall entry is a member function autocall.
+ */
 template<typename T, typename F>
 using is_member_autocall = std::is_member_function_pointer<typename F::value_type>;
 
+/*
+ * Trait that check if the type `T` is a pointer to nonmember function.
+ */
 template<typename T>
 using is_nonmember_function_pointer = bool_constant<
 	std::is_function<typename std::remove_pointer<T>::type>::value &&
 	std::is_pointer<T>::value
 >;
 
+/*
+ * Trait that check if the autocall entry is a member function autocall.
+ */
 template<typename T, typename F>
 using is_nonmember_autocall = bool_constant<(
 	meta_list_size<
@@ -38,16 +53,25 @@ using is_nonmember_autocall = bool_constant<(
 	>::value > 0
 )>;
 
+/*
+ * Alias to the service map of a autocall entry.
+ * Right now, it's only possible to set the map to all entry.
+ */
 template<typename T, typename F>
 using autocall_selected_map_t = typename T::map;
 
 /*
- * This class will the the member autocall function part of the service definition.
- * Maybe the autocall function part of the service definition should not exist, and moved to the container.
+ * This class will get the member autocall function member of the service definition.
+ *
+ * From a desing point of view, maybe the autocall function part of the service
+ * definition should not exist, and moved to the container.
  */
 template<typename, typename, typename = void>
 struct autocall_function_helper;
 
+/*
+ * This specialization of autocall_function_helper will get the member autocall when the autocall function is a member autocall.
+ */
 template<typename T, typename F>
 struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value && !is_nonmember_autocall<T, F>::value>> {
 private:
@@ -66,6 +90,9 @@ public:
 	>;
 };
 
+/*
+ * This spetialization of autocall_function_helper will get the member autocall when the autocall function is a member autocall.
+ */
 template<typename T, typename F>
 struct autocall_function_helper<T, F, enable_if_t<is_nonmember_autocall<T, F>::value && !is_invoke_call<F>::value && !is_member_autocall<T, F>::value>> {
 private:
@@ -84,6 +111,9 @@ public:
 	>;
 };
 
+/*
+ * This spetialization of autocall_function_helper will get the member autocall when the autocall function is invoke call expression.
+ */
 template<typename T, typename F>
 struct autocall_function_helper<T, F, enable_if_t<is_invoke_call<F>::value>> {
 private:
@@ -107,6 +137,9 @@ public:
 	using type = decltype(get_function(tuple_seq<invoke_call_parameters<F>>{}));
 };
 
+/*
+ * Alias to the autocall_function_helper trait to ease it's usage.
+ */
 template<typename T, typename F>
 using autocall_function = typename autocall_function_helper<T, F>::type;
 

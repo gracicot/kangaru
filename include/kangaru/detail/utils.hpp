@@ -9,8 +9,19 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Missing utility taken from C++17
+ */
 template<bool b>
 using bool_constant = std::integral_constant<bool, b>;
+
+
+/*
+ * Simple alias to member type `value_type`
+ * Used mostly for detection.
+ */
+template<typename T>
+using value_type_t = typename T::value_type;
 
 /*
  * Type trait that check if a particular type T indeed have a forward function, and ensure it doesn't return void.

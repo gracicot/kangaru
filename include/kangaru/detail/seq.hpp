@@ -1,8 +1,9 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SEQ_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SEQ_HPP
 
-#include <tuple>
 #include "meta_list.hpp"
+
+#include <tuple>
 
 namespace kgr {
 namespace detail {

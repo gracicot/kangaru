@@ -18,6 +18,10 @@ using template_constuct_function_pointer_t = decltype(&T::template construct<Arg
 template<typename T>
 using has_construct = is_detected<nontemplate_constuct_function_pointer_t, T>;
 
+/*
+ * Metafunction that returns a trait that check if a function is callable and services are valid.
+ * Used for is_construct_invokable
+ */
 template<typename F, typename... Args>
 struct curry_is_construct_invokable {
 	template<typename... Services>
@@ -27,6 +31,9 @@ struct curry_is_construct_invokable {
 	>;
 };
 
+/*
+ * Type trait that tell if the construct function F can be called with given arguments Args
+ */
 template<typename F, typename... Args>
 using is_construct_invokable = bool_constant<
 	is_detected<function_arguments_t, F>::value &&
@@ -136,32 +143,14 @@ using get_any_template_construct = get_any_template_construct_helper<T, meta_lis
 /*
  * Tells if there is any template construct function that exist in the service T
  */
-template<typename, typename, typename = void>
-struct has_any_template_construct_helper : std::false_type {};
-
 template<typename T, typename... Args>
-struct has_any_template_construct_helper<T, meta_list<Args...>, void_t<typename get_any_template_construct<T, Args...>::value_type>> : std::true_type {};
-
-/*
- * Alias for has_any_template_construct_helper
- */
-template<typename T, typename... Args>
-using has_any_template_construct = has_any_template_construct_helper<T, meta_list<Args...>>;
+using has_any_template_construct = is_detected<value_type_t, get_any_template_construct<T, Args...>>;
 
 /*
  * This trait tell if there is a callable template construct function
  */
-template<typename, typename, typename = void>
-struct has_template_construct_helper : std::false_type {};
-
 template<typename T, typename... Args>
-struct has_template_construct_helper<T, meta_list<Args...>, void_t<typename get_template_construct<T, Args...>::value_type>> : std::true_type {};
-
-/*
- * Alias for has_template_construct_helper
- */
-template<typename T, typename... Args>
-using has_template_construct = has_template_construct_helper<T, meta_list<Args...>>;
+using has_template_construct = is_detected<value_type_t, get_template_construct<T, Args...>>;
 
 /*
 * Trait that returns if a service has a construct function, callable or not

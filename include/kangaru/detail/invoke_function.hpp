@@ -158,9 +158,16 @@ using invoke_function_arguments_t = typename invoke_function<Map, T, Args...>::a
 template<std::size_t n, typename Map, typename T, typename... Args>
 using invoke_function_argument_t = meta_list_element_t<n, typename invoke_function<Map, T, Args...>::argument_types>;
 
+/*
+* Alias for invoke_function::return_type, the type of the nth argument.
+*/
 template<typename Map, typename T, typename... Args>
 using invoke_function_result_t = typename invoke_function<Map, T, Args...>::return_type;
 
+/*
+ * Metafunction that returns a partially applied trait.
+ * Used for is_invokable.
+ */
 template<typename Map, typename T, typename... Args>
 struct curry_is_invokable {
 	template<typename... Services>

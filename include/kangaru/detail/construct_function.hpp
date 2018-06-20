@@ -185,7 +185,7 @@ template<typename T, typename... Args>
 using construct_function = conditional_t<
 	has_any_template_construct<T, Args...>::value,
 	get_template_construct<T, Args...>,
-	instanciate_if_t<has_construct<T>::value, get_nontemplate_construct, T>
+	instantiate_if_t<has_construct<T>::value, get_nontemplate_construct, T>
 >;
 
 /*

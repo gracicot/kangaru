@@ -4,6 +4,7 @@
 #include "function_traits.hpp"
 #include "utils.hpp"
 #include "meta_list.hpp"
+#include "seq.hpp"
 #include "void_t.hpp"
 
 #include <type_traits>
@@ -54,34 +55,17 @@ using tuple_element_t = typename std::tuple_element<S, T>::type;
 template<std::size_t size, std::size_t align>
 using aligned_storage_t = typename std::aligned_storage<size, align>::type;
 
-template<std::size_t ...>
-struct seq {};
-
-template<std::size_t n, std::size_t ...S>
-struct seq_gen : seq_gen<n-1, n-1, S...> {};
-
-template<std::size_t ...S>
-struct seq_gen<0, S...> {
-	using type = seq<S...>;
-};
-
-template<typename>
-struct tuple_seq_gen;
-
-template<typename... Types>
-struct tuple_seq_gen<std::tuple<Types...>> : seq_gen<sizeof...(Types)> {};
-
-template<typename... Types>
-struct tuple_seq_gen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {};
-
-template<typename Tuple>
-using tuple_seq = typename tuple_seq_gen<Tuple>::type;
-
 template<typename F>
 using function_seq = tuple_seq<function_arguments_t<F>>;
 
 template<typename>
 struct seq_drop_first;
+
+template<typename>
+struct is_tuple : std::false_type {};
+
+template<typename... Types>
+struct is_tuple<std::tuple<Types...>> : std::true_type {};
 
 template<std::size_t... S>
 struct seq_drop_first<seq<0, S...>> {

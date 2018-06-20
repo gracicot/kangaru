@@ -4,6 +4,7 @@
 #include "meta_list.hpp"
 #include "void_t.hpp"
 #include "utils.hpp"
+#include "seq.hpp"
 
 namespace kgr {
 namespace detail {
@@ -26,12 +27,12 @@ struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
 };
 
 template<bool, typename Default, template<typename...> class, typename...>
-struct instanciate_if {
+struct instantiate_if {
 	using type = Default;
 };
 
 template<typename Default, template<typename...> class Template, typename... Args>
-struct instanciate_if<true, Default, Template, Args...> {
+struct instantiate_if<true, Default, Template, Args...> {
 	using type = typename detector<Default, void, Template, Args...>::type;
 };
 
@@ -54,10 +55,10 @@ template <typename Default, template<class...> class Op, typename... Args>
 using detected_or = typename detail_detection::detector<Default, void, Op, Args...>::type;
 
 template <bool b, template<class...> class Template, typename... Args>
-using instanciate_if_t = typename detail_detection::instanciate_if<b, nonesuch, Template, Args...>::type;
+using instantiate_if_t = typename detail_detection::instantiate_if<b, nonesuch, Template, Args...>::type;
 
 template <bool b, typename Default, template<class...> class Template, typename... Args>
-using instanciate_if_or = typename detail_detection::instanciate_if<b, Default, Template, Args...>::type;
+using instantiate_if_or = typename detail_detection::instantiate_if<b, Default, Template, Args...>::type;
 
 template<typename B>
 struct negation : bool_constant<!bool(B::value)> {};
@@ -91,6 +92,9 @@ struct expand_n_helper<seq<S...>, List, Trait> {
 
 template<std::size_t N, typename List, template<typename...> class Trait>
 using expand_n = typename expand_n_helper<typename seq_gen<N>::type, List, Trait>::type;
+
+template<typename List, template<typename...> class Trait>
+using expand_all = typename expand_n_helper<tuple_seq<List>, List, Trait>::type;
 
 } // namespace detail
 } // namespace kgr

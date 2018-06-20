@@ -140,7 +140,7 @@ template<typename Map, typename T, typename... Args>
 using invoke_function = conditional_t<
 	has_call_operator<T>::value || std::is_pointer<T>::value,
 	function_traits<T>,
-	function_traits<instanciate_if_t<
+	function_traits<instantiate_if_t<
 		!has_call_operator<T>::value && !std::is_pointer<T>::value,
 		get_template_call_t, Map, T, Args...>
 	>

@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_META_LIST_HPP
 
 #include <type_traits>
+#include <tuple>
 
 namespace kgr {
 namespace detail {
@@ -82,6 +83,20 @@ template <typename, typename>
 struct meta_list_unique;
 
 /*
+* This trait is used to convert a std::tuple into a meta_list
+*/
+template <typename>
+struct to_meta_list;
+
+template <typename... Types>
+struct to_meta_list<std::tuple<Types...>> {
+	using type = meta_list<Types...>;
+};
+
+template<typename T>
+using to_meta_list_t = typename to_meta_list<T>::type;
+
+/*
  * Case where we didn't find the type in the list.
  */
 template <typename T>
@@ -113,7 +128,7 @@ struct meta_list_size<meta_list<Types...>> {
 };
 
 /*
-* This trait simply return the size of the list.
+* This trait remove the first element of the list.
 */
 template <typename>
 struct meta_list_pop_front;
@@ -125,6 +140,20 @@ struct meta_list_pop_front<meta_list<First, Types...>> {
 
 template <typename List>
 using meta_list_pop_front_t = typename meta_list_pop_front<List>::type;
+
+/*
+* This trait add an element in the front of the list.
+*/
+template <typename, typename>
+struct meta_list_push_front;
+
+template <typename E, typename... Types>
+struct meta_list_push_front<E, meta_list<Types...>> {
+	using type = meta_list<E, Types...>;
+};
+
+template <typename E, typename List>
+using meta_list_push_front_t = typename meta_list_push_front<E, List>::type;
 
 /*
  * This trait apply a metafunction on each element in the list, and return the transformed list.

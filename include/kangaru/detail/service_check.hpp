@@ -22,42 +22,14 @@ namespace detail {
  * Trait that check if the service definition can be constructed given the return type of it's construct function.
  */
 template<typename T, typename... Args>
-struct is_service_constructible_helper {
-private:
-	template<typename U, typename... As, std::size_t F, std::size_t... S>
-	static is_service_instantiable<T,
-		tuple_element_t<F, function_result_t<construct_function_t<U, As...>>>,
-		tuple_element_t<S, function_result_t<construct_function_t<U, As...>>>...> test(seq<F, S...>);
-
-	// This overload is needed for msvc.
-	// Or else it will try to call the one just above with a 0 as S for strange reason.
-	template<typename U, typename... As, int_t<construct_function_t<U, As...>> = 0>
-	static is_service_instantiable<T> test(seq<>);
-	
-	template<typename U, typename... As, enable_if_t<is_supplied_service<U>::value || !has_any_construct<U, As...>::value, int> = 0>
-	static std::true_type test_helper(int);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	// The enable if is required here or else the function call will be ambiguous on visual studio.
-	template<typename U, typename... As, enable_if_t<!is_supplied_service<U>::value && has_any_construct<U, As...>::value, int> = 0>
-	static auto test_helper(int) -> decltype(test<U, As...>(tuple_seq<function_result_t<construct_function_t<U, As...>>>{}));
-	
-public:
-	using type = decltype(test_helper<T, Args...>(0));
-};
-
-/*
- * Alias for is_service_constructible_helper
- */
-template<typename T, typename... Args>
-using is_service_constructible = typename is_service_constructible_helper<T, Args...>::type;
-
-
+using is_service_constructible = bool_constant<
+	is_supplied_service<T>::value || !has_any_construct<T, Args...>::value ||
+	(is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value &&
+	expand_all<
+		meta_list_push_front_t<T, to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>>,
+		is_service_instantiable
+	>::value)
+>;
 
 /*
  * Meta trait that applies a trait recursively for each dependencies and thier dependencies.

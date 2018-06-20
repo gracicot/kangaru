@@ -183,8 +183,8 @@ struct curry_is_invokable {
 template<typename Map, typename T, typename... Args>
 using is_invokable = bool_constant<
 	is_detected<invoke_function_arguments_t, Map, T, Args...>::value &&
-	expand_n<
-		safe_minus(meta_list_size<detected_or<meta_list<>, invoke_function_arguments_t, Map, T, Args...>>::value, sizeof...(Args)),
+	expand_minus_n<
+		sizeof...(Args),
 		detected_or<meta_list<>, invoke_function_arguments_t, Map, T, Args...>,
 		curry_is_invokable<Map, T, Args...>::template trait
 	>::value

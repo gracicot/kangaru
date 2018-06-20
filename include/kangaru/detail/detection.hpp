@@ -28,7 +28,7 @@ struct detector<Default, void_t<Op<Args...>>, Op, Args...> {
 
 /*
  * This higher order metafunction only instantiate a template using `detector` if a condition is satisfied.
- * Used when the instantiation of a template is known to trigger a hard error.
+ * Useful when the instantiation of a template is known to trigger a hard error.
  */
 template<bool, typename Default, template<typename...> class, typename...>
 struct instantiate_if {
@@ -105,19 +105,22 @@ struct all_of_traits<std::tuple<Types...>, Trait, Args...> : conjunction<Trait<A
 template<typename, typename, template<typename...> class, typename... Args>
 struct expand_n_helper;
 
-template<std::size_t... S, typename List, template<typename...> class Trait>
-struct expand_n_helper<seq<S...>, List, Trait> {
-	using type = Trait<meta_list_element_t<S, List>...>;
+template<std::size_t... S, typename List, template<typename...> class Trait, typename... Args>
+struct expand_n_helper<seq<S...>, List, Trait, Args...> {
+	using type = Trait<Args..., meta_list_element_t<S, List>...>;
 };
 
+/*
+ * Shortcut to expand_n that expand all the list minus `N` elements into the template.
+ */
 template<std::size_t N, typename List, template<typename...> class Trait>
-using expand_n = typename expand_n_helper<typename seq_gen<N>::type, List, Trait>::type;
+using expand_minus_n = typename expand_n_helper<tuple_seq_minus<List, N>, List, Trait>::type;
 
 /*
  * Shortcut to expand_n that always expand all the list into the template.
  */
-template<typename List, template<typename...> class Trait>
-using expand_all = typename expand_n_helper<tuple_seq<List>, List, Trait>::type;
+template<typename List, template<typename...> class Trait, typename... Args>
+using expand_all = typename expand_n_helper<tuple_seq<List>, List, Trait, Args...>::type;
 
 } // namespace detail
 } // namespace kgr

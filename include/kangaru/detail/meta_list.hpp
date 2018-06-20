@@ -142,20 +142,6 @@ template <typename List>
 using meta_list_pop_front_t = typename meta_list_pop_front<List>::type;
 
 /*
-* This trait add an element in the front of the list.
-*/
-template <typename, typename>
-struct meta_list_push_front;
-
-template <typename E, typename... Types>
-struct meta_list_push_front<E, meta_list<Types...>> {
-	using type = meta_list<E, Types...>;
-};
-
-template <typename E, typename List>
-using meta_list_push_front_t = typename meta_list_push_front<E, List>::type;
-
-/*
  * This trait apply a metafunction on each element in the list, and return the transformed list.
  */
 template<typename, template<typename> class>

@@ -31,6 +31,24 @@ struct tuple_seq_gen<detail::meta_list<Types...>> : seq_gen<sizeof...(Types)> {}
 template<typename Tuple>
 using tuple_seq = typename tuple_seq_gen<Tuple>::type;
 
+template<typename>
+struct seq_drop_first;
+
+template<std::size_t... S>
+struct seq_drop_first<seq<0, S...>> {
+	using type = seq<S...>;
+};
+
+inline constexpr auto safe_minus(std::size_t lhs, std::size_t rhs) -> std::size_t {
+	return lhs - (lhs > rhs ? rhs : lhs);
+}
+
+template<typename S>
+using seq_drop_first_t = typename seq_drop_first<S>::type;
+
+template<typename List, std::size_t n>
+using tuple_seq_minus = typename detail::seq_gen<safe_minus(meta_list_size<List>::value, n)>::type;
+
 } // namespace detail
 } // namespace kgr
 

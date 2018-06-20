@@ -9,6 +9,9 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Aliases used for detection.
+ */
 template<typename T>
 using nontemplate_constuct_function_pointer_t = decltype(&T::construct);
 
@@ -37,8 +40,8 @@ struct curry_is_construct_invokable {
 template<typename F, typename... Args>
 using is_construct_invokable = bool_constant<
 	is_detected<function_arguments_t, F>::value &&
-	expand_n<
-		safe_minus(meta_list_size<detected_or<meta_list<>, function_arguments_t, F>>::value, sizeof...(Args)),
+	expand_minus_n<
+		sizeof...(Args),
 		detected_or<meta_list<>, function_arguments_t, F>,
 		curry_is_construct_invokable<F, Args...>::template trait
 	>::value
@@ -101,18 +104,10 @@ using get_template_construct = get_template_construct_helper<T, meta_list<Args..
 
 /*
  * This trait simply tells if a template construct function exists with a set of template parameter.
- */
-template<typename, typename, typename = void>
-struct template_construct_exist : std::false_type {};
-
-/*
- * Specialization of template_construct_exist
- * 
- * This specialization is selected when the construct function T::construct<Args...> exist.
  * We don't check for validity of parameter, nor if it's invocable.
  */
 template<typename T, typename... Args>
-struct template_construct_exist<T, meta_list<Args...>, void_t<decltype(&T::template construct<Args...>)>> : std::true_type {};
+using template_construct_exist = is_detected<template_constuct_function_pointer_t, T, Args...>;
 
 /*
  * Trait that returns a pointer to the first existing template function, even if that function is not possibly callable.
@@ -125,13 +120,13 @@ struct get_any_template_construct_helper {};
 template<typename T, typename Head, typename... Tail>
 struct get_any_template_construct_helper<
 	T, meta_list<Head, Tail...>,
-	enable_if_t<!template_construct_exist<T, meta_list<Head, Tail...>>::value>
+	enable_if_t<!template_construct_exist<T, Head, Tail...>::value>
 > : get_any_template_construct_helper<T, meta_list<Tail...>> {};
 
 template<typename T, typename... Args>
 struct get_any_template_construct_helper<
 	T, meta_list<Args...>,
-	enable_if_t<template_construct_exist<T, meta_list<Args...>>::value>
+	enable_if_t<template_construct_exist<T, Args...>::value>
 > : std::integral_constant<decltype(exact(&T::template construct<Args...>)), &T::template construct<Args...>> {};
 
 /*
@@ -199,7 +194,7 @@ using construct_result_seq = tuple_seq<construct_function_result_t<T, Args...>>;
 * Trait that returns if a service has a valid, callable construct function
 */
 template<typename T, typename... Args>
-using has_valid_construct = std::integral_constant<bool, has_template_construct<T, Args...>::value || has_construct<T>::value>;
+using has_valid_construct = bool_constant<has_template_construct<T, Args...>::value || has_construct<T>::value>;
 
 /*
  * Returns if a construct function is callable given a set of parameter if there should be a construct function

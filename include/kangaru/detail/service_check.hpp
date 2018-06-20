@@ -17,8 +17,9 @@ using is_service_constructible = bool_constant<
 	is_supplied_service<T>::value || !has_any_construct<T, Args...>::value ||
 	(is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value &&
 	expand_all<
-		meta_list_push_front_t<T, to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>>,
-		is_service_instantiable
+		to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>,
+		is_service_instantiable,
+		T
 	>::value)
 >;
 
@@ -37,8 +38,8 @@ struct dependency_trait {
 
 	static constexpr bool value =
 		is_supplied_service<T>::value ||
-		expand_n<
-			safe_minus(detected_or<std::integral_constant<int, 0>, meta_list_size, detected_or<meta_list<>, function_arguments_t, detected_t<construct_function_t, T, Args...>>>::value, sizeof...(Args)),
+		expand_minus_n<
+			sizeof...(Args),
 			detected_or<meta_list<>, function_arguments_t, detected_t<construct_function_t, T, Args...>>,
 			service_check_dependencies
 		>::value;

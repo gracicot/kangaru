@@ -56,10 +56,10 @@ using is_service_constructible = typename is_service_constructible_helper<T, Arg
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait {
 	template<typename... Service>
-	using service_check_dependencies = conjunction<
+	struct service_check_dependencies : conjunction<
 		Trait<detected_t<injected_service_t, Service>>...,
 		dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
-	>;
+	> {};
 
 	static constexpr bool value =
 		is_supplied_service<T>::value ||

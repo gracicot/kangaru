@@ -9,15 +9,6 @@
 namespace kgr {
 namespace detail {
 
-#ifndef KGR_KANGARU_MSVC_DEPENDENCY_TRAIT_STRUCT
-#if _MSC_VER == 1900
-#ifndef __clang__
-// MSVC has a defect that makes the use of the template keyword an error in some corner cases.
-#define KGR_KANGARU_MSVC_DEPENDENCY_TRAIT_STRUCT
-#endif // !__clang__
-#endif // _MSC_VER
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-
 /*
  * Trait that check if the service definition can be constructed given the return type of it's construct function.
  */

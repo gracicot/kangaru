@@ -9,6 +9,15 @@
 namespace kgr {
 namespace detail {
 
+#ifndef KGR_KANGARU_MSVC_DEPENDENCY_TRAIT_STRUCT
+#if _MSC_VER == 1900
+#ifndef __clang__
+// MSVC has a defect that makes the use of the template keyword an error in some corner cases.
+#define KGR_KANGARU_MSVC_DEPENDENCY_TRAIT_STRUCT
+#endif // !__clang__
+#endif // _MSC_VER
+#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
+
 /*
  * Trait that check if the service definition can be constructed given the return type of it's construct function.
  */
@@ -56,10 +65,12 @@ using is_service_constructible = typename is_service_constructible_helper<T, Arg
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait {
 	template<typename... Service>
-	struct service_check_dependencies : conjunction<
-		Trait<detected_t<injected_service_t, Service>>...,
-		dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
-	> {};
+	struct service_check_dependencies {
+		static constexpr bool value = conjunction<
+			Trait<detected_t<injected_service_t, Service>>...,
+			dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
+		>::value;
+	};
 
 	static constexpr bool value =
 		is_supplied_service<T>::value ||

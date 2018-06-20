@@ -64,6 +64,9 @@ struct is_tuple : std::false_type {};
 template<typename... Types>
 struct is_tuple<std::tuple<Types...>> : std::true_type {};
 
+template<typename T>
+using remove_cvref_t = typename std::remove_cv<typename std::remove_reference<T>::type>::type;
+
 template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 

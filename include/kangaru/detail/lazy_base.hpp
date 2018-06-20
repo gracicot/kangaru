@@ -16,7 +16,7 @@ struct lazy_base {
 private:
 	using ref = typename std::remove_reference<service_type<T>>::type&;
 	using rref = typename std::remove_reference<service_type<T>>::type&&;
-	using ptr = decay_t<service_type<T>>*;
+	using ptr = typename std::add_pointer<remove_cvref_t<service_type<T>>>::type;
 	
 	static constexpr bool nothrow_get() {
 		return noexcept(std::declval<container>().service<T>()) &&

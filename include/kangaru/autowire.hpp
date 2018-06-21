@@ -91,7 +91,7 @@ private:
 	// This would be replaced by a generic lambda in C++14
 	struct inject_function {
 		template<typename... Args>
-		auto operator()(Args&&... args) {
+		auto operator()(Args&&... args) -> inject_result<std::unique_ptr<Type>> {
 			return inject(std::unique_ptr<Type>{new Type(std::forward<Args>(args)...)});
 		}
 	};
@@ -132,8 +132,8 @@ private:
 	// This would be replaced by a generic lambda in C++14
 	struct inject_function {
 		template<typename... Args>
-		auto operator()(Args&&... args) {
-			return inject(std::unique_ptr<Type>{new Type(std::forward<Args>(args)...)});
+		auto operator()(Args&&... args) -> inject_result<std::shared_ptr<Type>> {
+			return inject(std::make_shared<Type>(std::forward<Args>(args)...));
 		}
 	};
 	

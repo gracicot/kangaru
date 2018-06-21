@@ -24,7 +24,13 @@ namespace detail {
 template<typename S>
 struct probe {
 	template<typename T, enable_if_t<std::is_same<decay_t<T>, decay_t<S>>::value, int> = 0>
-	operator T () const;
+	operator T ();
+	
+	template<typename T, enable_if_t<std::is_same<decay_t<T&>, decay_t<S>>::value, int> = 0>
+	operator T& () const;
+	
+	template<typename T, enable_if_t<std::is_same<decay_t<T&&>, decay_t<S>>::value, int> = 0>
+	operator T&& () const;
 };
 
 /*
@@ -40,7 +46,7 @@ template<typename... Ts>
 struct is_map<map<Ts...>> : std::true_type {};
 
 template<typename R>
-struct is_mapped_function_helper {
+struct is_indirect_map_helper {
 private:
 	template<template<typename> class>
 	static auto test_helper() -> std::true_type;
@@ -49,14 +55,14 @@ private:
 	static auto test(int) -> decltype(test_helper<T::template mapped_service>());
 	
 	template<typename>
-	static auto test(...) -> std::false_type;
+	static auto test(void*) -> std::false_type;
 	
 public:
 	using type = decltype(test<R>(0));
 };
 
 template<typename R>
-using is_mapped_function = typename is_mapped_function_helper<R>::type;
+using is_indirect_map = typename is_indirect_map_helper<R>::type;
 
 /*
  * Trait that returns the return type of the service_map function
@@ -68,7 +74,7 @@ struct map_result {};
 * Specialization of map_result when service_map() exist for S with the map M.
 */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<!is_mapped_function<decltype(service_map(std::declval<S>(), std::declval<M>()))>::value>> {
+struct map_result<S, M, enable_if_t<!is_indirect_map<decltype(service_map(std::declval<S>(), std::declval<M>()))>::value>> {
 	using type = decltype(service_map(std::declval<S>(), std::declval<M>()));
 };
 
@@ -76,7 +82,7 @@ struct map_result<S, M, enable_if_t<!is_mapped_function<decltype(service_map(std
 * Specialization of map_result when service_map() exist for S with no map.
 */
 template<typename S>
-struct map_result<S, void, enable_if_t<!is_mapped_function<decltype(service_map(std::declval<S>()))>::value>> {
+struct map_result<S, void, enable_if_t<!is_indirect_map<decltype(service_map(std::declval<S>()))>::value>> {
 	using type = decltype(service_map(std::declval<S>()));
 };
 
@@ -84,7 +90,7 @@ struct map_result<S, void, enable_if_t<!is_mapped_function<decltype(service_map(
 * Specialization of map_result when service_map() exist for S with the map M.
 */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))>::value>> {
+struct map_result<S, M, enable_if_t<is_indirect_map<decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))>::value>> {
 private:
 	template<typename Mapped, typename Service>
 	struct expand {
@@ -92,14 +98,14 @@ private:
 	};
 
 public:
-	using type = typename expand<decltype(service_map(std::declval<probe<S>>(), std::declval<M>())), decay_t<S>>::type;
+	using type = typename expand<decltype(service_map(std::declval<probe<S>>(), std::declval<M>())), S>::type;
 };
 
 /*
 * Specialization of map_result when service_map() exist for S with no map.
 */
 template<typename S>
-struct map_result<S, void, enable_if_t<is_mapped_function<decltype(service_map(std::declval<probe<S>>()))>::value>> {
+struct map_result<S, void, enable_if_t<is_indirect_map<decltype(service_map(std::declval<probe<S>>()))>::value>> {
 private:
 	template<typename Mapped, typename Service>
 	struct expand {
@@ -107,7 +113,7 @@ private:
 	};
 
 public:
-	using type = typename expand<decltype(service_map(std::declval<probe<S>>())), decay_t<S>>::type;
+	using type = typename expand<decltype(service_map(std::declval<probe<S>>())), S>::type;
 };
 
 /*

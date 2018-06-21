@@ -125,7 +125,7 @@ using inject_t = detail::injected_wrapper<T>&&;
  * Single service live as long as the container lives. They can, and should be l-value references.
  */
 template<typename... Args>
-std::tuple<detail::remove_rvalue_reference_t<Args>...> inject(Args&&... args) {
+constexpr auto inject(Args&&... args) -> std::tuple<detail::remove_rvalue_reference_t<Args>...> {
 	return std::tuple<detail::remove_rvalue_reference_t<Args>...>{std::forward<Args>(args)...};
 }
 

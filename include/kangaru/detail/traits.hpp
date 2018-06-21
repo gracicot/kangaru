@@ -8,6 +8,7 @@
 #include "void_t.hpp"
 
 #include <type_traits>
+#include <memory>
 #include <tuple>
 
 namespace kgr {
@@ -128,6 +129,14 @@ public:
 	static constexpr bool value = type::value;
 };
 
+template<typename T, typename... Args>
+struct call_result {
+	using type = decltype(std::declval<T>()(std::declval<Args>()...));
+};
+
+template<typename T, typename... Args>
+using call_result_t = typename call_result<T, Args...>::type;
+
 template<typename T>
 using is_service_embeddable = std::integral_constant<bool,
 	std::is_trivially_destructible<T>::value &&
@@ -147,6 +156,32 @@ template<typename T> struct remove_rvalue_reference { using type = T; };
 template<typename T> struct remove_rvalue_reference<T&&> { using type = T; };
 
 template<typename T> using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
+
+template<typename>
+struct unwrap_pointer {};
+
+template<typename T>
+struct unwrap_pointer<std::unique_ptr<T>> {
+	using type = T;
+};
+
+template<typename T>
+struct unwrap_pointer<std::shared_ptr<T>> {
+	using type = T;
+};
+
+template<typename T>
+struct unwrap_pointer<std::weak_ptr<T>> {
+	using type = T;
+};
+
+template<typename T>
+struct unwrap_pointer<T*> {
+	using type = T;
+};
+
+template<typename T>
+using unwrap_pointer_t = typename unwrap_pointer<T>::type;
 
 template<typename T, typename... Args>
 using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<T, Args...>::value || std::is_constructible<T, Args...>::value>;

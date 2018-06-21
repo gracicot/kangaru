@@ -160,6 +160,6 @@ struct IFileManagerService : kgr::abstract {
 
 Abstract services are implicitly single and polymorphic.
 
-To see more implementation of custom services, check out [example8](../examples/example8/example8.cpp).
+To see more implementation of custom services, check out [example9](../examples/example9/example9.cpp).
 
-[Next chapter: Advanced Mapping](section09_mapping.md)
+[Next chapter: Advanced Mapping](section10_mapping.md)

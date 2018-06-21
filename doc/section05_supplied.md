@@ -89,7 +89,8 @@ assert(&scene1 != &scene2); // passes, these are different instances of scenes
 ```
 
 Note that when replacing, the container will not destroy the old service. In our example, `scene1` is still valid after `replace` has been called.
+The lifetime of the first `SceneService` is not affected, and will be destroyed at the same time as the container.
 
 To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
 
-[Next chapter: Autocall](section06_autocall.md)
+[Next chapter: Autocall](section06_autowire.md)

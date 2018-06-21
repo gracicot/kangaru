@@ -77,4 +77,4 @@ container.invoke<kgr::map<MyMap2>>(function); // Service1_Definition2 and Servic
 container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Service1_Definition1 and Service1_Definition1 used
 ```
 
-[Next chapter: Debugging](section10_debug.md)
+[Next chapter: Debugging](section11_debug.md)

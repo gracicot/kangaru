@@ -60,7 +60,7 @@ This library make use of macros to prevent multiple inclusion.
 Every macros that starts with `KGR_KANGARU_` is considered reserved for implementation.
 Macros defined by the library are not part of it's interface.
 
-Note that [some features](06.-Autocall) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
+Note that [some features](section07_autocall.md) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
 
 ### Compiler Support
 
@@ -80,7 +80,7 @@ Breaking versions might bump compiler requirements and might also bump language 
 
 ### Migration Guide
 
-Since many breaking changes has been introduced in `v4.0.0`, we decided to write a [migration guide from the `3.x.y` series to `v4.0.0`](Migration-Guide-From-3.x.y-series-to-v4.0.0).
+Since many breaking changes has been introduced in `v4.0.0`, we decided to write a [migration guide from the `3.x.y` series to `v4.0.0`](migration_guide_3xy.md).
 We also added a compatibility header to make the transition smoother between the two versions.
 
 Index
@@ -90,11 +90,12 @@ Index
  * [Polymorphic Services](section03_polymorphic.md)
  * [Managing Containers](section04_container.md)
  * [Supplied services](section05_supplied.md)
- * [Autocall](section06_autocall.md)
- * [Operator services](section07_operator.md)
- * [Custom service definitions](section08_definitions.md)
- * [Advanced Mapping](section09_mapping.md)
- * [Debugging](section10_debug.md)
- * [Generic Services](section11_generic.md)
- * [Structuring projects](section12_structure.md)
- * [API Reference](section13_api_reference.md)
+ * [Autowire](section06_autowire.md)
+ * [Autocall](section07_autocall.md)
+ * [Operator services](section08_operator.md)
+ * [Custom service definitions](section09_definitions.md)
+ * [Advanced Mapping](section10_mapping.md)
+ * [Debugging](section11_debug.md)
+ * [Generic Services](section12_generic.md)
+ * [Structuring projects](section13_structure.md)
+ * [API Reference](section14_api_reference.md)

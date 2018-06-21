@@ -1,63 +1,40 @@
-#include <iostream>
-#include <string>
-
 #include <kangaru/kangaru.hpp>
+#include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 6: Autocall
- * It explains how to call member functions of a service upen construction and injection by setters.
+ * This example refect snippets of code found in the documentation section 6: Autowire
+ * It explains how to autowire services using the service map.
  */
 
-// This is a utility macro to workaround the lack of type inference for non-type template parameter
-// Will not be needed once this library upgrade to C++17
-#define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
-
-struct Scene {};
-struct Camera {};
-struct Window {
-	int get_framerate() {
-		return 60;
-	}
+struct Camera {
+	int position;
 };
 
-struct MessageBus {
-	void init(Window& window, Camera& camera) {
-		 max_delay = 3 * window.get_framerate();
-		 std::cout << "max_delay set to: " << max_delay << '\n';
-	}
+struct Scene {
+	Scene(Camera& c, int w = 0, int h = 0) :
+		camera{c}, width{w}, height{h} {}
 	
-	void set_scene(Scene& scene) {
-		this->scene = &scene;
-		std::cout << "Setting scene" << '\n';
-	}
-	
-private:
-	Scene* scene;
-	int max_delay;
+	Camera& camera;
+	int width;
+	int height;
 };
 
-struct SceneService : kgr::single_service<Scene> {};
-struct CameraService : kgr::single_service<Camera> {};
-struct WindowService : kgr::single_service<Window> {};
-struct MessageBusService : kgr::single_service<MessageBus>, kgr::autocall<
-	METHOD(&MessageBus::init),
-	METHOD(&MessageBus::set_scene)
-> {};
-
-struct MessageBusServiceInvoke : kgr::single_service<MessageBus>, kgr::autocall<
-	kgr::invoke<METHOD(&MessageBus::init), WindowService, CameraService>,
-	kgr::invoke<METHOD(&MessageBus::set_scene), SceneService>
-> {};
-
-auto service_map(Scene const&) -> SceneService;
-auto service_map(Camera const&) -> CameraService;
-auto service_map(Window const&) -> WindowService;
+auto service_map(Camera const&) -> kgr::autowire_single;
+auto service_map(Scene const&) -> kgr::autowire;
 
 int main()
 {
+	
 	kgr::container container;
 	
-	container.emplace<MessageBusService>();
-	std::cout << '\n';
-	container.emplace<MessageBusServiceInvoke>();
+	container.invoke([](Camera& camera, Scene scene) {
+		// Do stuff with the camera and the scene!
+	});
+	
+	// Optional, but can be useful
+	using SceneService = kgr::mapped_service_t<Scene>;
+	
+	auto scene = container.service<SceneService>(1920, 1080);
+
+	std::cout << "Scene created with size " << scene.width << "x" << scene.height << '\n';
 }

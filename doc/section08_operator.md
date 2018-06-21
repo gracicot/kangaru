@@ -139,6 +139,6 @@ And again, there's the equivalent of lazy with a forked container, named `forked
 
 While you can use the container directly everywhere, you can also be more fined grained over what a particular piece of code should be able to do with the container. It eventually reduces coupling with kangaru and help expressing your intent with other programmer about what you will do with the container.
 
-Please visit [example7](../examples/example7/example7.cpp) to see more of operator service usage.
+Please visit [example8](../examples/example8/example8.cpp) to see more of operator service usage.
 
-[Next chapter: Custom Service Definitions](section08_definitions.md)
+[Next chapter: Custom Service Definitions](section09_definitions.md)

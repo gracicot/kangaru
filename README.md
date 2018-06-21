@@ -1,7 +1,7 @@
 # kangaru [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/4yPPofe503MUNyGP)
 
-Kangaru is an inversion of control container for C++11 and later. It supports features like operation between containers,
-injection via function parameter, automatic call of member functions on instance creation and much more!
+Kangaru is an inversion of control container for C++11, C++14 and later. It supports features like operation between containers,
+injection via function parameter, automatic call of member functions on instance creation, autowiring and much more!
 
 Our goal is to create a DI container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
 
@@ -17,7 +17,7 @@ Looking for the latest stable version? Check out our [release page](https://gith
 Here's a quick demo to show usage of this library:
 ```c++
 #include <kangaru/kangaru.hpp>
-#include <iostream>
+#include <cassert>
 
 // We define some normal classes with dependencies between them
 struct Camera {};
@@ -26,8 +26,8 @@ struct Scene {
     Camera& camera;
 };
 
-// The following is the configuration of our classes.
-// Structure and dependency graph is defined here.
+// The following is the configuration of our user classes above.
+// The structure and dependency graph is defined by these configs.
 
 // Camera is a single service so the service has a shared instance.
 // It will be injected and returned as a reference.
@@ -45,7 +45,7 @@ int main()
     Scene scene = container.service<SceneService>();
     Camera& camera = container.service<CameraService>();
     
-    std::cout << std::boolalpha << (&scene.camera == &camera); // outputs true
+    assert(&scene.camera == &camera); // passes, both cameras are the same instance.
 }
 ```
 [Try this example online](https://wandbox.org/permlink/rCfQY4LqysmgXVXV) too see how it runs.
@@ -55,12 +55,11 @@ Features
 
  * Recursive dependency resolution
  * Non intrusive. No existing classes need modification.
- * You tell the container how to construct your types
- * You tell the container how to store them
- * You tell the container how they are injected
+ * You tell the container how to construct your types, store inject them
  * Injection by setters
+ * Autowiring by class constructors
  * Function parameter injection
- * Clean and simple API
+ * Clean and simple API for simple cases, complex enough for complex cases
  * Low runtime overhead
  * Header only library
  * Clean diagnostics at compile-time.

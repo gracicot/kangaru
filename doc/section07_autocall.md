@@ -15,7 +15,7 @@ using method = kgr::method<decltype(m), m>;
 
 Alternatively, if you only have C++11 or C++14 on hand, you can use a macro:
 ```c++
-#define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>
+#define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 ```
 
 Of course, you are free to name them as you want.
@@ -43,7 +43,7 @@ private:
 If we want `init()` to be called at the service's construction, we need our definition to extends `kgr::autocall`:
 
 ```c++
-struct MessageBusService : kgr::service<MessageBus>, kgr::AutoCall<METHOD(&MessageBus::init)> {};
+struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<METHOD(&MessageBus::init)> {};
 ```
 
 Great! Now creating the service will call that function:
@@ -126,6 +126,6 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 > {};
 ```
 
-To see those snippets in action, go check [example6](../examples/example6/example6.cpp).
+To see those snippets in action, go check [example7](../examples/example7/example7.cpp).
 
-[Next chapter: Operator Services](section07_operator.md)
+[Next chapter: Operator Services](section08_operator.md)

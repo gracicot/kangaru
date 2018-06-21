@@ -55,7 +55,7 @@ Features
 
  * Recursive dependency resolution
  * Non intrusive. No existing classes need modification.
- * You tell the container how to construct your types, store inject them
+ * You tell the container how to construct your types, store and inject them
  * Injection by setters
  * Autowiring by class constructors
  * Function parameter injection

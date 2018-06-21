@@ -164,3 +164,42 @@ namespace mapped_value_category {
 		REQUIRE((std::is_same<kgr::mapped_service_t<Service1&&>, Definition2>::value));
 	}
 }
+
+namespace indirect_map {
+	struct service1 {};
+	struct service2 {};
+	
+	struct indirect_map {
+		template<typename T>
+		using mapped_service = kgr::service<T>;
+	};
+	
+	auto service_map(service1 const&) -> indirect_map;
+	auto service_map(service2&&) -> indirect_map;
+	
+	TEST_CASE("The indirect map yeild a serivce definition type throught mapped_service<T>", "[service_map]") {
+		REQUIRE((std::is_same<kgr::mapped_service_t<service1>, kgr::service<service1>>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<service2>, kgr::service<service2>>::value));
+	}
+}
+
+namespace indirect_map_strict {
+	struct service1 {};
+	struct service2 : service1 {};
+	
+	struct indirect_map {
+		template<typename T>
+		using mapped_service = kgr::service<T>;
+	};
+	
+	struct map1 {};
+	struct map2 {};
+	
+	auto service_map(service1 const&, kgr::map_t<map1>) -> indirect_map;
+	auto service_map(service1 const&, kgr::map_t<map2>) -> kgr::service<service2>;
+	
+	TEST_CASE("The indirect map is strict to the mapped type", "[service_map]") {
+		REQUIRE_FALSE((kgr::detail::is_complete_map<kgr::map<map1>, service2>::value));
+		REQUIRE((std::is_same<kgr::mapped_service_t<service2, kgr::map<map2>>, kgr::service<service2>>::value));
+	}
+}

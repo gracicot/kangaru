@@ -203,3 +203,27 @@ namespace indirect_map_strict {
 		REQUIRE((std::is_same<kgr::mapped_service_t<service2, kgr::map<map2>>, kgr::service<service2>>::value));
 	}
 }
+
+namespace indirect_map_value_cat {
+	struct service {};
+	
+	struct indirect_map {
+		template<typename T>
+		using mapped_service = kgr::service<typename std::decay<T>::type>;
+	};
+	
+	struct single_indirect_map {
+		template<typename T>
+		using mapped_service = kgr::single_service<typename std::decay<T>::type>;
+	};
+	
+	auto service_map(service const&) -> single_indirect_map;
+	auto service_map(service&&) -> indirect_map;
+	
+	TEST_CASE("The indirect map respect the value category of the mapping", "[service_map]") {
+		CHECK((std::is_same<kgr::mapped_service_t<service>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&>, kgr::single_service<service>>::value));
+	}
+}

@@ -23,14 +23,26 @@ namespace detail {
 
 template<typename S>
 struct probe {
-	template<typename T, enable_if_t<std::is_same<decay_t<T>, decay_t<S>>::value, int> = 0>
-	operator T ();
+	template<typename T, typename U = S, enable_if_t<
+		std::is_same<T&, U>::value &&
+		!std::is_rvalue_reference<U>::value &&
+		!std::is_same<decay_t<U>, U>::value &&
+		!std::is_const<T>::value &&
+		std::is_constructible<T&, U>::value, int> = 0>
+	operator T& ();
 	
-	template<typename T, enable_if_t<std::is_same<decay_t<T&>, decay_t<S>>::value, int> = 0>
-	operator T& () const;
+	template<typename T, typename U = S&&, enable_if_t<
+		std::is_same<T&&, U>::value &&
+		!std::is_lvalue_reference<U>::value &&
+		std::is_constructible<T&&, U>::value, int> = 0>
+	operator T&& ();
 	
-	template<typename T, enable_if_t<std::is_same<decay_t<T&&>, decay_t<S>>::value, int> = 0>
-	operator T&& () const;
+	template<typename T, typename U = S, enable_if_t<
+		std::is_same<T const&, U>::value &&
+		!std::is_rvalue_reference<U>::value &&
+		!std::is_same<decay_t<U>, U>::value &&
+		std::is_constructible<T const&, U>::value, int> = 0>
+	operator T const& () const;
 };
 
 /*

@@ -217,13 +217,44 @@ namespace indirect_map_value_cat {
 		using mapped_service = kgr::single_service<typename std::decay<T>::type>;
 	};
 	
-	auto service_map(service const&) -> single_indirect_map;
-	auto service_map(service&&) -> indirect_map;
+	struct test1 {};
+	struct test2 {};
+	struct test3 {};
+	struct test4 {};
+	
+	auto service_map(service const&, kgr::map_t<test1>) -> single_indirect_map;
+	auto service_map(service&&, kgr::map_t<test1>) -> indirect_map;
+	
+	auto service_map(service const&, kgr::map_t<test2>) -> single_indirect_map;
+	
+	auto service_map(service const&, kgr::map_t<test3>) -> single_indirect_map;
+	auto service_map(service const&&, kgr::map_t<test3>) -> indirect_map;
+	
+	auto service_map(service &, kgr::map_t<test4>) -> single_indirect_map;
+	auto service_map(service const&, kgr::map_t<test4>) -> indirect_map;
 	
 	TEST_CASE("The indirect map respect the value category of the mapping", "[service_map]") {
-		CHECK((std::is_same<kgr::mapped_service_t<service>, kgr::service<service>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service const&>, kgr::single_service<service>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service&&>, kgr::service<service>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service&>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test1>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test1>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test1>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test1>>, kgr::single_service<service>>::value));
+		
+		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test2>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test2>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test2>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test2>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test2>>, kgr::single_service<service>>::value));
+		
+		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test3>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test3>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test3>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test3>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test3>>, kgr::service<service>>::value));
+		
+		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test4>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test4>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test4>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test4>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test4>>, kgr::service<service>>::value));
 	}
 }

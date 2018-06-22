@@ -165,12 +165,10 @@ struct SceneService : kgr::autowire_service<Scene, kgr::map<>, 12> {};
 auto service_map(Window const&) -> kgr::mapped_autowire<kgr::map<>, 3> {};
 ```
 
-## Conclusion
-
 Autowiring is a really powerful tool that can simplify both your code, but your interaction with kangaru in general.
 It enable you to change constructors as needed without any refactor. As long as your services are mapped, the container
 will be able to autowire any services!
 
-To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
+To see more about autowired services, please see [example6](../examples/example6/example6.cpp).
 
 [Next chapter: Autocall](section07_autocall.md)

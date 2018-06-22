@@ -77,4 +77,46 @@ container.invoke<kgr::map<MyMap2>>(function); // Service1_Definition2 and Servic
 container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Service1_Definition1 and Service1_Definition1 used
 ```
 
+# Indirect Maps
+
+Since kangaru 4.1.0, the service map allows you de define an indirect mapping.
+Instead of having the service definition type at the right of the arrow, you can put a class type that has a member template named `mapped_service`.
+
+It can be used to generate the service definition type automatically by the service map with a decent syntax.
+
+Here's how to create a indirect map:
+
+```c++
+struct indirect_service {
+    template<typename T>
+    using mapped_service = kgr::service<std::decay_t<T>> {};
+};
+
+auto service_map(Camera const&) -> indirect_service;
+```
+
+if the container found the mapping for camera, instead of trying to use `indirect_service` as the service type,
+it will use `indirect_service::mapped_service<Camera&>`. This in turn will result in `kgr::service<Camera>`.
+
+It's primary use was for autowiring services, but it can serves many other purposes.
+
+It's also nice to note that when using indirect mapping, the container will try to be stricter in order to avoid generating definitions for unwanted types.
+
+For example, the container won't allow subclasses to be mapped:
+
+```c++
+struct ServiceBase {};
+struct ServiceDerived : ServiceBase {};
+
+struct indirect_service {
+    template<typename T>
+    using mapped_service = kgr::service<T>;
+};
+
+auto service_map(ServiceBase const&) -> misleading_map;
+```
+
+Even though `ServiceDerived` is convertible to `ServiceBase const&` and the generated service definition yield the right type,
+this particular mapping won't be picked, since the mapping was intendended for `ServiceBase`.
+
 [Next chapter: Debugging](section11_debug.md)

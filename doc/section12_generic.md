@@ -40,7 +40,7 @@ Here's the typical implementation:
 
 ```c++
 template<typename T, typename... Args>
-static decltype(auto) call(Type& instance, T method, Args&&... args) {
+static auto call(Type& instance, T method, Args&&... args) -> decltype(auto) {
     return (instance().*method)(std::forward<Args>(args)...);
 }
 ```
@@ -69,7 +69,7 @@ struct MyUniqueService<Type, kgr::dependency<Deps...>> : kgr::generic_service<st
     }
     
     template<typename T, typename... Args>
-    static decltype(auto) call(T method, Args&&... args) {
+    static auto call(T method, Args&&... args) -> decltype(auto) {
         return ((*this->instance()).*method)(std::forward<Args>(args)...);
     }
 };
@@ -89,7 +89,7 @@ If the generic definition should be single, simply make it extend from the `kgr:
 
 ## Autowire (experimental)
 
-WARNING: This section is totally optional to follow, use an experimental API and is rather complicated to use at the moment. However, if you do need enabling autowiring for your own generic services, continue this section will describe how to do it.
+WARNING: This section is totally optional to follow, use an experimental API and is rather complicated to use at the moment. However, if you do need enabling autowiring for your own generic services, this section will describe how to do it.
 
 While it is possible to enable autowire for custom generic services, it is still considered experimental,
 since the API may still be subject to changes, and is rather complicated at that time.

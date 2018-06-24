@@ -251,13 +251,16 @@ namespace indirect_map_value_cat {
 		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test3>>, kgr::single_service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test3>>, kgr::service<service>>::value));
 		
-		// The following test cannot pass on visual studio. A bug will be reported about this behaviour
-#ifndef _MSC_VER
+		
+
 		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test4>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test4>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test4>>, kgr::service<service>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test4>>, kgr::single_service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test4>>, kgr::service<service>>::value));
+
+		// The following test cannot pass on visual studio. A bug will be reported about this behaviour
+#ifndef _MSC_VER
+		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test4>>, kgr::single_service<service>>::value));
 #endif
 	}
 }

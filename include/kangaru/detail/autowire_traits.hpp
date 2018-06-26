@@ -101,7 +101,7 @@ struct amount_of_deductible_service_helper<S, T, Map, meta_list<Args...>, n, ena
 	amount_of_deductible_service_helper<S, T, Map, meta_list<Args...>, n - 1> {};
 
 /*
- * The default maximum amount of deducer sent to the construct function when autowireing.
+ * The default maximum amount of deducer sent to the construct function when autowiring.
  * Tells how many autowired dependencies a service can have by default.
  */
 constexpr std::size_t default_max_dependency = 8;

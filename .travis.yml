@@ -44,36 +44,42 @@ matrix:
     - os: linux
       env:
         - COMPILER=g++-4.8
+        - ENABLE_CXX14=false
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-4.8"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-4.9
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-4.9"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-5
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-5"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-6
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-7
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-8
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
 
@@ -124,6 +130,6 @@ install:
 
 script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true  -DKANGARU_TEST_CXX17="${ENABLE_CXX17}"
+  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14="${ENABLE_CXX14}"  -DKANGARU_TEST_CXX17="${ENABLE_CXX17}"
   - cmake --build . -- -j2
   - ctest .

@@ -107,7 +107,7 @@ private:
 	};
 
 public:
-	using type = typename expand<decltype(service_map(std::declval<probe<S>>(), std::declval<M>())), S>::type;
+	using type = typename expand<decltype(service_map(std::declval<S>(), std::declval<M>())), S>::type;
 };
 
 /*
@@ -122,7 +122,7 @@ private:
 	};
 
 public:
-	using type = typename expand<decltype(service_map(std::declval<probe<S>>())), S>::type;
+	using type = typename expand<decltype(service_map(std::declval<S>())), S>::type;
 };
 
 /*

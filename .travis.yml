@@ -43,6 +43,18 @@ matrix:
 
     - os: linux
       env:
+        - COMPILER=g++-4.8
+        - ENABLE_CXX17=false
+      addons: { apt: { packages: ["g++-4.8"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
+        - COMPILER=g++-4.9
+        - ENABLE_CXX17=false
+      addons: { apt: { packages: ["g++-4.9"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
         - COMPILER=g++-5
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-5"], sources: ["ubuntu-toolchain-r-test"] } }

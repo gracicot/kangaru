@@ -28,10 +28,10 @@ auto service_map(container&&) -> fork_service;
 
 template<typename Map>
 struct mapped_invoker_service {
-	explicit mapped_invoker_service(in_place_t, container& container) : _container{container} {}
+	explicit mapped_invoker_service(in_place_t, container& container) : _container{&container} {}
 	
 	mapped_invoker<Map> forward() {
-		return mapped_invoker<Map>{_container};
+		return mapped_invoker<Map>{*_container};
 	}
 	
 	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
@@ -39,7 +39,7 @@ struct mapped_invoker_service {
 	}
 	
 private:
-	container& _container;
+	container* _container;
 };
 
 using invoker_service = mapped_invoker_service<map<>>;
@@ -70,10 +70,10 @@ auto service_map(const forked_mapped_invoker<Map>&) -> forked_mapped_invoker_ser
 
 template<typename T>
 struct generator_service {
-	explicit generator_service(in_place_t, container& container) : _container{container} {}
+	explicit generator_service(in_place_t, container& container) : _container{&container} {}
 	
 	generator<T> forward() {
-		return generator<T>{_container};
+		return generator<T>{*_container};
 	}
 	
 	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
@@ -81,7 +81,7 @@ struct generator_service {
 	}
 	
 private:
-	container& _container;
+	container* _container;
 };
 
 template<typename T>
@@ -108,10 +108,10 @@ auto service_map(const forked_generator<T>&) -> forked_generator_service<T>;
 
 template<typename T>
 struct lazy_service {
-	explicit lazy_service(in_place_t, container& container) : _container{container} {}
+	explicit lazy_service(in_place_t, container& container) : _container{&container} {}
 	
 	lazy<T> forward() {
-		return lazy<T>{_container};
+		return lazy<T>{*_container};
 	}
 	
 	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
@@ -119,7 +119,7 @@ struct lazy_service {
 	}
 	
 private:
-	container& _container;
+	container* _container;
 };
 
 template<typename T>

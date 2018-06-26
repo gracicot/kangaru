@@ -44,10 +44,14 @@ struct Circle : Shape {
 
 // Other classes. Contains information we need to instanciate shape classes.
 struct Window {
+	Window(int h = 0, int w = 0) noexcept : height{h}, width{w} {}
+	
 	int height, width;
 };
 
 struct CursorState {
+	explicit CursorState(int d = 0) noexcept : dragging_distance{d} {}
+	
 	int dragging_distance;
 };
 

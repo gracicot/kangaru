@@ -221,6 +221,7 @@ namespace indirect_map_value_cat {
 	struct test2 {};
 	struct test3 {};
 	struct test4 {};
+	struct test5 {};
 	
 	auto service_map(service const&, kgr::map_t<test1>) -> single_indirect_map;
 	auto service_map(service&&, kgr::map_t<test1>) -> indirect_map;
@@ -232,6 +233,9 @@ namespace indirect_map_value_cat {
 	
 	auto service_map(service &, kgr::map_t<test4>) -> single_indirect_map;
 	auto service_map(service const&, kgr::map_t<test4>) -> indirect_map;
+	
+	auto service_map(service const&, kgr::map_t<test5>) -> kgr::single_service<service>;
+	auto service_map(service const&&, kgr::map_t<test5>) -> indirect_map;
 	
 	TEST_CASE("The indirect map respect the value category of the mapping", "[service_map]") {
 		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test1>>, kgr::service<service>>::value));
@@ -260,5 +264,10 @@ namespace indirect_map_value_cat {
 #ifndef _MSC_VER
 		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test4>>, kgr::single_service<service>>::value));
 #endif
+		
+		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test5>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test5>>, kgr::single_service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test5>>, kgr::service<service>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test5>>, kgr::service<service>>::value));
 	}
 }

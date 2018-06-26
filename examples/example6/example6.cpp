@@ -24,7 +24,6 @@ auto service_map(Scene const&) -> kgr::autowire;
 
 int main()
 {
-	
 	kgr::container container;
 	
 	container.invoke([](Camera& camera, Scene scene) {

@@ -154,7 +154,7 @@ Of course, all those aliases are also defined for unique and shared services.
 The autowire feature had to be implemented without reflection. Because we cannot know the amount of parameters a service
 need to take, we had to define a maximum. With the current implementation, this maximum is defined to be `8`.
 
-However, that maximum is not fixed. With both `kgr::autowire_service` and `kgr::mapped_autowire` have a supplementary parameter
+However, that maximum is not fixed. With both `kgr::autowire_service` and `kgr::mapped_autowire` have a second parameter
 that allow setting the maximum amount of deduced services:
 
 

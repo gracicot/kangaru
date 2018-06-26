@@ -77,6 +77,16 @@ but coupling with this library is still coupling.
 If on the other hand using the container (or operator services) in a particular place
 reduces unwanted coupling with other thing, then don't be afraid and use the container.
 
+## Limit the scope of the service map
+
+The service map is an integral part of this library. It enables invoking functions and autowiring constructors.
+
+However, having too many overload in the same scope can slightly slow down compilation.
+
+In a project with about a hundred of autowired services, declaring service map functions as friends decreased from 1 minute 5 seconds to 59 seconds.
+
+It may seem small but it's important to be aware of some way to make compilation faster, especially if you're a big template user.
+
 ## Including kangaru
 
 We would recommend to not include `kangaru.hpp` directly, and use a proxy header file instead. Why? Because right now `kgr::AutoCall` is easier to use with a macro, and you can also include your own generic services that you want to use throughout your application.

@@ -577,8 +577,10 @@ private:
 	 * This function call service using the service map.
 	 * This function is called when the service map `Map` is valid for a given `T`
 	 */
-	template<typename Map, typename T, enable_if<detail::is_complete_map<Map, T>> = 0>
-	auto mapped_service() -> decltype(service<mapped_service_t<T, Map>>()) {
+	template<typename Map, typename T,
+		enable_if<detail::is_complete_map<Map, T>> = 0,
+		enable_if<detail::is_service_valid<detail::detected_t<mapped_service_t, T, Map>>> = 0>
+	auto mapped_service() -> service_type<mapped_service_t<T, Map>> {
 		return service<mapped_service_t<T, Map>>();
 	}
 	

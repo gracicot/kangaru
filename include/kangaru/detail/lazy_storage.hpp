@@ -9,7 +9,7 @@ namespace detail {
 
 template<typename T>
 using is_trivially_copy_constructible =
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ == 7)
 	bool_constant<__has_trivial_copy(T) && std::is_copy_constructible<T>::value>
 #else
 	std::is_trivially_copy_constructible<T>
@@ -18,7 +18,7 @@ using is_trivially_copy_constructible =
 
 template<typename T>
 using is_trivially_copy_assignable =
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ == 7)
 	bool_constant<__has_trivial_assign(T) && std::is_copy_assignable<T>::value>
 #else
 	std::is_trivially_copy_assignable<T>
@@ -27,7 +27,7 @@ using is_trivially_copy_assignable =
 
 template<typename T>
 using is_trivially_move_constructible =
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ == 7)
 	bool_constant<false_t<T>::value>
 #else
 	std::is_trivially_move_constructible<T>
@@ -36,7 +36,7 @@ using is_trivially_move_constructible =
 
 template<typename T>
 using is_trivially_move_assignable =
-#if __GNUC__ == 4 && __GNUC_MINOR__ == 8
+#if __GNUC__ == 4 && (__GNUC_MINOR__ == 8 || __GNUC_MINOR__ == 7)
 	bool_constant<false_t<T>::value>
 #else
 	std::is_trivially_move_assignable<T>
@@ -196,7 +196,7 @@ struct lazy_move_construct<CRTP, T, enable_if_t<std::is_move_constructible<T>::v
  * In that case, we become trivially move constructible too, and simply copying the contained buffer.
  */
 template<typename CRTP, typename T>
-struct lazy_move_construct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {};
+struct lazy_move_construct<CRTP, T, enable_if_t<is_trivially_move_constructible<T>::value>> {};
 
 /*
  * This class implements the copy assignation operator.

@@ -12,7 +12,7 @@ struct Camera {
 
 struct Scene {
 	Scene(Camera& c, int w = 0, int h = 0) :
-		camera{c}, width{w}, height{h} {}
+		camera(c), width{w}, height{h} {}
 	
 	Camera& camera;
 	int width;

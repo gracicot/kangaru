@@ -56,8 +56,8 @@ public:
  * 
  * It hold the service as a reference to the instance, and returns it by reference.
  */
-template<typename Type, typename Deps = dependency<>>
-struct extern_service : single_service<Type&, Deps>, supplied {};
+template<typename Type>
+struct extern_service : single_service<Type&>, supplied {};
 
 /**
  * This is the default non-single service.
@@ -173,10 +173,10 @@ public:
  * 
  * It hold the service as a reference to the instance, and returns it by reference.
  */
-template<typename Type, typename Deps = dependency<>>
-struct extern_shared_service : shared_service<Type, Deps>, supplied {
+template<typename Type>
+struct extern_shared_service : shared_service<Type>, supplied {
 private:
-	using parent = shared_service<Type, Deps>;
+	using parent = shared_service<Type>;
 	
 protected:
 	using parent::instance;
@@ -184,7 +184,6 @@ protected:
 public:
 	using parent::parent;
 
-	template<typename... Args>
 	static auto construct(std::shared_ptr<Type> instance) -> inject_result<std::shared_ptr<Type>> {
 		return inject(std::move(instance));
 	}

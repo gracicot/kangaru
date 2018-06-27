@@ -71,6 +71,52 @@ Scene& scene = container.service<SceneService>(); // works, won't try to constru
 
 Note that if the instance is not found, the container won't be able to construct it and will throw a `kgr::supplied_not_found` instead.
 
+## External services
+
+The kangaru library also provide two supplied services specialized for cases where instances are created from an external system.
+
+The first, `kgr::extern_service<T>` holds a reference to an instance of `T`. It behave just as a single service, but the instance must be provided to the container manually.
+
+Here's an example of extern service:
+
+```c++
+struct Scene {};
+
+struct SceneService : kgr::extern_service<Scene> {};
+
+int main() {
+    Scene scene;
+    kgr::container container;
+    
+    // Add the scene
+    container.emplace<SceneService>(scene);
+    
+    // Passes, the container returns the instance we sent it.
+    assert(&scene == &container.service<SceneService>());
+}
+```
+
+The other external service is `kgr::extern_shared_service<T>`, which is analogous to the `kgr::extern_service` but inject and contains the service by shared pointers.
+
+Here's the same example as above, but with teh shared external service:
+
+```c++
+struct Scene {};
+
+struct SceneService : kgr::extern_shared_service<Scene> {};
+
+int main() {
+    auto scene = std::make_shared<Scene>();
+    kgr::container container;
+    
+    // Add the scene
+    container.emplace<SceneService>(scene);
+    
+    // Passes, the container returns the same shared pointer we sent it.
+    assert(scene == container.service<SceneService>());
+}
+```
+
 ## Replace Services
 
 The `emplace` function will only construct a service is it's not in the container yet. But what if you wanted to replace an existing service?

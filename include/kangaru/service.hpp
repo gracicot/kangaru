@@ -169,6 +169,28 @@ public:
 };
 
 /**
+ * This class is a service definition for a single service managed by an external system.
+ * 
+ * It hold the service as a reference to the instance, and returns it by reference.
+ */
+template<typename Type, typename Deps = dependency<>>
+struct extern_shared_service : shared_service<Type, Deps>, supplied {
+private:
+	using parent = shared_service<Type, Deps>;
+	
+protected:
+	using parent::instance;
+	
+public:
+	using parent::parent;
+
+	template<typename... Args>
+	static auto construct(std::shared_ptr<Type> instance) -> inject_result<std::shared_ptr<Type>> {
+		return inject(std::move(instance));
+	}
+};
+
+/**
  * This class is a abstract service that a kgr::SingleService can override.
  * 
  * It cannot be constructed, but only overrided.

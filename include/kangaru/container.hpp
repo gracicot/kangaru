@@ -188,14 +188,13 @@ public:
 	 * This function returns the result of the callable object of type U.
 	 * It will call the function with the sevices listed in the `Services` parameter pack.
 	 */
-	template<typename... Services, typename U, typename... Args, detail::int_t<
-		enable_if<detail::is_service_valid<Services>>...,
-		disable_if<detail::is_map<Services>>...,
-		detail::enable_if_t<(sizeof...(Services) > 0)>> = 0>
+	template<typename First, typename... Services, typename U, typename... Args, enable_if<detail::conjunction<
+		detail::is_service_valid<First>,
+		detail::is_service_valid<Services>...>> = 0>
 	auto invoke(U&& function, Args&&... args)
-		-> decltype(std::declval<U>()(std::declval<service_type<Services>>()..., std::declval<Args>()...))
+		-> detail::call_result_t<U, service_type<First>, service_type<Services>..., Args...>
 	{
-		return std::forward<U>(function)(service<Services>()..., std::forward<Args>(args)...);
+		return std::forward<U>(function)(service<First>(), service<Services>()..., std::forward<Args>(args)...);
 	}
 	
 	/*

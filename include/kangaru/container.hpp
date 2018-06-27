@@ -163,6 +163,20 @@ public:
 		enable_if<detail::is_map<Map>> = 0,
 		enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
 	auto invoke(U&& function, Args&&... args) -> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> {
+		return invoke(Map{}, std::forward<U>(function), std::forward<Args>(args)...);
+	}
+	
+	/*
+	 * This function returns the result of the callable object of type U.
+	 * Args are additional arguments to be sent to the function after services arguments.
+	 * This function will deduce arguments from the function signature.
+	 * 
+	 * This function also takes the map object as function parameter.
+	 */
+	template<typename Map, typename U, typename... Args,
+		enable_if<detail::is_map<Map>> = 0,
+		enable_if<detail::is_invoke_valid<Map, detail::decay_t<U>, Args...>> = 0>
+	auto invoke(Map, U&& function, Args&&... args) -> detail::invoke_function_result_t<Map, detail::decay_t<U>, Args...> {
 		return invoke_helper<Map>(
 			detail::tuple_seq_minus<detail::invoke_function_arguments_t<Map, detail::decay_t<U>, Args...>, sizeof...(Args)>{},
 			std::forward<U>(function),

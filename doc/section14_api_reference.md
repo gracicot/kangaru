@@ -66,11 +66,14 @@ This function returns the result of the callable object of type `U`.
 This function will deduce arguments from the function signature.
 
 ```c++
+template<typename M, typename U, typename... Args> requires Invocable<M, U, Args...> && Map<M>
+void invoke(M map, U&& function, Args&&... args);
+
 template<typename M = kgr::map<>, typename U, typename... Args> requires Invocable<M, U, Args...> && Map<M>
-void service(U&& function, Args&&... args);
+void invoke(U&& function, Args&&... args);
 
 template<typename... Services, typename U, typename... Args> requires Callable<U, service_type<Services>..., Args...>
-void service(U&& function, Args&&... args);
+void invoke(U&& function, Args&&... args);
 ```
 
 ### clear

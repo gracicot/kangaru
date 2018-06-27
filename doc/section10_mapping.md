@@ -52,6 +52,12 @@ container.invoke(function);                  // Definition1 used
 container.invoke<kgr::map<MyMap>>(function); // Definition2 used
 ```
 
+Also, there's an alternative syntax to send which map is sent to the invoke function:
+
+```c++
+container.invoke(kgr::map<MyMap>{}, function); // Equivalent
+```
+
 ## Multiple Maps
 
 The map name parameter we used with other functionalities, the `kgr::map<...>`, can in fact receive many named map to pick from.

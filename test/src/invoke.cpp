@@ -28,6 +28,31 @@ TEST_CASE("The container can call functions using invoke", "[invoke]") {
 	REQUIRE(called);
 }
 
+namespace test_invoke_map {
+	struct service {};
+	
+	struct map {};
+	auto service_map(service const&, kgr::map_t<map>) -> kgr::service<service>;
+	
+	TEST_CASE("The container can call functions using invoke and a map", "[invoke]") {
+		kgr::container c;
+		
+		bool called = false;
+		
+		SECTION("Using a map parameter") {
+			c.invoke(kgr::map<map>{}, [&](service) { called = true; });
+			
+			REQUIRE(called);
+		}
+		
+		SECTION("Using a map template parameter") {
+			c.invoke<kgr::map<map>>([&](service) { called = true; });
+			
+			REQUIRE(called);
+		}
+	}
+}
+
 TEST_CASE("The container returns value from invoked function", "[invoke]") {
 	kgr::container c;
 	

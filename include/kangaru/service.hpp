@@ -56,8 +56,8 @@ public:
  * 
  * It hold the service as a reference to the instance, and returns it by reference.
  */
-template<typename Type, typename Deps = dependency<>>
-struct extern_service : single_service<Type&, Deps>, supplied {};
+template<typename Type>
+struct extern_service : single_service<Type&>, supplied {};
 
 /**
  * This is the default non-single service.
@@ -165,6 +165,27 @@ public:
 	template<typename T, typename... Args>
 	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
 		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
+	}
+};
+
+/**
+ * This class is a service definition for a single service managed by an external system.
+ * 
+ * It hold the service as a reference to the instance, and returns it by reference.
+ */
+template<typename Type>
+struct extern_shared_service : shared_service<Type>, supplied {
+private:
+	using parent = shared_service<Type>;
+	
+protected:
+	using parent::instance;
+	
+public:
+	using parent::parent;
+
+	static auto construct(std::shared_ptr<Type> instance) -> inject_result<std::shared_ptr<Type>> {
+		return inject(std::move(instance));
 	}
 };
 

@@ -65,7 +65,7 @@ Note that [some features](section07_autocall.md) of this library may be easier t
 ### Compiler Support
 
  - MSVC: 2015 update 3 or better
- - GCC: 5.4 or better
+ - GCC: 4.8.5 or better
  - Clang: 3.6 or better
 
 ### Backward Compatibility

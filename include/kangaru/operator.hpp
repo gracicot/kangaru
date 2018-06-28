@@ -35,127 +35,80 @@ struct generator_base {
 	sink operator()(service_error<T, identity_t<Args>...>, Args&&...) = delete;
 };
 
+struct operator_base {
+	explicit operator_base(kgr::container& c) noexcept : _container{&c} {}
+	
+	inline auto container() noexcept -> kgr::container& {
+		return *_container;
+	}
+	
+	inline auto container() const noexcept -> kgr::container const& {
+		return *_container;
+	}
+	
+	kgr::container* _container;
+};
+
+struct forked_operator_base {
+	explicit forked_operator_base(kgr::container&& c) noexcept : _container{std::move(c)} {}
+	
+	inline auto container() noexcept -> kgr::container& {
+		return _container;
+	}
+	
+	inline auto container() const noexcept -> kgr::container const& {
+		return _container;
+	}
+	
+	kgr::container _container;
+};
+
+template<template<typename, typename> class Operator, typename Param, typename Base = operator_base>
+struct basic_operator : Operator<basic_operator<Operator, Param, Base>, Param>, private Base {
+	using Base::Base;
+	
+protected:
+	friend struct Operator<basic_operator<Operator, Param, Base>, Param>;
+	using Base::container;
+};
+
+template<template<typename, typename> class Operator, typename Param>
+using basic_forked_operator = basic_operator<Operator, Param, forked_operator_base>;
+
 } // namespace detail
 
 template<typename Map>
-struct mapped_invoker : detail::invoker_base<mapped_invoker<Map>, Map> {
-	explicit mapped_invoker(kgr::container& container) : _container{&container} {}
+struct mapped_invoker : detail::basic_operator<detail::invoker_base, Map> {
+	using detail::basic_operator<detail::invoker_base, Map>::basic_operator;
 	
 	template<typename M>
-	mapped_invoker(const mapped_invoker<M>& other) : _container{other._container} {}
-	
-private:
-	friend struct detail::invoker_base<mapped_invoker<Map>, Map>;
-	template<typename> friend struct mapped_invoker;
-	
-	kgr::container& container() {
-		return *_container;
-	}
-	
-	const kgr::container& container() const {
-		return *_container;
-	}
-	
-	kgr::container* _container;
+	mapped_invoker(const mapped_invoker<M>& other) :
+		detail::basic_operator<detail::invoker_base, Map>{other.container()} {}
 };
-
-using invoker = mapped_invoker<map<>>;
 
 template<typename Map>
-struct forked_mapped_invoker : detail::invoker_base<forked_mapped_invoker<Map>, Map> {
-	explicit forked_mapped_invoker(kgr::container container) : _container{std::move(container)} {}
+struct forked_mapped_invoker : detail::basic_forked_operator<detail::invoker_base, Map> {
+	using detail::basic_forked_operator<detail::invoker_base, Map>::basic_forked_operator;
 	
 	template<typename M>
-	forked_mapped_invoker(forked_mapped_invoker<M>&& other) : _container{std::move(other._container)} {}
-	
-private:
-	friend struct detail::invoker_base<forked_mapped_invoker<Map>, Map>;
-	template<typename> friend struct forked_mapped_invoker;
-	
-	kgr::container& container() {
-		return _container;
-	}
-	
-	const kgr::container& container() const {
-		return _container;
-	}
-	
-	kgr::container _container;
+	forked_mapped_invoker(forked_mapped_invoker<M>&& other) :
+		detail::basic_forked_operator<detail::invoker_base, Map>{std::move(other.container())} {}
 };
 
+template<typename T>
+using generator = detail::basic_operator<detail::generator_base, T>;
+
+template<typename T>
+using forked_generator = detail::basic_forked_operator<detail::generator_base, T>;
+
+template<typename T>
+using lazy = detail::basic_operator<detail::lazy_base, T>;
+
+template<typename T>
+using forked_lazy = detail::basic_forked_operator<detail::lazy_base, T>;
+
+using invoker = mapped_invoker<map<>>;
 using forked_invoker = forked_mapped_invoker<map<>>;
-
-template<typename T>
-struct generator : detail::generator_base<generator<T>, T> {
-	explicit generator(kgr::container& container) : _container{&container} {}
-	
-private:
-	friend struct detail::generator_base<generator<T>, T>;
-	
-	kgr::container& container() {
-		return *_container;
-	}
-	
-	const kgr::container& container() const {
-		return *_container;
-	}
-	
-	kgr::container* _container;
-};
-
-template<typename T>
-struct forked_generator : detail::generator_base<forked_generator<T>, T> {
-	explicit forked_generator(kgr::container container) : _container{std::move(container)} {}
-	
-private:
-	friend struct detail::generator_base<forked_generator<T>, T>;
-	
-	kgr::container& container() {
-		return _container;
-	}
-	
-	const kgr::container& container() const {
-		return _container;
-	}
-	
-	kgr::container _container;
-};
-
-template<typename T>
-struct lazy : detail::lazy_base<lazy<T>, T> {
-	explicit lazy(kgr::container& container) : _container{&container} {}
-	
-private:
-	friend struct detail::lazy_base<lazy<T>, T>;
-	
-	kgr::container& container() {
-		return *_container;
-	}
-	
-	const kgr::container& container() const {
-		return *_container;
-	}
-	
-	kgr::container* _container;
-};
-
-template<typename T>
-struct forked_lazy : detail::lazy_base<forked_lazy<T>, T> {
-	explicit forked_lazy(kgr::container container) : _container{std::move(container)} {}
-	
-private:
-	friend struct detail::lazy_base<forked_lazy<T>, T>;
-	
-	kgr::container& container() {
-		return _container;
-	}
-	
-	const kgr::container& container() const {
-		return _container;
-	}
-	
-	kgr::container _container;
-};
 
 } // namespace kgr
 

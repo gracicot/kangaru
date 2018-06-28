@@ -321,15 +321,6 @@ public:
 	using base::emplace;
 	using typename base::type;
 	
-	lazy_storage() = default;
-	
-	lazy_storage& operator=(lazy_storage&&) = default;
-	lazy_storage& operator=(const lazy_storage&) = default;
-	lazy_storage(lazy_storage&&) = default;
-	lazy_storage(const lazy_storage&) = default;
-	
-	~lazy_storage() = default;
-	
 	explicit operator bool() const noexcept {
 		return _initialized;
 	}
@@ -377,13 +368,6 @@ public:
 	lazy_storage() {
 		emplace(nullptr);
 	}
-	
-	lazy_storage& operator=(lazy_storage&&) = default;
-	lazy_storage& operator=(const lazy_storage&) = default;
-	lazy_storage(lazy_storage&&) = default;
-	lazy_storage(const lazy_storage&) = default;
-	
-	~lazy_storage() = default;
 	
 	explicit operator bool() const noexcept {
 		return data() != nullptr;

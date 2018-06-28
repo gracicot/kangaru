@@ -186,6 +186,7 @@ namespace indirect_map {
 namespace indirect_map_strict {
 	struct service1 {};
 	struct service2 : service1 {};
+	struct service3 { service3(service2&&) {} };
 	
 	struct indirect_map {
 		template<typename T>
@@ -195,12 +196,16 @@ namespace indirect_map_strict {
 	struct map1 {};
 	struct map2 {};
 	struct map3 {};
+	struct map4 {};
 	
 	auto service_map(service1 const&, kgr::map_t<map1>) -> indirect_map;
 	auto service_map(service1 const&, kgr::map_t<map2>) -> kgr::service<service2>;
 	
 	auto service_map(service2 const&, kgr::map_t<map3>) -> kgr::single_service<service2>;
 	auto service_map(service1&&, kgr::map_t<map3>) -> indirect_map;
+	
+	auto service_map(service2 const&, kgr::map_t<map4>) -> kgr::single_service<service2>;
+	auto service_map(service3, kgr::map_t<map4>) -> indirect_map;
 	
 	TEST_CASE("The indirect map is strict to the mapped type", "[service_map]") {
 		REQUIRE_FALSE((kgr::detail::is_complete_map<kgr::map<map1>, service2>::value));
@@ -210,6 +215,11 @@ namespace indirect_map_strict {
 		CHECK((std::is_same<kgr::mapped_service_t<service2 const&, kgr::map<map3>>, kgr::single_service<service2>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service2&&, kgr::map<map3>>, kgr::single_service<service2>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service2 const&&, kgr::map<map3>>, kgr::single_service<service2>>::value));
+		
+		CHECK((std::is_same<kgr::mapped_service_t<service2, kgr::map<map4>>, kgr::single_service<service2>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service2 const&, kgr::map<map4>>, kgr::single_service<service2>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service2&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
+		CHECK((std::is_same<kgr::mapped_service_t<service2 const&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
 	}
 }
 

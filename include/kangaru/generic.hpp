@@ -20,6 +20,9 @@ struct generic_service_destruction<Generic, Type, enable_if_t<std::is_trivially_
 
 } // namespace detail
 
+/*
+ * A generic storage for services. It also provides the emplace function and constructors.
+ */
 template<typename Type>
 struct generic_service : detail::generic_service_destruction<generic_service<Type>, Type> {
 	generic_service() = default;
@@ -68,6 +71,11 @@ private:
 	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
 
+/*
+ * A generic storage for services. It also provides the emplace function and constructors.
+ * 
+ * This specialisation is for lvalue reference types. Mainly used for external services.
+ */
 template<typename Type>
 struct generic_service<Type&> {
 	generic_service() = default;

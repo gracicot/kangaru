@@ -7,6 +7,11 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Base class for all non-forking operator service definitions.
+ * 
+ * Holds a non-owning reference to the container as a pointer.
+ */
 struct operator_service_base {
 	inline explicit operator_service_base(in_place_t, kgr::container& container) noexcept : _container{&container} {}
 	
@@ -18,6 +23,11 @@ protected:
 	kgr::container* _container;
 };
 
+/*
+ * Template base class for non-forking operator service definitions.
+ * 
+ * Only exist to provide the forward function and not template the whole base class.
+ */
 template<typename Type>
 struct operator_service : operator_service_base {
 	using operator_service_base::operator_service_base;
@@ -27,6 +37,11 @@ struct operator_service : operator_service_base {
 	}
 };
 
+/*
+ * Base class for all forking operator service definitions.
+ * 
+ * Holds a non-owning reference to the container as a pointer.
+ */
 template<typename Predicate, typename Type>
 struct forked_operator_service {
 	explicit forked_operator_service(in_place_t, kgr::container& container) noexcept : _container{container.fork<Predicate>()} {}
@@ -45,6 +60,9 @@ protected:
 
 } // namespace detail
 
+/*
+ * Service defintion for a forking container.
+ */
 template<typename Predicate>
 struct filtered_fork_service : detail::forked_operator_service<Predicate, container> {
 	using detail::forked_operator_service<Predicate, container>::forked_operator_service;
@@ -54,28 +72,60 @@ struct filtered_fork_service : detail::forked_operator_service<Predicate, contai
 	}
 };
 
+/*
+ * Service defintion for the mapped_invoker.
+ */
 template<typename Map>
 using mapped_invoker_service = detail::operator_service<mapped_invoker<Map>>;
 
+/*
+ * Service defintion for the forked_mapped_invoker.
+ */
 template<typename Map, typename Predicate = all>
 using forked_mapped_invoker_service = detail::forked_operator_service<Predicate, forked_mapped_invoker<Map>>;
 
+/*
+ * Service defintion for the generator.
+ */
 template<typename T>
 using generator_service = detail::operator_service<generator<T>>;
 
+/*
+ * Service defintion for the forked_generator.
+ */
 template<typename T, typename Predicate = all>
 using forked_generator_service = detail::forked_operator_service<Predicate, forked_generator<T>>;
 
+/*
+ * Service defintion for the lazy.
+ */
 template<typename T>
 using lazy_service = detail::operator_service<lazy<T>>;
 
+/*
+ * Service defintion for the forked_lazy.
+ */
 template<typename T, typename Predicate = all>
 using forked_lazy_service = detail::forked_operator_service<Predicate, forked_lazy<T>>;
 
+/*
+ * Alias to the filtered_fork_service with the default predicate.
+ */
 using fork_service = filtered_fork_service<all>;
+
+/*
+ * Alias to the invoker service with the default map.
+ */
 using invoker_service = mapped_invoker_service<map<>>;
+
+/*
+ * Alias to the forked invoker service with the default map.
+ */
 using forked_invoker_service = forked_mapped_invoker_service<map<>>;
 
+/*
+ * Service map entries for all the services definition written above.
+ */
 auto service_map(container&&) -> fork_service;
 
 template<typename T>

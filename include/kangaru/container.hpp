@@ -274,12 +274,7 @@ public:
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
 	inline void merge(container& other) {
-		_services.insert(other._services.begin(), other._services.end());
-		_instances.insert(
-			_instances.end(),
-			std::make_move_iterator(other._instances.begin()),
-			std::make_move_iterator(other._instances.end())
-		);
+		merge(std::move(other));
 	}
 	
 	

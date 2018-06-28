@@ -55,8 +55,8 @@ public:
  * It hold and return the service by value.
  */
 template<typename Type, typename Map, std::size_t max_dependencies>
-struct service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<service, Map, max_dependencies>> {
-	using detail::basic_service<Type, detail::basic_autowire_tag<service, Map, max_dependencies>>::basic_service;
+struct service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<kgr::service, Map, max_dependencies>> {
+	using detail::basic_service<Type, detail::basic_autowire_tag<kgr::service, Map, max_dependencies>>::basic_service;
 	
 	auto forward() -> Type {
 		return std::move(this->instance());
@@ -69,8 +69,8 @@ struct service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basi
  * It hold the service as value, and returns it by reference.
  */
 template<typename Type, typename Map, std::size_t max_dependencies>
-struct single_service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<single_service, Map, max_dependencies>>, single {
-	using detail::basic_service<Type, detail::basic_autowire_tag<single_service, Map, max_dependencies>>::basic_service;
+struct single_service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<kgr::single_service, Map, max_dependencies>>, single {
+	using detail::basic_service<Type, detail::basic_autowire_tag<kgr::single_service, Map, max_dependencies>>::basic_service;
 	
 	auto forward() -> Type& {
 		return this->instance();
@@ -87,7 +87,7 @@ struct single_service<Type, detail::autowire_tag<Map, max_dependencies>> : detai
  * It will hold the service as a std::unique_ptr, and inject it as a std::unique_ptr
  */
 template<typename Type, typename Map, std::size_t max_dependencies>
-struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::unique_ptr<Type>> {
+struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : unique_service<Type> {
 private:
 	template<typename... Args>
 	using amount_deduced = detail::amount_of_deductible_service<unique_service, Type, Map, max_dependencies, Args...>;
@@ -101,7 +101,7 @@ private:
 	};
 	
 public:
-	using generic_service<std::unique_ptr<Type>>::generic_service;
+	using unique_service<Type>::unique_service;
 	
 	template<typename... Args>
 	static auto construct(inject_t<container_service> cont, Args&&... args)
@@ -111,15 +111,6 @@ public:
 			amount_deduced<Args...>::amount, inject_function{}, std::move(cont), std::forward<Args>(args)...
 		);
 	}
-	
-	auto forward() -> std::unique_ptr<Type> {
-		return std::move(this->instance());
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
-	}
 };
 
 /**
@@ -128,7 +119,7 @@ public:
  * It will hold the service as a std::shared_ptr and inject it a s a std::shared_ptr
  */
 template<typename Type, typename Map, std::size_t max_dependencies>
-struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::shared_ptr<Type>>, single {
+struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : shared_service<Type> {
 private:
 	template<typename... Args>
 	using amount_deduced = detail::amount_of_deductible_service<shared_service, Type, Map, max_dependencies, Args...>;
@@ -142,7 +133,7 @@ private:
 	};
 	
 public:
-	using generic_service<std::shared_ptr<Type>>::generic_service;
+	using shared_service<Type>::shared_service;
 	
 	template<typename... Args>
 	static auto construct(inject_t<container_service> cont, Args&&... args)
@@ -151,15 +142,6 @@ public:
 		return detail::deduce_construct<shared_service, Map>(
 			amount_deduced<Args...>::amount, inject_function{}, std::move(cont), std::forward<Args>(args)...
 		);
-	}
-	
-	auto forward() -> std::shared_ptr<Type> {
-		return this->instance();
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
 	}
 };
 

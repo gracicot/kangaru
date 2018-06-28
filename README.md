@@ -48,7 +48,7 @@ int main()
     assert(&scene.camera == &camera); // passes, both cameras are the same instance.
 }
 ```
-[Try this example online](https://wandbox.org/permlink/rCfQY4LqysmgXVXV) too see how it runs.
+[Try this example online](https://wandbox.org/permlink/3ekQZXqTFGRlj8ZG) too see how it runs.
 
 Features
 --------

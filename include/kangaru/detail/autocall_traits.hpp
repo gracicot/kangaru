@@ -70,35 +70,18 @@ template<typename, typename, typename = void>
 struct autocall_function_helper;
 
 /*
- * This specialization of autocall_function_helper will get the member autocall when the autocall function is a member autocall.
+ * This spetialization of autocall_function_helper will get the autocall function when the autocall function is a member and nonmeber autocall.
  */
 template<typename T, typename F>
-struct autocall_function_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value && !is_nonmember_autocall<T, F>::value>> {
+struct autocall_function_helper<T, F, enable_if_t<(is_nonmember_autocall<T, F>::value || is_member_autocall<T, F>::value) && !is_invoke_call<F>::value>> {
 private:
 	static void autocall(inject_t<container_service> cs, T& service) {
 		T::template autocall_helper<T, autocall_selected_map_t<T, F>, F>(
-			function_seq<typename F::value_type>{},
-			std::move(cs),
-			service
-		);
-	}
-	
-public:
-	using type = std::integral_constant<
-		decltype(&autocall_function_helper::autocall),
-		&autocall_function_helper::autocall
-	>;
-};
-
-/*
- * This spetialization of autocall_function_helper will get the member autocall when the autocall function is a member autocall.
- */
-template<typename T, typename F>
-struct autocall_function_helper<T, F, enable_if_t<is_nonmember_autocall<T, F>::value && !is_invoke_call<F>::value && !is_member_autocall<T, F>::value>> {
-private:
-	static void autocall(inject_t<container_service> cs, T& service) {
-		T::template autocall_helper<T, autocall_selected_map_t<T, F>, F>(
-			seq_drop_first_t<function_seq<typename F::value_type>>{},
+			conditional_t<
+				is_member_autocall<T, F>::value,
+				function_seq<typename F::value_type>,
+				detected_t<seq_drop_first_t, function_seq<typename F::value_type>>
+			>{},
 			std::move(cs),
 			service
 		);
@@ -160,16 +143,20 @@ struct autocall_services_helper<T, F, enable_if_t<is_invoke_call<F>::value>> {
 };
 
 /*
- * This is the case for an autocall member function call.
+ * This is the case for an autocall member and nonmember function call.
  * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
  */
 template<typename T, typename F>
-struct autocall_services_helper<T, F, enable_if_t<is_member_autocall<T, F>::value && !is_invoke_call<F>::value && !is_nonmember_autocall<T, F>::value>> {
+struct autocall_services_helper<T, F, enable_if_t<!is_invoke_call<F>::value && (is_member_autocall<T, F>::value || is_nonmember_autocall<T, F>::value)>> {
 private:
 	template<typename U>
 	using mapped_type = detected_t<mapped_service_t, U, autocall_selected_map_t<T, F>>;
 	
-	using arguments = function_arguments_t<typename F::value_type>;
+	using arguments = conditional_t<
+		is_member_autocall<T, F>::value,
+		function_arguments_t<typename F::value_type>,
+		detected_t<meta_list_pop_front_t, function_arguments_t<typename F::value_type>>
+	>;
 	
 public:
 	using type = conditional_t<
@@ -178,27 +165,6 @@ public:
 		nonesuch
 	>;
 };
-
-/*
- * This is the case for an autocall member function call.
- * Since the arguments are the injected service type, we must use a map and extract the definition type out of each arguments.
- */
-template<typename T, typename F>
-struct autocall_services_helper<T, F, enable_if_t<!is_member_autocall<T, F>::value && !is_invoke_call<F>::value && is_nonmember_autocall<T, F>::value>> {
-private:
-	template<typename U>
-	using mapped_type = detected_t<mapped_service_t, U, autocall_selected_map_t<T, F>>;
-	
-	using arguments = meta_list_pop_front_t<function_arguments_t<typename F::value_type>>;
-	
-public:
-	using type = conditional_t<
-		all_of_traits<arguments, is_complete_map, autocall_selected_map_t<T, F>>::value,
-		meta_list_transform_t<arguments, mapped_type>,
-		nonesuch
-	>;
-};
-
 
 /*
  * This is an alias for the list of autocall functions in a service.

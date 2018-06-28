@@ -8,60 +8,84 @@ matrix:
     - os: linux
       env:
         - LLVM_VERSION=3.6.2
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["clang-3.6"], sources: ["llvm-toolchain-precise-3.6", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=3.7.1
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["clang-3.7"], sources: ["llvm-toolchain-precise-3.7", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=3.8.1
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["clang-3.8"], sources: ["llvm-toolchain-precise-3.8", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=3.9.1
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["clang-3.9"], sources: ["llvm-toolchain-precise-3.9", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=4.0.1
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["clang-4.0"], sources: ["llvm-toolchain-trusty-4.0", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=5.0.0
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["clang-5.0"], sources: ["llvm-toolchain-trusty-5.0", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
+        - COMPILER=g++-4.8
+        - ENABLE_CXX14=false
+        - ENABLE_CXX17=false
+      addons: { apt: { packages: ["g++-4.8"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
+        - COMPILER=g++-4.9
+        - ENABLE_CXX14=true
+        - ENABLE_CXX17=false
+      addons: { apt: { packages: ["g++-4.9"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
         - COMPILER=g++-5
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-5"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-6
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=false
       addons: { apt: { packages: ["g++-6"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-7
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-7"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - COMPILER=g++-8
+        - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
 
@@ -112,6 +136,6 @@ install:
 
 script:
   - cd "${TRAVIS_BUILD_DIR}"
-  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true  -DKANGARU_TEST_CXX17="${ENABLE_CXX17}"
+  - cmake . -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14="${ENABLE_CXX14}"  -DKANGARU_TEST_CXX17="${ENABLE_CXX17}"
   - cmake --build . -- -j2
   - ctest .

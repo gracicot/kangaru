@@ -7,6 +7,42 @@
 namespace kgr {
 namespace detail {
 
+template<typename T>
+using is_trivially_copy_constructible =
+#if __GNUC__ < 5 && !defined(__clang__)
+	bool_constant<__has_trivial_copy(T) && std::is_copy_constructible<T>::value>
+#else
+	std::is_trivially_copy_constructible<T>
+#endif
+;
+
+template<typename T>
+using is_trivially_copy_assignable =
+#if __GNUC__ < 5 && !defined(__clang__)
+	bool_constant<__has_trivial_assign(T) && std::is_copy_assignable<T>::value>
+#else
+	std::is_trivially_copy_assignable<T>
+#endif
+;
+
+template<typename T>
+using is_trivially_move_constructible =
+#if __GNUC__ < 5 && !defined(__clang__)
+	bool_constant<false_t<T>::value>
+#else
+	std::is_trivially_move_constructible<T>
+#endif
+;
+
+template<typename T>
+using is_trivially_move_assignable =
+#if __GNUC__ < 5 && !defined(__clang__)
+	bool_constant<false_t<T>::value>
+#else
+	std::is_trivially_move_assignable<T>
+#endif
+;
+
 /*
  * This is is the contained type the lazy should hold.
  * If T is a reference, we must hold a pointer instead.
@@ -43,7 +79,7 @@ struct lazy_copy_construct {
  * In that case, the copy constructor is implemented using emplacement.
  */
 template<typename CRTP, typename T>
-struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::value && !std::is_trivially_copy_constructible<T>::value>> {
+struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::value && !is_trivially_copy_constructible<T>::value>> {
 	lazy_copy_construct(const lazy_copy_construct& other) noexcept(std::is_nothrow_copy_constructible<T>::value){
 		auto&& o = static_cast<const CRTP&>(other);
 		if (o) {
@@ -62,7 +98,7 @@ struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_copy_constructible<T>::v
  * In that case, we become trivially copy constructible too, and simply copying the contained buffer.
  */
 template<typename CRTP, typename T>
-struct lazy_copy_construct<CRTP, T, enable_if_t<std::is_trivially_copy_assignable<T>::value>> {};
+struct lazy_copy_construct<CRTP, T, enable_if_t<is_trivially_copy_assignable<T>::value>> {};
 
 /*
  * This class implements the copy assignation operator.
@@ -84,7 +120,7 @@ struct lazy_copy_assign {
 template<typename CRTP, typename T>
 struct lazy_copy_assign<CRTP, T, enable_if_t<
 	std::is_copy_assignable<T>::value && std::is_copy_constructible<T>::value &&
-	!(std::is_trivially_copy_assignable<T>::value && std::is_trivially_copy_constructible<T>::value && std::is_trivially_destructible<T>::value)
+	!(is_trivially_copy_assignable<T>::value && is_trivially_copy_constructible<T>::value && std::is_trivially_destructible<T>::value)
 >> {
 	lazy_copy_assign& operator=(const lazy_copy_assign& other)
 	noexcept(
@@ -118,8 +154,8 @@ struct lazy_copy_assign<CRTP, T, enable_if_t<
  */
 template<typename CRTP, typename T>
 struct lazy_copy_assign<CRTP, T, enable_if_t<
-	std::is_trivially_copy_assignable<T>::value &&
-	std::is_trivially_copy_constructible<T>::value &&
+	is_trivially_copy_assignable<T>::value &&
+	is_trivially_copy_constructible<T>::value &&
 	std::is_trivially_destructible<T>::value
 >> {};
 
@@ -141,7 +177,7 @@ struct lazy_move_construct {
  * In that case, the move constructor is implemented using emplacement.
  */
 template<typename CRTP, typename T>
-struct lazy_move_construct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !std::is_trivially_move_constructible<T>::value>> {
+struct lazy_move_construct<CRTP, T, enable_if_t<std::is_move_constructible<T>::value && !is_trivially_move_constructible<T>::value>> {
 	lazy_move_construct(lazy_move_construct&& other) noexcept(std::is_nothrow_move_constructible<T>::value) {
 		auto&& o = static_cast<CRTP&>(other);
 		if (o) {
@@ -160,7 +196,7 @@ struct lazy_move_construct<CRTP, T, enable_if_t<std::is_move_constructible<T>::v
  * In that case, we become trivially move constructible too, and simply copying the contained buffer.
  */
 template<typename CRTP, typename T>
-struct lazy_move_construct<CRTP, T, enable_if_t<std::is_trivially_move_constructible<T>::value>> {};
+struct lazy_move_construct<CRTP, T, enable_if_t<is_trivially_move_constructible<T>::value>> {};
 
 /*
  * This class implements the copy assignation operator.
@@ -182,7 +218,7 @@ struct lazy_move_assign {
 template<typename CRTP, typename T>
 struct lazy_move_assign<CRTP, T, enable_if_t<
 	std::is_move_assignable<T>::value && std::is_move_constructible<T>::value &&
-	!(std::is_trivially_move_assignable<T>::value && std::is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)
+	!(is_trivially_move_assignable<T>::value && is_trivially_move_constructible<T>::value && std::is_trivially_destructible<T>::value)
 >> {
 	lazy_move_assign& operator=(lazy_move_assign&& other)
 	noexcept(
@@ -214,8 +250,8 @@ struct lazy_move_assign<CRTP, T, enable_if_t<
  */
 template<typename CRTP, typename T>
 struct lazy_move_assign<CRTP, T, enable_if_t<
-	std::is_trivially_move_assignable<T>::value &&
-	std::is_trivially_move_constructible<T>::value &&
+	is_trivially_move_assignable<T>::value &&
+	is_trivially_move_constructible<T>::value &&
 	std::is_trivially_destructible<T>::value
 >> {};
 

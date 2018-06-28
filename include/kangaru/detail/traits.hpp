@@ -130,12 +130,7 @@ public:
 };
 
 template<typename T, typename... Args>
-struct call_result {
-	using type = decltype(std::declval<T>()(std::declval<Args>()...));
-};
-
-template<typename T, typename... Args>
-using call_result_t = typename call_result<T, Args...>::type;
+using call_result_t = decltype(std::declval<T>()(std::declval<Args>()...));
 
 template<typename T>
 using is_service_embeddable = std::integral_constant<bool,

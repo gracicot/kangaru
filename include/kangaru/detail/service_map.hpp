@@ -54,6 +54,9 @@ struct is_map : std::false_type {};
 template<typename... Ts>
 struct is_map<map<Ts...>> : std::true_type {};
 
+/*
+ * Type trait that check if a particular type is an indirect map.
+ */
 template<typename R>
 struct is_indirect_map_helper {
 private:
@@ -70,8 +73,35 @@ public:
 	using type = decltype(test<R>(0));
 };
 
+/*
+ * Alias to the is_indirect_map_helper trait.
+ */
 template<typename R>
 using is_indirect_map = typename is_indirect_map_helper<R>::type;
+
+/*
+ * Alias to the expression of a normal named service map
+ */
+template<typename S, typename M>
+using normal_map_result_mapped = decltype(service_map(std::declval<S>(), std::declval<M>()));
+
+/*
+ * Alias to the expression of a normal non named service map
+ */
+template<typename S>
+using normal_map_result_void = decltype(service_map(std::declval<S>()));
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S, typename M>
+using probed_map_result_mapped = decltype(service_map(std::declval<probe<S>>(), std::declval<M>()));
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S>
+using probed_map_result_void = decltype(service_map(std::declval<probe<S>>()));
 
 /*
  * helper implementation for the indirect map.
@@ -88,34 +118,34 @@ template<typename, typename, typename = void>
 struct map_result {};
 
 /*
-* Specialization of map_result when service_map() exist for S with the map M.
-*/
+ * Specialization of map_result when service_map() exist for S with the map M.
+ */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<!is_indirect_map<decltype(service_map(std::declval<S>(), std::declval<M>()))>::value>> {
+struct map_result<S, M, enable_if_t<!is_indirect_map<normal_map_result_mapped<S, M>>::value>> {
 	using type = decltype(service_map(std::declval<S>(), std::declval<M>()));
 };
 
 /*
-* Specialization of map_result when service_map() exist for S with no map.
-*/
+ * Specialization of map_result when service_map() exist for S with no map.
+ */
 template<typename S>
-struct map_result<S, void, enable_if_t<!is_indirect_map<decltype(service_map(std::declval<S>()))>::value>> {
+struct map_result<S, void, enable_if_t<!is_indirect_map<normal_map_result_void<S>>::value>> {
 	using type = decltype(service_map(std::declval<S>()));
 };
 
 /*
-* Specialization of map_result when service_map() exist for S with the map M.
-*/
+ * Specialization of map_result when service_map() exist for S with the map M.
+ */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<is_indirect_map<decltype(service_map(std::declval<probe<S>>(), std::declval<M>()))>::value>> :
-	indirect_map<decltype(service_map(std::declval<probe<S>>(), std::declval<M>())), S> {};
+struct map_result<S, M, enable_if_t<is_detected<probed_map_result_mapped, S, M>::value && is_indirect_map<normal_map_result_mapped<S, M>>::value>> :
+	indirect_map<normal_map_result_mapped<S, M>, S> {};
 
 /*
-* Specialization of map_result when service_map() exist for S with no map.
-*/
+ * Specialization of map_result when service_map() exist for S with no map.
+ */
 template<typename S>
-struct map_result<S, void, enable_if_t<is_indirect_map<decltype(service_map(std::declval<probe<S>>()))>::value>> :
-	indirect_map<decltype(service_map(std::declval<probe<S>>())), S> {};
+struct map_result<S, void, enable_if_t<is_detected<probed_map_result_void, S>::value && is_indirect_map<normal_map_result_void<S>>::value>> :
+	indirect_map<normal_map_result_void<S>, S> {};
 
 /*
  * Alias for map_result::type
@@ -208,8 +238,8 @@ template<typename Map, typename T, typename = void>
 struct is_complete_map : std::false_type {};
 
 /*
-* Specialization of is_complete_map when the service T is mapped in Map
-*/
+ * Specialization of is_complete_map when the service T is mapped in Map
+ */
 template<typename... Maps, typename T>
 struct is_complete_map<map<Maps...>, T, void_t<typename map_entry<map<Maps...>, T>::mapped_service>> : std::true_type {};
 

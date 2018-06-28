@@ -1,5 +1,5 @@
-#ifndef KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_HPP
-#define KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_HPP
+#ifndef KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_AUTOWIRING_HPP
+#define KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_AUTOWIRING_HPP
 
 #include "../detail/autowire_traits.hpp"
 
@@ -49,4 +49,4 @@ using autowire_tag = detail::autowire_tag<Map, max_dependencies>;
 } // namespace experimental
 } // namespace kgr
 
-#endif // KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_HPP
+#endif // KGR_KANGARU_INCLUDE_KANGARU_EXPERIMENTAL_AUTOWIRING_HPP

@@ -97,9 +97,9 @@ Then you can include the library as follow:
 
 Compiler Requirement
 --------------------
- - MSVC: 2015 update 3 or better
- - GCC: 4.8.5 or better
- - Clang: 3.6 or better
+ * MSVC: 2015 update 3 or better
+ * GCC: 4.8.5 or better
+ * Clang: 3.6 or better
 
 What's next?
 ------------

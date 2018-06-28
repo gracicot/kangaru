@@ -95,6 +95,12 @@ Then you can include the library as follow:
 
     #include <kangaru/kangaru.hpp>
 
+Compiler Requirement
+--------------------
+ - MSVC: 2015 update 3 or better
+ - GCC: 4.8.5 or better
+ - Clang: 3.6 or better
+
 What's next?
 ------------
 There is some feature I would like to see become real. Here's a list of those,

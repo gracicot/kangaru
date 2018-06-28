@@ -62,7 +62,7 @@ Macros defined by the library are not part of it's interface.
 
 Note that [some features](section07_autocall.md) of this library may be easier to use with macros, especially before C++17. We recommend you to define some for your own usage if you feel the need.
 
-### Compiler Support
+### Compiler Requirement
 
  - MSVC: 2015 update 3 or better
  - GCC: 4.8.5 or better

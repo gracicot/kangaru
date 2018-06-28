@@ -17,37 +17,49 @@ namespace kgr {
 template<typename... Args>
 using dependency = detail::meta_list<Args...>;
 
+namespace detail {
+
 /**
- * This class is the default single service.
+ * This is the base for default non-single and single service.
  * 
- * It hold the service as value, and returns it by reference.
+ * Contains all the shared logic between single and non single services.
  */
-template<typename, typename = dependency<>>
-struct single_service;
+template<typename Type>
+struct basic_service_base : generic_service<Type> {
+	using generic_service<Type>::generic_service;
+	
+	template<typename T, typename... Args>
+	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
+		return detail::nostd::invoke(method, this->instance(), std::forward<Args>(args)...);
+	}
+};
+
+template<typename, typename>
+struct basic_service;
 
 template<typename Type, typename... Deps>
-struct single_service<Type, dependency<Deps...>> : generic_service<Type>, single {
-private:
-	using parent = generic_service<Type>;
-	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
+struct basic_service<Type, dependency<Deps...>> : basic_service_base<Type> {
+	using basic_service_base<Type>::basic_service_base;
 	
 	template<typename... Args>
 	static auto construct(inject_t<Deps>... deps, Args&&... args) -> inject_result<service_type<Deps>..., Args...> {
 		return inject(deps.forward()..., std::forward<Args>(args)...);
 	}
+};
 
-	Type& forward() {
-		return instance();
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
+} // namespace detail
+
+/**
+ * This class is the default single service.
+ * 
+ * It hold the service as value, and returns it by reference.
+ */
+template<typename Type, typename Deps = dependency<>>
+struct single_service : detail::basic_service<Type, Deps>, single {
+	using detail::basic_service<Type, Deps>::basic_service;
+
+	auto forward() -> Type& {
+		return this->instance();
 	}
 };
 
@@ -64,32 +76,12 @@ struct extern_service : single_service<Type&>, supplied {};
  * 
  * It hold and return the service by value.
  */
-template<typename, typename = dependency<>>
-struct service;
-
-template<typename Type, typename... Deps>
-struct service<Type, dependency<Deps...>> : generic_service<Type> {
-private:
-	using parent = generic_service<Type>;
+template<typename Type, typename Deps = dependency<>>
+struct service : detail::basic_service<Type, Deps> {
+	using detail::basic_service<Type, Deps>::basic_service;
 	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
-	
-	template<typename... Args>
-	static auto construct(inject_t<Deps>... deps, Args&&... args) -> inject_result<service_type<Deps>..., Args...> {
-		return inject(deps.forward()..., std::forward<Args>(args)...);
-	}
-
-	Type forward() {
-		return std::move(instance());
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
+	auto forward() -> Type {
+		return std::move(this->instance());
 	}
 };
 
@@ -106,14 +98,7 @@ struct unique_service;
 
 template<typename Type, typename... Deps>
 struct unique_service<Type, dependency<Deps...>> : generic_service<std::unique_ptr<Type>> {
-private:
-	using parent = generic_service<std::unique_ptr<Type>>;
-	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
+	using generic_service<std::unique_ptr<Type>>::generic_service;
 	
 	template<typename... Args>
 	static auto construct(inject_t<Deps>... deps, Args&&... args)
@@ -122,13 +107,13 @@ public:
 		return inject(std::unique_ptr<Type>{new Type(deps.forward()..., std::forward<Args>(args)...)});
 	}
 	
-	std::unique_ptr<Type> forward() {
-		return std::move(instance());
+	auto forward() -> std::unique_ptr<Type> {
+		return std::move(this->instance());
 	}
 	
 	template<typename T, typename... Args>
 	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
+		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
 	}
 };
 
@@ -142,15 +127,8 @@ struct shared_service;
 
 template<typename Type, typename... Deps>
 struct shared_service<Type, dependency<Deps...>> : generic_service<std::shared_ptr<Type>>, single {
-private:
-	using parent = generic_service<std::shared_ptr<Type>>;
+	using generic_service<std::shared_ptr<Type>>::generic_service;
 	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
-
 	template<typename... Args>
 	static auto construct(inject_t<Deps>... deps, Args&&... args)
 		-> detail::enable_if_t<std::is_constructible<Type, service_type<Deps>..., Args...>::value, inject_result<std::shared_ptr<Type>>>
@@ -158,55 +136,48 @@ public:
 		return inject(std::make_shared<Type>(deps.forward()..., std::forward<Args>(args)...));
 	}
 	
-	std::shared_ptr<Type> forward() {
-		return instance();
+	auto forward() -> std::shared_ptr<Type> {
+		return this->instance();
 	}
 	
 	template<typename T, typename... Args>
 	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
+		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
 	}
 };
 
 /**
  * This class is a service definition for a single service managed by an external system.
  * 
- * It hold the service as a reference to the instance, and returns it by reference.
+ * It hold and injects the service as a shared pointer to the supplied instance.
  */
 template<typename Type>
 struct extern_shared_service : shared_service<Type>, supplied {
-private:
-	using parent = shared_service<Type>;
+	using shared_service<Type>::shared_service;
 	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
-
 	static auto construct(std::shared_ptr<Type> instance) -> inject_result<std::shared_ptr<Type>> {
 		return inject(std::move(instance));
 	}
 };
 
 /**
- * This class is a abstract service that a kgr::SingleService can override.
+ * This class is a abstract service that a kgr::single_service can override.
  * 
  * It cannot be constructed, but only overrided.
  */
 template<typename T>
 struct abstract_service : abstract {
-	T& forward();
+	auto forward() -> T&;
 };
 
 /**
- * This class is an abstract service that can be overrided by kgr::SharedService
+ * This class is an abstract service that can be overrided by kgr::shared_service
  * 
  * As it is abstract, a service that overrides it must be instanciated by the container before usage.
  */
 template<typename T>
 struct abstract_shared_service : abstract {
-	std::shared_ptr<T> forward();
+	auto forward() -> std::shared_ptr<T>;
 };
 
 } // namespace kgr

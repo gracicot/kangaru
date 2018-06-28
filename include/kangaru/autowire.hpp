@@ -13,78 +13,82 @@
 #include "detail/autowire_traits.hpp"
 
 namespace kgr {
+namespace detail {
 
-template<typename Type, typename Map, std::size_t max_dependencies>
-struct service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<Type> {
+/**
+ * Alias to autowire_map. Act as a autowire tag. This one is required to be used for autowired basic_service.
+ */
+template<template<typename, typename> class Service, typename Map, std::size_t max_dependencies>
+using basic_autowire_tag = autowire_map<Service, decay_t, Map, max_dependencies>;
+
+/**
+ * This is the base for autowired default non-single and single service.
+ * 
+ * Contains all the shared logic between single and non single autowired services.
+ */
+template<typename Type, template<typename, typename> class Service, typename Map, std::size_t max_dependencies>
+struct basic_service<Type, basic_autowire_tag<Service, Map, max_dependencies>> : basic_service_base<Type> {
 private:
-	using parent = generic_service<Type>;
+	using Derived = Service<Type, autowire_tag<Map, max_dependencies>>;
 	
 	template<typename... Args>
-	using amount_deduced = detail::amount_of_deductible_service<service, Type, Map, max_dependencies, Args...>;
-	
-protected:
-	using parent::instance;
+	using amount_deduced = amount_of_deductible_service<Derived, Type, Map, max_dependencies, Args...>;
 	
 public:
-	using parent::parent;
+	using basic_service_base<Type>::basic_service_base;
 	
 	template<typename... Args>
 	static auto construct(inject_t<container_service> cont, Args&&... args)
-		-> detail::enable_if_t<amount_deduced<Args...>::deductible, typename amount_deduced<Args...>::default_result_t>
+		-> enable_if_t<amount_deduced<Args...>::deductible, typename amount_deduced<Args...>::default_result_t>
 	{
-		return detail::deduce_construct_default<service, Map>(
+		return deduce_construct_default<Derived, Map>(
 			amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...
 		);
 	}
+};
+
+} // namespace detail
+
+/**
+ * This is the autowired default non-single service.
+ * 
+ * It hold and return the service by value.
+ */
+template<typename Type, typename Map, std::size_t max_dependencies>
+struct service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<service, Map, max_dependencies>> {
+	using detail::basic_service<Type, detail::basic_autowire_tag<service, Map, max_dependencies>>::basic_service;
 	
 	auto forward() -> Type {
-		return std::move(instance());
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
+		return std::move(this->instance());
 	}
 };
 
+/**
+ * This class is the autowired default single service.
+ * 
+ * It hold the service as value, and returns it by reference.
+ */
 template<typename Type, typename Map, std::size_t max_dependencies>
-struct single_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<Type>, single {
-private:
-	using parent = generic_service<Type>;
-	
-	template<typename... Args>
-	using amount_deduced = detail::amount_of_deductible_service<single_service, Type, Map, max_dependencies, Args...>;
-	
-protected:
-	using parent::instance;
-	
-public:
-	using parent::parent;
-	
-	template<typename... Args>
-	static auto construct(inject_t<container_service> cont, Args&&... args)
-		-> detail::enable_if_t<amount_deduced<Args...>::deductible, typename amount_deduced<Args...>::default_result_t>
-	{
-		return detail::deduce_construct_default<single_service, Map>(
-			amount_deduced<Args...>::amount, std::move(cont), std::forward<Args>(args)...
-		);
-	}
+struct single_service<Type, detail::autowire_tag<Map, max_dependencies>> : detail::basic_service<Type, detail::basic_autowire_tag<single_service, Map, max_dependencies>>, single {
+	using detail::basic_service<Type, detail::basic_autowire_tag<single_service, Map, max_dependencies>>::basic_service;
 	
 	auto forward() -> Type& {
-		return instance();
-	}
-	
-	template<typename T, typename... Args>
-	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, instance(), std::forward<Args>(args)...);
+		return this->instance();
 	}
 };
 
+
+/**
+ * This class is the service definition for a autowired, non-single heap allocated service.
+ * 
+ * It works for both case where you need a shared pointer non-single service,
+ * because they are implicitly constructible from a unique pointer.
+ * 
+ * It will hold the service as a std::unique_ptr, and inject it as a std::unique_ptr
+ */
 template<typename Type, typename Map, std::size_t max_dependencies>
 struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::unique_ptr<Type>> {
 private:
-	using parent = generic_service<std::unique_ptr<Type>>;
-	
 	template<typename... Args>
 	using amount_deduced = detail::amount_of_deductible_service<unique_service, Type, Map, max_dependencies, Args...>;
 	
@@ -96,11 +100,8 @@ private:
 		}
 	};
 	
-protected:
-	using parent::instance;
-	
 public:
-	using parent::parent;
+	using generic_service<std::unique_ptr<Type>>::generic_service;
 	
 	template<typename... Args>
 	static auto construct(inject_t<container_service> cont, Args&&... args)
@@ -112,20 +113,23 @@ public:
 	}
 	
 	auto forward() -> std::unique_ptr<Type> {
-		return std::move(instance());
+		return std::move(this->instance());
 	}
 	
 	template<typename T, typename... Args>
 	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
+		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
 	}
 };
 
+/**
+ * This class is a autowired service definition when a single should be injected as a shared pointer.
+ * 
+ * It will hold the service as a std::shared_ptr and inject it a s a std::shared_ptr
+ */
 template<typename Type, typename Map, std::size_t max_dependencies>
 struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::shared_ptr<Type>>, single {
 private:
-	using parent = generic_service<std::shared_ptr<Type>>;
-	
 	template<typename... Args>
 	using amount_deduced = detail::amount_of_deductible_service<shared_service, Type, Map, max_dependencies, Args...>;
 	
@@ -137,11 +141,8 @@ private:
 		}
 	};
 	
-protected:
-	using parent::instance;
-	
 public:
-	using parent::parent;
+	using generic_service<std::shared_ptr<Type>>::generic_service;
 	
 	template<typename... Args>
 	static auto construct(inject_t<container_service> cont, Args&&... args)
@@ -153,32 +154,36 @@ public:
 	}
 	
 	auto forward() -> std::shared_ptr<Type> {
-		return instance();
+		return this->instance();
 	}
 	
 	template<typename T, typename... Args>
 	auto call(T method, Args&&... args) -> detail::nostd::invoke_result_t<T, Type&, Args...> {
-		return detail::nostd::invoke(method, *instance(), std::forward<Args>(args)...);
+		return detail::nostd::invoke(method, *this->instance(), std::forward<Args>(args)...);
 	}
 };
 
+/*
+ * The following aliases are indirect maps for autowired services.
+ * 
+ * kgr::autowire is also a autowire tag to use instead of dependencies
+ */
 using autowire = detail::autowire_map<service, detail::decay_t, map<>, detail::default_max_dependency>;
 using autowire_single = detail::autowire_map<single_service, detail::decay_t, map<>, detail::default_max_dependency>;
 using autowire_unique = detail::autowire_map<unique_service, detail::unwrap_pointer_t, map<>, detail::default_max_dependency>;
 using autowire_shared = detail::autowire_map<shared_service, detail::unwrap_pointer_t, map<>, detail::default_max_dependency>;
 
+/**
+ * autowire tag that can receive which service map should be used.
+ */
 template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
 using mapped_autowire = detail::autowire_map<service, detail::decay_t, Map, max_dependencies>;
 
-template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
-using mapped_autowire_single = detail::autowire_map<single_service, detail::decay_t, Map, max_dependencies>;
-
-template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
-using mapped_autowire_unique = detail::autowire_map<unique_service, detail::unwrap_pointer_t, Map, max_dependencies>;
-
-template<typename Map, std::size_t max_dependencies = detail::default_max_dependency>
-using mapped_autowire_shared = detail::autowire_map<shared_service, detail::unwrap_pointer_t, Map, max_dependencies>;
-
+/*
+ * The following four aliases are shortcuts for autowired services.
+ * 
+ * It act as a shorter alternative to service<Type, kgr::mapped_autowire<...>>
+ */
 template<typename T, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
 using autowire_service = single_service<T, kgr::mapped_autowire<Map, max_dependencies>>;
 

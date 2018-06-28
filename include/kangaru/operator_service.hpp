@@ -10,7 +10,7 @@ namespace detail {
 struct operator_service_base {
 	inline explicit operator_service_base(in_place_t, kgr::container& container) noexcept : _container{&container} {}
 	
-	inline static auto construct(inject_t<container_service> cs) noexcept -> decltype(inject(cs.forward())) {
+	inline static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	
@@ -31,7 +31,7 @@ template<typename Predicate, typename Type>
 struct forked_operator_service {
 	explicit forked_operator_service(in_place_t, kgr::container& container) noexcept : _container{container.fork<Predicate>()} {}
 	
-	static auto construct(inject_t<container_service> cs) noexcept -> decltype(inject(cs.forward())) {
+	static auto construct(inject_t<container_service> cs) -> decltype(inject(cs.forward())) {
 		return inject(cs.forward());
 	}
 	

@@ -10,11 +10,13 @@ namespace detail {
 /*
  * Base class for invokers. Implements the call operator that invoke the function.
  */
-template<typename CRTP, typename Map>
-struct invoker_base {
+template<typename Base, typename Map>
+struct invoker_base : protected Base {
+	using Base::Base;
+
 	template<typename F, typename... Args, enable_if_t<is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
 	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
-		container& c = static_cast<CRTP*>(this)->container();
+		kgr::container& c = this->container();
 		return c.invoke<Map>(std::forward<F>(f), std::forward<Args>(args)...);
 	}
 	
@@ -24,13 +26,14 @@ struct invoker_base {
 /*
  * Base class for generators. Implements the call operator that create services.
  */
-template<typename CRTP, typename T>
-struct generator_base {
+template<typename Base, typename T>
+struct generator_base : protected Base {
 	static_assert(!is_single<T>::value, "Generator only work with non-single services.");
+	using Base::Base;
 	
 	template<typename... Args, enable_if_t<is_service_valid<T, Args...>::value, int> = 0>
 	service_type<T> operator()(Args&&... args) {
-		container& c = static_cast<CRTP*>(this)->container();
+		kgr::container& c = Base::container();
 		return c.service<T>(std::forward<Args>(args)...);
 	}
 	
@@ -79,24 +82,6 @@ struct forked_operator_base {
 	kgr::container _container;
 };
 
-/*
- * Helper class to setup the base operator class and the operator generic implementation.
- */
-template<template<typename, typename> class Operator, typename Param, typename Base = operator_base>
-struct basic_operator : Operator<basic_operator<Operator, Param, Base>, Param>, private Base {
-	using Base::Base;
-	
-protected:
-	friend struct Operator<basic_operator<Operator, Param, Base>, Param>;
-	using Base::container;
-};
-
-/*
- * Alias to the helper class with the forking operator base.
- */
-template<template<typename, typename> class Operator, typename Param>
-using basic_forked_operator = basic_operator<Operator, Param, forked_operator_base>;
-
 } // namespace detail
 
 /**
@@ -105,12 +90,12 @@ using basic_forked_operator = basic_operator<Operator, Param, forked_operator_ba
  * Useful when dealing with higer order functions or to convey intent.
  */
 template<typename Map>
-struct mapped_invoker : detail::basic_operator<detail::invoker_base, Map> {
-	using detail::basic_operator<detail::invoker_base, Map>::basic_operator;
+struct mapped_invoker : detail::invoker_base<detail::operator_base, Map> {
+	using detail::invoker_base<detail::operator_base, Map>::invoker_base;
 	
 	template<typename M>
 	mapped_invoker(const mapped_invoker<M>& other) :
-		detail::basic_operator<detail::invoker_base, Map>{other.container()} {}
+		detail::invoker_base<detail::operator_base, Map>{other.container()} {}
 };
 
 /**
@@ -121,12 +106,12 @@ struct mapped_invoker : detail::basic_operator<detail::invoker_base, Map> {
  * Useful when dealing with higer order functions or to convey intent.
  */
 template<typename Map>
-struct forked_mapped_invoker : detail::basic_forked_operator<detail::invoker_base, Map> {
-	using detail::basic_forked_operator<detail::invoker_base, Map>::basic_forked_operator;
+struct forked_mapped_invoker : detail::invoker_base<detail::forked_operator_base, Map> {
+	using detail::invoker_base<detail::forked_operator_base, Map>::invoker_base;
 	
 	template<typename M>
 	forked_mapped_invoker(forked_mapped_invoker<M>&& other) :
-		detail::basic_forked_operator<detail::invoker_base, Map>{std::move(other.container())} {}
+		detail::invoker_base<detail::forked_operator_base, Map>{std::move(other.container())} {}
 };
 
 /**
@@ -136,7 +121,7 @@ struct forked_mapped_invoker : detail::basic_forked_operator<detail::invoker_bas
  * Useful to convey intent or contraining usage of the container.
  */
 template<typename T>
-using generator = detail::basic_operator<detail::generator_base, T>;
+using generator = detail::generator_base<detail::operator_base, T>;
 
 /**
  * Function object that calls creates a service.
@@ -147,13 +132,13 @@ using generator = detail::basic_operator<detail::generator_base, T>;
  * Useful to convey intent or contraining usage of the container.
  */
 template<typename T>
-using forked_generator = detail::basic_forked_operator<detail::generator_base, T>;
+using forked_generator = detail::generator_base<detail::forked_operator_base, T>;
 
 /**
  * A proxy class that delays the construction of a service until usage.
  */
 template<typename T>
-using lazy = detail::basic_operator<detail::lazy_base, T>;
+using lazy = detail::lazy_base<detail::operator_base, T>;
 
 /**
  * A proxy class that delays the construction of a service until usage.
@@ -161,7 +146,7 @@ using lazy = detail::basic_operator<detail::lazy_base, T>;
  * This will fork the container when the proxy is created.
  */
 template<typename T>
-using forked_lazy = detail::basic_forked_operator<detail::lazy_base, T>;
+using forked_lazy = detail::lazy_base<detail::forked_operator_base, T>;
 
 /**
  * Alias to the default invoker

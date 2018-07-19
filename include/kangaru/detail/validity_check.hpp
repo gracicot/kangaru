@@ -36,41 +36,31 @@ struct is_service_valid : std::integral_constant<bool,
 	is_construction_valid<T, Args...>::value
 > {};
 
+/*
+ * Metafunction that returns a partially applied trait.
+ * Condition for is_invoke_service_valid.
+ */
+template<typename Map, typename T>
+struct curry_is_invoke_service_valid {
+	template<typename U>
+	using mapped_t = mapped_service_t<U, Map>;
+
+	template<typename... Services>
+	using trait = all_of_traits<meta_list<detected_t<mapped_t, Services>...>, is_service_valid>;
+};
+
 /* 
  * Trait that check if a function is invocable, and all it's injected arguments are valid.
  */
 template<typename Map, typename T, typename... Args>
-struct is_invoke_service_valid_helper {
-private:
-	template<typename U>
-	using map_t = mapped_service_t<U, Map>;
-	
-	template<typename U, std::size_t I>
-	struct expander {
-		using type = std::integral_constant<bool, is_service_valid<map_t<invoke_function_argument_t<I, Map, U, Args...>>>::value>;
-	};
-	
-	template<typename U, typename... As, std::size_t... S, int_t<map_t<invoke_function_argument_t<S, Map, U, As...>>..., enable_if_t<expander<U, S>::type::value>...> = 0>
-	static std::true_type test_helper(seq<S...>);
-	
-	template<typename...>
-	static std::false_type test_helper(...);
-	
-	template<typename U, typename... As>
-	static decltype(test_helper<U, As...>(tuple_seq_minus<invoke_function_arguments_t<Map, U, As...>, sizeof...(Args)>{})) test(int);
-	
-	template<typename...>
-	static std::false_type test(...);
-	
-public:
-	using type = decltype(test<T, Args...>(0));
-};
-
-/*
- * Alias for is_invoke_service_valid_helper
- */
-template<typename Map, typename T, typename... Args>
-struct is_invoke_service_valid : is_invoke_service_valid_helper<Map, T, Args...>::type {};
+using is_invoke_service_valid = bool_constant<
+	is_detected<invoke_function_arguments_t, Map, T, Args...>::value &&
+	expand_minus_n<
+		sizeof...(Args),
+		detected_or<meta_list<>, invoke_function_arguments_t, Map, T, Args...>,
+		curry_is_invoke_service_valid<Map, T>::template trait
+	>::value
+>;
 
 /*
  * Validity check for a invoke expression

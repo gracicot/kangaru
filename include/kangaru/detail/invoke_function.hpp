@@ -136,15 +136,20 @@ using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...
 * function_trait equivalent for an invoke function.
 * It has to choose if it's a lambda, generic lambda or a function.
 */
+template<bool>
+struct invoke_function_helper {
+	template<typename Map, typename T, typename... Args>
+	using type = function_traits<get_template_call_t<Map, T, Args...>>;
+};
+
+template<>
+struct invoke_function_helper<true> {
+	template<typename Map, typename T, typename... Args>
+	using type = function_traits<T>;
+};
+
 template<typename Map, typename T, typename... Args>
-using invoke_function = conditional_t<
-	has_call_operator<T>::value || std::is_pointer<T>::value,
-	function_traits<T>,
-	function_traits<instantiate_if_t<
-		!has_call_operator<T>::value && !std::is_pointer<T>::value,
-		get_template_call_t, Map, T, Args...>
-	>
->;
+using invoke_function = typename invoke_function_helper<has_call_operator<T>::value || std::is_pointer<T>::value>::template type<Map, T, Args...>;
 
 /*
  * Alias for invoke_function::argument_types, a meta list of argument types.

@@ -98,6 +98,8 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 > {};
 ```
 
+The functions are called in the order that are listed in `kgr::autocall`.
+
 ## Non-Member Functions
 
 Non-member function are also supported. Here's the same code as above, using non-member functions:
@@ -122,8 +124,6 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 > {};
 ```
 
-
-The functions are called in the order that are listed in `kgr::autocall`.
 
 ## Specifying The Service Map
 

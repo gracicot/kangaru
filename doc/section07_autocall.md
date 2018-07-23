@@ -74,7 +74,7 @@ private:
 
 That's it! You can add any number of parameter as you wish, the definition will stay the same and the method will receive what you ask for.
 
-## Multiple methods
+## Multiple Methods
 
 As said before, `kgr::autocall` is a list of method to call. You can have as many method to call as you wish
 ```c++
@@ -97,6 +97,31 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
     METHOD(&MessageBus::set_scene)
 > {};
 ```
+
+## Non-Member Functions
+
+Non-member function are also supported. Here's the same code as above, using non-member functions:
+
+```c++
+struct MessageBus {
+    Scene* scene;
+    int max_delay;
+};
+
+void init(MessageBus& self, Window& window, Camera& camera) {
+     self.max_delay = 3 * window.get_framerate();
+}
+
+void set_scene(MessageBus& self, Scene& scene) {
+    self.scene = &scene;
+}
+
+struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
+    METHOD(init),
+    METHOD(set_scene)
+> {};
+```
+
 
 The functions are called in the order that are listed in `kgr::autocall`.
 

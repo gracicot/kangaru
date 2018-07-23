@@ -131,7 +131,8 @@ In previous examples, we used the default service map. If you deal with advanced
 You can set the default map to use in the first parameter of autocall:
 
 ```c++
-struct MyMap;
+struct MyMap1 {};
+struct MyMap2 {};
 
 struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
     kgr::map<MyMap1, MyMap2>,

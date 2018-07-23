@@ -133,21 +133,33 @@ template<typename Map, typename T, typename... Args>
 using get_template_call_t = typename get_template_call<Map, T, meta_list<Args...>, meta_list<Args...>>::type;
 
 /*
-* function_trait equivalent for an invoke function.
-* It has to choose if it's a lambda, generic lambda or a function.
-*/
+ * function_trait equivalent for an invoke function.
+ * It has to choose if it's a lambda, generic lambda or a function.
+ * 
+ * This specialization is when T is not a function pointer and does not have a non overloaded operator()
+ */
 template<bool>
 struct invoke_function_helper {
 	template<typename Map, typename T, typename... Args>
-	using type = function_traits<get_template_call_t<Map, T, Args...>>;
+	using type = function_traits<detected_t<get_template_call_t, Map, T, Args...>>;
 };
 
+/*
+ * function_trait equivalent for an invoke function.
+ * It has to choose if it's a lambda, generic lambda or a function.
+ * 
+ * This specialization is when T is function pointer or have a operator()
+ */
 template<>
 struct invoke_function_helper<true> {
 	template<typename Map, typename T, typename... Args>
 	using type = function_traits<T>;
 };
 
+/*
+ * function_trait equivalent for an invoke function.
+ * It has to choose if it's a lambda, generic lambda or a function.
+ */
 template<typename Map, typename T, typename... Args>
 using invoke_function = typename invoke_function_helper<has_call_operator<T>::value || std::is_pointer<T>::value>::template type<Map, T, Args...>;
 

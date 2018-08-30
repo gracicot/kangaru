@@ -104,8 +104,8 @@ public:
 template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
-	template<typename U, typename... As, int_t<decltype(std::declval<U>().emplace(std::declval<As>()...))> = 0>
-	static std::true_type test(int);
+	template<typename U, typename... As>
+	static std::true_type test(int_t<decltype(std::declval<U>().emplace(std::declval<As>()...))>);
 	
 	template<typename U, typename... As>
 	static std::false_type test(...);
@@ -120,8 +120,8 @@ private:
 	template<typename...>
 	static std::false_type test(...);
 
-	template<typename U, typename... As, int_t<decltype(std::declval<U>()(std::declval<As>()...))> = 0>
-	static std::true_type test(int);
+	template<typename U, typename... As>
+	static std::true_type test(int_t<decltype(std::declval<U>()(std::declval<As>()...))>);
 
 	using type = decltype(test<F, Args...>(0));
 	

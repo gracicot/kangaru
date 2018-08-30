@@ -58,13 +58,13 @@ struct invoke : M {
  * The class that defines autocall with the default map.
  */
 template<typename... Ts>
-struct autocall : detail::autocall_base<map<>, Ts...> {};
+struct autocall : detail::autocall_base<kgr::map<>, Ts...> {};
 
 /*
  * Specialization of autocall when a map is sent as first parameter.
  */
 template<typename... Maps, typename... Ts>
-struct autocall<map<Maps...>, Ts...> : detail::autocall_base<map<Maps...>, Ts...> {};
+struct autocall<kgr::map<Maps...>, Ts...> : detail::autocall_base<kgr::map<Maps...>, Ts...> {};
 
 } // namespace kgr
 

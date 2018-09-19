@@ -126,7 +126,9 @@ using forked_invoker_service = forked_mapped_invoker_service<map<>>;
 /*
  * Service map entries for all the services definition written above.
  */
-auto service_map(container&&) -> fork_service;
+namespace detail {
+	auto service_map(basic_container&&) -> fork_service;
+} // namespace detail
 
 template<typename T>
 auto service_map(const generator<T>&) -> generator_service<T>;

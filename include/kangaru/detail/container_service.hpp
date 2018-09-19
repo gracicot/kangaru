@@ -4,8 +4,10 @@
 #include <type_traits>
 
 namespace kgr {
-
-struct container;
+	
+namespace detail {
+	struct basic_container;
+} // namespace detail
 
 /*
  * Special definition.
@@ -14,22 +16,22 @@ struct container;
  * When the container is asked for this definition, il will proceed to inject himself in the constructor.
  */
 struct container_service {
-	explicit container_service(container& instance) : _instance{&instance} {}
+	explicit container_service(detail::basic_container& instance) : _instance{&instance} {}
 	
-	inline container& forward() {
+	inline detail::basic_container& forward() {
 		return *_instance;
 	}
 	
 private:
-	container* _instance;
+	detail::basic_container* _instance;
 };
+
+namespace detail {
 
 /*
  * We map the container in the service map.
  */
-auto service_map(const container&) -> container_service;
-
-namespace detail {
+auto service_map(const basic_container&) -> container_service;
 
 /*
  * Trait that tells if a particular service is the container service.

@@ -22,14 +22,14 @@
 #include <iterator>
 
 namespace kgr {
-
+namespace detail {
 /**
  * The kangaru container class.
  * 
  * This class will construct services and share single instances for a given definition.
  * It is the class that parses and manage dependency graphs and calls autocall functions.
  */
-struct container final {
+struct basic_container {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
@@ -52,7 +52,7 @@ private:
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T(std::forward<Args>(args)...),
-			&container::deleter<T>
+			&basic_container::deleter<T>
 		};
 	}
 	
@@ -60,7 +60,7 @@ private:
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T{std::forward<Args>(args)...},
-			&container::deleter<T>
+			&basic_container::deleter<T>
 		};
 	}
 	
@@ -75,12 +75,12 @@ private:
 	}
 	
 public:
-	explicit container() = default;
-	container(const container &) = delete;
-	container& operator=(const container &) = delete;
-	container(container&&) = default;
-	container& operator=(container&&) = default;
-	~container() = default;
+	explicit basic_container() = default;
+	basic_container(const basic_container &) = delete;
+	basic_container& operator=(const basic_container &) = delete;
+	basic_container(basic_container&&) = default;
+	basic_container& operator=(basic_container&&) = default;
+	~basic_container() = default;
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.
@@ -228,7 +228,7 @@ public:
 	 * It will call fork() with a predicate as parameter.
 	 */
 	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
-	auto fork() const -> container {
+	auto fork() const -> basic_container {
 		return fork(Predicate{});
 	}
 	
@@ -241,8 +241,8 @@ public:
 	 * It takes a predicate as argument.
 	 */
 	template<typename Predicate>
-	auto fork(Predicate predicate) const -> container {
-		container c;
+	auto fork(Predicate predicate) const -> basic_container {
+		basic_container c;
 		
 		c._services.reserve(_services.size());
 		
@@ -261,7 +261,7 @@ public:
 	 * This function merges a container with another.
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
-	inline void merge(container&& other) {
+	inline void merge(basic_container&& other) {
 		_services.insert(other._services.begin(), other._services.end());
 		_instances.insert(
 			_instances.end(),
@@ -274,7 +274,7 @@ public:
 	 * This function merges a container with another.
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
-	inline void merge(container& other) {
+	inline void merge(basic_container& other) {
 		merge(std::move(other));
 	}
 	
@@ -291,7 +291,7 @@ public:
 	 * It will call rebase() with a predicate as parameter.
 	 */
 	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
-	void rebase(const container& other) {
+	void rebase(const basic_container& other) {
 		rebase(other, Predicate{});
 	}
 	
@@ -303,7 +303,7 @@ public:
 	 * It takes a predicate type as argument to filter.
 	 */
 	template<typename Predicate>
-	void rebase(const container& other, Predicate predicate) {
+	void rebase(const basic_container& other, Predicate predicate) {
 		std::copy_if(
 			other._services.begin(), other._services.end(),
 			std::inserter(_services, _services.end()),
@@ -715,6 +715,10 @@ private:
 	instance_cont _instances;
 	service_cont _services;
 };
+
+} // namespace detail
+
+struct container final : detail::basic_container {};
 
 } // namespace kgr
 

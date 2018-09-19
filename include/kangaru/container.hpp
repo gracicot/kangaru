@@ -718,7 +718,7 @@ private:
 
 } // namespace detail
 
-struct container final : detail::basic_container {};
+using container = detail::basic_container;
 
 } // namespace kgr
 

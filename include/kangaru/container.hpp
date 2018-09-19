@@ -23,6 +23,7 @@
 
 namespace kgr {
 namespace detail {
+
 /**
  * The kangaru container class.
  * 
@@ -80,7 +81,16 @@ public:
 	basic_container& operator=(const basic_container &) = delete;
 	basic_container(basic_container&&) = default;
 	basic_container& operator=(basic_container&&) = default;
+	
+#ifdef KGR_KANGARU_REVERSE_DESTRUCTION
+	~basic_container() {
+		for (auto it = _instances.rbegin() ; it != _instances.rend() ; ++it) {
+			it->reset();
+		}
+	}
+#else
 	~basic_container() = default;
+#endif
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.

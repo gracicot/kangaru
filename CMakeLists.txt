@@ -12,6 +12,7 @@ set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
+option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" false)
 option(KANGARU_TEST "Build test binaries" false)
 option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
 option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
@@ -28,6 +29,10 @@ target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
+
+if(KANGARU_REVERSE_DESTRUCTION)
+	target_compile_definitions(kangaru INTERFACE KGR_KANGARU_REVERSE_DESTRUCTION)
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
 

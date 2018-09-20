@@ -72,7 +72,7 @@ private:
 	
 	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
 	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
-		return detail::injected_wrapper<T>{*static_cast<T*>(instance.service)};
+		return detail::injected_wrapper<T>{instance.service<T>()};
 	}
 	
 public:

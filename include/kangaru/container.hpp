@@ -1,6 +1,7 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP
 
+#include "detail/default_source.hpp"
 #include "detail/traits.hpp"
 #include "detail/validity_check.hpp"
 #include "detail/utils.hpp"
@@ -16,10 +17,6 @@
 #include <unordered_map>
 #include <memory>
 #include <type_traits>
-#include <tuple>
-#include <algorithm>
-#include <vector>
-#include <iterator>
 
 namespace kgr {
 namespace detail {
@@ -30,50 +27,35 @@ namespace detail {
  * This class will construct services and share single instances for a given definition.
  * It is the class that parses and manage dependency graphs and calls autocall functions.
  */
-struct basic_container {
+struct basic_container : private default_source {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(void*)>;
-	using instance_cont = std::vector<instance_ptr<void>>;
-	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
-	using service_cont_value = service_cont::value_type::second_type;
 	template<typename T> using contained_service_t = typename std::conditional<
 		detail::is_single<T>::value,
-		instance_ptr<T>,
+		T&,
 		T>::type;
 	using unpack = int[];
 	
-	template<typename T>
-	static void deleter(void* i) {
-		delete static_cast<T*>(i);
+	auto source() const noexcept -> default_source const& {
+		return static_cast<default_source const&>(*this);
 	}
 	
-	template<typename T, typename... Args, enable_if<std::is_constructible<T, Args...>> = 0>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T(std::forward<Args>(args)...),
-			&basic_container::deleter<T>
-		};
-	}
-	
-	template<typename T, typename... Args, enable_if<detail::is_only_brace_constructible<T, Args...>> = 0>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T{std::forward<Args>(args)...},
-			&basic_container::deleter<T>
-		};
+	auto source() noexcept -> default_source& {
+		return static_cast<default_source&>(*this);
 	}
 	
 	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
+	static detail::injected_wrapper<T> make_wrapper(storage_t& instance) {
 		return detail::injected_wrapper<T>{instance.cast<T>()};
 	}
 	
 	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
-	static detail::injected_wrapper<T> make_wrapper(service_cont_value instance) {
+	static detail::injected_wrapper<T> make_wrapper(storage_t& instance) {
 		return detail::injected_wrapper<T>{instance.service<T>()};
 	}
+	
+	explicit basic_container(default_source&& source) : default_source{std::move(source)} {}
 	
 public:
 	explicit basic_container() = default;
@@ -81,16 +63,6 @@ public:
 	basic_container& operator=(const basic_container &) = delete;
 	basic_container(basic_container&&) = default;
 	basic_container& operator=(basic_container&&) = default;
-	
-#ifdef KGR_KANGARU_REVERSE_DESTRUCTION
-	~basic_container() {
-		for (auto it = _instances.rbegin() ; it != _instances.rend() ; ++it) {
-			it->reset();
-		}
-	}
-#else
-	~basic_container() = default;
-#endif
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.
@@ -104,7 +76,7 @@ public:
 		enable_if<detail::is_construction_valid<T, Args...>> = 0>
 	bool emplace(Args&&... args) {
 		// TODO: We're doing two search in the map: One before constructing the service and one to insert. We should do only one.
-		return contains<T>() ? false : (autocall(save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...))), true);
+		return contains<T>() ? false : (autocall(make_service_instance<T>(std::forward<Args>(args)...)), true);
 	}
 	
 	/*
@@ -128,7 +100,7 @@ public:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_construction_valid<T, Args...>> = 0>
 	void replace(Args&&... args) {
-		autocall(save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...)));
+		autocall(make_service_instance<T>(std::forward<Args>(args)...));
 	}
 	
 	/*
@@ -216,13 +188,13 @@ public:
 	template<typename... Services>
 	auto invoke(detail::not_invokable_error = {}, ...) -> detail::sink = delete;
 	
+		
 	/*
 	 * This function clears this container.
 	 * Every single services are invalidated after calling this function.
 	 */
 	inline void clear() {
-		_instances.clear();
-		_services.clear();
+		source().clear();
 	}
 	
 	/*
@@ -237,7 +209,7 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call fork() with a predicate as parameter.
 	 */
-	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
+	template<typename Predicate = all, enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
 	auto fork() const -> basic_container {
 		return fork(Predicate{});
 	}
@@ -252,19 +224,7 @@ public:
 	 */
 	template<typename Predicate>
 	auto fork(Predicate predicate) const -> basic_container {
-		basic_container c;
-		
-		c._services.reserve(_services.size());
-		
-		std::copy_if(
-			_services.begin(), _services.end(),
-			std::inserter(c._services, c._services.begin()),
-			[&predicate](service_cont::const_reference i) {
-				return predicate(i.first);
-			}
-		);
-		
-		return c;
+		return basic_container{source().fork(predicate)};
 	}
 	
 	/*
@@ -272,17 +232,14 @@ public:
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
 	inline void merge(basic_container&& other) {
-		_services.insert(other._services.begin(), other._services.end());
-		_instances.insert(
-			_instances.end(),
-			std::make_move_iterator(other._instances.begin()),
-			std::make_move_iterator(other._instances.end())
-		);
+		source().merge(std::move(other.source()));
 	}
 	
 	/*
 	 * This function merges a container with another.
 	 * The receiving container will prefer it's own instances in a case of conflicts.
+	 * 
+	 * This function consumes the container `other`
 	 */
 	inline void merge(basic_container& other) {
 		merge(std::move(other));
@@ -300,7 +257,7 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call rebase() with a predicate as parameter.
 	 */
-	template<typename Predicate = all, enable_if<std::is_default_constructible<Predicate>> = 0>
+	template<typename Predicate = all, enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
 	void rebase(const basic_container& other) {
 		rebase(other, Predicate{});
 	}
@@ -314,22 +271,16 @@ public:
 	 */
 	template<typename Predicate>
 	void rebase(const basic_container& other, Predicate predicate) {
-		std::copy_if(
-			other._services.begin(), other._services.end(),
-			std::inserter(_services, _services.end()),
-			[&predicate](service_cont::const_reference i) {
-				return predicate(i.first);
-			}
-		);
+		source().rebase(other.source(), predicate);
 	}
 	
 	/*
 	 * This function return true if the container contains the service T. Returns false otherwise.
 	 * T nust be a single service.
 	 */
-	template<typename T, enable_if<detail::is_service<T>> = 0, enable_if<detail::is_single<T>> = 0>
+	template<typename T, enable_if_t<detail::is_service<T>::value && detail::is_single<T>::value, int> = 0>
 	bool contains() const {
-		return _services.find(type_id<T>()) != _services.end();
+		return source().contains<T>();
 	}
 	
 private:
@@ -346,8 +297,8 @@ private:
 		disable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	T& save_new_instance(Args&&... args) {
-		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+	auto save_new_instance(Args&&... args) -> T& {
+		auto& service = make_service_instance<T>(std::forward<Args>(args)...);
 		
 		autocall(service);
 		
@@ -364,7 +315,7 @@ private:
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
 	auto save_new_instance(Args&&... args) -> detail::typed_service_storage<T> {
-		auto& service = save_instance<T>(make_service_instance<T>(std::forward<Args>(args)...));
+		auto& service = make_service_instance<T>(std::forward<Args>(args)...);
 		
 		autocall(service);
 		
@@ -423,61 +374,16 @@ private:
 		return detail::typed_service_storage<T>{storage.service, get_override_forward<T, detail::default_type<T>>()};
 	}
 	
-	/*
-	 * This function will save the instance sent as arguments.
-	 * It will save the instance and will save overrides if any.
-	 */
-	template<typename T>
-	T& save_instance(contained_service_t<T> service) {
-		return save_instance<T>(detail::tuple_seq<detail::parent_types<T>>{}, std::move(service));
-	}
-	
-	/*
-	 * This function implements the logic to save a service in the container.
-	 * This function saves the instance and it's overrides if any.
-	 */
-	template<typename T, std::size_t... S>
-	T& save_instance(detail::seq<S...>, contained_service_t<T> service) {
-		auto& serviceRef = *service;
-		
-		// This codes loop over S to expand to enclosed code for each values of S.
-		(void)unpack{(
-			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>>(serviceRef)
-		, 0)..., 0};
-		
-		emplace_or_assign<T>(service.get(), get_forward<T>());
-		_instances.emplace_back(std::move(service));
-		
-		return serviceRef;
-	}
-	
-	/*
-	 * This function is the iteration that saves overrides to the container.
-	 * It will be called as many times as there's overrides to save.
-	 */
-	template<typename Override, typename T>
-	void save_override(T& service) {
-		static_assert(detail::is_polymorphic<Override>::value,
-			"The overriden service must be virtual"
-		);
-		
-		static_assert(!detail::is_final_service<Override>::value,
-			"A final service cannot be overriden"
-		);
-		
-		emplace_or_assign<Override>(&service, get_override_forward<Override, T>());
-	}
-	
 	template<typename Override, typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	auto get_override_forward() -> detail::forward_ptr<Override> {
-		return [](void* s) -> service_type<Override> {
+		return [](default_source::alias_t s) -> service_type<Override> {
 			return static_cast<service_type<Override>>(static_cast<T*>(s)->forward());
 		};
 	}
 	
 	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	auto get_forward() -> detail::forward_ptr<T> {
-		return [](void* service) -> service_type<T> {
+		return [](default_source::alias_t service) -> service_type<T> {
 			return static_cast<T*>(service)->forward();
 		};
 	}
@@ -485,17 +391,6 @@ private:
 	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
 	auto get_forward() -> detail::forward_ptr<T> {
 		return nullptr;
-	}
-	
-	template<typename T>
-	void emplace_or_assign(void* service, detail::forward_ptr<T> forward) {
-		auto it = _services.find(type_id<T>());
-		
-		if (it == _services.end()) {
-			_services.emplace(type_id<T>(), detail::typed_service_storage<T>{service, forward});
-		} else {
-			it->second = detail::typed_service_storage<T>{service, forward};
-		}
 	}
 	
 	///////////////////////
@@ -539,7 +434,9 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
-		return make_instance_ptr<T>(detail::in_place, std::forward<Args>(args)...);
+		auto storage = source().emplace<T>(get_forward<T>(), detail::in_place, std::forward<Args>(args)...);
+		save_overrides<T>(detail::tuple_seq<detail::parent_types<T>>{}, storage.first);
+		return storage.second.template service<T>();
 	}
 	
 	/*
@@ -564,9 +461,11 @@ private:
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
 	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
-		auto service = make_instance_ptr<T>();
+		auto storage = source().emplace<T>(get_forward<T>());
+		auto& service = storage.second.template service<T>();
 		
-		service->emplace(std::forward<Args>(args)...);
+		service.emplace(std::forward<Args>(args)...);
+		save_overrides<T>(detail::tuple_seq<detail::parent_types<T>>{}, storage.first);
 		
 		return service;
 	}
@@ -587,6 +486,38 @@ private:
 		service.emplace(std::forward<Args>(args)...);
 		
 		return service;
+	}
+	
+	/*
+	 * This function implements the logic to save a service in the container.
+	 * This function saves the instance and it's overrides if any.
+	 */
+	template<typename T, std::size_t... S>
+	void save_overrides(detail::seq<S...>, default_source::alias_t service) {
+		// if the S sequence is empty, service is an unused variable. This line silence it.
+		static_cast<void>(service);
+		
+		// This codes loop over S to expand to enclosed code for each values of S.
+		(void)unpack{(
+			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>, T>(service)
+		, 0)..., 0};
+	}
+	
+	/*
+	 * This function is the iteration that saves overrides to the container.
+	 * It will be called as many times as there's overrides to save.
+	 */
+	template<typename Override, typename T>
+	void save_override(default_source::alias_t service) {
+		static_assert(detail::is_polymorphic<Override>::value,
+			"The overriden service must be virtual"
+		);
+		
+		static_assert(!detail::is_final_service<Override>::value,
+			"A final service cannot be overriden"
+		);
+		
+		source().override<Override>(get_override_forward<Override, T>(), service);
 	}
 	
 	///////////////////////
@@ -641,13 +572,10 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_container_service<T>> = 0>
 	auto definition() -> detail::injected_wrapper<T> {
-		auto it = _services.find(type_id<T>());
-		
-		if (it != _services.end()) {
-			return make_wrapper<T>(it->second);
-		} else {
-			return detail::injected_wrapper<T>{save_new_instance<T>()};
-		}
+		return source().find<T>(
+			[](default_source::storage_t storage) { return make_wrapper<T>(storage); },
+			[this]{ return detail::injected_wrapper<T>{save_new_instance<T>()}; }
+		);
 	}
 	
 	///////////////////////
@@ -717,13 +645,6 @@ private:
 	 */
 	template<typename T, disable_if<detail::has_autocall<T>> = 0>
 	void autocall(T&) {}
-	
-	///////////////////////
-	//     instances     //
-	///////////////////////
-	
-	instance_cont _instances;
-	service_cont _services;
 };
 
 } // namespace detail

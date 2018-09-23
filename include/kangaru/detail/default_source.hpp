@@ -161,7 +161,7 @@ public:
 	}
 	
 	template<typename T, typename F1, typename F2, typename R1 = call_result_t<F1, storage_t>, typename R2 = call_result_t<F2>>
-	auto find(F1&& found, F2&& fails) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
+	auto find(F1 found, F2 fails) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
 		auto it = _services.find(type_id<T>());
 		
 		if (it != _services.end()) {
@@ -175,7 +175,7 @@ public:
 	 * This function return true if the container contains the service T. Returns false otherwise.
 	 * T nust be a single service.
 	 */
-	template<typename T, enable_if_t<detail::is_service<T>::value && detail::is_single<T>::value, int> = 0>
+	template<typename T>
 	bool contains() const {
 		return _services.find(type_id<T>()) != _services.end();
 	}

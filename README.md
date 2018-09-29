@@ -79,7 +79,7 @@ That's it! Link it to your project using cmake and you can already include and c
 
 Optionally, you can also install kangaru on your system:
 
-    # make install
+    $ sudo make install # optional step
 
 Adding Include Path
 -------------------

@@ -68,18 +68,24 @@ Installation
 ------------
 To make kangaru available on your machine, you must clone the repository and create a build directory:
 
-    $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
-    $ mkdir build && cd build
+```sh
+$ git clone https://github.com/gracicot/kangaru.git && cd kangaru
+$ mkdir build && cd build
+```
 
 Then use cmake to generate the makefile and export the package informations:
 
-    $ cmake ..
+```sh
+$ cmake ..
+```
 
 That's it! Link it to your project using cmake and you can already include and code!
 
 Optionally, you can also install kangaru on your system:
 
-    $ sudo make install # optional step
+```sh
+$ sudo make install # optional step
+```
 
 Adding Include Path
 -------------------

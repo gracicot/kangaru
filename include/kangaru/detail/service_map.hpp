@@ -22,6 +22,28 @@ struct map_t {};
 
 namespace detail {
 
+#if (defined(__clang__) and __clang_major__ > 7) or defined(_MSC_VER)
+template<typename S>
+struct probe {
+	template<typename T, enable_if_t<
+		std::is_same<T&, S>::value &&
+		!std::is_const<T>::value, int> = 0>
+	operator T& ();
+	
+	template<typename T, enable_if_t<
+		std::is_same<T&&, S&&>::value &&
+		!std::is_const<T>::value, int> = 0>
+	operator T&& ();
+	
+	template<typename T, enable_if_t<
+		std::is_same<T const&, S>::value, int> = 0>
+	operator T const& () const;
+	
+	template<typename T, enable_if_t<
+		std::is_same<T const&&, S&&>::value, int> = 0>
+	operator T const&& () const;
+};
+#else
 template<typename S>
 struct probe {
 	template<typename T, enable_if_t<std::is_same<T&, S>::value, int> = 0>
@@ -30,6 +52,7 @@ struct probe {
 	template<typename T, enable_if_t<std::is_same<T&&, S&&>::value, int> = 0>
 	operator T&& ();
 };
+#endif
 
 /*
  * Trait that determines if a type is a map type.

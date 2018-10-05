@@ -74,6 +74,24 @@ using is_explicitly_convertible = std::is_constructible<To, From>;
 template<typename T>
 struct is_service : bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value> {};
 
+template<typename T>
+struct constify {
+	using type = T const;
+};
+
+template<typename T>
+struct constify<T&&> {
+	using type = T const&&;
+};
+
+template<typename T>
+struct constify<T&> {
+	using type = T const&;
+};
+
+template<typename T>
+using constify_t = typename constify<T>::type;
+
 struct sink {
 	constexpr sink() = default;
 	

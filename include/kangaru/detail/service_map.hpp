@@ -22,6 +22,18 @@ struct map_t {};
 
 namespace detail {
 
+/*
+ * Alias to the expression of a normal named service map
+ */
+template<typename S, typename M>
+using normal_map_result_mapped = decltype(service_map(std::declval<S>(), std::declval<M>()));
+
+/*
+ * Alias to the expression of a normal non named service map
+ */
+template<typename S>
+using normal_map_result_void = decltype(service_map(std::declval<S>()));
+
 #if (defined(__clang__) && __clang_major__ < 7) || defined(_MSC_VER)
 template<typename S>
 struct probe {
@@ -43,6 +55,18 @@ struct probe {
 		std::is_same<T const&&, S&&>::value, int> = 0>
 	operator T const&& () const;
 };
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S, typename M>
+using probed_map_result_mapped = normal_map_result_mapped<probe<S>, M>;
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S>
+using probed_map_result_void = normal_map_result_void<probe<S>>;
 #else
 template<typename S>
 struct probe {
@@ -52,6 +76,18 @@ struct probe {
 	template<typename T, enable_if_t<std::is_same<T&&, S&&>::value, int> = 0>
 	operator T&& ();
 };
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S, typename M, typename Result = detected_or<detected_t<normal_map_result_mapped, probe<constify_t<S>>, M>, normal_map_result_mapped, probe<S>, M>>
+using probed_map_result_mapped = enable_if_t<such<Result>::value, Result>;
+
+/*
+ * Alias to the expression of a normal mapped service map
+ */
+template<typename S, typename Result = detected_or<detected_t<normal_map_result_void, probe<constify_t<S>>>, normal_map_result_void, probe<S>>>
+using probed_map_result_void = enable_if_t<such<Result>::value, Result>;
 #endif
 
 /*
@@ -92,30 +128,6 @@ template<typename R>
 using is_indirect_map = typename is_indirect_map_helper<R>::type;
 
 /*
- * Alias to the expression of a normal named service map
- */
-template<typename S, typename M>
-using normal_map_result_mapped = decltype(service_map(std::declval<S>(), std::declval<M>()));
-
-/*
- * Alias to the expression of a normal non named service map
- */
-template<typename S>
-using normal_map_result_void = decltype(service_map(std::declval<S>()));
-
-/*
- * Alias to the expression of a normal mapped service map
- */
-template<typename S, typename M>
-using probed_map_result_mapped = detected_or<detected_t<normal_map_result_mapped, probe<constify_t<S>>, M>, normal_map_result_mapped, probe<S>, M>;
-
-/*
- * Alias to the expression of a normal mapped service map
- */
-template<typename S>
-using probed_map_result_void = detected_or<detected_t<normal_map_result_void, probe<constify_t<S>>>, normal_map_result_void, probe<S>>;
-
-/*
  * helper implementation for the indirect map.
  */
 template<typename Indirect, typename Service>
@@ -150,14 +162,14 @@ struct map_result<S, void, enable_if_t<!is_indirect_map<normal_map_result_void<S
  * Specialization of map_result when service_map() exist for S with the map M.
  */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<such<probed_map_result_mapped<S, M>>::value && is_indirect_map<normal_map_result_mapped<S, M>>::value>> :
+struct map_result<S, M, enable_if_t<is_detected<probed_map_result_mapped, S, M>::value && is_indirect_map<normal_map_result_mapped<S, M>>::value>> :
 	indirect_map<normal_map_result_mapped<S, M>, S> {};
 
 /*
  * Specialization of map_result when service_map() exist for S with no map.
  */
 template<typename S>
-struct map_result<S, void, enable_if_t<such<probed_map_result_void<S>>::value && is_indirect_map<normal_map_result_void<S>>::value>> :
+struct map_result<S, void, enable_if_t<is_detected<probed_map_result_void, S>::value && is_indirect_map<normal_map_result_void<S>>::value>> :
 	indirect_map<normal_map_result_void<S>, S> {};
 
 /*

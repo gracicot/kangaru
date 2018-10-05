@@ -7,11 +7,13 @@
 #include "injected.hpp"
 
 #include "../container.hpp"
-#include "../service.hpp"
 
 namespace kgr {
-namespace detail {
 
+template<typename, typename>
+struct service;
+
+namespace detail {
 /*
  * This class is an object convertible to any mapped service.
  * Upon conversion, it calls the container to get that service.

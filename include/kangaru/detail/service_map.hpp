@@ -22,7 +22,7 @@ struct map_t {};
 
 namespace detail {
 
-#if (defined(__clang__) and __clang_major__ > 7) or defined(_MSC_VER)
+#if (defined(__clang__) && __clang_major__ < 7) || defined(_MSC_VER)
 template<typename S>
 struct probe {
 	template<typename T, enable_if_t<

@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_MAP_HPP
 
 #include "traits.hpp"
+#include "detection.hpp"
 
 namespace kgr {
 
@@ -23,23 +24,11 @@ namespace detail {
 
 template<typename S>
 struct probe {
-	template<typename T, typename U = S, enable_if_t<
-		std::is_same<T&, U>::value &&
-		!std::is_const<T>::value, int> = 0>
+	template<typename T, enable_if_t<std::is_same<T&, S>::value, int> = 0>
 	operator T& ();
 	
-	template<typename T, typename U = S&&, enable_if_t<
-		std::is_same<T&&, U>::value &&
-		!std::is_const<T>::value, int> = 0>
+	template<typename T, enable_if_t<std::is_same<T&&, S&&>::value, int> = 0>
 	operator T&& ();
-	
-	template<typename T, typename U = S, enable_if_t<
-		std::is_same<T const&, U>::value, int> = 0>
-	operator T const& () const;
-	
-	template<typename T, typename U = S&&, enable_if_t<
-		std::is_same<T const&&, U>::value, int> = 0>
-	operator T const&& () const;
 };
 
 /*
@@ -95,13 +84,13 @@ using normal_map_result_void = decltype(service_map(std::declval<S>()));
  * Alias to the expression of a normal mapped service map
  */
 template<typename S, typename M>
-using probed_map_result_mapped = decltype(service_map(std::declval<probe<S>>(), std::declval<M>()));
+using probed_map_result_mapped = detected_or<detected_t<normal_map_result_mapped, probe<constify_t<S>>, M>, normal_map_result_mapped, probe<S>, M>;
 
 /*
  * Alias to the expression of a normal mapped service map
  */
 template<typename S>
-using probed_map_result_void = decltype(service_map(std::declval<probe<S>>()));
+using probed_map_result_void = detected_or<detected_t<normal_map_result_void, probe<constify_t<S>>>, normal_map_result_void, probe<S>>;
 
 /*
  * helper implementation for the indirect map.
@@ -117,12 +106,13 @@ struct indirect_map {
 template<typename, typename, typename = void>
 struct map_result {};
 
+//TODO: In kangaru 5, disable implicit conversion in service maps.
 /*
  * Specialization of map_result when service_map() exist for S with the map M.
  */
 template<typename S, typename M>
 struct map_result<S, M, enable_if_t<!is_indirect_map<normal_map_result_mapped<S, M>>::value>> {
-	using type = decltype(service_map(std::declval<S>(), std::declval<M>()));
+	using type = normal_map_result_mapped<S, M>;
 };
 
 /*
@@ -130,21 +120,21 @@ struct map_result<S, M, enable_if_t<!is_indirect_map<normal_map_result_mapped<S,
  */
 template<typename S>
 struct map_result<S, void, enable_if_t<!is_indirect_map<normal_map_result_void<S>>::value>> {
-	using type = decltype(service_map(std::declval<S>()));
+	using type = normal_map_result_void<S>;
 };
 
 /*
  * Specialization of map_result when service_map() exist for S with the map M.
  */
 template<typename S, typename M>
-struct map_result<S, M, enable_if_t<is_detected<probed_map_result_mapped, S, M>::value && is_indirect_map<normal_map_result_mapped<S, M>>::value>> :
+struct map_result<S, M, enable_if_t<such<probed_map_result_mapped<S, M>>::value && is_indirect_map<normal_map_result_mapped<S, M>>::value>> :
 	indirect_map<normal_map_result_mapped<S, M>, S> {};
 
 /*
  * Specialization of map_result when service_map() exist for S with no map.
  */
 template<typename S>
-struct map_result<S, void, enable_if_t<is_detected<probed_map_result_void, S>::value && is_indirect_map<normal_map_result_void<S>>::value>> :
+struct map_result<S, void, enable_if_t<such<probed_map_result_void<S>>::value && is_indirect_map<normal_map_result_void<S>>::value>> :
 	indirect_map<normal_map_result_void<S>, S> {};
 
 /*

@@ -21,6 +21,8 @@ struct Window {
 };
 
 struct MessageBus {
+	MessageBus() = default;
+	
 	void init(Window& window, Camera& camera) {
 		 max_delay = 3 * window.get_framerate();
 		 std::cout << "max_delay set to: " << max_delay << '\n';
@@ -32,8 +34,8 @@ struct MessageBus {
 	}
 	
 private:
-	Scene* scene;
-	int max_delay;
+	Scene* scene = nullptr;
+	int max_delay = 0;
 };
 
 struct SceneService : kgr::single_service<Scene> {};

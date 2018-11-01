@@ -17,7 +17,7 @@ struct Connection {
 
 struct Database {
 	// A database needs a connection
-	Database(Connection const&) {
+	explicit Database(Connection const&) {
 		std::cout << "database created" << std::endl;
 	}
 

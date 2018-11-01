@@ -6,7 +6,7 @@ TEST_CASE("Injected singles are the same returned by the container", "[dependenc
 	
 	struct Service2 {
 		Service2() = default;
-		Service2(Service1& s) : s1{&s} {}
+		explicit Service2(Service1& s) : s1{&s} {}
 		
 		Service1* s1 = nullptr;
 	};
@@ -24,7 +24,7 @@ TEST_CASE("Injected arguments are sent correctly to the constructor", "[dependen
 	
 	struct Service2 {
 		Service2() = default;
-		Service2(Service1& s) : s1{&s} {}
+		explicit Service2(Service1& s) : s1{&s} {}
 		
 		Service1* s1 = nullptr;
 	};
@@ -32,7 +32,7 @@ TEST_CASE("Injected arguments are sent correctly to the constructor", "[dependen
 	struct Definition1 : kgr::single_service<Service1> {};
 	
 	struct Definition2 {
-		Definition2(kgr::in_place_t) {}
+		explicit Definition2(kgr::in_place_t) {}
 		Definition2(kgr::in_place_t, Service1& dep) : service{dep} {}
 		
 		Service2 forward() {
@@ -108,18 +108,18 @@ TEST_CASE("Container injects arguments recursively", "[dependency]") {
 	
 	struct Service2 {
 		Service2() = default;
-		Service2(Service1) { service2_constructed = true; }
+		explicit Service2(Service1) { service2_constructed = true; }
 	};
 	
 	struct Service3 {
 		Service3() = default;
 		Service3(Service1, Service2) { service3_two_constructed = true; }
-		Service3(Service2) { service3_one_constructed = true; }
+		explicit Service3(Service2) { service3_one_constructed = true; }
 	};
 	
 	struct Service4 {
 		Service4() = default;
-		Service4(Service3) { service4_constructed = true; }
+		explicit Service4(Service3) { service4_constructed = true; }
 	};
 	
 	struct Definition1 : kgr::service<Service1> {};

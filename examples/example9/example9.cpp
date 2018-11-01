@@ -29,7 +29,7 @@ struct CameraService : kgr::service<Camera> {};
 
 // Custom defintion. We kind of reinplement what `kgr::service` is doing
 struct BasicFileManagerService {
-	BasicFileManagerService(kgr::in_place_t) : instance{} {
+	explicit BasicFileManagerService(kgr::in_place_t) : instance{} {
 		std::cout << "BasicFileManagerService::BasicFileManagerService called\n";
 	}
 	

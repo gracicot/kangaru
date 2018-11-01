@@ -28,6 +28,7 @@ int main()
 	
 	container.invoke([](Camera& camera, Scene scene) {
 		// Do stuff with the camera and the scene!
+		(void) scene.camera.position;
 	});
 	
 	// Optional, but can be useful

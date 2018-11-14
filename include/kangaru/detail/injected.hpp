@@ -61,7 +61,7 @@ template<typename>
 struct injected_service {};
 
 /*
- * This is for non-single, non-virtual services.
+ * This is for non-virtual services.
  */
 template<typename T>
 struct injected_service<injected<T>&&> {
@@ -69,15 +69,7 @@ struct injected_service<injected<T>&&> {
 };
 
 /*
- * This is for non-virtual single services.
- */
-template<typename T>
-struct injected_service<injected<T&>&&> {
-	using type = T;
-};
-
-/*
- * This is for vritual services.
+ * This is for virtual services.
  */
 template<typename T>
 struct injected_service<virtual_injected<T>&&> {

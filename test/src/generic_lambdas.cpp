@@ -1,10 +1,10 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
 #include <random>
 #include <limits>
 
-inline namespace {
+namespace {
 
 static std::mt19937 random{std::random_device{}()};
 

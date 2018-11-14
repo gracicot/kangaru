@@ -1,5 +1,5 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
 namespace test_autowire_construct {
 	struct service1 {};

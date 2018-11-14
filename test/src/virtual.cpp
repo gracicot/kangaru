@@ -1,5 +1,5 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
 TEST_CASE("Definition can override another", "[virtual]") {
 	SECTION("Bases are instanciated, but not used after instanciate the derived") {
@@ -343,4 +343,20 @@ TEST_CASE("Definition can override with multiple level and virtual inheritance",
 		REQUIRE(static_cast<ServiceMiddle1*>(&c.service<DefinitionDerived>()) == &c.service<DefinitionMiddle1>());
 		REQUIRE(static_cast<ServiceMiddle2*>(&c.service<DefinitionDerived>()) == &c.service<DefinitionMiddle2>());
 	}
+}
+
+TEST_CASE("Abtract Services Are virtual", "[virtual]") {
+	kgr::container container;
+	struct A {};
+	
+	struct AbstractDefinition : kgr::abstract_service<A> {};
+	
+	REQUIRE(kgr::detail::is_polymorphic<AbstractDefinition>::value);
+	
+	CHECK_THROWS_AS(container.service<AbstractDefinition>(), kgr::abstract_not_found);
+	struct Override1Definition : kgr::single_service<A>, kgr::overrides<AbstractDefinition> {};
+	
+	container.emplace<Override1Definition>();
+	
+	REQUIRE(&container.service<AbstractDefinition>() == &container.service<AbstractDefinition>());
 }

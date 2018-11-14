@@ -1,7 +1,7 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
-inline namespace {
+namespace {
 	bool called = false;
 	
 	void function() noexcept {

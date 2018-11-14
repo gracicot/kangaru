@@ -38,8 +38,6 @@ target_include_directories(kangaru INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated/include>
 )
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
-
 if (KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()

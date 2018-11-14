@@ -1,5 +1,5 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
 TEST_CASE("Injected singles are the same returned by the container", "[dependency]") {
 	struct Service1 {};

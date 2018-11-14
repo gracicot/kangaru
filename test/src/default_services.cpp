@@ -1,5 +1,5 @@
-#include "catch.hpp"
-#include "kangaru/kangaru.hpp"
+#include <catch2/catch.hpp>
+#include <kangaru/kangaru.hpp>
 
 TEST_CASE("kgr::service must be constructible", "[default_services]") {
 	struct Service {};
@@ -108,6 +108,8 @@ TEST_CASE("kgr::single_service must accept references", "[default_services]") {
 	
 	kgr::container container;
 	
+	CHECK_THROWS_AS(container.service<Definition>(), kgr::supplied_not_found);
+	
 	container.emplace<Definition>(s);
 	
 	REQUIRE(kgr::detail::is_service_valid<Definition>::value);
@@ -121,6 +123,9 @@ TEST_CASE("kgr::extern_service is supplied and holds a reference", "[default_ser
 	
 	kgr::container container;
 	
+	CHECK_THROWS(container.service<Definition>());
+	
+	CHECK_THROWS_AS(container.service<Definition>(), kgr::supplied_not_found);
 	using return_value = decltype(container.service<Definition>());
 	
 	container.emplace<Definition>(s);
@@ -136,6 +141,8 @@ TEST_CASE("kgr::extern_shared_service is supplied and holds a shared_ptr", "[def
 	struct Definition : kgr::extern_shared_service<Service> {};
 	
 	kgr::container container;
+	
+	CHECK_THROWS_AS(container.service<Definition>(), kgr::supplied_not_found);
 	
 	using return_value = decltype(container.service<Definition>());
 	

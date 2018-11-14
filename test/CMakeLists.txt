@@ -37,10 +37,29 @@ if(${KANGARU_TEST})
 	add_kgr_test(definition)
 	add_kgr_test(dependency)
 	add_kgr_test(invoke)
+	add_kgr_test(noexcept_compiler_disabled_supplied noexcept.cpp)
+	add_kgr_test(noexcept_compiler_disabled_abstract noexcept.cpp)
+	add_kgr_test(noexcept_macro_disabled_supplied noexcept.cpp)
+	add_kgr_test(noexcept_macro_disabled_abstract noexcept.cpp)
 	add_kgr_test(service_map)
 	add_kgr_test(single)
 	add_kgr_test(virtual)
 endif()
+
+target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
+	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
+	$<$<CXX_COMPILER_ID:MSVC>:/GX->
+)
+
+target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
+	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
+	$<$<CXX_COMPILER_ID:MSVC>:/GX->
+)
+
+target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)
+target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_ABSTRACT_ABORT)
+target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
+target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
 
 if(${KANGARU_TEST_CXX14})
 	add_kgr_test(generic_lambdas)

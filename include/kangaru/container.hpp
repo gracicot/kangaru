@@ -336,7 +336,7 @@ private:
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
 	auto save_new_instance(Args&&...) -> detail::typed_service_storage<T> {
-		throw abstract_not_found{};
+		KGR_KANGARU_THROW(abstract_not_found{});
 	}
 	
 	/*
@@ -350,7 +350,7 @@ private:
 	auto save_new_instance(Args&&...)
 		-> detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&>
 	{
-		throw supplied_not_found{};
+		KGR_KANGARU_THROW(supplied_not_found{});
 	}
 	
 	/*
@@ -374,6 +374,7 @@ private:
 		return detail::typed_service_storage<T>{storage.service, get_override_forward<T, detail::default_type<T>>()};
 	}
 	
+	// TODO: find a way to move these to the source.
 	template<typename Override, typename T, enable_if<detail::is_polymorphic<T>> = 0>
 	auto get_override_forward() -> detail::forward_ptr<Override> {
 		return [](default_source::alias_t s) -> service_type<Override> {

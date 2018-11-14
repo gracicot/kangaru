@@ -17,6 +17,13 @@ option(KANGARU_TEST "Build test binaries" false)
 option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
 option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
 
+set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
+configure_file(
+	cmake/config/config.hpp.in
+	generated/include/kangaru/detail/config.hpp
+	@ONLY
+)
+
 if(${KANGARU_TEST_CXX14} OR ${KANGARU_TEST_CXX17} OR ${KANGARU_TEST})
 	set(KANGARU_ENABLE_TESTS true)
 endif()
@@ -28,11 +35,8 @@ add_library(kangaru INTERFACE)
 target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated/include>
 )
-
-if(KANGARU_REVERSE_DESTRUCTION)
-	target_compile_definitions(kangaru INTERFACE KGR_KANGARU_REVERSE_DESTRUCTION)
-endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules/")
 
@@ -75,7 +79,7 @@ if (KANGARU_INSTALL)
 		NO_CHECK_REQUIRED_COMPONENTS_MACRO
 	)
 
-	install(DIRECTORY include/kangaru DESTINATION ${KANGARU_INSTALL_INCLUDE_DIR} FILES_MATCHING PATTERN "*.hpp")
+	install(DIRECTORY include/kangaru ${CMAKE_BINARY_DIR}/generated/include/kangaru DESTINATION ${KANGARU_INSTALL_INCLUDE_DIR} FILES_MATCHING PATTERN "*.hpp")
 	
 	install(
 		FILES 

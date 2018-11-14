@@ -10,24 +10,25 @@ static void abort_handler(int signal)
 	}
 }
 
+TEST_CASE("Should abort when exceptions are disabled", "[noexcept]") {
+	std::signal(SIGABRT, abort_handler);
+	
 #if defined(KGR_KANGARU_TEST_ABSTRACT_ABORT)
-
-TEST_CASE("Should abort when exceptions are disabled", "[noexcept]") {
-	std::signal(SIGABRT, abort_handler);
-	struct A {};
-	struct Abstract : kgr::abstract_service<A> {};
-	
-	kgr::container{}.service<Abstract>();
-}
-
-#elif KGR_KANGARU_TEST_SUPPLIED_ABORT
-
-TEST_CASE("Should abort when exceptions are disabled", "[noexcept]") {
-	std::signal(SIGABRT, abort_handler);
-	struct S {};
-	struct Supplied : kgr::single_service<S>, kgr::supplied {};
-	
-	kgr::container{}.service<Supplied>();
-}
-
+	SECTION("Supplied service error") {
+		struct S {};
+		struct Supplied : kgr::single_service<S>, kgr::supplied {};
+		
+		kgr::container{}.service<Supplied>();
+	}
+#elif defined(KGR_KANGARU_TEST_SUPPLIED_ABORT)
+	SECTION("Abstract service error") {
+		struct A {};
+		struct Abstract : kgr::abstract_service<A> {};
+		
+		kgr::container{}.service<Abstract>();
+	}
+#else
+	#error "Specify a test to run"
 #endif
+}
+

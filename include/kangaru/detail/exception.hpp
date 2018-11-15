@@ -13,6 +13,8 @@
 	#define KGR_KANGARU_THROW(exception) std::abort()
 #endif
 
+#ifndef KGR_KANGARU_NOEXCEPTION
+
 #include <exception>
 
 namespace kgr {

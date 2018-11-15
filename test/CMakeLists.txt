@@ -48,12 +48,12 @@ endif()
 
 target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
 	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/GX->
+	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
 )
 
 target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
 	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/GX->
+	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
 )
 
 target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)

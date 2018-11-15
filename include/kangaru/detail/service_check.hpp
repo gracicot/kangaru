@@ -14,13 +14,17 @@ namespace detail {
  */
 template<typename T, typename... Args>
 using is_service_constructible = bool_constant<
-	is_supplied_service<T>::value || !has_any_construct<T, Args...>::value ||
+	is_abstract_service<T>::value || is_container_service<T>::value ||
 	(is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value &&
 	expand_all<
 		to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>,
-		is_service_instantiable,
-		T
+		is_service_instantiable, T
 	>::value)
+>;
+
+template<typename T, typename... Args>
+using is_service_constructible_if_required = bool_constant<
+	is_service_constructible<T, Args...>::value || is_supplied_service<T>::value
 >;
 
 /*
@@ -28,6 +32,7 @@ using is_service_constructible = bool_constant<
  */
 template<template<typename...> class Trait, typename T, typename... Args>
 struct dependency_trait {
+	// This subtrait recursively call dependency_trait for each dependencies
 	template<typename... Service>
 	struct service_check_dependencies {
 		static constexpr bool value = conjunction<
@@ -35,7 +40,7 @@ struct dependency_trait {
 			dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
 		>::value;
 	};
-
+	
 	static constexpr bool value =
 		is_supplied_service<T>::value ||
 		expand_minus_n<
@@ -66,8 +71,8 @@ using is_abstract_not_final = std::integral_constant<bool,
 template<typename T, typename... Args>
 using shallow_service_check = std::integral_constant<bool,
 	is_service<T>::value &&
-	is_service_constructible<T, Args...>::value &&
-	is_construct_function_callable<T, Args...>::value &&
+	(is_service_constructible<T, Args...>::value || is_supplied_service<T>::value) &&
+	(is_construct_function_callable_if_needed<T, Args...>::value || is_supplied_service<T>::value) &&
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
 	is_override_polymorphic<T>::value &&

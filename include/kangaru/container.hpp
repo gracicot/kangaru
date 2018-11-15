@@ -71,8 +71,7 @@ public:
 	 * This function require the service to be single.
 	 */
 	template<typename T, typename... Args,
-		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_construction_valid<T, Args...>> = 0>
+		enable_if<detail::is_emplace_valid<T, Args...>> = 0>
 	bool emplace(Args&&... args) {
 		// TODO: We're doing two search in the map: One before constructing the service and one to insert. We should do only one.
 		return contains<T>() ? false : (autocall(make_service_instance<T>(std::forward<Args>(args)...)), true);
@@ -96,8 +95,7 @@ public:
 	 * This function require the service to be single.
 	 */
 	template<typename T, typename... Args,
-		enable_if<detail::is_single<T>> = 0,
-		enable_if<detail::is_construction_valid<T, Args...>> = 0>
+		enable_if<detail::is_emplace_valid<T, Args...>> = 0>
 	void replace(Args&&... args) {
 		autocall(make_service_instance<T>(std::forward<Args>(args)...));
 	}

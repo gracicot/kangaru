@@ -204,9 +204,16 @@ using has_valid_construct = bool_constant<has_template_construct<T, Args...>::va
 template<typename T, typename... Args>
 struct is_construct_function_callable : bool_constant<
 	is_construct_invokable<detected_t<construct_function_t, T, Args...>, Args...>::value ||
-	is_container_service<T>::value || is_abstract_service<T>::value ||
-	(is_supplied_service<T>::value && sizeof...(Args) == 0)
+	is_container_service<T>::value || is_abstract_service<T>::value
 > {};
+
+/*
+ * Returns if a construct function is callable, but only if it's not a supplied service.
+ */
+template<typename T, typename... Args>
+using is_construct_function_callable_if_needed = bool_constant<
+	is_construct_function_callable<T, Args...>::value || (is_supplied_service<T>::value && sizeof...(Args) == 0)
+>;
 
 } // namespace detail
 } // namespace kgr

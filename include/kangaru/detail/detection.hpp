@@ -116,8 +116,8 @@ struct expand_n_helper<seq<S...>, List, Trait, Args...> {
 /*
  * Shortcut to expand_n that expand all the list minus `N` elements into the template.
  */
-template<std::size_t N, typename List, template<typename...> class Trait>
-using expand_minus_n = typename expand_n_helper<tuple_seq_minus<List, N>, List, Trait>::type;
+template<std::size_t N, typename List, template<typename...> class Trait, typename... Args>
+using expand_minus_n = typename expand_n_helper<tuple_seq_minus<List, N>, List, Trait, Args...>::type;
 
 /*
  * Shortcut to expand_n that always expand all the list into the template.

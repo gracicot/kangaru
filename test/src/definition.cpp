@@ -80,7 +80,7 @@ TEST_CASE("The construct function can be template", "[definition]") {
 	(void) c.service<Definition>(0);
 	(void) c.service<Definition>(std::tuple<>{});
 }
-}
+} // namespace template_construct
 
 namespace template_construct_param {
 
@@ -109,7 +109,7 @@ TEST_CASE("The construct function can be a mix of non templated and template par
 	(void) c.service<Definition>(0, 0);
 	(void) c.service<Definition>(0, std::tuple<>{});
 }
-}
+} // namespace template_construct_param
 
 namespace template_construct_inject {
 
@@ -182,7 +182,7 @@ TEST_CASE("The construct function can be a mix of non templated and template par
 	(void) c.service<DefinitionC>(DefinitionB{}, 0, 0);
 	(void) c.service<DefinitionC>(DefinitionB{}, 0, std::tuple<>{});
 }
-}
+} // namespace template_construct_inject
 
 namespace in_place_constructor {
 
@@ -199,7 +199,7 @@ TEST_CASE("The container call the constructor with the in_place_t constructor", 
 	(void) kgr::container{}.service<Definition>();
 	REQUIRE(constructor_called);
 }
-}
+} // namespace in_place_constructor
 
 namespace no_in_place {
 
@@ -219,7 +219,7 @@ TEST_CASE("The container call the default if no constructor with the in_place_t 
 	REQUIRE(emplace_called);
 	REQUIRE(constructor_called);
 }
-}
+} // namespace no_in_place
 
 namespace in_place_recieves_injected_parameters {
 
@@ -238,7 +238,7 @@ TEST_CASE("The forward injected parameters to the Definition constructor", "[def
 	(void) kgr::container{}.service<Definition>(a);
 	REQUIRE(constructor_called);
 }
-}
+} // namespace in_place_recieves_injected_parameters
 
 namespace definition_constructor_priority {
 
@@ -264,4 +264,18 @@ TEST_CASE("The container prefer the in_place_t constructor over emplace function
 	REQUIRE(constructor_called);
 	REQUIRE_FALSE(emplace_called);
 }
+} // namespace definition_constructor_priority
+
+TEST_CASE("Supplied services has different constraints", "[definition]") {
+	struct Service { explicit Service(int) {} };
+	struct Definition : kgr::single_service<Service>, kgr::supplied {};
+	
+	SECTION("Are still valid even if not constructible") {
+		REQUIRE(kgr::detail::is_service_valid<Definition>::value);
+	}
+	
+	SECTION("Need arguments when emplaced") {
+		REQUIRE_FALSE(kgr::detail::is_emplace_valid<Definition>::value);
+		REQUIRE(kgr::detail::is_emplace_valid<Definition, int>::value);
+	}
 }

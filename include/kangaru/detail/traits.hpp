@@ -197,13 +197,13 @@ template<typename T>
 using unwrap_pointer_t = typename unwrap_pointer<T>::type;
 
 template<typename T, typename... Args>
-using is_someway_constructible = std::integral_constant<bool, is_brace_constructible<T, Args...>::value || std::is_constructible<T, Args...>::value>;
+using is_someway_constructible = bool_constant<is_brace_constructible<T, Args...>::value || std::is_constructible<T, Args...>::value>;
 
 template<typename T, typename... Args>
-using is_emplaceable = std::integral_constant<bool, std::is_default_constructible<T>::value && has_emplace<T, Args...>::value>;
+using is_emplaceable = bool_constant<std::is_default_constructible<T>::value && has_emplace<T, Args...>::value>;
 
 template<typename T, typename... Args>
-using is_service_instantiable = std::integral_constant<bool, is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
+using is_service_instantiable = bool_constant<is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
 
 } // namespace detail

@@ -25,12 +25,6 @@ struct typed_service_storage {
 	forward_ptr<T> forward;
 };
 
-template<typename T>
-struct constant_typed_service_storage {
-	void const* service;
-	forward_ptr<T> forward;
-};
-
 struct service_storage {
 private:
 	using function_pointer = void*(*)(void*);
@@ -52,11 +46,6 @@ public:
 	template<typename T>
 	auto service() const noexcept -> T const& {
 		return *static_cast<T const*>(_service);
-	}
-	
-	template<typename T>
-	auto cast() const noexcept -> constant_typed_service_storage<T> {
-		return constant_typed_service_storage<T>{_service, reinterpret_cast<const forward_storage<T>*>(&forward_function)->forward};
 	}
 	
 	template<typename T>

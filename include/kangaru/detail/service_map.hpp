@@ -34,40 +34,6 @@ using normal_map_result_mapped = decltype(service_map(std::declval<S>(), std::de
 template<typename S>
 using normal_map_result_void = decltype(service_map(std::declval<S>()));
 
-#if (defined(__clang__) && __clang_major__ < 7) || defined(_MSC_VER)
-template<typename S>
-struct probe {
-	template<typename T, enable_if_t<
-		std::is_same<T&, S>::value &&
-		!std::is_const<T>::value, int> = 0>
-	operator T& ();
-	
-	template<typename T, enable_if_t<
-		std::is_same<T&&, S&&>::value &&
-		!std::is_const<T>::value, int> = 0>
-	operator T&& ();
-	
-	template<typename T, enable_if_t<
-		std::is_same<T const&, S>::value, int> = 0>
-	operator T const& () const;
-	
-	template<typename T, enable_if_t<
-		std::is_same<T const&&, S&&>::value, int> = 0>
-	operator T const&& () const;
-};
-
-/*
- * Alias to the expression of a normal mapped service map
- */
-template<typename S, typename M>
-using probed_map_result_mapped = normal_map_result_mapped<probe<S>, M>;
-
-/*
- * Alias to the expression of a normal mapped service map
- */
-template<typename S>
-using probed_map_result_void = normal_map_result_void<probe<S>>;
-#else
 template<typename S>
 struct probe {
 	template<typename T, enable_if_t<std::is_same<T&, S>::value, int> = 0>
@@ -77,18 +43,26 @@ struct probe {
 	operator T&& ();
 };
 
+template<typename S>
+struct probe_const {
+	template<typename T, enable_if_t<std::is_same<T&, S>::value, int> = 0>
+	operator T const& ();
+	
+	template<typename T, enable_if_t<std::is_same<T&&, S&&>::value, int> = 0>
+	operator T const&& ();
+};
+
 /*
  * Alias to the expression of a normal mapped service map
  */
-template<typename S, typename M, typename Result = detected_or<detected_t<normal_map_result_mapped, probe<constify_t<S>>, M>, normal_map_result_mapped, probe<S>, M>>
+template<typename S, typename M, typename Result = detected_or<detected_t<normal_map_result_mapped, probe_const<S>, M>, normal_map_result_mapped, probe<S>, M>>
 using probed_map_result_mapped = enable_if_t<such<Result>::value, Result>;
 
 /*
  * Alias to the expression of a normal mapped service map
  */
-template<typename S, typename Result = detected_or<detected_t<normal_map_result_void, probe<constify_t<S>>>, normal_map_result_void, probe<S>>>
+template<typename S, typename Result = detected_or<detected_t<normal_map_result_void, probe_const<S>>, normal_map_result_void, probe<S>>>
 using probed_map_result_void = enable_if_t<such<Result>::value, Result>;
-#endif
 
 /*
  * Trait that determines if a type is a map type.

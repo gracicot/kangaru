@@ -6,7 +6,7 @@ static void abort_handler(int signal)
 {
 	if (signal == SIGABRT) {
 		SUCCEED();
-		std::exit(0);
+		std::_Exit(EXIT_SUCCESS);
 	}
 }
 

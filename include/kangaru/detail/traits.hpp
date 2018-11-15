@@ -89,6 +89,9 @@ struct constify<T&> {
 	using type = T const&;
 };
 
+template<typename T>
+using constify_t = typename constify<T>::type;
+
 struct sink {
 	constexpr sink() = default;
 	

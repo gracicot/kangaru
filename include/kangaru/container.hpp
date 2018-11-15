@@ -19,7 +19,6 @@
 #include <type_traits>
 
 namespace kgr {
-namespace detail {
 
 /**
  * The kangaru container class.
@@ -27,7 +26,7 @@ namespace detail {
  * This class will construct services and share single instances for a given definition.
  * It is the class that parses and manage dependency graphs and calls autocall functions.
  */
-struct basic_container : private default_source {
+struct container : private detail::default_source {
 private:
 	template<typename Condition, typename T = int> using enable_if = detail::enable_if_t<Condition::value, T>;
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
@@ -55,14 +54,14 @@ private:
 		return detail::injected_wrapper<T>{instance.service<T>()};
 	}
 	
-	explicit basic_container(default_source&& source) : default_source{std::move(source)} {}
+	explicit container(default_source&& source) : default_source{std::move(source)} {}
 	
 public:
-	explicit basic_container() = default;
-	basic_container(const basic_container &) = delete;
-	basic_container& operator=(const basic_container &) = delete;
-	basic_container(basic_container&&) = default;
-	basic_container& operator=(basic_container&&) = default;
+	explicit container() = default;
+	container(container const&) = delete;
+	container& operator=(container const&) = delete;
+	container(container&&) = default;
+	container& operator=(container&&) = default;
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.
@@ -209,8 +208,8 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call fork() with a predicate as parameter.
 	 */
-	template<typename Predicate = all, enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
-	auto fork() const -> basic_container {
+	template<typename Predicate = all, detail::enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
+	auto fork() const -> container {
 		return fork(Predicate{});
 	}
 	
@@ -223,15 +222,15 @@ public:
 	 * It takes a predicate as argument.
 	 */
 	template<typename Predicate>
-	auto fork(Predicate predicate) const -> basic_container {
-		return basic_container{source().fork(predicate)};
+	auto fork(Predicate predicate) const -> container {
+		return container{source().fork(predicate)};
 	}
 	
 	/*
 	 * This function merges a container with another.
 	 * The receiving container will prefer it's own instances in a case of conflicts.
 	 */
-	inline void merge(basic_container&& other) {
+	inline void merge(container&& other) {
 		source().merge(std::move(other.source()));
 	}
 	
@@ -241,7 +240,7 @@ public:
 	 * 
 	 * This function consumes the container `other`
 	 */
-	inline void merge(basic_container& other) {
+	inline void merge(container& other) {
 		merge(std::move(other));
 	}
 	
@@ -257,8 +256,8 @@ public:
 	 * This version of the function takes a predicate that is default constructible.
 	 * It will call rebase() with a predicate as parameter.
 	 */
-	template<typename Predicate = all, enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
-	void rebase(const basic_container& other) {
+	template<typename Predicate = all, detail::enable_if_t<std::is_default_constructible<Predicate>::value, int> = 0>
+	void rebase(const container& other) {
 		rebase(other, Predicate{});
 	}
 	
@@ -270,7 +269,7 @@ public:
 	 * It takes a predicate type as argument to filter.
 	 */
 	template<typename Predicate>
-	void rebase(const basic_container& other, Predicate predicate) {
+	void rebase(const container& other, Predicate predicate) {
 		source().rebase(other.source(), predicate);
 	}
 	
@@ -278,7 +277,7 @@ public:
 	 * This function return true if the container contains the service T. Returns false otherwise.
 	 * T nust be a single service.
 	 */
-	template<typename T, enable_if_t<detail::is_service<T>::value && detail::is_single<T>::value, int> = 0>
+	template<typename T, detail::enable_if_t<detail::is_service<T>::value && detail::is_single<T>::value, int> = 0>
 	bool contains() const {
 		return source().contains<T>();
 	}
@@ -647,10 +646,6 @@ private:
 	template<typename T, disable_if<detail::has_autocall<T>> = 0>
 	void autocall(T&) {}
 };
-
-} // namespace detail
-
-using container = detail::basic_container;
 
 } // namespace kgr
 

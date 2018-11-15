@@ -137,6 +137,7 @@ public:
 	 */
 	inline void merge(default_source&& other) {
 		_services.insert(other._services.begin(), other._services.end());
+		_instances.reserve(_instances.size() + other._instances.size());
 		_instances.insert(
 			_instances.end(),
 			std::make_move_iterator(other._instances.begin()),
@@ -162,6 +163,11 @@ public:
 		);
 	}
 	
+	/**
+	 * This function finds a service in the source.
+	 * When the service is found, it returns the return value of the `found` function.
+	 * Otherwise it calls `fails` with no parameter.
+	 */
 	template<typename T, typename F1, typename F2, typename R1 = call_result_t<F1, storage_t>, typename R2 = call_result_t<F2>>
 	auto find(F1 found, F2 fails) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
 		auto it = _services.find(type_id<T>());

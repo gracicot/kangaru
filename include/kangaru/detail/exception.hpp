@@ -13,14 +13,6 @@
 	#define KGR_KANGARU_THROW(exception) std::abort()
 #endif
 
-// These preprocessor directives allow users to override.
-#if defined(KGR_KANGARU_THROW_OVERRIDE)
-	#undef KGR_KANGARU_THROW
-	#define KGR_KANGARU_THROW KGR_KANGARU_THROW_OVERRIDE
-#endif
-
-#ifndef KGR_KANGARU_NOEXCEPTION
-
 #include <exception>
 
 namespace kgr {

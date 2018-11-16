@@ -1,7 +1,7 @@
 find_package(Catch2 QUIET)
 
 if (NOT Catch2_FOUND)
-	add_subdirectory(catch/Catch2)
+	add_subdirectory(third_party/Catch2)
 	mark_as_advanced(Catch2_DIR)
 	mark_as_advanced(CATCH_USE_VALGRIND)
 	mark_as_advanced(CATCH_BUILD_TESTING)

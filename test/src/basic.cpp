@@ -4,7 +4,7 @@
 TEST_CASE("Container returns a service from a definition", "[service]") {
 	struct Service {};
 	struct Definition {
-		Definition(kgr::in_place_t) {}
+		explicit Definition(kgr::in_place_t) {}
 		
 		Service forward() {
 			return std::move(service);

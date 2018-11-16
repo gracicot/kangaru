@@ -14,6 +14,7 @@ option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" false)
 option(KANGARU_NO_EXCEPTION "Disable exceptions by replacing throws by asserts" false)
+option(KANGARU_BENCHMARK "Build benchmark binaries" false)
 option(KANGARU_TEST "Build test binaries" false)
 option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
 option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
@@ -33,7 +34,9 @@ endif()
 set(KANGARU_INSTALL_INCLUDE_DIR "include")
 
 add_library(kangaru INTERFACE)
+add_library(kangaru::kangaru ALIAS kangaru)
 
+target_compile_features(kangaru INTERFACE cxx_std_11)
 target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -47,6 +50,10 @@ endif()
 if (KANGARU_ENABLE_TESTS)
 	enable_testing()
     add_subdirectory(test)
+endif()
+
+if(KANGARU_BENCHMARK)
+	add_subdirectory(benchmark)
 endif()
 
 if (KANGARU_EXPORT)

@@ -22,7 +22,8 @@ function(add_kgr_test TEST_NAME)
 	endif()
 	
 	add_executable("${TEST_NAME}_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_test" PUBLIC Catch2::Catch2 kangaru)
+	target_link_libraries("${TEST_NAME}_test" PUBLIC Catch2::Catch2 kangaru::kangaru)
+	target_compile_features("${TEST_NAME}_test" PRIVATE cxx_std_11)
 	target_compile_definitions("${TEST_NAME}_test" PRIVATE CATCH_CONFIG_MAIN)
 	
 	add_test(${TEST_NAME} "${TEST_NAME}_test")
@@ -64,9 +65,11 @@ target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_
 if(${KANGARU_TEST_CXX14})
 	add_kgr_test(generic_lambdas)
 	set_property(TARGET generic_lambdas_test PROPERTY CXX_STANDARD 14)
+	target_compile_features(generic_lambdas_test PRIVATE cxx_std_14)
 endif()
 
 if(${KANGARU_TEST_CXX17})
 	add_kgr_test(noexcept_invoke)
 	set_property(TARGET noexcept_invoke_test PROPERTY CXX_STANDARD 17)
+	target_compile_features(noexcept_invoke_test PRIVATE cxx_std_17)
 endif()

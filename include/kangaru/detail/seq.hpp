@@ -8,16 +8,46 @@
 namespace kgr {
 namespace detail {
 
-template<std::size_t ...>
-struct seq {};
+template<typename S1, typename S2> struct seq_concat;
 
-template<std::size_t n, std::size_t ...S>
-struct seq_gen : seq_gen<n-1, n-1, S...> {};
+template<std::size_t...>
+struct seq { using type = seq; };
 
-template<std::size_t ...S>
-struct seq_gen<0, S...> {
-	using type = seq<S...>;
-};
+template<std::size_t... I1, std::size_t... I2>
+struct seq_concat<seq<I1...>, seq<I2...>> : seq<I1..., (sizeof...(I1)+I2)...>{};
+
+template<class S1, class S2>
+using seq_concat_t = typename seq_concat<S1, S2>::type;
+
+template<std::size_t n>
+struct seq_gen : seq_concat_t<typename seq_gen<n / 2>::type, typename seq_gen<n - n / 2>::type> {};
+
+template<>
+struct seq_gen<0> : seq<> {};
+
+template<>
+struct seq_gen<1> : seq<0> {};
+
+template<>
+struct seq_gen<2> : seq<0, 1> {};
+
+template<>
+struct seq_gen<3> : seq<0, 1, 2> {};
+
+template<>
+struct seq_gen<4> : seq<0, 1, 2, 3> {};
+
+template<>
+struct seq_gen<5> : seq<0, 1, 2, 3, 4> {};
+
+template<>
+struct seq_gen<6> : seq<0, 1, 2, 3, 4, 5> {};
+
+template<>
+struct seq_gen<7> : seq<0, 1, 2, 3, 4, 5, 6> {};
+
+template<>
+struct seq_gen<8> : seq<0, 1, 2, 3, 4, 5, 6, 7> {};
 
 template<typename>
 struct tuple_seq_gen;

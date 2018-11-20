@@ -414,7 +414,7 @@ private:
 	 */
 	template<typename T, typename... Args, std::size_t... S>
 	auto make_service_instance_helper(detail::seq<S...>, Args&&... args) -> contained_service_t<T> {
-		auto construct_args = invoke_raw(detail::construct_function<T, Args...>::value, std::forward<Args>(args)...);
+		auto construct_args = invoke_definition<detail::construct_function<T, Args...>>(std::forward<Args>(args)...);
 		
 		// This line is used to shut unused-variable warning, since S can be empty.
 		static_cast<void>(construct_args);
@@ -598,22 +598,21 @@ private:
 	 * This function is the same as invoke but it sends service definitions instead of the service itself.
 	 * It is called with some autocall function and the make_service_instance function.
 	 */
-	template<typename U, typename... Args>
-	auto invoke_raw(U function, Args&&... args) -> detail::function_result_t<U> {
-		return invoke_raw_helper(
-			detail::tuple_seq_minus<detail::function_arguments_t<U>, sizeof...(Args)>{},
-			function,
+	template<typename U, typename... Args, typename F = typename U::value_type>
+	auto invoke_definition(Args&&... args) -> detail::function_result_t<F> {
+		return invoke_definition_helper<U>(
+			detail::tuple_seq_minus<detail::function_arguments_t<F>, sizeof...(Args)>{},
 			std::forward<Args>(args)...
 		);
 	}
 	
 	/*
-	 * This function is an helper of the invoke_raw function.
+	 * This function is an helper of the invoke_definition function.
 	 * It unpacks arguments of the function U with an integer sequence.
 	 */
-	template<typename U, typename... Args, std::size_t... S>
-	auto invoke_raw_helper(detail::seq<S...>, U function, Args&&... args) -> detail::function_result_t<U> {
-		return function(definition<detail::injected_argument_t<S, U>>()..., std::forward<Args>(args)...);
+	template<typename U, typename... Args, std::size_t... S, typename F = typename U::value_type>
+	auto invoke_definition_helper(detail::seq<S...>, Args&&... args) -> detail::function_result_t<F> {
+		return U::value(definition<detail::injected_argument_t<S, F>>()..., std::forward<Args>(args)...);
 	}
 	
 	///////////////////////
@@ -634,7 +633,7 @@ private:
 	template<typename T, std::size_t... S, enable_if<detail::has_autocall<T>> = 0>
 	void autocall(detail::seq<S...>, T& service) {
 		(void)unpack{(void(
-			invoke_raw(detail::autocall_nth_function<T, S>::value, service)
+			invoke_definition<detail::autocall_nth_function<T, S>>(service)
 		), 0)..., 0};
 	}
 	

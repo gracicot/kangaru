@@ -14,6 +14,9 @@ The name kangaru comes from the container's feature to inject itself into a serv
 
 Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
 
+Overview
+--------
+
 Here's a quick demo to show usage of this library:
 ```c++
 #include <kangaru/kangaru.hpp>
@@ -53,13 +56,12 @@ int main()
 Features
 --------
 
- * Recursive dependency resolution
  * Non intrusive. No existing classes need modification.
  * You tell the container how to construct your types, store and inject them
  * Injection by setters
  * Autowiring by class constructors
  * Function parameter injection
- * Clean and simple API for simple cases, complex enough for complex cases
+ * Clean and simple API for simple cases, flexible enough for complex cases
  * Low runtime overhead
  * Header only library
  * Clean diagnostics at compile-time.
@@ -103,6 +105,9 @@ Then you can include the library as follow:
 
 Compiler Requirement
 --------------------
+
+Kangaru is tested by our continuous integration with all major compiler versions. The minimum required versions are:
+
  * MSVC: 2015 update 3 or better
  * GCC: 4.8.5 or better
  * Clang: 3.6 or better
@@ -113,9 +118,9 @@ There is some feature I would like to see become real. Here's a list of those,
 feel free to contribute!
 
  * Tests for compile-time errors
- * More test coverage
  * Better messages for compile-time errors (ongoing)
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
+ * Even better performance (ongoing)
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
 

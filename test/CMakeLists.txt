@@ -22,9 +22,16 @@ function(add_kgr_test TEST_NAME)
 	endif()
 	
 	add_executable("${TEST_NAME}_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_test" PUBLIC Catch2::Catch2 kangaru::kangaru)
+	target_link_libraries("${TEST_NAME}_test" PRIVATE Catch2::Catch2)
 	target_compile_features("${TEST_NAME}_test" PRIVATE cxx_std_11)
 	target_compile_definitions("${TEST_NAME}_test" PRIVATE CATCH_CONFIG_MAIN)
+
+	target_include_directories("${TEST_NAME}_test" PRIVATE $<TARGET_PROPERTY:kangaru::kangaru,INTERFACE_INCLUDE_DIRECTORIES>)
+	
+	target_compile_options("${TEST_NAME}_test" PRIVATE
+		$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall -Wextra>
+		$<$<CXX_COMPILER_ID:MSVC>:/W3>
+	)
 	
 	add_test(${TEST_NAME} "${TEST_NAME}_test")
 endfunction()

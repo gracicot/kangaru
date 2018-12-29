@@ -109,6 +109,7 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	
 	CHECK(!service1_constructed);
 	CHECK(sizeof(lazy1) == sizeof(kgr::container*) + sizeof(Service1*));
+	CHECK(sizeof(kgr::detail::lazy_storage<kgr::service_type<Definition1>>) == sizeof(Service1*));
 	
 	auto& service1 = *lazy1;
 	

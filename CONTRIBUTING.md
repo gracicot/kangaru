@@ -32,3 +32,6 @@ To increase the chances of a patch to be accepted, please be mindful of:
  * Follow the coding style of the edited file,
  * Write tests if applicable.
  
+### Testing
+
+When a patch influence the public API or has any obverable property in user code, a test is required. Any major functionality should have a dedicated unit test.

@@ -126,11 +126,13 @@ Got suggestions or questions? Discovered a bug? Please open an issue and we'll g
 
 Contributing
 ------------
-To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome!
+To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome! See our complete [contribution guideline](https://github.com/gracicot/kangaru/blob/master/CONTRIBUTING.md) for more details.
 
 Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)!
 
 Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
+
+For security related problems, please submit us an issues with the _security_ tag. If any private code/information need to be transmitted, a main contributor will transmit the instruction in the issue.
 
 Who's using kangaru?
 --------------------

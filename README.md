@@ -130,6 +130,8 @@ To contribute, simply open a pull request or an issue and we'll discuss together
 
 Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)!
 
+Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
+
 Who's using kangaru?
 --------------------
 Here's a list of projets making use of kangaru

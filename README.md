@@ -1,5 +1,16 @@
 
-# kangaru <br /> [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1a3587f5fba946d5a1c3c3bc556de45d)](https://app.codacy.com/app/gracicot/kangaru?utm_source=github.com&utm_medium=referral&utm_content=gracicot/kangaru&utm_campaign=Badge_Grade_Dashboard) [![Total alerts](https://img.shields.io/lgtm/alerts/g/gracicot/kangaru.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gracicot/kangaru/alerts/) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1401/badge)](https://bestpractices.coreinfrastructure.org/projects/1401) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/SVZduLAhH0dACDlj)
+# kangaru <br /> 
+[![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru)
+[![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru)
+[![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1a3587f5fba946d5a1c3c3bc556de45d)](https://app.codacy.com/app/gracicot/kangaru?utm_source=github.com&utm_medium=referral&utm_content=gracicot/kangaru&utm_campaign=Badge_Grade_Dashboard)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/gracicot/kangaru.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gracicot/kangaru/alerts/)
+[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1401/badge)](https://bestpractices.coreinfrastructure.org/projects/1401)
+[![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/gracicot/kangaru/master/LICENSE.MIT)
+[![GitHub Releases](https://img.shields.io/github/release/gracicot/kangaru.svg)](https://github.com/gracicot/kangaru/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/gracicot/kangaru.svg)](http://github.com/gracicot/kangaru/issues)
+[![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/SVZduLAhH0dACDlj)
 
 Kangaru is an inversion of control container for C++11, C++14 and later. It supports features like operation between containers,
 injection via function parameter, automatic call of member functions on instance creation, autowiring and much more!

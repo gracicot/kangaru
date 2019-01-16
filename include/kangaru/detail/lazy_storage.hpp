@@ -7,6 +7,12 @@
 namespace kgr {
 namespace detail {
 
+#if defined(_MSC_VER)
+#define KGR_KANGARU_EMPTY_BASES __declspec(empty_bases)
+#else
+#define KGR_KANGARU_EMPTY_BASES
+#endif
+
 template<typename T>
 using is_trivially_copy_constructible =
 #if __GNUC__ < 5 && !defined(__clang__)
@@ -59,7 +65,7 @@ using lazy_stored_type = typename std::conditional<
  * This is used to implement all of the CRTP classes at once, without copy-pasting the CRTP parameters.
  */
 template<typename CRTP, typename T, template<typename, typename, typename = void> class... Bases>
-struct lazy_crtp_helper : Bases<CRTP, T>... {};
+struct KGR_KANGARU_EMPTY_BASES lazy_crtp_helper : Bases<CRTP, T>... {};
 
 /*
  * This class implements the copy constructor of lazy_storage.

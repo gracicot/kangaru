@@ -27,7 +27,8 @@ struct deducer {
 	template<typename T, enable_if_t<
 		!std::is_base_of<For, mapped_service_t<T, Map>>::value &&
 		!std::is_base_of<mapped_service_t<T, Map>, For>::value &&
-		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
+		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value &&
+		is_service_valid<mapped_service_t<T, Map>>::value, int> = 0>
 	operator T () {
 		return _container->service<mapped_service_t<T, Map>>();
 	}
@@ -35,7 +36,8 @@ struct deducer {
 	template<typename T, enable_if_t<
 		!std::is_base_of<For, mapped_service_t<T&, Map>>::value &&
 		!std::is_base_of<mapped_service_t<T&, Map>, For>::value &&
-		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
+		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value &&
+		is_service_valid<mapped_service_t<T&, Map>>::value, int> = 0>
 	operator T& () const {
 		return _container->service<mapped_service_t<T&, Map>>();
 	}
@@ -43,7 +45,8 @@ struct deducer {
 	template<typename T, enable_if_t<
 		!std::is_base_of<For, mapped_service_t<T&&, Map>>::value &&
 		!std::is_base_of<mapped_service_t<T&&, Map>, For>::value &&
-		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
+		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value &&
+		is_service_valid<mapped_service_t<T&&, Map>>::value, int> = 0>
 	operator T&& () const {
 		return _container->service<mapped_service_t<T&&, Map>>();
 	}

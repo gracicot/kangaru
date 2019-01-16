@@ -1,9 +1,6 @@
 # kangaru [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/SVZduLAhH0dACDlj)
 
-Kangaru is an inversion of control container for C++11, C++14 and later. It supports features like operation between containers,
-injection via function parameter, automatic call of member functions on instance creation, autowiring and much more!
-
-Our goal is to create a DI container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
+Kangaru is an inversion of control container for C++11, C++14 and later. It provides many features to automate dependency injection and reduce the amount of wiring boilerplate in your code. We are achiving that by exposing in code configuration for autowiring, constructor and function parameters injection. We aim to keep the simplest interface possible and keep boilerplate to a minimum. On top of that, we don't want to be intrusive into user/library code.
 
 Kangaru is a header only library because of it's extensive use of templates.
 The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
@@ -17,7 +14,8 @@ Looking for the latest stable version? Check out our [release page](https://gith
 Overview
 --------
 
-Here's a quick demo to show usage of this library:
+Here's a quick demo to show usage of this library. This is some basic usage of the library with two user classes.
+
 ```c++
 #include <kangaru/kangaru.hpp>
 #include <cassert>
@@ -51,6 +49,7 @@ int main()
     assert(&scene.camera == &camera); // passes, both cameras are the same instance.
 }
 ```
+
 [Try this example online](https://wandbox.org/permlink/3ekQZXqTFGRlj8ZG) to see how it runs.
 
 Features
@@ -121,6 +120,7 @@ feel free to contribute!
  * Better messages for compile-time errors (ongoing)
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
  * Even better performance (ongoing)
+ * Expose a zero-overhead interface for cases it can apply
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
 
@@ -137,7 +137,7 @@ Here's a list of projets making use of kangaru
    
 #### Using kangaru?
 
-Let me know of your projects that uses kangaru! I'll be glad to fill the list above with your project's name.
+Let me know of your projects using kangaru! I'll be glad to fill the list above with your project's name.
 
 Acknowledgements
 ----------------

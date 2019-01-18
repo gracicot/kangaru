@@ -306,6 +306,8 @@ namespace test_autowire_priority {
 		
 		auto service2 = container.service<definition3>(32);
 		
+		(void) service2;
+		
 		REQUIRE(service3_nth_constructor_called == 3);
 	}
 }

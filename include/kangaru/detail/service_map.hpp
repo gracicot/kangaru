@@ -34,7 +34,7 @@ using normal_map_result_mapped = decltype(service_map(std::declval<S>(), std::de
 template<typename S>
 using normal_map_result_void = decltype(service_map(std::declval<S>()));
 
-#if (defined(__clang__) && __clang_major__ < 7) || defined(_MSC_VER)
+#if (defined(__clang__) && __clang_major__ < 7) || (defined(_MSC_VER) && not defined(__clang__))
 template<typename S>
 struct probe {
 	template<typename T, enable_if_t<

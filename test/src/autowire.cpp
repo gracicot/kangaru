@@ -156,6 +156,52 @@ namespace test_autowire_normal_services {
 	}
 }
 
+namespace test_autowire_circular_error {
+	struct service3;
+	
+	struct service1 {
+		service3& s;
+	};
+	
+	struct service2 {
+		service1& s;
+	};
+	
+	struct service3 {
+		service2& s;
+	};
+	
+	auto service_map(service1 const&) -> kgr::single_service<service1, kgr::autowire>;
+	auto service_map(service2 const&) -> kgr::single_service<service2, kgr::autowire>;
+	auto service_map(service3 const&) -> kgr::single_service<service3, kgr::autowire>;
+	
+	TEST_CASE("autowire detect circular dependency", "[autowire]") {
+		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service1>>::value);
+		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
+		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service3>>::value);
+	}
+}
+
+namespace test_autowire_service_error {
+	struct ill_formed {};
+	
+	auto service_map(ill_formed const&) -> kgr::single_service<ill_formed, kgr::dependency<kgr::invoker_service>>;
+	
+	struct service2 {
+		ill_formed& s1;
+		kgr::container& container;
+		
+		friend auto service_map(service2 const&) -> kgr::service<service2, kgr::autowire>;
+	};
+	
+	TEST_CASE("autowire service detect errors in autowired dependencies", "[autowire]") {
+		kgr::container container;
+		
+		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<ill_formed>>::value);
+		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
+	}
+}
+
 namespace test_autowire_mapped {
 	bool bad_constructed = false;
 	
@@ -259,6 +305,8 @@ namespace test_autowire_priority {
 		REQUIRE(service1.s2);
 		
 		auto service2 = container.service<definition3>(32);
+		
+		(void) service2;
 		
 		REQUIRE(service3_nth_constructor_called == 3);
 	}

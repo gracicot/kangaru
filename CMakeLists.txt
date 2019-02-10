@@ -21,6 +21,7 @@ option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
 
 set(KGR_KANGARU_NOEXCEPTION ${KANGARU_NO_EXCEPTION})
 set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
+
 configure_file(
 	cmake/config/config.hpp.in
 	generated/include/kangaru/detail/config.hpp
@@ -43,24 +44,24 @@ target_include_directories(kangaru INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/generated/include>
 )
 
-if (KANGARU_BUILD_EXAMPLES)
+if(KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
-if (KANGARU_ENABLE_TESTS)
+if(KANGARU_ENABLE_TESTS)
 	enable_testing()
-    add_subdirectory(test)
+	add_subdirectory(test)
 endif()
 
 if(KANGARU_BENCHMARK)
 	add_subdirectory(benchmark)
 endif()
 
-if (KANGARU_EXPORT)
+if(KANGARU_EXPORT)
 	export(PACKAGE kangaru)
 endif()
 
-if (KANGARU_INSTALL)
+if(KANGARU_INSTALL)
 	set(KANGARU_CONFIG_PATH "lib/cmake/kangaru")
 	
 	include(CMakePackageConfigHelpers)
@@ -70,14 +71,14 @@ if (KANGARU_INSTALL)
 		VERSION ${KANGARU_VERSION}
 		COMPATIBILITY SameMajorVersion
 	)
-
+	
 	# build tree package config
 	configure_file(
 		cmake/config/kangaruBuildConfig.cmake.in
 		kangaruConfig.cmake
 		@ONLY
 	)
-
+	
 	# install tree package config
 	configure_package_config_file(
 		cmake/config/kangaruConfig.cmake.in
@@ -85,23 +86,26 @@ if (KANGARU_INSTALL)
 		INSTALL_DESTINATION ${KANGARU_CONFIG_PATH}
 		NO_CHECK_REQUIRED_COMPONENTS_MACRO
 	)
-
-	install(DIRECTORY include/kangaru ${CMAKE_BINARY_DIR}/generated/include/kangaru DESTINATION ${KANGARU_INSTALL_INCLUDE_DIR} FILES_MATCHING PATTERN "*.hpp")
 	
 	install(
-		FILES 
+		DIRECTORY include/kangaru ${CMAKE_BINARY_DIR}/generated/include/kangaru
+		DESTINATION ${KANGARU_INSTALL_INCLUDE_DIR} FILES_MATCHING PATTERN "*.hpp"
+	)
+	
+	install(
+		FILES
 			"${CMAKE_CURRENT_BINARY_DIR}/${KANGARU_CONFIG_PATH}/kangaruConfig.cmake"
 			"${CMAKE_CURRENT_BINARY_DIR}/kangaruConfigVersion.cmake"
 		DESTINATION ${KANGARU_CONFIG_PATH}
 	)
 	
 	install(TARGETS kangaru EXPORT kangaruTargets)
-
+	
 	export(
 		EXPORT kangaruTargets
 		FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaruTargets.cmake"
 	)
-
+	
 	install(
 		EXPORT kangaruTargets FILE kangaruTargets.cmake
 		DESTINATION ${KANGARU_CONFIG_PATH}

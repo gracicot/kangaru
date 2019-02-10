@@ -1,9 +1,6 @@
-# kangaru [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/SVZduLAhH0dACDlj)
+# kangaru <br /> [![Build status](https://ci.appveyor.com/api/projects/status/8gv9iapt3g7mgc4l?svg=true)](https://ci.appveyor.com/project/gracicot/kangaru) [![Build Status](https://travis-ci.org/gracicot/kangaru.svg?branch=master)](https://travis-ci.org/gracicot/kangaru) [![BCH compliance](https://bettercodehub.com/edge/badge/gracicot/kangaru?branch=master)](https://bettercodehub.com/results/gracicot/kangaru) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1a3587f5fba946d5a1c3c3bc556de45d)](https://app.codacy.com/app/gracicot/kangaru?utm_source=github.com&utm_medium=referral&utm_content=gracicot/kangaru&utm_campaign=Badge_Grade_Dashboard) [![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/gracicot/kangaru.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/gracicot/kangaru/context:cpp) [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1401/badge)](https://bestpractices.coreinfrastructure.org/projects/1401) [![Join the chat at https://gitter.im/gracicot/kangaru](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/gracicot/kangaru?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/gracicot/kangaru/master/LICENSE) [![GitHub Releases](https://img.shields.io/github/release/gracicot/kangaru.svg)](https://github.com/gracicot/kangaru/releases) [![GitHub Issues](https://img.shields.io/github/issues/gracicot/kangaru.svg)](http://github.com/gracicot/kangaru/issues) [![Try online](https://img.shields.io/badge/try-online-blue.svg)](https://wandbox.org/permlink/SVZduLAhH0dACDlj)
 
-Kangaru is an inversion of control container for C++11, C++14 and later. It supports features like operation between containers,
-injection via function parameter, automatic call of member functions on instance creation, autowiring and much more!
-
-Our goal is to create a DI container capable of automatic, recusive dependency injection. We also want to do most diagnostics at compile time, while keeping the simplest interface possible. On top of that, we don't want to be intrusive into user/library code.
+Kangaru is an inversion of control container for C++11, C++14 and later. It provides many features to automate dependency injection and reduce the amount of wiring boilerplate in your code. We are achiving that by exposing in code configuration for autowiring, constructor and function parameters injection. We aim to keep the simplest interface possible and keep boilerplate to a minimum. On top of that, we don't want to be intrusive into user/library code.
 
 Kangaru is a header only library because of it's extensive use of templates.
 The name kangaru comes from the container's feature to inject itself into a service as a dependency, and because kangaroos are awesome.
@@ -14,7 +11,11 @@ The name kangaru comes from the container's feature to inject itself into a serv
 
 Looking for the latest stable version? Check out our [release page](https://github.com/gracicot/kangaru/releases).
 
-Here's a quick demo to show usage of this library:
+Overview
+--------
+
+Here's a quick demo to show usage of this library. This is some basic usage of the library with two user classes.
+
 ```c++
 #include <kangaru/kangaru.hpp>
 #include <cassert>
@@ -48,18 +49,18 @@ int main()
     assert(&scene.camera == &camera); // passes, both cameras are the same instance.
 }
 ```
+
 [Try this example online](https://wandbox.org/permlink/3ekQZXqTFGRlj8ZG) to see how it runs.
 
 Features
 --------
 
- * Recursive dependency resolution
  * Non intrusive. No existing classes need modification.
  * You tell the container how to construct your types, store and inject them
  * Injection by setters
  * Autowiring by class constructors
  * Function parameter injection
- * Clean and simple API for simple cases, complex enough for complex cases
+ * Clean and simple API for simple cases, flexible enough for complex cases
  * Low runtime overhead
  * Header only library
  * Clean diagnostics at compile-time.
@@ -68,18 +69,24 @@ Installation
 ------------
 To make kangaru available on your machine, you must clone the repository and create a build directory:
 
-    $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
-    $ mkdir build && cd build
+```sh
+$ git clone https://github.com/gracicot/kangaru.git && cd kangaru
+$ mkdir build && cd build
+```
 
 Then use cmake to generate the makefile and export the package informations:
 
-    $ cmake ..
+```sh
+$ cmake ..
+```
 
 That's it! Link it to your project using cmake and you can already include and code!
 
 Optionally, you can also install kangaru on your system:
 
-    # make install
+```sh
+$ sudo make install # optional step
+```
 
 Adding Include Path
 -------------------
@@ -97,6 +104,9 @@ Then you can include the library as follow:
 
 Compiler Requirement
 --------------------
+
+Kangaru is tested by our continuous integration with all major compiler versions. The minimum required versions are:
+
  * MSVC: 2015 update 3 or better
  * GCC: 4.8.5 or better
  * Clang: 3.6 or better
@@ -107,17 +117,22 @@ There is some feature I would like to see become real. Here's a list of those,
 feel free to contribute!
 
  * Tests for compile-time errors
- * More test coverage
  * Better messages for compile-time errors (ongoing)
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
+ * Even better performance (ongoing)
+ * Expose a zero-overhead interface for cases it can apply
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
 
 Contributing
 ------------
-To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome!
+To contribute, simply open a pull request or an issue and we'll discuss together about how to make this library even more awesome! See our complete [contribution guideline](https://github.com/gracicot/kangaru/blob/master/CONTRIBUTING.md) for more details.
 
 Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/kangaru/issues)!
+
+Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
+
+For security related problems, please submit us an issues with the _security_ tag. If any private code/information need to be transmitted, a main contributor will transmit the instruction in the issue.
 
 Who's using kangaru?
 --------------------
@@ -126,7 +141,7 @@ Here's a list of projets making use of kangaru
    
 #### Using kangaru?
 
-Let me know of your projects that uses kangaru! I'll be glad to fill the list above with your project's name.
+Let me know of your projects using kangaru! I'll be glad to fill the list above with your project's name.
 
 Acknowledgements
 ----------------

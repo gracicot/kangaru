@@ -37,7 +37,7 @@ struct dependency_trait {
 	struct service_check_dependencies {
 		static constexpr bool value = conjunction<
 			Trait<detected_t<injected_service_t, Service>>...,
-			dependency_trait<Trait, detected_t<injected_service_t, Service>, Args...>...
+			dependency_trait<Trait, detected_t<injected_service_t, Service>>...
 		>::value;
 	};
 	

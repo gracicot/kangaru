@@ -14,6 +14,13 @@ template<typename, typename>
 struct service;
 
 namespace detail {
+
+template<typename Service1, typename Service2>
+using is_different_service = bool_constant<
+	!std::is_base_of<Service1, Service2>::value &&
+	!std::is_base_of<Service2, Service1>::value
+>;
+
 /*
  * This class is an object convertible to any mapped service.
  * Upon conversion, it calls the container to get that service.
@@ -25,24 +32,24 @@ struct deducer {
 	explicit deducer(container& c) noexcept : _container{&c} {}
 	
 	template<typename T, enable_if_t<
-		!std::is_base_of<For, mapped_service_t<T, Map>>::value &&
-		!std::is_base_of<mapped_service_t<T, Map>, For>::value &&
+		is_different_service<For, mapped_service_t<T, Map>>::value &&
+		is_service_valid<mapped_service_t<T, Map>>::value &&
 		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
 	operator T () {
 		return _container->service<mapped_service_t<T, Map>>();
 	}
 	
 	template<typename T, enable_if_t<
-		!std::is_base_of<For, mapped_service_t<T&, Map>>::value &&
-		!std::is_base_of<mapped_service_t<T&, Map>, For>::value &&
+		is_different_service<For, mapped_service_t<T&, Map>>::value &&
+		is_service_valid<mapped_service_t<T&, Map>>::value &&
 		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
 	operator T& () const {
 		return _container->service<mapped_service_t<T&, Map>>();
 	}
 	
 	template<typename T, enable_if_t<
-		!std::is_base_of<For, mapped_service_t<T&&, Map>>::value &&
-		!std::is_base_of<mapped_service_t<T&&, Map>, For>::value &&
+		is_different_service<For, mapped_service_t<T&&, Map>>::value &&
+		is_service_valid<mapped_service_t<T&&, Map>>::value &&
 		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
 	operator T&& () const {
 		return _container->service<mapped_service_t<T&&, Map>>();
@@ -52,11 +59,35 @@ private:
 	container* _container;
 };
 
+template<typename For, typename Map>
+struct weak_deducer {
+	template<typename T, enable_if_t<
+		is_different_service<For, mapped_service_t<T, Map>>::value &&
+		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
+	operator T ();
+	
+	template<typename T, enable_if_t<
+		is_different_service<For, mapped_service_t<T&, Map>>::value &&
+		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
+	operator T& () const;
+	
+	template<typename T, enable_if_t<
+		is_different_service<For, mapped_service_t<T&&, Map>>::value &&
+		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
+	operator T&& () const;
+};
+
 /*
  * Alias that simply add a std::size_t parameter so it can be expanded using a sequence.
  */
 template<typename For, typename Map, std::size_t>
 using deducer_expand_t = deducer<For, Map>;
+
+/*
+ * Alias that simply add a std::size_t parameter so it can be expanded using a sequence.
+ */
+template<typename For, typename Map, std::size_t>
+using weak_deducer_expand_t = weak_deducer<For, Map>;
 
 /*
  * Trait that check if a service is constructible using `n` amount of deducers.
@@ -69,7 +100,7 @@ struct is_deductible_from_amount_helper : std::false_type {};
  * It also returns the injected result of the construct function (assuming a basic construct function)
  */
 template<typename Service, typename T, typename Map, typename... Args, std::size_t... S, std::size_t n>
-struct is_deductible_from_amount_helper<Service, T, Map, n, meta_list<Args...>, seq<S...>, enable_if_t<is_someway_constructible<T, deducer_expand_t<Service, Map, S>..., Args...>::value>> : std::true_type {
+struct is_deductible_from_amount_helper<Service, T, Map, n, meta_list<Args...>, seq<S...>, enable_if_t<is_someway_constructible<T, weak_deducer_expand_t<Service, Map, S>..., Args...>::value>> : std::true_type {
 	using default_result_t = inject_result<deducer_expand_t<Service, Map, S>..., Args...>;
 };
 

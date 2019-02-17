@@ -9,17 +9,28 @@
 namespace kgr {
 namespace detail {
 
+template<typename T, typename... Args>
+using curry_is_constructible_from_construct = expand_all<
+	to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>,
+	is_service_instantiable, T
+>;
+
+/*
+ * Trait that check if the service construct function can be called and returns arguments that construct the service.
+ */
+template<typename T, typename... Args>
+using is_constructible_from_construct = instantiate_if_or<
+	is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value,
+	std::false_type, curry_is_constructible_from_construct, T, Args...
+>;
+
 /*
  * Trait that check if the service definition can be constructed given the return type of it's construct function.
  */
 template<typename T, typename... Args>
-using is_service_constructible = bool_constant<
-	is_abstract_service<T>::value || is_container_service<T>::value ||
-	(is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value &&
-	expand_all<
-		to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>,
-		is_service_instantiable, T
-	>::value)
+using is_service_constructible = instantiate_if_or<
+	!is_abstract_service<T>::value && !is_container_service<T>::value, std::true_type,
+	is_constructible_from_construct, T, Args...
 >;
 
 template<typename T, typename... Args>
@@ -65,14 +76,8 @@ using is_abstract_not_final = std::integral_constant<bool,
 	!is_abstract_service<T>::value || !is_final_service<T>::value
 >;
 
-/*
- * Validity check for a service, without it's dependencies
- */
-template<typename T, typename... Args>
-using shallow_service_check = std::integral_constant<bool,
-	is_service<T>::value &&
-	(is_service_constructible<T, Args...>::value || is_supplied_service<T>::value) &&
-	(is_construct_function_callable_if_needed<T, Args...>::value || is_supplied_service<T>::value) &&
+template<typename T>
+using polymorphic_service_check = bool_constant<
 	is_default_service_valid<T>::value &&
 	is_override_convertible<T>::value &&
 	is_override_polymorphic<T>::value &&
@@ -82,15 +87,26 @@ using shallow_service_check = std::integral_constant<bool,
 >;
 
 /*
+ * Validity check for a service, without it's dependencies
+ */
+template<typename T, typename... Args>
+using shallow_service_check = std::integral_constant<bool,
+	is_service<T>::value &&
+	(is_service_constructible<T, Args...>::value || is_supplied_service<T>::value) &&
+	(is_construct_function_callable_if_needed<T, Args...>::value || is_supplied_service<T>::value) &&
+	instantiate_if_or<is_polymorphic<T>::value, std::true_type, polymorphic_service_check, T>::value
+>;
+
+/*
  * Validity check for dependencies of a service
  */
 template<typename T, typename... Args>
 using dependency_check = dependency_trait<shallow_service_check, T, Args...>;
 
 template<typename T, typename... Args>
-struct service_check : bool_constant<
+using service_check = bool_constant<
 	shallow_service_check<T, Args...>::value && dependency_check<T, Args...>::value
-> {};
+>;
 
 } // namespace detail
 } // namespace kgr

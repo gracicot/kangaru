@@ -72,7 +72,7 @@ template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 
 template<typename T>
-struct is_service : bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value> {};
+using is_service = bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value>;
 
 template<typename T>
 struct constify {

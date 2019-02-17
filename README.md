@@ -132,8 +132,6 @@ Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/k
 
 Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
 
-For security related problems, please submit us an issues with the _security_ tag. If any private code/information need to be transmitted, a main contributor will transmit the instruction in the issue.
-
 Who's using kangaru?
 --------------------
 Here's a list of projets making use of kangaru

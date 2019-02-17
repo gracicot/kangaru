@@ -4,6 +4,7 @@
 #include "function_traits.hpp"
 #include "utils.hpp"
 #include "meta_list.hpp"
+#include "detection.hpp"
 #include "seq.hpp"
 #include "void_t.hpp"
 
@@ -12,15 +13,22 @@
 #include <tuple>
 
 namespace kgr {
+
+/*
+ * This is a tag type to mark a constructor as the one the container should use to construct a definition.
+ */
+using in_place_t = decltype(detail::in_place);
+
 namespace detail {
 
-template<typename...>
-struct to_false {
-	using type = std::false_type;
-};
+/**
+ * This type is the return type of the forward function of the service T.
+ */
+template<typename T>
+using forward_t = decltype(std::declval<T>().forward());
 
-template<typename... Ts>
-using false_t = typename to_false<Ts...>::type;
+template<typename T>
+using has_forward = bool_constant<!std::is_void<detected_or<void, forward_t, T>>::value>;
 
 template<typename...>
 struct to_int {
@@ -205,8 +213,14 @@ using is_emplaceable = bool_constant<std::is_default_constructible<T>::value && 
 template<typename T, typename... Args>
 using is_service_instantiable = bool_constant<is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
-
 } // namespace detail
+
+/**
+ * This type is the type of the service returned by the definition T.
+ */
+template<typename T>
+using service_type = detail::forward_t<T>;
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_TRAITS_HPP

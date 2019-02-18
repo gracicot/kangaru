@@ -29,7 +29,7 @@ function(add_kgr_test TEST_NAME)
 	target_include_directories("${TEST_NAME}_test" PRIVATE $<TARGET_PROPERTY:kangaru::kangaru,INTERFACE_INCLUDE_DIRECTORIES>)
 	
 	target_compile_options("${TEST_NAME}_test" PRIVATE
-		$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-Wall -Wextra>
+		$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wall -Wextra>
 		$<$<CXX_COMPILER_ID:MSVC>:/W3>
 	)
 	
@@ -56,12 +56,12 @@ if(${KANGARU_TEST})
 endif()
 
 target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
+	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fno-exceptions>
 	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
 )
 
 target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>>:-fno-exceptions>
+	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fno-exceptions>
 	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
 )
 

@@ -56,6 +56,13 @@ matrix:
 
     - os: linux
       env:
+        - LLVM_VERSION=7.0.0
+        - ENABLE_CXX14=true
+        - ENABLE_CXX17=true
+      addons: { apt: { packages: ["clang-7.0"], sources: ["llvm-toolchain-trusty-7", "ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
         - COMPILER=g++-4.8
         - ENABLE_CXX14=false
         - ENABLE_CXX17=false

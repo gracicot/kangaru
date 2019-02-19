@@ -6,3 +6,4 @@ build-*
 !.gitmodules
 !.travis.yml
 !.appveyor.yml
+CMakeSettings.json

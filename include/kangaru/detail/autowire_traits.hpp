@@ -61,20 +61,12 @@ private:
 
 template<typename For, typename Map>
 struct weak_deducer {
-	template<typename T, enable_if_t<
-		is_different_service<For, mapped_service_t<T, Map>>::value &&
-		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
-	operator T ();
 	
 	template<typename T, enable_if_t<
 		is_different_service<For, mapped_service_t<T&, Map>>::value &&
 		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
 	operator T& () const;
 	
-	template<typename T, enable_if_t<
-		is_different_service<For, mapped_service_t<T&&, Map>>::value &&
-		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
-	operator T&& () const;
 };
 
 /*

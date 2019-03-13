@@ -7,8 +7,6 @@ target_compile_options(kangaru-example INTERFACE
 
 target_link_libraries(kangaru-example INTERFACE kangaru)
 
-add_subdirectory(abstract_factory)
-add_subdirectory(cars)
 add_subdirectory(example1)
 add_subdirectory(example2)
 add_subdirectory(example3)

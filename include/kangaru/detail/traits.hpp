@@ -4,6 +4,7 @@
 #include "function_traits.hpp"
 #include "utils.hpp"
 #include "meta_list.hpp"
+#include "detection.hpp"
 #include "seq.hpp"
 #include "void_t.hpp"
 
@@ -14,25 +15,19 @@
 namespace kgr {
 namespace detail {
 
-template<typename...>
-struct to_false {
-	using type = std::false_type;
-};
+/**
+ * This type is the return type of the forward function of the service T.
+ */
+template<typename T>
+using forward_t = decltype(std::declval<T>().forward());
 
-template<typename... Ts>
-using false_t = typename to_false<Ts...>::type;
+template<typename T>
+using has_forward = bool_constant<!std::is_void<detected_or<void, forward_t, T>>::value>;
 
-template<typename...>
-struct to_int {
-	using type = int;
-};
 
 // Workaround for visual studio to take the address of a generic lambda
 template<typename T>
 T exact(T);
-
-template<typename... Ts>
-using int_t = typename to_int<Ts...>::type;
 
 template<typename T>
 struct identity { using type = T; };
@@ -109,10 +104,10 @@ template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:
 	template<typename U, typename... As>
-	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(int);
+	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(void*);
 	
 	template<typename...>
-	static std::false_type test(...);
+	static std::false_type test(int);
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -123,10 +118,10 @@ template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
 	template<typename U, typename... As>
-	static std::true_type test(int_t<decltype(std::declval<U>().emplace(std::declval<As>()...))>);
+	static std::true_type test(void_t<decltype(std::declval<U>().emplace(std::declval<As>()...))>*);
 	
 	template<typename U, typename... As>
-	static std::false_type test(...);
+	static std::false_type test(int);
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -136,10 +131,10 @@ template<typename F, typename... Args>
 struct is_callable {
 private:
 	template<typename...>
-	static std::false_type test(...);
+	static std::false_type test(void*);
 
 	template<typename U, typename... As>
-	static std::true_type test(int_t<decltype(std::declval<U>()(std::declval<As>()...))>);
+	static std::true_type test(void_t<decltype(std::declval<U>()(std::declval<As>()...))>*);
 
 	using type = decltype(test<F, Args...>(0));
 	
@@ -205,8 +200,30 @@ using is_emplaceable = bool_constant<std::is_default_constructible<T>::value && 
 template<typename T, typename... Args>
 using is_service_instantiable = bool_constant<is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
+/*
+ * Type trait that extract the return type of the forward function.
+ */
+template<typename, typename = void>
+struct service_type_helper {};
+
+/*
+ * Specialization of ServiceTypeHelper when T has a valid forward function callable without parameter.
+ * Makes an alias to the return type of the forward function.
+ */
+template<typename T>
+struct service_type_helper<T, enable_if_t<has_forward<T>::value>> {
+	using type = decltype(std::declval<T>().forward());
+};
 
 } // namespace detail
+
+
+/**
+ * This type is the type of the service returned by the definition T.
+ */
+template<typename T>
+using service_type = typename detail::service_type_helper<T>::type;
+
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_TRAITS_HPP

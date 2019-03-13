@@ -30,7 +30,7 @@ struct curry_is_construct_invokable {
 	template<typename... Services>
 	using trait = bool_constant<
 		kgr::detail::is_callable<F, Services..., Args...>::value &&
-		conjunction<is_service<Services>...>::value
+		conjunction<is_service<detected_t<injected_service_t, Services>>...>::value
 	>;
 };
 

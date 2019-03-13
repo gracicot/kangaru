@@ -31,6 +31,24 @@ TEST_CASE("The definition can be construct using emplace", "[definition]") {
 	(void) kgr::container{}.service<Definition>();
 }
 
+TEST_CASE("The definition can have arguments including other services", "[definition]") {
+	struct Service1 {};
+	struct Service2 {};
+	struct Definition1 {
+		static std::tuple<> construct() { return {}; }
+		void emplace() {}
+		Service1 forward() { return {}; }
+	};
+	struct Definition2 {
+		static std::tuple<Service1> construct(kgr::inject_t<Definition1>, int) { return {}; }
+		void emplace(Service1) {}
+		Service2 forward() { return {}; }
+	};
+
+	REQUIRE(kgr::detail::is_service_valid<Definition2, int>::value);
+	(void) kgr::container{}.service<Definition2>(123);
+}
+
 TEST_CASE("The definition cannot be construct with emplace differing construct", "[definition]") {
 	struct Service {};
 	struct Definition {

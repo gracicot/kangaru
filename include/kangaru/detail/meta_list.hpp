@@ -15,6 +15,17 @@ template<typename... Types>
 struct meta_list {};
 
 /*
+ * This trait simply return the size of the list.
+ */
+template <typename>
+struct meta_list_size;
+
+template <typename... Types>
+struct meta_list_size<meta_list<Types...>> {
+	static constexpr std::size_t value = sizeof...(Types);
+};
+
+/*
  * This class is a trait that returns the nth element of a type.
  */
 template<std::size_t, typename>
@@ -51,28 +62,31 @@ using meta_list_element_t = typename meta_list_element<I, List>::type;
 /*
  * This class is a trait that tells if a particular type is contained in the list.
  */
-template <typename, typename>
-struct meta_list_contains;
+template<typename, typename, std::size_t = 0>
+struct meta_list_find;
 
 /*
  * This is the case where the type isn't found.
  * We extends false_type to return the result.
  */
-template <typename T>
-struct meta_list_contains<T, meta_list<>> : std::false_type {};
+template<typename T, std::size_t nth>
+struct meta_list_find<T, meta_list<>, nth> : std::integral_constant<std::size_t, nth + 1> {};
 
 /*
  * This is the case where T is different from Head.
  * In this case, we continue to iterate by removeing the Head and comparing the Head again.
  */
-template <typename T, typename Head, typename... Tail>
-struct meta_list_contains<T, meta_list<Head, Tail...>> : meta_list_contains<T, meta_list<Tail...>> {};
+template<typename T, typename Head, typename... Tail, std::size_t nth>
+struct meta_list_find<T, meta_list<Head, Tail...>, nth> : meta_list_find<T, meta_list<Tail...>, nth + 1> {};
 
 /*
  * This is the case where T is the same as the head. In that case, return true by extending std::true_type.
  */
-template <typename T, typename... Tail>
-struct meta_list_contains<T, meta_list<T, Tail...>> : std::true_type {};
+template<typename T, typename... Tail, std::size_t nth>
+struct meta_list_find<T, meta_list<T, Tail...>, nth> : std::integral_constant<std::size_t, nth> {};
+
+template<typename T, typename List>
+using meta_list_contains = std::integral_constant<bool, (meta_list_find<T, List>::value < meta_list_size<List>::value)>;
 
 /*
  * This trait return if a type is in the list at most one time.
@@ -115,17 +129,6 @@ struct meta_list_unique<T, meta_list<Head, Tail...>> : meta_list_unique<T, meta_
  */
 template <typename T, typename... Tail>
 struct meta_list_unique<T, meta_list<T, Tail...>> : std::integral_constant<bool, !meta_list_contains<T, meta_list<Tail...>>::value> {};
-
-/*
-* This trait simply return the size of the list.
-*/
-template <typename>
-struct meta_list_size;
-
-template <typename... Types>
-struct meta_list_size<meta_list<Types...>> {
-	static constexpr std::size_t value = sizeof...(Types);
-};
 
 /*
 * This trait remove the first element of the list.

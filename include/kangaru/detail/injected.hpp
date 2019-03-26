@@ -101,6 +101,17 @@ struct inject_result_helper {
 	using type = std::tuple<typename remove_rvalue_reference<Ts>::type...>;
 };
 
+template<typename, typename>
+struct single_insertion_result;
+
+template<typename T, typename... Parents>
+struct single_insertion_result<T, meta_list<Parents...>> {
+	using type = std::tuple<detail::typed_service_storage<T>, detail::typed_service_storage<Parents>...>;
+};
+
+template<typename T>
+using single_insertion_result_t = typename single_insertion_result<T, parent_types<T>>::type;
+
 } // namespace detail
 
 /*

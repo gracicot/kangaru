@@ -32,7 +32,7 @@ private:
 	template<typename Condition, typename T = int> using disable_if = detail::enable_if_t<!Condition::value, T>;
 	template<typename T> using contained_service_t = typename std::conditional<
 		detail::is_single<T>::value,
-		T&,
+		detail::single_insertion_result_t<T>,
 		T>::type;
 	using unpack = int[];
 	
@@ -44,14 +44,9 @@ private:
 		return static_cast<default_source&>(*this);
 	}
 	
-	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	static detail::injected_wrapper<T> make_wrapper(storage_t& instance) {
-		return detail::injected_wrapper<T>{instance.cast<T>()};
-	}
-	
-	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
-	static detail::injected_wrapper<T> make_wrapper(storage_t& instance) {
-		return detail::injected_wrapper<T>{instance.service<T>()};
+	template<typename T>
+	static auto static_unwrap_single(detail::single_insertion_result_t<T> single_result) -> T& {
+		return *static_cast<T*>(std::get<0>(single_result).service);
 	}
 	
 	explicit container(default_source&& source) : default_source{std::move(source)} {}
@@ -74,7 +69,7 @@ public:
 		enable_if<detail::is_emplace_valid<T, Args...>> = 0>
 	bool emplace(Args&&... args) {
 		// TODO: We're doing two search in the map: One before constructing the service and one to insert. We should do only one.
-		return contains<T>() ? false : (autocall(make_service_instance<T>(std::forward<Args>(args)...)), true);
+		return contains<T>() ? false : (autocall(static_unwrap_single<T>(make_service_instance<T>(std::forward<Args>(args)...))), true);
 	}
 	
 	/*
@@ -97,7 +92,7 @@ public:
 	template<typename T, typename... Args,
 		enable_if<detail::is_emplace_valid<T, Args...>> = 0>
 	void replace(Args&&... args) {
-		autocall(make_service_instance<T>(std::forward<Args>(args)...));
+		autocall(static_unwrap_single<T>(make_service_instance<T>(std::forward<Args>(args)...)));
 	}
 	
 	/*
@@ -282,7 +277,7 @@ public:
 	
 private:
 	///////////////////////
-	//   save instance   //
+	//   new service    //
 	///////////////////////
 	
 	/*
@@ -294,8 +289,8 @@ private:
 		disable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	auto save_new_instance(Args&&... args) -> T& {
-		auto& service = make_service_instance<T>(std::forward<Args>(args)...);
+	auto configure_new_service(Args&&... args) -> T& {
+		auto& service = static_unwrap_single<T>(make_service_instance<T>(std::forward<Args>(args)...));
 		
 		autocall(service);
 		
@@ -311,47 +306,43 @@ private:
 		enable_if<detail::is_polymorphic<T>> = 0,
 		disable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	auto save_new_instance(Args&&... args) -> detail::typed_service_storage<T> {
-		auto& service = make_service_instance<T>(std::forward<Args>(args)...);
+	auto configure_new_service(Args&&... args) -> detail::typed_service_storage<T> {
+		auto storage = make_service_instance<T>(std::forward<Args>(args)...);
+		auto& service = static_unwrap_single<T>(storage);
 		
 		autocall(service);
 		
-		static_assert(
-			std::is_same<decltype(service), T&>::value,
-			"save_instance returned a different service type than the required one!"
-		);
-		
-		return detail::typed_service_storage<T>{&service, get_forward<T>()};
+		return std::get<0>(storage);
 	}
 	
 	/*
-	 * This function is a specialization of save_new_instance for abstract classes.
+	 * This function is a specialization of configure_new_service for abstract classes.
 	 * Since you cannot construct an abstract class, this function always throw.
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		disable_if<detail::has_default<T>> = 0>
-	auto save_new_instance(Args&&...) -> detail::typed_service_storage<T> {
+	auto configure_new_service(Args&&...) -> detail::typed_service_storage<T> {
 		KGR_KANGARU_THROW(abstract_not_found{});
 	}
 	
 	/*
-	 * This function is a specialization of save_new_instance for abstract classes.
+	 * This function is a specialization of configure_new_service for abstract classes.
 	 * Since you cannot construct an abstract class, this function always throw.
 	 */
 	template<typename T, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_supplied_service<T>> = 0,
 		disable_if<detail::is_abstract_service<T>> = 0>
-	auto save_new_instance(Args&&...)
+	auto configure_new_service(Args&&...)
 		-> detail::conditional_t<detail::is_polymorphic<T>::value, detail::typed_service_storage<T>, T&>
 	{
 		KGR_KANGARU_THROW(supplied_not_found{});
 	}
 	
 	/*
-	 * This function is a specialization of save_new_instance for abstract classes.
+	 * This function is a specialization of configure_new_service for abstract classes.
 	 * Since that abstract service has a default service specified, we can contruct that one.
 	 */
 	template<typename T, typename... Args,
@@ -359,8 +350,12 @@ private:
 		disable_if<detail::is_supplied_service<T>> = 0,
 		enable_if<detail::is_abstract_service<T>> = 0,
 		enable_if<detail::has_default<T>> = 0>
-	auto save_new_instance(Args&&...) -> detail::typed_service_storage<T> {
-		auto&& storage = save_new_instance<detail::default_type<T>>();
+	auto configure_new_service(Args&&...) -> detail::typed_service_storage<T> {
+		auto storage = make_service_instance<detail::default_type<T>>();
+		auto& service = *static_cast<detail::default_type<T>*>(std::get<0>(storage).service);
+		using service_index = detail::meta_list_find<T, detail::parent_types<detail::default_type<T>>>;
+		
+		autocall(service);
 		
 		// The static assert is still required here, if other checks fails and allow
 		// a call to this function where the default service don't overrides T, it would be UB.
@@ -368,27 +363,7 @@ private:
 			"The default service type of an abstract service must override that abstract service."
 		);
 		
-		return detail::typed_service_storage<T>{storage.service, get_override_forward<T, detail::default_type<T>>()};
-	}
-	
-	// TODO: find a way to move these to the source.
-	template<typename Override, typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	auto get_override_forward() -> detail::forward_ptr<Override> {
-		return [](default_source::alias_t s) -> service_type<Override> {
-			return static_cast<service_type<Override>>(static_cast<T*>(s)->forward());
-		};
-	}
-	
-	template<typename T, enable_if<detail::is_polymorphic<T>> = 0>
-	auto get_forward() -> detail::forward_ptr<T> {
-		return [](default_source::alias_t service) -> service_type<T> {
-			return static_cast<T*>(service)->forward();
-		};
-	}
-	
-	template<typename T, disable_if<detail::is_polymorphic<T>> = 0>
-	auto get_forward() -> detail::forward_ptr<T> {
-		return nullptr;
+		return std::get<service_index::value + 1>(storage);
 	}
 	
 	///////////////////////
@@ -420,6 +395,7 @@ private:
 		static_cast<void>(construct_args);
 		
 		return make_contained_service<T>(
+			detail::parent_types<T>{},
 			std::forward<detail::tuple_element_t<S, decltype(construct_args)>>(std::get<S>(construct_args))...
 		);
 	}
@@ -428,13 +404,11 @@ private:
 	 * This function create a service with the received arguments.
 	 * It creating it in the right type for the container to contain it in it's container.
 	 */
-	template<typename T, typename... Args,
+	template<typename T, typename... Overrides, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
-	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
-		auto storage = source().emplace<T>(get_forward<T>(), detail::in_place, std::forward<Args>(args)...);
-		save_overrides<T>(detail::tuple_seq<detail::parent_types<T>>{}, storage.first);
-		return storage.second.template service<T>();
+	auto make_contained_service(detail::meta_list<Overrides...>, Args&&... args) -> detail::single_insertion_result_t<T> {
+		return source().emplace<T, Overrides...>(detail::in_place, std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -444,7 +418,7 @@ private:
 	template<typename T, typename... Args,
 		disable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
-	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
+	auto make_contained_service(detail::meta_list<>, Args&&... args) -> T {
 		return T{detail::in_place, std::forward<Args>(args)...};
 	}
 	
@@ -454,18 +428,17 @@ private:
 	 * This version of the function is called when the service definition has no valid constructor.
 	 * It will try to call an emplace function that construct the service in a lazy way.
 	 */
-	template<typename T, typename... Args,
+	template<typename T, typename... Overrides, typename... Args,
 		enable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
-	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
-		auto storage = source().emplace<T>(get_forward<T>());
-		auto& service = storage.second.template service<T>();
+	auto make_contained_service(detail::meta_list<Overrides...>, Args&&... args) -> detail::single_insertion_result_t<T> {
+		auto storage = source().emplace<T, Overrides...>();
+		auto& service = static_unwrap_single<T>(storage);
 		
 		service.emplace(std::forward<Args>(args)...);
-		save_overrides<T>(detail::tuple_seq<detail::parent_types<T>>{}, storage.first);
 		
-		return service;
+		return storage;
 	}
 	
 	/*
@@ -478,44 +451,12 @@ private:
 		disable_if<detail::is_single<T>> = 0,
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
-	auto make_contained_service(Args&&... args) -> contained_service_t<T> {
+	auto make_contained_service(detail::meta_list<>, Args&&... args) -> T {
 		T service;
 		
 		service.emplace(std::forward<Args>(args)...);
 		
 		return service;
-	}
-	
-	/*
-	 * This function implements the logic to save a service in the container.
-	 * This function saves the instance and it's overrides if any.
-	 */
-	template<typename T, std::size_t... S>
-	void save_overrides(detail::seq<S...>, default_source::alias_t service) {
-		// if the S sequence is empty, service is an unused variable. This line silence it.
-		static_cast<void>(service);
-		
-		// This codes loop over S to expand to enclosed code for each values of S.
-		(void)unpack{(
-			save_override<detail::meta_list_element_t<S, detail::parent_types<T>>, T>(service)
-		, 0)..., 0};
-	}
-	
-	/*
-	 * This function is the iteration that saves overrides to the container.
-	 * It will be called as many times as there's overrides to save.
-	 */
-	template<typename Override, typename T>
-	void save_override(default_source::alias_t service) {
-		static_assert(detail::is_polymorphic<Override>::value,
-			"The overriden service must be virtual"
-		);
-		
-		static_assert(!detail::is_final_service<Override>::value,
-			"A final service cannot be overriden"
-		);
-		
-		source().override<Override>(get_override_forward<Override, T>(), service);
 	}
 	
 	///////////////////////
@@ -571,8 +512,8 @@ private:
 		disable_if<detail::is_container_service<T>> = 0>
 	auto definition() -> detail::injected_wrapper<T> {
 		return source().find<T>(
-			[](default_source::storage_t storage) { return make_wrapper<T>(storage); },
-			[this]{ return detail::injected_wrapper<T>{save_new_instance<T>()}; }
+			[](detail::injected_wrapper<T>&& storage) { return storage; },
+			[this]{ return detail::injected_wrapper<T>{configure_new_service<T>()}; }
 		);
 	}
 	

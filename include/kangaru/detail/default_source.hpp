@@ -5,6 +5,7 @@
 
 #include "../type_id.hpp"
 #include "traits.hpp"
+#include "injected.hpp"
 
 #include <algorithm>
 #include <type_traits>
@@ -17,11 +18,9 @@ namespace kgr {
 namespace detail {
 
 struct default_source {
-	// TODO: Make them private
-	using storage_t = detail::service_storage;
+private:
 	using alias_t = void*;
 	
-private:
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
@@ -31,7 +30,7 @@ private:
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
+	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value>* = nullptr>
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T(std::forward<Args>(args)...),
@@ -39,7 +38,7 @@ private:
 		};
 	}
 	
-	template<typename T, typename... Args, enable_if_t<detail::is_only_brace_constructible<T, Args...>::value, int> = 0>
+	template<typename T, typename... Args, enable_if_t<!std::is_constructible<T, Args...>::value>* = nullptr>
 	static instance_ptr<T> make_instance_ptr(Args&&... args) {
 		return instance_ptr<T>{
 			new T{std::forward<Args>(args)...},
@@ -48,16 +47,58 @@ private:
 	}
 	
 	template<typename T>
-	auto emplace_or_assign(alias_t service, detail::forward_ptr<T> forward) -> detail::service_storage& {
-		auto it = _services.find(type_id<T>());
+	auto emplace_or_assign(alias_t service, detail::forward_ptr<T> forward) -> detail::typed_service_storage<T> {
+		auto const it = _services.find(type_id<T>());
 		
 		if (it == _services.end()) {
 			auto inserted = _services.emplace(type_id<T>(), detail::typed_service_storage<T>{service, forward});
-			return inserted.first->second;
+			return inserted.first->second.template cast<T>();
 		} else {
 			it->second = detail::typed_service_storage<T>{service, forward};
-			return it->second;
+			return it->second.template cast<T>();
 		}
+	}
+	
+	template<typename Override, typename Parent>
+	auto insert_override(alias_t overriden) -> detail::typed_service_storage<Parent> {
+		static_assert(detail::is_polymorphic<Parent>::value,
+			"The overriden service must be virtual"
+		);
+		
+		static_assert(!detail::is_final_service<Parent>::value,
+			"A final service cannot be overriden"
+		);
+		
+		return emplace_or_assign<Parent>(overriden, get_override_forward<Override, Parent>());
+	}
+	
+	template<typename Override, typename Parent, enable_if_t<detail::is_polymorphic<Parent>::value, int> = 0>
+	auto get_override_forward() -> detail::forward_ptr<Parent> {
+		return [](alias_t s) -> service_type<Parent> {
+			return static_cast<service_type<Parent>>(static_cast<Override*>(s)->forward());
+		};
+	}
+	
+	template<typename T, enable_if_t<detail::is_polymorphic<T>::value, int> = 0>
+	auto get_forward() -> detail::forward_ptr<T> {
+		return [](alias_t service) -> service_type<T> {
+			return static_cast<T*>(service)->forward();
+		};
+	}
+	
+	template<typename T, enable_if_t<!detail::is_polymorphic<T>::value, int> = 0>
+	auto get_forward() -> detail::forward_ptr<T> {
+		return nullptr;
+	}
+	
+	template<typename T, enable_if_t<is_polymorphic<T>::value, int> = 0>
+	static auto make_wrapper(service_storage& instance) -> detail::injected_wrapper<T> {
+		return detail::injected_wrapper<T>{instance.cast<T>()};
+	}
+	
+	template<typename T, enable_if_t<!is_polymorphic<T>::value, int> = 0>
+	static auto make_wrapper(service_storage& instance) -> detail::injected_wrapper<T> {
+		return detail::injected_wrapper<T>{instance.service<T>()};
 	}
 	
 public:
@@ -77,24 +118,14 @@ public:
 	~default_source() = default;
 #endif
 	
-	template<typename T>
-	auto storage() -> storage_t& {
-		return _services[type_id<T>()];
-	}
-	
-	template<typename T, typename... Args>
-	auto emplace(detail::forward_ptr<T> forward, Args&&... args) -> std::pair<alias_t, storage_t&> {
+	template<typename T, typename... Parents, typename... Args>
+	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);
 		auto ptr = instance_ptr.get();
 		
 		_instances.emplace_back(std::move(instance_ptr));
 		
-		return std::pair<alias_t, storage_t&>{ptr, emplace_or_assign<T>(ptr, forward)};
-	}
-	
-	template<typename T>
-	auto override(detail::forward_ptr<detail::identity_t<T>> forward, alias_t overriden) -> storage_t& {
-		return emplace_or_assign<T>(overriden, forward);
+		return single_insertion_result_t<T>{emplace_or_assign<T>(ptr, get_forward<T>()), insert_override<T, Parents>(ptr)...};
 	}
 	
 	/*
@@ -168,12 +199,12 @@ public:
 	 * When the service is found, it returns the return value of the `found` function.
 	 * Otherwise it calls `fails` with no parameter.
 	 */
-	template<typename T, typename F1, typename F2, typename R1 = call_result_t<F1, storage_t>, typename R2 = call_result_t<F2>>
+	template<typename T, typename F1, typename F2, typename R1 = call_result_t<F1, detail::injected_wrapper<T>>, typename R2 = call_result_t<F2>>
 	auto find(F1 found, F2 fails) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
 		auto it = _services.find(type_id<T>());
 		
 		if (it != _services.end()) {
-			return found(it->second);
+			return found(make_wrapper<T>(it->second));
 		} else {
 			return fails();
 		}

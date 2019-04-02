@@ -3,6 +3,7 @@
 
 #include "traits.hpp"
 #include "container_service.hpp"
+#include "validity_check.hpp"
 #include "service_map.hpp"
 #include "injected.hpp"
 
@@ -31,28 +32,31 @@ template<typename For, typename Map>
 struct deducer {
 	explicit deducer(container& c) noexcept : _container{&c} {}
 	
-	template<typename T, enable_if_t<
-		is_different_service<For, mapped_service_t<T, Map>>::value &&
-		is_service_valid<mapped_service_t<T, Map>>::value &&
-		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
+	template<typename T, typename Mapped = mapped_service_t<T, Map>, enable_if_t<
+		instantiate_if_or<
+			is_different_service<For, Mapped>::value && !std::is_reference<service_type<Mapped>>::value,
+			std::false_type, is_service_valid, Mapped
+		>::value, int> = 0>
 	operator T () {
-		return _container->service<mapped_service_t<T, Map>>();
+		return _container->service<Mapped>();
 	}
 	
-	template<typename T, enable_if_t<
-		is_different_service<For, mapped_service_t<T&, Map>>::value &&
-		is_service_valid<mapped_service_t<T&, Map>>::value &&
-		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
+	template<typename T, typename Mapped = mapped_service_t<T&, Map>, enable_if_t<
+		instantiate_if_or<
+			is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value,
+			std::false_type, is_service_valid, Mapped
+		>::value, int> = 0>
 	operator T& () const {
-		return _container->service<mapped_service_t<T&, Map>>();
+		return _container->service<Mapped>();
 	}
 	
-	template<typename T, enable_if_t<
-		is_different_service<For, mapped_service_t<T&&, Map>>::value &&
-		is_service_valid<mapped_service_t<T&&, Map>>::value &&
-		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
+	template<typename T, typename Mapped = mapped_service_t<T&&, Map>, enable_if_t<
+		instantiate_if_or<
+			is_different_service<For, Mapped>::value && std::is_rvalue_reference<service_type<Mapped>>::value,
+			std::false_type, is_service_valid, Mapped
+		>::value, int> = 0>
 	operator T&& () const {
-		return _container->service<mapped_service_t<T&&, Map>>();
+		return _container->service<Mapped>();
 	}
 	
 private:

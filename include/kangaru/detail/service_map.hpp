@@ -22,7 +22,7 @@ struct map_t {};
 
 namespace detail {
 
-inline auto service_map() -> void;
+inline void service_map() {}
 
 /*
  * Alias to the expression of a normal named service map
@@ -181,12 +181,37 @@ template<typename S, typename M>
 using map_result_t = typename map_result<S, M>::type;
 
 /*
+ * This is a trait that tell if the service S is mapped in M
+ */
+template<typename, typename, typename = void>
+struct is_mapped : std::false_type {};
+
+/*
  * Trait that check if the result of the map is a valid service that forwards something convertible to S.
  */
-template<typename M, typename S, typename Result = typename std::remove_cv<service_type<map_result_t<S, M>>>::type&&>
+template<typename M, typename S>
 using is_valid_entry = std::integral_constant<bool,
-	std::is_convertible<Result, S&>::value || std::is_convertible<Result, S&&>::value
+	std::is_convertible<typename std::remove_cv<service_type<map_result_t<S, M>>>::type&&, S&>::value ||
+	std::is_convertible<typename std::remove_cv<service_type<map_result_t<S, M>>>::type&&, S&&>::value
 >;
+
+/*
+ * Specialization when map M maps the service S
+ */
+template<typename M, typename S>
+struct is_mapped<map<M>, S, enable_if_t<is_valid_entry<map_t<M>, S>::value>> : std::true_type {};
+
+/*
+ * Specialization for an empty map, equivalent for a void map
+ */
+template<typename S>
+struct is_mapped<map<>, S, enable_if_t<is_valid_entry<map_t<>, S>::value>> : std::true_type {};
+
+/*
+ * Specialization when no map is specified.
+ */
+template<typename S>
+struct is_mapped<void, S, enable_if_t<is_valid_entry<void, S>::value>> : std::true_type {};
 
 /*
  * Trait that extranct the mapped service type given the parameter and a group of maps.
@@ -198,14 +223,14 @@ struct map_entry {};
  * When no service map entry has been found for First, continue with the next map
  */
 template<typename First, typename... Maps, typename P>
-struct map_entry<map<First, Maps...>, P, enable_if_t<!detected_or<std::false_type, is_valid_entry, map_t<First>, P>::value>> : map_entry<map<Maps...>, P> {};
+struct map_entry<map<First, Maps...>, P, enable_if_t<!is_mapped<map<First>, P>::value>> : map_entry<map<Maps...>, P> {};
 
 /*
  * Case when a map has been found.
  * We proceed to create an alias for the mapped definition.
  */
 template<typename First, typename... Maps, typename P>
-struct map_entry<map<First, Maps...>, P> {
+struct map_entry<map<First, Maps...>, P, enable_if_t<is_mapped<map<First>, P>::value>> {
 	using mapped_service = map_result_t<P, map_t<First>>;
 };
 
@@ -214,7 +239,7 @@ struct map_entry<map<First, Maps...>, P> {
  * We proceed to create an alias for the mapped definition.
  */
 template<typename P>
-struct map_entry<map<>, P, enable_if_t<is_valid_entry<map_t<>, P>::value>> {
+struct map_entry<map<>, P, enable_if_t<is_mapped<map<>, P>::value>> {
 	using mapped_service = map_result_t<P, map_t<>>;
 };
 
@@ -223,13 +248,13 @@ struct map_entry<map<>, P, enable_if_t<is_valid_entry<map_t<>, P>::value>> {
  * We proceed to extend an try the void map.
  */
 template<typename P>
-struct map_entry<map<>, P, enable_if_t<!detected_or<std::false_type, is_valid_entry, map_t<>, P>::value>> : map_entry<void, P> {};
+struct map_entry<map<>, P, enable_if_t<!is_mapped<map<>, P>::value>> : map_entry<void, P> {};
 
 /*
  * Case when the only service map found has no map specified at all.
  */
 template<typename P>
-struct map_entry<void, P, enable_if_t<is_valid_entry<void, P>::value>> {
+struct map_entry<void, P, enable_if_t<is_mapped<void, P>::value>> {
 	using mapped_service = map_result_t<P, void>;
 };
 

@@ -195,14 +195,14 @@ constexpr default_inject_function{};
  * A construct function usable by many service definition implementation.
  * Will send as many deducers as there are numbers in S
  */
-template<typename Self, typename Map, typename I, std::size_t... S, typename... Args>
-inline auto deduce_construct(detail::seq<S...>, I inject, inject_t<container_service> cont, Args&&... args) -> detail::call_result_t<I, detail::deducer_expand_t<Self, Map, S>..., Args...> {
+template<typename Self, typename Map, typename I, std::size_t... S, typename... Args, typename Deducer = detail::deducer<Self, Map>>
+inline auto deduce_construct(detail::seq<S...>, I inject, inject_t<container_service> cont, Args&&... args) -> decltype(inject((void(S), std::declval<Deducer>())..., std::declval<Args>()...)) {
 	auto& container = cont.forward();
 
 	// The expansion of the inject call may be empty. This will silence the warning.
 	static_cast<void>(container);
 
-	return inject((void(S), detail::deducer<Self, Map>{container})..., std::forward<Args>(args)...);
+	return inject((void(S), Deducer{container})..., std::forward<Args>(args)...);
 }
 
 /*

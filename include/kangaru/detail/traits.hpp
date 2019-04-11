@@ -80,7 +80,7 @@ template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 
 template<typename T>
-using is_service = bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value>;
+struct is_service : bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value> {};
 
 template<typename T>
 struct constify {
@@ -213,13 +213,21 @@ using is_emplaceable = bool_constant<std::is_default_constructible<T>::value && 
 template<typename T, typename... Args>
 using is_service_instantiable = bool_constant<is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
+template<typename, bool>
+struct service_type_helper {};
+
+template<typename T>
+struct service_type_helper<T, true> {
+	using type = forward_t<T>;
+};
+
 } // namespace detail
 
 /**
  * This type is the type of the service returned by the definition T.
  */
 template<typename T>
-using service_type = detail::forward_t<T>;
+using service_type = typename detail::service_type_helper<T, detail::has_forward<T>::value>::type;
 
 } // namespace kgr
 

@@ -19,19 +19,28 @@ using curry_is_constructible_from_construct = expand_all<
  * Trait that check if the service construct function can be called and returns arguments that construct the service.
  */
 template<typename T, typename... Args>
-using is_constructible_from_construct = instantiate_if_or<
-	is_tuple<detected_t<function_result_t, detected_t<construct_function_t, T, Args...>>>::value,
+struct is_constructible_from_construct : instantiate_if_or<
+	is_tuple<function_result_t<construct_function_t<T, Args...>>>::value,
 	std::false_type, curry_is_constructible_from_construct, T, Args...
->;
+> {};
 
 /*
  * Trait that check if the service definition can be constructed given the return type of it's construct function.
  */
 template<typename T, typename... Args>
-using is_service_constructible = instantiate_if_or<
-	!is_abstract_service<T>::value && !is_container_service<T>::value, std::true_type,
+struct is_service_constructible_helper : instantiate_if_or<
+	is_detected<construct_function_t, T, Args...>::value, std::false_type,
 	is_constructible_from_construct, T, Args...
->;
+> {};
+
+/*
+ * Trait that check if the service definition can be constructed given the return type of it's construct function.
+ */
+template<typename T, typename... Args>
+struct is_service_constructible : instantiate_if_or<
+	!is_abstract_service<T>::value && !is_container_service<T>::value, std::true_type,
+	is_service_constructible_helper, T, Args...
+> {};
 
 template<typename T, typename... Args>
 using is_service_constructible_if_required = bool_constant<

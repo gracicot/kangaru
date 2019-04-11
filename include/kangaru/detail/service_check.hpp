@@ -104,9 +104,9 @@ template<typename T, typename... Args>
 using dependency_check = dependency_trait<shallow_service_check, T, Args...>;
 
 template<typename T, typename... Args>
-using service_check = bool_constant<
+struct service_check : bool_constant<
 	shallow_service_check<T, Args...>::value && dependency_check<T, Args...>::value
->;
+> {};
 
 } // namespace detail
 } // namespace kgr

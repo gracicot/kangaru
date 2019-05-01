@@ -2,11 +2,11 @@
 #include <kangaru/kangaru.hpp>
 #include <string>
 
-namespace {
-	struct Service {
-		friend auto service_map(Service const&) -> kgr::autowire;
-	};
-}
+namespace invoker_constructible_from_container {
+
+struct Service {
+	friend auto service_map(Service const&) -> kgr::autowire;
+};
 
 TEST_CASE("Invoker is constructible from a container or with a service", "[operator]") {
 	kgr::container container;
@@ -49,6 +49,8 @@ TEST_CASE("Invoker is constructible from a container or with a service", "[opera
 		REQUIRE((kgr::detail::is_callable<kgr::invoker, decltype(lambda), float, std::string>::value));
 	}
 }
+
+} // namespace invoker_constructible_from_container
 
 TEST_CASE("Container can fork with a service", "[operator]") {
 	struct Service1 {};

@@ -21,7 +21,7 @@ struct default_source {
 private:
 	using alias_t = void*;
 	
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) noexcept>;
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	

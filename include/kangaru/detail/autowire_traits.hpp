@@ -52,7 +52,7 @@ struct deducer {
 	}
 	
 	template<typename T, typename Mapped = mapped_service_t<T&, Map>, enable_if_t<
-
+	
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value,
@@ -198,10 +198,10 @@ constexpr default_inject_function{};
 template<typename Self, typename Map, typename I, std::size_t... S, typename... Args, typename Deducer = detail::deducer<Self, Map>>
 inline auto deduce_construct(detail::seq<S...>, I inject, inject_t<container_service> cont, Args&&... args) -> decltype(inject((void(S), std::declval<Deducer>())..., std::declval<Args>()...)) {
 	auto& container = cont.forward();
-
+	
 	// The expansion of the inject call may be empty. This will silence the warning.
 	static_cast<void>(container);
-
+	
 	return inject((void(S), Deducer{container})..., std::forward<Args>(args)...);
 }
 

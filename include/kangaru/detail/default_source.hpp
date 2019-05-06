@@ -21,28 +21,24 @@ struct default_source {
 private:
 	using alias_t = void*;
 	
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) noexcept>;
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	
 	template<typename T>
-	static void deleter(alias_t i) {
+	static void deleter(alias_t i) noexcept {
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value>* = nullptr>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T(std::forward<Args>(args)...),
-			&default_source::deleter<T>
-		};
-	}
-	
-	template<typename T, typename... Args, enable_if_t<!std::is_constructible<T, Args...>::value>* = nullptr>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T{std::forward<Args>(args)...},
-			&default_source::deleter<T>
+	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
+	static instance_ptr<memory_block<T>> make_instance_ptr(Args&&... args) {
+		static_assert(
+			std::is_standard_layout<memory_block<T>>::value,
+			"The service memory block must be standard layout"
+		);
+		return instance_ptr<memory_block<T>>{
+			new memory_block<T>(std::forward<Args>(args)...),
+			&default_source::deleter<memory_block<T>>
 		};
 	}
 	
@@ -121,7 +117,7 @@ public:
 	template<typename T, typename... Parents, typename... Args>
 	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);
-		auto ptr = instance_ptr.get();
+		auto ptr = &instance_ptr->cast();
 		
 		_instances.emplace_back(std::move(instance_ptr));
 		

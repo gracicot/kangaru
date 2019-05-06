@@ -14,6 +14,10 @@
 #include <memory>
 #include <iterator>
 
+#if !defined(KGR_KANGARU_CXX17_NOEXCEPT) && (defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L)
+#define KGR_KANGARU_CXX17_NOEXCEPT
+#endif
+
 namespace kgr {
 namespace detail {
 
@@ -21,7 +25,12 @@ struct default_source {
 private:
 	using alias_t = void*;
 	
+#ifdef KGR_KANGARU_CXX17_NOEXCEPT
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) noexcept>;
+#else
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
+#endif
+
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	
@@ -32,12 +41,12 @@ private:
 	
 	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
 	static instance_ptr<memory_block<T>> make_instance_ptr(Args&&... args) {
-		static_assert(
-			std::is_standard_layout<memory_block<T>>::value,
+		static_assert(std::is_standard_layout<memory_block<T>>::value,
 			"The service memory block must be standard layout"
 		);
+		
 		return instance_ptr<memory_block<T>>{
-			new memory_block<T>(std::forward<Args>(args)...),
+			new memory_block<T>{std::forward<Args>(args)...},
 			&default_source::deleter<memory_block<T>>
 		};
 	}

@@ -102,6 +102,13 @@ And then add the include dirs to your target:
 Then you can include the library as follow:
 
     #include <kangaru/kangaru.hpp>
+    
+If you skip the installation, simply tell CMake where to find kangaru:
+
+```sh
+# in your project build directory
+$ cmake .. -DCMAKE_PREFIX_PATH=../../path/to/kangaru
+```
 
 Compiler Requirement
 --------------------

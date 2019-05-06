@@ -44,20 +44,6 @@ struct generic_service : detail::generic_service_destruction<generic_service<Typ
 		emplace(std::forward<Args>(args)...);
 	}
 	
-protected:
-	Type& instance() {
-		return *reinterpret_cast<Type*>(&_instance);
-	}
-	
-	const Type& instance() const {
-		return *reinterpret_cast<const Type*>(&_instance);
-	}
-	
-private:
-	friend container;
-	friend detail::generic_service_destruction<generic_service<Type>, Type>;
-	template<typename, typename...> friend struct detail::has_emplace_helper;
-	
 	template<typename... Args, detail::enable_if_t<std::is_constructible<Type, Args...>::value, int> = 0>
 	void emplace(Args&&... args) {
 		new (&_instance) Type(std::forward<Args>(args)...);
@@ -67,6 +53,18 @@ private:
 	void emplace(Args&&... args) {
 		new (&_instance) Type{std::forward<Args>(args)...};
 	}
+	
+protected:
+	Type& instance() {
+		return *static_cast<Type*>(static_cast<void*>(&_instance));
+	}
+	
+	const Type& instance() const {
+		return *static_cast<Type*>(static_cast<void*>(&_instance));
+	}
+	
+private:
+	friend detail::generic_service_destruction<generic_service<Type>, Type>;
 	
 	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
 };
@@ -93,6 +91,10 @@ struct generic_service<Type&> {
 	
 	generic_service(in_place_t, Type&& ref) = delete;
 	
+	void emplace(Type& ref) {
+		_instance = &ref;
+	}
+	
 protected:
 	Type& instance() {
 		return *_instance;
@@ -103,14 +105,6 @@ protected:
 	}
 	
 private:
-	friend container;
-	friend detail::generic_service_destruction<generic_service<Type>, Type>;
-	template<typename, typename...> friend struct detail::has_emplace_helper;
-	
-	void emplace(Type& ref) {
-		_instance = &ref;
-	}
-	
 	Type* _instance;
 };
 

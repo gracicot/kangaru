@@ -24,17 +24,13 @@ struct default_source {
 private:
 	using alias_t = void*;
 	
-#ifdef KGR_KANGARU_CXX17_NOEXCEPT
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) noexcept>;
-#else
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
-#endif
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) KGR_KANGARU_CXX17_NOEXCEPT>;
 	
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	
 	template<typename T>
-	static void deleter(alias_t i) noexcept {
+	static void deleter(alias_t i) KGR_KANGARU_CXX17_NOEXCEPT {
 		delete static_cast<T*>(i);
 	}
 	

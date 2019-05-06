@@ -103,12 +103,12 @@ struct memory_block : memory_block_destruction<memory_block<T>, T> {
 	
 	aligned_storage_t<sizeof(T), alignof(T)> service;
 };
+
 #if _MSC_VER
 #ifndef __clang__
 #pragma warning( pop )
 #endif
 #endif
-
 
 } // namespace detail
 } // namespace kgr

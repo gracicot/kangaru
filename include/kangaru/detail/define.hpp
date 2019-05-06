@@ -2,7 +2,10 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFINE
 
 #ifndef KGR_KANGARU_CXX17_NOEXCEPT
-#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L
+#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG > 201402L
+#define KGR_KANGARU_CXX17_NOEXCEPT_FPTR
+#define KGR_KANGARU_CXX17_NOEXCEPT noexcept
+#else
 #define KGR_KANGARU_CXX17_NOEXCEPT
 #endif
 #endif
@@ -28,7 +31,7 @@
 #endif
 
 #ifndef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-#if _MSC_VER == 1900
+#if defined(_MSC_VER)
 #ifndef __clang__
 // MSVC has a defect that makes the use of the template keyword an error in some corner cases.
 #define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD

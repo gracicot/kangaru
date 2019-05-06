@@ -130,7 +130,7 @@ struct function_traits_helper<R(*)(Args...)> : base_non_member_function_traits<R
 template <typename R, typename... Args>
 struct function_traits_helper<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
 
-#ifdef KGR_KANGARU_CXX17_NOEXCEPT
+#ifdef KGR_KANGARU_CXX17_NOEXCEPT_FPTR
 
 template <typename Type, typename R, typename... Args>
 struct function_traits_helper<R(Type::*)(Args...) const noexcept> : base_function_traits<Type, R, Args...> {};

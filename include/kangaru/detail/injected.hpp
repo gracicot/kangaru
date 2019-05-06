@@ -21,11 +21,12 @@ private:
 	using Type = conditional_t<is_single<T>::value, T&, T>;
 	
 public:
+	// TODO: kangaru 5: use () parens contructor by default
 	template<typename... Args, enable_if_t<is_brace_constructible<Type, Args...>::value, int> = 0>
-	explicit injected(Args&&... args) : _service{std::forward<Args>(args)...} {}
+	explicit injected(Args&&... args) noexcept(noexcept(Type{std::forward<Args>(args)...})) : _service{std::forward<Args>(args)...} {}
 	
 	template<typename... Args, enable_if_t<!is_brace_constructible<Type, Args...>::value && std::is_constructible<Type, Args...>::value, int> = 0>
-	explicit injected(Args&&... args) : _service(std::forward<Args>(args)...) {}
+	explicit injected(Args&&... args) noexcept(std::is_nothrow_constructible<Type, Args...>::value) : _service(std::forward<Args>(args)...) {}
 	
 	service_type<T> forward() {
 		return _service.forward();

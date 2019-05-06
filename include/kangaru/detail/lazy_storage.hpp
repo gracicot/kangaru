@@ -4,14 +4,10 @@
 #include <type_traits>
 #include "traits.hpp"
 
+#include "define.hpp"
+
 namespace kgr {
 namespace detail {
-
-#if defined(_MSC_VER)
-#define KGR_KANGARU_EMPTY_BASES __declspec(empty_bases)
-#else
-#define KGR_KANGARU_EMPTY_BASES
-#endif
 
 template<typename T>
 using is_trivially_copy_constructible =
@@ -433,5 +429,7 @@ private:
 
 } // namespace detail
 } // namespace kgr
+
+#include "undef.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_LAZY_STORAGE_HPP

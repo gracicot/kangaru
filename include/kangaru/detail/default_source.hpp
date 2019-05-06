@@ -14,9 +14,7 @@
 #include <memory>
 #include <iterator>
 
-#if !defined(KGR_KANGARU_CXX17_NOEXCEPT) && (defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L)
-#define KGR_KANGARU_CXX17_NOEXCEPT
-#endif
+#include "define.hpp"
 
 namespace kgr {
 namespace detail {
@@ -231,5 +229,7 @@ private:
 
 } // namespace detail
 } // namespace kgr
+
+#include "undef.hpp"
 
 #endif

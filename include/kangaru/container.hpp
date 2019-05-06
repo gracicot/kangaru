@@ -18,6 +18,8 @@
 #include <memory>
 #include <type_traits>
 
+#include "detail/define.hpp"
+
 namespace kgr {
 
 /**
@@ -586,5 +588,7 @@ private:
 };
 
 } // namespace kgr
+
+#include "detail/undef.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_CONTAINER_HPP

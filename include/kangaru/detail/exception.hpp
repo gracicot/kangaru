@@ -2,16 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_EXCEPTION_HPP
 
 #include "kangaru/detail/config.hpp"
-
-// These preprocessor directives allow kangaru to work with exceptions disabled.
-#if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(KGR_KANGARU_NOEXCEPTION)
-	#define KGR_KANGARU_THROW(exception) throw exception
-#else
-	#ifndef KGR_KANGARU_NOEXCEPTION
-		#define KGR_KANGARU_NOEXCEPTION
-	#endif
-	#define KGR_KANGARU_THROW(exception) std::abort()
-#endif
+#include "define.hpp"
 
 #ifndef KGR_KANGARU_NOEXCEPTION
 
@@ -76,4 +67,7 @@ struct supplied_not_found : service_not_found {
 } // namespace kgr
 
 #endif // KGR_KANGARU_NOEXCEPTION
+
+#include "undef.hpp"
+
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_EXCEPTION_HPP

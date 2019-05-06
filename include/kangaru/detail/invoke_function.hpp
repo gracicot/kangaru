@@ -7,24 +7,7 @@
 #include "service_map.hpp"
 #include "detection.hpp"
 
-#ifndef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-#if _MSC_VER == 1900
-#ifndef __clang__
-// MSVC has a defect that makes the use of the template keyword an error in some corner cases.
-#define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-#endif // !__clang__
-#endif // _MSC_VER
-#endif // KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-
-#ifndef KGR_KANGARU_MSVC_EXACT_DECLTYPE
-#if _MSC_VER
-#ifndef __clang__
-// MSVC has a defect that makes decltype with the address of a
-// generic lambda not possible unless sending the address to a function.
-#define KGR_KANGARU_MSVC_EXACT_DECLTYPE
-#endif // !__clang__
-#endif // _MSC_VER
-#endif // KGR_KANGARU_MSVC_EXACT_DECLTYPE
+#include "define.hpp"
 
 namespace kgr {
 namespace detail {
@@ -209,5 +192,7 @@ using is_invokable = bool_constant<
 
 } // namespace detail
 } // namespace kgr
+
+#include "undef.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_INVOKE_FUNCTION_HPP

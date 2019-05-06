@@ -9,11 +9,7 @@
 
 #include "../container.hpp"
 
-#if !defined(_MSC_VER) || _MSC_VER <= 1900
-// MSVC 2015 cannot properly validate autowired argument to services.
-// It will generate bad code and cause crashes
-#define KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
-#endif
+#include "define.hpp"
 
 namespace kgr {
 
@@ -221,5 +217,7 @@ using autowire_tag = detail::autowire_map<service, decay_t, Map, max_dependencie
 
 } // namespace detail
 } // namespace sbg
+
+#include "undef.hpp"
 
 #endif

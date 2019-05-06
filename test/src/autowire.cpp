@@ -1,6 +1,9 @@
 #include <catch2/catch.hpp>
 #include <kangaru/kangaru.hpp>
 
+// We make feature macro available
+#include <kangaru/detail/define.hpp>
+
 namespace test_autowire_construct {
 	struct service1 {};
 	auto service_map(service1 const&) -> kgr::autowire;

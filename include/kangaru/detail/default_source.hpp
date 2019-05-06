@@ -6,6 +6,7 @@
 #include "../type_id.hpp"
 #include "traits.hpp"
 #include "injected.hpp"
+#include "service_storage.hpp"
 
 #include <algorithm>
 #include <type_traits>
@@ -28,7 +29,7 @@ private:
 #else
 	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
 #endif
-
+	
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	

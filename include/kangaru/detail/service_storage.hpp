@@ -69,6 +69,13 @@ struct memory_block_destruction {
 template<typename Derived, typename Type>
 struct memory_block_destruction<Derived, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
 
+#if _MSC_VER == 1900
+#ifndef __clang__
+#pragma warning( push )
+#pragma warning( disable : 4521 )
+#endif
+#endif
+
 template<typename T>
 struct memory_block : memory_block_destruction<memory_block<T>, T> {
 	memory_block(memory_block const&) = delete;
@@ -96,6 +103,12 @@ struct memory_block : memory_block_destruction<memory_block<T>, T> {
 	
 	aligned_storage_t<sizeof(T), alignof(T)> service;
 };
+#if _MSC_VER
+#ifndef __clang__
+#pragma warning( pop )
+#endif
+#endif
+
 
 } // namespace detail
 } // namespace kgr

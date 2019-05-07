@@ -69,19 +69,10 @@ struct memory_block_destruction {
 template<typename Derived, typename Type>
 struct memory_block_destruction<Derived, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
 
-#if _MSC_VER == 1900
-#ifndef __clang__
-#pragma warning( push )
-#pragma warning( disable : 4521 )
-#endif
-#endif
-
 template<typename T>
 struct memory_block : memory_block_destruction<memory_block<T>, T> {
 	memory_block(memory_block const&) = delete;
 	memory_block(memory_block &&) = delete;
-	memory_block(memory_block&) = delete;
-	memory_block(memory_block const&&) = delete;
 	memory_block& operator=(memory_block const&) = delete;
 	memory_block& operator=(memory_block &&) = delete;
 	
@@ -90,9 +81,7 @@ struct memory_block : memory_block_destruction<memory_block<T>, T> {
 		new (&service) T(std::forward<Args>(args)...);
 	}
 	
-	template<typename... Args, enable_if_t<
-		!std::is_constructible<T, Args...>::value &&
-		is_brace_constructible_helper<T, Args...>::value, int> = 0>
+	template<typename... Args, enable_if_t<is_only_brace_constructible<T, Args...>::value, int> = 0>
 	explicit memory_block(Args&&... args) noexcept(noexcept(T{std::forward<Args>(args)...})) {
 		new (&service) T{std::forward<Args>(args)...};
 	}
@@ -103,12 +92,6 @@ struct memory_block : memory_block_destruction<memory_block<T>, T> {
 	
 	aligned_storage_t<sizeof(T), alignof(T)> service;
 };
-
-#if _MSC_VER
-#ifndef __clang__
-#pragma warning( pop )
-#endif
-#endif
 
 } // namespace detail
 } // namespace kgr

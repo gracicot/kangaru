@@ -34,7 +34,7 @@ private:
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
+	template<typename T, typename... Args>
 	static instance_ptr<memory_block<T>> make_instance_ptr(Args&&... args) {
 		static_assert(std::is_standard_layout<memory_block<T>>::value,
 			"The service memory block must be standard layout"

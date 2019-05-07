@@ -110,10 +110,10 @@ template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:
 	template<typename U, typename... As>
-	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(int);
+	static auto test(decltype(void(U{std::declval<As>()...}), 0)) -> std::true_type;
 	
 	template<typename...>
-	static std::false_type test(...);
+	static auto test(void*) -> std::false_type;
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -124,10 +124,10 @@ template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
 	template<typename U, typename... As>
-	static std::true_type test(decltype(void(std::declval<U>().emplace(std::declval<As>()...)), 0));
+	static auto test(decltype(void(std::declval<U>().emplace(std::declval<As>()...)), 0)) -> std::true_type;
 	
 	template<typename U, typename... As>
-	static std::false_type test(void*);
+	static auto test(void*) -> std::false_type;
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -137,10 +137,10 @@ template<typename F, typename... Args>
 struct is_callable {
 private:
 	template<typename...>
-	static std::false_type test(void*);
+	static auto test(void*) -> std::false_type;
 
 	template<typename U, typename... As>
-	static std::true_type test(decltype(void(std::declval<U>()(std::declval<As>()...)), 0));
+	static auto test(decltype(void(std::declval<U>()(std::declval<As>()...)), 0)) -> std::true_type;
 
 	using type = decltype(test<F, Args...>(0));
 	

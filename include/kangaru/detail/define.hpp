@@ -31,7 +31,7 @@
 #endif
 
 #ifndef KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && _MSC_VER <= 1900
 #ifndef __clang__
 // MSVC has a defect that makes the use of the template keyword an error in some corner cases.
 #define KGR_KANGARU_MSVC_NO_DEPENDENT_TEMPLATE_KEYWORD

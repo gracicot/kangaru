@@ -182,6 +182,67 @@ namespace test_autowire_circular_error {
 	}
 }
 
+namespace test_autowire_indirect_circular_error {
+	struct service3;
+	
+	struct service1 {
+		service1(service3 const&) {}
+	};
+	
+	struct service2 {
+		service2(service1 const&) {}
+	};
+	
+	struct service3 {
+		service3(service2 const&) {}
+	};
+	
+	struct service4 {
+		service4(service1 const&) {}
+	};
+	
+	auto service_map(service1 const&) -> kgr::single_service<service1, kgr::autowire>;
+	auto service_map(service2 const&) -> kgr::single_service<service2, kgr::dependency<kgr::mapped_service_t<service1>>>;
+	auto service_map(service3 const&) -> kgr::single_service<service3, kgr::autowire>;
+	auto service_map(service4 const&) -> kgr::single_service<service4, kgr::autowire>;
+	
+	TEST_CASE("autowire detect indirect circular dependencies", "[autowire]") {
+		// TODO: We connot detect indirect circular dependencies. We still stop the compilation though
+// 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service4>>::value);
+
+	}
+}
+namespace test_autowire_prefer_non_circular_paths {
+	struct service4;
+	
+	struct service1 {
+		service1(service4 const&) {}
+	};
+	
+	struct service2 {
+		service2(service1 const&) {}
+	};
+	
+	struct service3 {};
+	
+	struct service4 {
+		service4(service3 const&) {}
+		service4(service2 const&) {}
+	};
+	
+	auto service_map(service1 const&) -> kgr::single_service<service1, kgr::autowire>;
+	auto service_map(service2 const&) -> kgr::single_service<service2, kgr::dependency<kgr::mapped_service_t<service1>>>;
+	auto service_map(service3 const&) -> kgr::single_service<service3, kgr::autowire>;
+	auto service_map(service4 const&) -> kgr::single_service<service4, kgr::autowire>;
+	
+	TEST_CASE("autowire prefer non circular path for deduction", "[autowire]") {
+		kgr::container container;
+		// TODO: We connot detect indirect circular dependencies. We still stop the compilation though
+// 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<service4>>::value);
+// 		container.service<kgr::mapped_service_t<service4>>();
+	}
+}
+
 namespace test_autowire_service_error {
 	struct ill_formed {};
 	

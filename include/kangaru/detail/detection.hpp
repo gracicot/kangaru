@@ -110,7 +110,8 @@ struct expand_n_helper;
 
 template<std::size_t... S, typename List, template<typename...> class Trait, typename... Args>
 struct expand_n_helper<seq<S...>, List, Trait, Args...> {
-	using type = Trait<Args..., meta_list_element_t<S, List>...>;
+	// Cannot use the alias here or msvc will try to send `I` as reference.
+	using type = Trait<Args..., typename meta_list_element<S, List>::type...>;
 };
 
 /*

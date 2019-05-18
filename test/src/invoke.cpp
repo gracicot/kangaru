@@ -4,7 +4,7 @@
 #include <random>
 #include <limits>
 
-namespace {
+namespace kgr_test {
 
 static std::mt19937 random{std::random_device{}()};
 
@@ -286,4 +286,4 @@ namespace testcase_inject_mapped {
 	}
 }
 
-} // namespace
+} // namespace kgr_test

@@ -6,6 +6,7 @@
 #include "../type_id.hpp"
 #include "traits.hpp"
 #include "injected.hpp"
+#include "service_storage.hpp"
 
 #include <algorithm>
 #include <type_traits>
@@ -14,6 +15,8 @@
 #include <memory>
 #include <iterator>
 
+#include "define.hpp"
+
 namespace kgr {
 namespace detail {
 
@@ -21,28 +24,25 @@ struct default_source {
 private:
 	using alias_t = void*;
 	
-	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t)>;
+	template<typename T> using instance_ptr = std::unique_ptr<T, void(*)(alias_t) KGR_KANGARU_CXX17_NOEXCEPT>;
+	
 	using instance_cont = std::vector<instance_ptr<void>>;
 	using service_cont = std::unordered_map<type_id_t, detail::service_storage>;
 	
 	template<typename T>
-	static void deleter(alias_t i) {
+	static void deleter(alias_t i) KGR_KANGARU_CXX17_NOEXCEPT {
 		delete static_cast<T*>(i);
 	}
 	
-	template<typename T, typename... Args, enable_if_t<std::is_constructible<T, Args...>::value>* = nullptr>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T(std::forward<Args>(args)...),
-			&default_source::deleter<T>
-		};
-	}
-	
-	template<typename T, typename... Args, enable_if_t<!std::is_constructible<T, Args...>::value>* = nullptr>
-	static instance_ptr<T> make_instance_ptr(Args&&... args) {
-		return instance_ptr<T>{
-			new T{std::forward<Args>(args)...},
-			&default_source::deleter<T>
+	template<typename T, typename... Args>
+	static instance_ptr<memory_block<T>> make_instance_ptr(Args&&... args) {
+		static_assert(std::is_standard_layout<memory_block<T>>::value,
+			"The service memory block must be standard layout"
+		);
+		
+		return instance_ptr<memory_block<T>>{
+			new memory_block<T>{std::forward<Args>(args)...},
+			&default_source::deleter<memory_block<T>>
 		};
 	}
 	
@@ -73,31 +73,31 @@ private:
 	}
 	
 	template<typename Override, typename Parent, enable_if_t<detail::is_polymorphic<Parent>::value, int> = 0>
-	auto get_override_forward() -> detail::forward_ptr<Parent> {
+	auto get_override_forward() noexcept -> detail::forward_ptr<Parent> {
 		return [](alias_t s) -> service_type<Parent> {
 			return static_cast<service_type<Parent>>(static_cast<Override*>(s)->forward());
 		};
 	}
 	
 	template<typename T, enable_if_t<detail::is_polymorphic<T>::value, int> = 0>
-	auto get_forward() -> detail::forward_ptr<T> {
+	auto get_forward() noexcept -> detail::forward_ptr<T> {
 		return [](alias_t service) -> service_type<T> {
 			return static_cast<T*>(service)->forward();
 		};
 	}
 	
 	template<typename T, enable_if_t<!detail::is_polymorphic<T>::value, int> = 0>
-	auto get_forward() -> detail::forward_ptr<T> {
+	auto get_forward() noexcept -> detail::forward_ptr<T> {
 		return nullptr;
 	}
 	
 	template<typename T, enable_if_t<is_polymorphic<T>::value, int> = 0>
-	static auto make_wrapper(service_storage& instance) -> detail::injected_wrapper<T> {
+	static auto make_wrapper(service_storage& instance) noexcept -> detail::injected_wrapper<T> {
 		return detail::injected_wrapper<T>{instance.cast<T>()};
 	}
 	
 	template<typename T, enable_if_t<!is_polymorphic<T>::value, int> = 0>
-	static auto make_wrapper(service_storage& instance) -> detail::injected_wrapper<T> {
+	static auto make_wrapper(service_storage& instance) noexcept -> detail::injected_wrapper<T> {
 		return detail::injected_wrapper<T>{instance.service<T>()};
 	}
 	
@@ -121,7 +121,7 @@ public:
 	template<typename T, typename... Parents, typename... Args>
 	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);
-		auto ptr = instance_ptr.get();
+		auto ptr = &instance_ptr->cast();
 		
 		_instances.emplace_back(std::move(instance_ptr));
 		
@@ -132,7 +132,7 @@ public:
 	 * This function clears this container.
 	 * Every single services are invalidated after calling this function.
 	 */
-	inline void clear() {
+	inline void clear() noexcept {
 		_instances.clear();
 		_services.clear();
 	}
@@ -200,7 +200,7 @@ public:
 	 * Otherwise it calls `fails` with no parameter.
 	 */
 	template<typename T, typename F1, typename F2, typename R1 = call_result_t<F1, detail::injected_wrapper<T>>, typename R2 = call_result_t<F2>>
-	auto find(F1 found, F2 fails) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
+	auto find(F1 found, F2 fails) noexcept(noexcept(fails()) && noexcept(found(std::declval<detail::injected_wrapper<T>>()))) -> enable_if_t<std::is_same<R1, R2>::value, R1> {
 		auto it = _services.find(type_id<T>());
 		
 		if (it != _services.end()) {
@@ -215,7 +215,7 @@ public:
 	 * T nust be a single service.
 	 */
 	template<typename T>
-	bool contains() const {
+	bool contains() const noexcept {
 		return _services.find(type_id<T>()) != _services.end();
 	}
 	
@@ -226,5 +226,7 @@ private:
 
 } // namespace detail
 } // namespace kgr
+
+#include "undef.hpp"
 
 #endif

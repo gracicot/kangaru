@@ -16,10 +16,13 @@ template<typename T>
 using nontemplate_constuct_function_pointer_t = decltype(&T::construct);
 
 template<typename T, typename... Args>
-using template_constuct_function_pointer_t = decltype(&T::template construct<Args...>);
+using template_constuct_function_pointer_t = decltype(exact(&T::template construct<Args...>));
 
 template<typename T>
 using has_construct = is_detected<nontemplate_constuct_function_pointer_t, T>;
+
+template<typename T, typename... Args>
+using template_construct_function_pointer_constant = std::integral_constant<decltype(exact(&T::template construct<Args...>)), &T::template construct<Args...>>;
 
 /*
  * Metafunction that returns a trait that check if a function is callable and services are valid.
@@ -47,31 +50,17 @@ using is_construct_invokable = bool_constant<
 	>::value
 >;
 
-/*
- * has_callable_template_construct
- * 
- * This trait test if a particular template construct function is callable given a set of parameter
- */
-template<typename, typename, typename, typename = void>
-struct has_callable_template_construct : std::false_type {};
+template<typename, typename, typename>
+struct has_callable_template_construct {};
 
-/*
- * Specialization of has_callable_template_construct.
- * 
- * We select this specialization if the function construct<TArgs...> exist within T,
- * and also if that function is invokable using Args... as provided arguments.
- */
 template<typename T, typename... TArgs, typename... Args>
-struct has_callable_template_construct<
-	T, meta_list<TArgs...>, meta_list<Args...>,
-	enable_if_t<is_detected<template_constuct_function_pointer_t, T, TArgs...>::value>
-> : is_construct_invokable<template_constuct_function_pointer_t<T, TArgs...>, Args...> {};
+struct has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>> : bool_constant<
+	instantiate_if_or<is_detected<template_constuct_function_pointer_t, T, TArgs...>::value, std::false_type, is_construct_invokable, detected_t<template_constuct_function_pointer_t, T, TArgs...>, Args...>::value
+> {};
 
-/*
- * This trait will extract the first matching construct function that is callable.
- */
 template<typename, typename, typename, typename = void>
 struct get_template_construct_helper {};
+
 
 /*
  * Specialization of get_template_construct_helper.
@@ -94,7 +83,7 @@ template<typename T, typename... TArgs, typename... Args>
 struct get_template_construct_helper<
 	T, meta_list<TArgs...>, meta_list<Args...>,
 	enable_if_t<has_callable_template_construct<T, meta_list<TArgs...>, meta_list<Args...>>::value>
-> : std::integral_constant<decltype(&T::template construct<TArgs...>), &T::template construct<TArgs...>> {};
+> : template_construct_function_pointer_constant<T, TArgs...> {};
 
 /*
  * The starting point for get_template_construct_helper.
@@ -127,7 +116,7 @@ template<typename T, typename... Args>
 struct get_any_template_construct_helper<
 	T, meta_list<Args...>,
 	enable_if_t<template_construct_exist<T, Args...>::value>
-> : std::integral_constant<decltype(exact(&T::template construct<Args...>)), &T::template construct<Args...>> {};
+> : template_construct_function_pointer_constant<T, Args...> {};
 
 /*
  * Alias for get_any_template_construct_helper

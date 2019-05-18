@@ -6,6 +6,8 @@
 
 #include <type_traits>
 
+#include "define.hpp"
+
 namespace kgr {
 namespace detail {
 
@@ -128,7 +130,7 @@ struct function_traits_helper<R(*)(Args...)> : base_non_member_function_traits<R
 template <typename R, typename... Args>
 struct function_traits_helper<R(*)(Args..., ...)> : base_non_member_function_traits<R, Args...> {};
 
-#if defined(__cpp_noexcept_function_type) || __cplusplus >= 201703L || _MSVC_LANG >= 201703L
+#ifdef KGR_KANGARU_CXX17_NOEXCEPT_FPTR
 
 template <typename Type, typename R, typename... Args>
 struct function_traits_helper<R(Type::*)(Args...) const noexcept> : base_function_traits<Type, R, Args...> {};
@@ -248,5 +250,7 @@ using function_argument_t = meta_list_element_t<n, typename function_traits<F>::
 
 } // namespace detail
 } // namespace kgr
+
+#include "undef.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_FUNCTION_TRAITS_HPP

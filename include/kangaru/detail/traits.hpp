@@ -30,17 +30,10 @@ using forward_t = decltype(std::declval<T>().forward());
 template<typename T>
 using has_forward = bool_constant<!std::is_void<detected_or<void, forward_t, T>>::value>;
 
-template<typename...>
-struct to_int {
-	using type = int;
-};
 
 // Workaround for visual studio to take the address of a generic lambda
 template<typename T>
 T exact(T);
-
-template<typename... Ts>
-using int_t = typename to_int<Ts...>::type;
 
 template<typename T>
 struct identity { using type = T; };
@@ -80,7 +73,7 @@ template<typename From, typename To>
 using is_explicitly_convertible = std::is_constructible<To, From>;
 
 template<typename T>
-using is_service = bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value>;
+struct is_service : bool_constant<!std::is_polymorphic<T>::value && has_forward<T>::value> {};
 
 template<typename T>
 struct constify {
@@ -117,10 +110,10 @@ template<typename T, typename... Args>
 struct is_brace_constructible_helper {
 private:
 	template<typename U, typename... As>
-	static decltype(static_cast<void>(U{std::declval<As>()...}), std::true_type{}) test(int);
+	static auto test(decltype(void(U{std::declval<As>()...}), 0)) -> std::true_type;
 	
 	template<typename...>
-	static std::false_type test(...);
+	static auto test(void*) -> std::false_type;
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -131,10 +124,10 @@ template<typename T, typename... Args>
 struct has_emplace_helper {
 private:
 	template<typename U, typename... As>
-	static std::true_type test(int_t<decltype(std::declval<U>().emplace(std::declval<As>()...))>);
+	static auto test(decltype(void(std::declval<U>().emplace(std::declval<As>()...)), 0)) -> std::true_type;
 	
 	template<typename U, typename... As>
-	static std::false_type test(...);
+	static auto test(void*) -> std::false_type;
 	
 public:
 	using type = decltype(test<T, Args...>(0));
@@ -144,10 +137,10 @@ template<typename F, typename... Args>
 struct is_callable {
 private:
 	template<typename...>
-	static std::false_type test(...);
+	static auto test(void*) -> std::false_type;
 
 	template<typename U, typename... As>
-	static std::true_type test(int_t<decltype(std::declval<U>()(std::declval<As>()...))>);
+	static auto test(decltype(void(std::declval<U>()(std::declval<As>()...)), 0)) -> std::true_type;
 
 	using type = decltype(test<F, Args...>(0));
 	
@@ -213,13 +206,28 @@ using is_emplaceable = bool_constant<std::is_default_constructible<T>::value && 
 template<typename T, typename... Args>
 using is_service_instantiable = bool_constant<is_emplaceable<T, Args...>::value || is_someway_constructible<T, kgr::in_place_t, Args...>::value>;
 
+/*
+ * Type trait that extract the return type of the forward function.
+ */
+template<typename, typename = void>
+struct service_type_helper {};
+
+/*
+ * Specialization of ServiceTypeHelper when T has a valid forward function callable without parameter.
+ * Makes an alias to the return type of the forward function.
+ */
+template<typename T>
+struct service_type_helper<T, enable_if_t<has_forward<T>::value>> {
+	using type = decltype(std::declval<T>().forward());
+};
+
 } // namespace detail
 
 /**
  * This type is the type of the service returned by the definition T.
  */
 template<typename T>
-using service_type = detail::forward_t<T>;
+using service_type = typename detail::service_type_helper<T>::type;
 
 } // namespace kgr
 

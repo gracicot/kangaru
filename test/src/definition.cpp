@@ -44,7 +44,7 @@ TEST_CASE("The definition can have arguments including other services", "[defini
 		void emplace(Service1) {}
 		Service2 forward() { return {}; }
 	};
-	
+
 	REQUIRE(kgr::detail::is_service_valid<Definition2, int>::value);
 	(void) kgr::container{}.service<Definition2>(123);
 }

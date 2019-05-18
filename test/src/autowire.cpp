@@ -1,6 +1,9 @@
 #include <catch2/catch.hpp>
 #include <kangaru/kangaru.hpp>
 
+// We make feature macro available
+#include <kangaru/detail/define.hpp>
+
 namespace test_autowire_construct {
 	struct service1 {};
 	auto service_map(service1 const&) -> kgr::autowire;
@@ -176,9 +179,11 @@ namespace test_autowire_circular_error {
 	auto service_map(service3 const&) -> kgr::single_service<service3, kgr::autowire>;
 	
 	TEST_CASE("autowire detect circular dependency", "[autowire]") {
+#ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service1>>::value);
 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service3>>::value);
+#endif
 	}
 }
 
@@ -258,8 +263,10 @@ namespace test_autowire_service_error {
 	TEST_CASE("autowire service detect errors in autowired dependencies", "[autowire]") {
 		kgr::container container;
 		
+#ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<ill_formed>>::value);
 		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
+#endif
 	}
 }
 

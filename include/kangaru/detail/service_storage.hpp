@@ -58,6 +58,41 @@ private:
 	aligned_storage_t<sizeof(function_pointer), alignof(function_pointer)> forward_function;
 };
 
+
+template<typename Derived, typename Type, typename = void>
+struct memory_block_destruction {
+	~memory_block_destruction() {
+		static_cast<Derived*>(this)->cast().~Type();
+	}
+};
+
+template<typename Derived, typename Type>
+struct memory_block_destruction<Derived, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
+
+template<typename T>
+struct memory_block : memory_block_destruction<memory_block<T>, T> {
+	memory_block(memory_block const&) = delete;
+	memory_block(memory_block &&) = delete;
+	memory_block& operator=(memory_block const&) = delete;
+	memory_block& operator=(memory_block &&) = delete;
+	
+	template<typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
+	explicit memory_block(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value) {
+		new (&service) T(std::forward<Args>(args)...);
+	}
+	
+	template<typename... Args, enable_if_t<is_only_brace_constructible<T, Args...>::value, int> = 0>
+	explicit memory_block(Args&&... args) noexcept(noexcept(T{std::forward<Args>(args)...})) {
+		new (&service) T{std::forward<Args>(args)...};
+	}
+	
+	auto cast() noexcept -> T& {
+		return *static_cast<T*>(static_cast<void*>(&service));
+	}
+	
+	aligned_storage_t<sizeof(T), alignof(T)> service;
+};
+
 } // namespace detail
 } // namespace kgr
 

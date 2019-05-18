@@ -9,6 +9,8 @@
 
 #include "../container.hpp"
 
+#include "define.hpp"
+
 namespace kgr {
 
 template<typename, typename>
@@ -33,28 +35,41 @@ struct deducer {
 	explicit deducer(container& c) noexcept : _container{&c} {}
 	
 	template<typename T, typename Mapped = mapped_service_t<T, Map>, enable_if_t<
+#ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && !std::is_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped
-		>::value, int> = 0>
+			std::false_type, is_service_valid, Mapped>::value
+#else
+		is_different_service<For, Mapped>::value && !std::is_reference<service_type<Mapped>>::value
+#endif
+		, int> = 0>
 	operator T () {
 		return _container->service<Mapped>();
 	}
 	
 	template<typename T, typename Mapped = mapped_service_t<T&, Map>, enable_if_t<
+	
+#ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped
-		>::value, int> = 0>
+			std::false_type, is_service_valid, Mapped>::value
+#else
+		is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value
+#endif
+		, int> = 0>
 	operator T& () const {
 		return _container->service<Mapped>();
 	}
 	
 	template<typename T, typename Mapped = mapped_service_t<T&&, Map>, enable_if_t<
+#ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && std::is_rvalue_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped
-		>::value, int> = 0>
+			std::false_type, is_service_valid, Mapped>::value
+#else
+		is_different_service<For, Mapped>::value && std::is_rvalue_reference<service_type<Mapped>>::value
+#endif
+		, int> = 0>
 	operator T&& () const {
 		return _container->service<Mapped>();
 	}
@@ -69,12 +84,12 @@ struct weak_deducer {
 		is_different_service<For, mapped_service_t<T, Map>>::value &&
 		!std::is_reference<service_type<mapped_service_t<T, Map>>>::value, int> = 0>
 	operator T ();
-	
+
 	template<typename T, enable_if_t<
 		is_different_service<For, mapped_service_t<T&, Map>>::value &&
 		std::is_lvalue_reference<service_type<mapped_service_t<T&, Map>>>::value, int> = 0>
 	operator T& () const;
-	
+
 	template<typename T, enable_if_t<
 		is_different_service<For, mapped_service_t<T&&, Map>>::value &&
 		std::is_rvalue_reference<service_type<mapped_service_t<T&&, Map>>>::value, int> = 0>
@@ -176,14 +191,14 @@ constexpr default_inject_function{};
  * A construct function usable by many service definition implementation.
  * Will send as many deducers as there are numbers in S
  */
-template<typename Self, typename Map, typename I, std::size_t... S, typename... Args>
-inline auto deduce_construct(detail::seq<S...>, I inject, inject_t<container_service> cont, Args&&... args) -> detail::call_result_t<I, detail::deducer_expand_t<Self, Map, S>..., Args...> {
+template<typename Self, typename Map, typename I, std::size_t... S, typename... Args, typename Deducer = detail::deducer<Self, Map>>
+inline auto deduce_construct(detail::seq<S...>, I inject, inject_t<container_service> cont, Args&&... args) -> decltype(inject((void(S), std::declval<Deducer>())..., std::declval<Args>()...)) {
 	auto& container = cont.forward();
-
+	
 	// The expansion of the inject call may be empty. This will silence the warning.
 	static_cast<void>(container);
-
-	return inject((void(S), detail::deducer<Self, Map>{container})..., std::forward<Args>(args)...);
+	
+	return inject((void(S), Deducer{container})..., std::forward<Args>(args)...);
 }
 
 /*
@@ -202,5 +217,7 @@ using autowire_tag = detail::autowire_map<service, decay_t, Map, max_dependencie
 
 } // namespace detail
 } // namespace sbg
+
+#include "undef.hpp"
 
 #endif

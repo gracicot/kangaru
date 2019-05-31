@@ -37,7 +37,7 @@ public:
 	template<typename... Args>
 	
 	explicit injected(service_storage& storage) noexcept :
-		_service{storage.service<T>()} {}
+		_service(storage.service<T>()) {}
 	
 	auto forward() noexcept(noexcept(std::declval<Type>().forward())) -> service_type<T> {
 		return _service.forward();

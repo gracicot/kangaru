@@ -79,7 +79,7 @@ template<typename T>
 using is_not_final_service = negation<is_final_service<T>>;
 
 template<typename T>
-using is_polymorphic = bool_constant<std::is_base_of<polymorphic, T>::value || !meta_list_empty<parent_types<T>>::value>;
+using is_polymorphic = std::integral_constant<bool, std::is_base_of<polymorphic, T>::value || !meta_list_empty<parent_types<T>>::value>;
 
 template<typename Service, typename Overrider>
 using is_overriden_by = meta_list_contains<Service, parent_types<Overrider>>;

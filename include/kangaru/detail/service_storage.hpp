@@ -4,8 +4,6 @@
 #include "traits.hpp"
 #include "utils.hpp"
 
-#include <vector>
-
 namespace kgr {
 namespace detail {
 
@@ -100,10 +98,6 @@ struct memory_block {
 		service{std::forward<Args>(args)...} {}
 	
 	T service;
-};
-
-struct override_list_collection {
-	std::vector<std::vector<service_storage>> overrides;
 };
 
 } // namespace detail

@@ -23,12 +23,23 @@ private:
 public:
 	// TODO: kangaru 5: use () parens contructor by default
 	template<typename... Args, enable_if_t<is_brace_constructible<Type, Args...>::value, int> = 0>
-	explicit injected(Args&&... args) noexcept(noexcept(Type{std::forward<Args>(args)...})) : _service{std::forward<Args>(args)...} {}
+	explicit injected(Args&&... args) noexcept(noexcept(Type{std::forward<Args>(args)...})) :
+		_service{std::forward<Args>(args)...} {}
 	
-	template<typename... Args, enable_if_t<!is_brace_constructible<Type, Args...>::value && std::is_constructible<Type, Args...>::value, int> = 0>
-	explicit injected(Args&&... args) noexcept(std::is_nothrow_constructible<Type, Args...>::value) : _service(std::forward<Args>(args)...) {}
+	template<typename... Args, enable_if_t<
+		!is_brace_constructible<Type, Args...>::value &&
+		std::is_constructible<Type, Args...>::value, int> = 0>
+	explicit injected(Args&&... args) noexcept(std::is_nothrow_constructible<Type, Args...>::value) :
+		_service(std::forward<Args>(args)...) {}
 	
-	service_type<T> forward() {
+	// TODO: kangaru 5: use () parens contructor by default
+	// When using this function, Type is always a reference so no copy is done.
+	template<typename... Args>
+	
+	explicit injected(service_storage& storage) noexcept :
+		_service{storage.service<T>()} {}
+	
+	auto forward() noexcept(noexcept(std::declval<Type>().forward())) -> service_type<T> {
 		return _service.forward();
 	}
 	
@@ -42,8 +53,10 @@ private:
  */
 template<typename T>
 struct virtual_injected {
+	explicit virtual_injected(service_storage& storage) noexcept : virtual_injected{storage.cast<T>()} {}
 	explicit virtual_injected(void* service, forward_ptr<T> f) noexcept : _service{service}, _forward{f} {}
-	explicit virtual_injected(const typed_service_storage<T>& storage) noexcept : _service{storage.service}, _forward{storage.forward} {}
+	explicit virtual_injected(const typed_service_storage<T>& storage) noexcept :
+		_service{storage.service}, _forward{storage.forward} {}
 	
 	service_type<T> forward() {
 		return _forward(_service);

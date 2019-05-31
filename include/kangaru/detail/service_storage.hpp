@@ -4,6 +4,8 @@
 #include "traits.hpp"
 #include "utils.hpp"
 
+#include <vector>
+
 namespace kgr {
 namespace detail {
 
@@ -25,18 +27,35 @@ struct typed_service_storage {
 	forward_ptr<T> forward;
 };
 
+template<typename>
+struct override_type_id {};
+
+struct override_index_t {} constexpr override_index{};
+
 struct service_storage {
 private:
 	using function_pointer = void*(*)(void*);
 	
 public:
 	template<typename T>
-	service_storage(const typed_service_storage<T>& storage) noexcept : _service{storage.service} {
+	service_storage(typed_service_storage<T> const& storage) noexcept : _service{storage.service} {
 		static_assert(sizeof(function_pointer) >= sizeof(forward_storage<T>), "The forward storage size exceed the size of a function pointer");
 		static_assert(alignof(function_pointer) >= alignof(forward_storage<T>), "The forward storage alignement exceed the alignement of a function pointer");
 		
 		new (&forward_function) forward_storage<T>{storage.forward};
 	}
+	
+	inline explicit service_storage(override_index_t, std::size_t index) noexcept : _service{nullptr} {
+		static_assert(
+			sizeof(function_pointer) >= sizeof(std::size_t) &&
+			alignof(function_pointer) >= alignof(std::size_t),
+			"The size and alignement of std::size_t exceed the size and alignement of a function pointer"
+		);
+		
+		new (&forward_function) std::size_t{index};
+	}
+	
+	inline explicit service_storage(override_index_t, void* collection) noexcept : _service{collection}, forward_function{} {}
 	
 	template<typename T>
 	auto service() noexcept -> T& {
@@ -49,8 +68,15 @@ public:
 	}
 	
 	template<typename T>
-	auto cast() noexcept -> typed_service_storage<T> {
-		return typed_service_storage<T>{_service, reinterpret_cast<const forward_storage<T>*>(&forward_function)->forward};
+	auto cast() const noexcept -> typed_service_storage<T> {
+		return typed_service_storage<T>{
+			_service,
+			static_cast<forward_storage<T> const*>(static_cast<void const*>(&forward_function))->forward
+		};
+	}
+	
+	inline auto index() const noexcept -> std::size_t {
+		return *static_cast<std::size_t const*>(static_cast<void const*>(&forward_function));
 	}
 	
 private:
@@ -58,39 +84,26 @@ private:
 	aligned_storage_t<sizeof(function_pointer), alignof(function_pointer)> forward_function;
 };
 
-
-template<typename Derived, typename Type, typename = void>
-struct memory_block_destruction {
-	~memory_block_destruction() {
-		static_cast<Derived*>(this)->cast().~Type();
-	}
-};
-
-template<typename Derived, typename Type>
-struct memory_block_destruction<Derived, Type, enable_if_t<std::is_trivially_destructible<Type>::value>> {};
-
 template<typename T>
-struct memory_block : memory_block_destruction<memory_block<T>, T> {
+struct memory_block {
 	memory_block(memory_block const&) = delete;
 	memory_block(memory_block &&) = delete;
 	memory_block& operator=(memory_block const&) = delete;
 	memory_block& operator=(memory_block &&) = delete;
 	
 	template<typename... Args, enable_if_t<std::is_constructible<T, Args...>::value, int> = 0>
-	explicit memory_block(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value) {
-		new (&service) T(std::forward<Args>(args)...);
-	}
+	explicit memory_block(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value) :
+		service(std::forward<Args>(args)...) {}
 	
 	template<typename... Args, enable_if_t<is_only_brace_constructible<T, Args...>::value, int> = 0>
-	explicit memory_block(Args&&... args) noexcept(noexcept(T{std::forward<Args>(args)...})) {
-		new (&service) T{std::forward<Args>(args)...};
-	}
+	explicit memory_block(Args&&... args) noexcept(noexcept(T{std::forward<Args>(args)...})) :
+		service{std::forward<Args>(args)...} {}
 	
-	auto cast() noexcept -> T& {
-		return *static_cast<T*>(static_cast<void*>(&service));
-	}
-	
-	aligned_storage_t<sizeof(T), alignof(T)> service;
+	T service;
+};
+
+struct override_list_collection {
+	std::vector<std::vector<service_storage>> overrides;
 };
 
 } // namespace detail

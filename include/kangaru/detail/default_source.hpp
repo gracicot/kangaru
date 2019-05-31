@@ -7,9 +7,10 @@
 #include "traits.hpp"
 #include "injected.hpp"
 #include "service_storage.hpp"
+#include "override_storage_service.hpp"
+#include "service_range.hpp"
 
 #include <algorithm>
-#include <type_traits>
 #include <unordered_map>
 #include <vector>
 #include <memory>
@@ -36,10 +37,6 @@ private:
 	
 	template<typename T, typename... Args>
 	static instance_ptr<memory_block<T>> make_instance_ptr(Args&&... args) {
-		static_assert(std::is_standard_layout<memory_block<T>>::value,
-			"The service memory block must be standard layout"
-		);
-		
 		return instance_ptr<memory_block<T>>{
 			new memory_block<T>{std::forward<Args>(args)...},
 			&default_source::deleter<memory_block<T>>
@@ -69,36 +66,58 @@ private:
 			"A final service cannot be overriden"
 		);
 		
-		return emplace_or_assign<Parent>(overriden, get_override_forward<Override, Parent>());
+		auto inserted = emplace_or_assign<Parent>(overriden, get_override_forward<Override, Parent>());
+		
+		auto& overrides = overrides_of<Parent>(get_override_storage());
+		overrides.emplace_back(inserted);
+		
+		return inserted;
 	}
 	
-	template<typename Override, typename Parent, enable_if_t<detail::is_polymorphic<Parent>::value, int> = 0>
+	template<typename Override, typename Parent>
 	auto get_override_forward() noexcept -> detail::forward_ptr<Parent> {
+		static_assert(detail::is_polymorphic<Parent>::value,
+			"The overriden service must be virtual"
+		);
+		
 		return [](alias_t s) -> service_type<Parent> {
 			return static_cast<service_type<Parent>>(static_cast<Override*>(s)->forward());
 		};
 	}
 	
-	template<typename T, enable_if_t<detail::is_polymorphic<T>::value, int> = 0>
+	template<typename T>
 	auto get_forward() noexcept -> detail::forward_ptr<T> {
-		return [](alias_t service) -> service_type<T> {
-			return static_cast<T*>(service)->forward();
-		};
+		return detail::is_polymorphic<T>::value ? detail::forward_ptr<T>{
+			[](alias_t service) -> service_type<T> {
+				return static_cast<T*>(service)->forward();
+			}
+		} : nullptr;
 	}
 	
-	template<typename T, enable_if_t<!detail::is_polymorphic<T>::value, int> = 0>
-	auto get_forward() noexcept -> detail::forward_ptr<T> {
-		return nullptr;
+	inline auto get_override_storage() -> override_storage& {
+		auto it = _services.find(type_id<override_storage_service>());
+		
+		if (it != _services.end()) {
+			return it->second.service<override_storage_service>().forward();
+		} else {
+			_instances.emplace_back(make_instance_ptr<override_storage_service>());
+			auto storage = emplace_or_assign<override_storage_service>(_instances.back().get(), nullptr);
+			return static_cast<override_storage_service*>(storage.service)->forward();
+		}
 	}
 	
-	template<typename T, enable_if_t<is_polymorphic<T>::value, int> = 0>
-	static auto make_wrapper(service_storage& instance) noexcept -> detail::injected_wrapper<T> {
-		return detail::injected_wrapper<T>{instance.cast<T>()};
-	}
-	
-	template<typename T, enable_if_t<!is_polymorphic<T>::value, int> = 0>
-	static auto make_wrapper(service_storage& instance) noexcept -> detail::injected_wrapper<T> {
-		return detail::injected_wrapper<T>{instance.service<T>()};
+	template<typename T>
+	auto overrides_of(override_storage& override_storage) -> std::vector<service_storage>& {
+		auto it = _services.find(type_id<index_storage<T>>());
+		
+		if (it != _services.end()) {
+			return override_storage.overrides[it->second.index()];
+		} else {
+			auto next_index = override_storage.overrides.size();
+			override_storage.overrides.emplace_back();
+			_services.emplace(type_id<index_storage<T>>(), service_storage{override_index, next_index});
+			return override_storage.overrides.back();
+		}
 	}
 	
 public:
@@ -109,7 +128,7 @@ public:
 	default_source& operator=(default_source&&) = default;
 	
 #ifdef KGR_KANGARU_REVERSE_DESTRUCTION
-	~default_source() {
+	inline ~default_source() {
 		for (auto it = _instances.rbegin() ; it != _instances.rend() ; ++it) {
 			it->reset();
 		}
@@ -121,7 +140,7 @@ public:
 	template<typename T, typename... Parents, typename... Args>
 	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);
-		auto ptr = &instance_ptr->cast();
+		auto ptr = &instance_ptr->service;
 		
 		_instances.emplace_back(std::move(instance_ptr));
 		
@@ -147,19 +166,27 @@ public:
 	 */
 	template<typename Predicate>
 	auto fork(Predicate predicate) const -> default_source {
-		default_source s;
+		default_source fork;
 		
-		s._services.reserve(_services.size());
+		fork._services.reserve(_services.size());
 		
 		std::copy_if(
 			_services.begin(), _services.end(),
-			std::inserter(s._services, s._services.begin()),
+			std::inserter(fork._services, fork._services.begin()),
 			[&predicate](service_cont::const_reference i) {
-				return predicate(i.first);
+				return i.first != type_id<override_storage_service>() && predicate(i.first);
 			}
 		);
 		
-		return s;
+		auto it = _services.find(type_id<override_storage_service>());
+		
+		if (it != _services.end()) {
+			auto& this_overrides = it->second.service<override_storage_service>();
+			auto fork_overrides = std::get<0>(fork.emplace<override_storage_service>());
+			static_cast<override_storage*>(fork_overrides.service)->overrides = this_overrides.forward().overrides;
+		}
+		
+		return fork;
 	}
 	
 	/*
@@ -189,7 +216,7 @@ public:
 			other._services.begin(), other._services.end(),
 			std::inserter(_services, _services.end()),
 			[&predicate](service_cont::const_reference i) {
-				return predicate(i.first);
+				return i.first != type_id<override_storage_service>() && predicate(i.first);
 			}
 		);
 	}
@@ -204,10 +231,19 @@ public:
 		auto it = _services.find(type_id<T>());
 		
 		if (it != _services.end()) {
-			return found(make_wrapper<T>(it->second));
+			return found(detail::injected_wrapper<T>{it->second});
 		} else {
 			return fails();
 		}
+	}
+	
+	template<typename T>
+	auto overrides() -> override_range<T> {
+		auto& overrides = overrides_of<T>(get_override_storage());
+		return override_range<T>{
+			override_iterator<T>{overrides.begin()},
+			override_iterator<T>{overrides.end()}
+		};
 	}
 	
 	/*

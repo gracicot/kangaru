@@ -5,6 +5,29 @@
 #include <vector>
 
 namespace kgr {
+
+template<typename Iterator>
+struct override_range {
+	using iterator = Iterator;
+	using service = typename Iterator::service;
+	using service_type = service_type<service>;
+	
+	explicit override_range(iterator begin, iterator end) noexcept :
+		_begin{begin}, _end{end} {}
+	
+	auto begin() const noexcept -> iterator {
+		return _begin;
+	}
+	
+	auto end() const noexcept -> iterator {
+		return _end;
+	}
+	
+private:
+	iterator _begin;
+	iterator _end;
+};
+
 namespace detail {
 
 template<typename T>
@@ -34,31 +57,10 @@ struct override_iterator {
 	}
 	
 private:
+	using service = T;
+	friend struct override_range<override_iterator<T>>;
 	std::vector<service_storage>::iterator _internal;
 };
-
-template<typename T>
-struct override_range {
-	using iterator = override_iterator<T>;
-	
-	explicit override_range(iterator begin, iterator end) noexcept :
-		_begin{begin}, _end{end} {}
-	
-	auto begin() const noexcept -> iterator {
-		return _begin;
-	}
-	
-	auto end() const noexcept -> iterator {
-		return _end;
-	}
-	
-private:
-	iterator _begin;
-	iterator _end;
-};
-
-
-
 
 } // namespace detail
 } // namespace kgr

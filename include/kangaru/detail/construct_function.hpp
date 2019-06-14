@@ -5,6 +5,7 @@
 #include "traits.hpp"
 #include "injected.hpp"
 #include "container_service.hpp"
+#include "override_range_service.hpp"
 
 namespace kgr {
 namespace detail {
@@ -193,7 +194,7 @@ using has_valid_construct = bool_constant<has_template_construct<T, Args...>::va
 template<typename T, typename... Args>
 struct is_construct_function_callable : bool_constant<
 	is_construct_invokable<detected_t<construct_function_t, T, Args...>, Args...>::value ||
-	is_container_service<T>::value || is_abstract_service<T>::value
+	is_override_range_service<T>::value || is_container_service<T>::value || is_abstract_service<T>::value
 > {};
 
 /*

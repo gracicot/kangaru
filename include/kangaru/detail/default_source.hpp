@@ -238,9 +238,9 @@ public:
 	}
 	
 	template<typename T>
-	auto overrides() -> override_range<T> {
+	auto overrides() -> override_range<override_iterator<T>> {
 		auto& overrides = overrides_of<T>(get_override_storage());
-		return override_range<T>{
+		return override_range<override_iterator<T>>{
 			override_iterator<T>{overrides.begin()},
 			override_iterator<T>{overrides.end()}
 		};

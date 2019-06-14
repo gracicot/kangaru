@@ -5,6 +5,7 @@
 #include "detail/traits.hpp"
 #include "detail/validity_check.hpp"
 #include "detail/utils.hpp"
+#include "detail/override_range_service.hpp"
 #include "detail/container_service.hpp"
 #include "detail/autocall_traits.hpp"
 #include "detail/single.hpp"
@@ -486,7 +487,8 @@ private:
 	 */
 	template<typename T, typename... Args,
 		disable_if<detail::is_single<T>> = 0,
-		disable_if<detail::is_container_service<T>> = 0>
+		disable_if<detail::is_container_service<T>> = 0,
+		disable_if<detail::is_override_range_service<T>> = 0>
 	auto definition(Args&&... args) -> detail::injected_wrapper<T> {
 		auto service = make_service_instance<T>(std::forward<Args>(args)...);
 		
@@ -506,12 +508,20 @@ private:
 	
 	/*
 	 * This function returns a service definition.
+	 * This version of this function is specific to a container service.
+	 */
+	template<typename T, enable_if<detail::is_override_range_service<T>> = 0>
+	auto definition() -> detail::injected_wrapper<T> {
+		return detail::injected<T>{T{source().overrides<detail::override_range_service_type_t<T>>()}};
+	}
+	
+	/*
+	 * This function returns a service definition.
 	 * This version of this function create the service if it was not created before.
 	 * It is called when getting a service definition for a single, non virtual service
 	 */
 	template<typename T,
-		enable_if<detail::is_single<T>> = 0,
-		disable_if<detail::is_container_service<T>> = 0>
+		enable_if<detail::is_single<T>> = 0>
 	auto definition() -> detail::injected_wrapper<T> {
 		return source().find<T>(
 			[](detail::injected_wrapper<T>&& storage) { return storage; },

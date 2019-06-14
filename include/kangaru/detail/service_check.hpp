@@ -4,6 +4,8 @@
 #include "traits.hpp"
 #include "function_traits.hpp"
 #include "construct_function.hpp"
+#include "container_service.hpp"
+#include "override_range_service.hpp"
 #include "override_traits.hpp"
 
 namespace kgr {
@@ -29,7 +31,7 @@ using is_constructible_from_construct = instantiate_if_or<
  */
 template<typename T, typename... Args>
 using is_service_constructible = instantiate_if_or<
-	!is_abstract_service<T>::value && !is_container_service<T>::value, std::true_type,
+	!is_abstract_service<T>::value && !is_container_service<T>::value && !is_override_range_service<T>::value, std::true_type,
 	is_constructible_from_construct, T, Args...
 >;
 

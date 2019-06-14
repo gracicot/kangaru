@@ -22,6 +22,13 @@ option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
 set(KGR_KANGARU_NOEXCEPTION ${KANGARU_NO_EXCEPTION})
 set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
 
+if(NOT "${KGR_KANGARU_REVERSE_DESTRUCTION}")
+	message(WARNING
+		"The recommended behavior is to enable reverse destruction. This option will the the "
+		"default behavior for kangaru 5.x.y. Not enabling this option is considered deprecated."
+	)
+endif()
+
 configure_file(
 	cmake/config/config.hpp.in
 	generated/include/kangaru/detail/config.hpp

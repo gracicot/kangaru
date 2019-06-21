@@ -303,9 +303,9 @@ struct lazy_storage_base :
 	lazy_storage_base() = default;
 	
 	lazy_storage_base& operator=(lazy_storage_base&&) = default;
-	lazy_storage_base& operator=(const lazy_storage_base&) = default;
+	lazy_storage_base& operator=(lazy_storage_base const&) = default;
 	lazy_storage_base(lazy_storage_base&&) = default;
-	lazy_storage_base(const lazy_storage_base&) = default;
+	lazy_storage_base(lazy_storage_base const&) = default;
 	
 	~lazy_storage_base() = default;
 	
@@ -332,11 +332,11 @@ protected:
 	using lazy_destruction<CRTP, lazy_stored_type<T>>::destructor;
 	
 	type& data() noexcept {
-		return *reinterpret_cast<type*>(&_data);
+		return *static_cast<type*>(static_cast<void*>(&_data));
 	}
 	
 	const type& data() const noexcept {
-		return *reinterpret_cast<const type*>(&_data);
+		return *reinterpret_cast<type const*>(static_cast<void const*>(&_data));
 	}
 	
 	aligned_storage_t<sizeof(type), alignof(type)> _data;
@@ -358,6 +358,8 @@ public:
 	using base::data;
 	using base::emplace;
 	using typename base::type;
+	using reference = T&;
+	using pointer = T*;
 	
 	explicit operator bool() const noexcept {
 		return _initialized;
@@ -367,7 +369,7 @@ public:
 		emplace(std::move(value));
 	}
 	
-	T& value() noexcept {
+	auto value() noexcept -> reference {
 		return data();
 	}
 	
@@ -402,6 +404,8 @@ public:
 	using base::data;
 	using base::emplace;
 	using typename base::type;
+	using reference = T&;
+	using pointer = T*;
 	
 	lazy_storage() {
 		emplace(nullptr);
@@ -415,7 +419,7 @@ public:
 		emplace(&value);
 	}
 	
-	T& value() noexcept {
+	auto value() noexcept -> reference {
 		return *data();
 	}
 	

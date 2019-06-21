@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_RANGE_HPP
 
 #include "service_storage.hpp"
+#include "lazy_storage.hpp"
 #include <vector>
 
 namespace kgr {
@@ -10,7 +11,7 @@ template<typename Iterator>
 struct override_range {
 	using iterator = Iterator;
 	using service = typename Iterator::service;
-	using service_type = service_type<service>;
+	using service_type = kgr::service_type<service>;
 	
 	explicit override_range(iterator begin, iterator end) noexcept :
 		_begin{begin}, _end{end} {}
@@ -32,6 +33,9 @@ namespace detail {
 
 template<typename T>
 struct override_iterator {
+	using storage = lazy_storage<service_type<T>>;
+	
+private:
 	explicit override_iterator(std::vector<service_storage>::iterator internal) noexcept :
 		_internal{internal} {}
 	
@@ -51,15 +55,28 @@ struct override_iterator {
 		return prev;
 	}
 	
-	auto operator*() const -> service_type<T> {
-		auto const& typed_storage = _internal->cast<T>();
-		return typed_storage.forward(typed_storage.service);
+	auto operator*() const -> typename storage::reference {
+		return get();
+	}
+	
+	auto operator->() const -> typename storage::pointer {
+		return &get();
 	}
 	
 private:
+	auto get() -> typename storage::reference {
+		if (!_service) {
+			auto const& typed_storage = _internal->cast<T>();
+			_service.construct(typed_storage.forward(typed_storage.service));
+		}
+		
+		return _service.value();
+	}
+	
 	using service = T;
 	friend struct override_range<override_iterator<T>>;
 	std::vector<service_storage>::iterator _internal;
+	lazy_storage<service_type<T>> _service;
 };
 
 } // namespace detail

@@ -10,6 +10,17 @@
 #endif
 #endif
 
+#ifndef KGR_KANGARU_USE_ALTERNATE_MAP_PROBE
+#if ( \
+	!(defined(__clang__) && __clang_major__ < 7 && !defined(__APPLE__)) && \
+	!(defined(_MSC_VER) && !defined(__clang__)) && \
+	!(defined(__APPLE__) && defined(__clang__) && __clang_major__ == 10 && __clang_patchlevel__ < 1) && \
+	!(defined(__APPLE__) && defined(__clang__) && __clang_major__ < 10) \
+)
+#define KGR_KANGARU_USE_ALTERNATE_MAP_PROBE
+#endif
+#endif
+
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 #if defined(_MSC_VER) && _MSC_VER <= 1900
 // MSVC 2015 cannot properly validate autowired argument to services.

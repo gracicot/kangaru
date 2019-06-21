@@ -336,7 +336,7 @@ protected:
 	}
 	
 	const type& data() const noexcept {
-		return *reinterpret_cast<type const*>(static_cast<void const*>(&_data));
+		return *static_cast<type const*>(static_cast<void const*>(&_data));
 	}
 	
 	aligned_storage_t<sizeof(type), alignof(type)> _data;

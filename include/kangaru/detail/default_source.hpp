@@ -120,6 +120,21 @@ private:
 		}
 	}
 	
+	template<typename T, enable_if_t<detail::is_polymorphic<T>::value, int> = 0>
+	auto insert_self(alias_t service) -> detail::typed_service_storage<T> {
+		auto inserted = emplace_or_assign<T>(service, get_forward<T>());
+		
+		auto& overrides = overrides_of<T>(get_override_storage());
+		overrides.emplace_back(inserted);
+		
+		return inserted;
+	}
+	
+	template<typename T, enable_if_t<!detail::is_polymorphic<T>::value, int> = 0>
+	auto insert_self(alias_t service) -> detail::typed_service_storage<T> {
+		return emplace_or_assign<T>(service, get_forward<T>());
+	}
+	
 public:
 	explicit default_source() = default;
 	default_source(default_source const&) = delete;
@@ -144,7 +159,7 @@ public:
 		
 		_instances.emplace_back(std::move(instance_ptr));
 		
-		return single_insertion_result_t<T>{emplace_or_assign<T>(ptr, get_forward<T>()), insert_override<T, Parents>(ptr)...};
+		return single_insertion_result_t<T>{insert_self<T>(ptr), insert_override<T, Parents>(ptr)...};
 	}
 	
 	/*

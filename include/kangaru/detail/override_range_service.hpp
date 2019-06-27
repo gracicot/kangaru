@@ -36,7 +36,7 @@ struct override_range_service_type<override_range_service<T>> {
 };
 
 template<typename T>
-using override_range_service_type_t = typename is_override_range_service<T>::type;
+using override_range_service_type_t = typename override_range_service_type<T>::type;
 
 } // namespace detail
 } // namespace kgr

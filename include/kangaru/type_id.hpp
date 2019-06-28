@@ -23,8 +23,6 @@ struct is_index_storage<index_storage<T>> : std::true_type {};
  */
 template<typename T>
 struct type_id_ptr {
-	struct type_tag {};
-	
 	static constexpr bool is_implementation_defined() {
 		return std::is_same<T, override_storage_service>::value || is_index_storage<T>::value;
 	}

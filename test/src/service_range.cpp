@@ -1,6 +1,28 @@
 #include <catch2/catch.hpp>
 #include <kangaru/kangaru.hpp>
 #include <algorithm>
+#include <array>
+
+template<typename It, typename V, std::size_t n>
+void test_iterator_values(It b, It e, V(&&values)[n]) {
+	for (auto value : values) {
+		auto has_value = std::any_of(b, e, [&](typename It::const_reference elem) {
+			return elem.type == value;
+		});
+		
+		CHECK(has_value);
+	}
+}
+template<typename It, typename V, std::size_t n>
+void test_iterator_not_values(It b, It e, V(&&values)[n]) {
+	for (auto value : values) {
+		auto exclude_value = std::all_of(b, e, [&](typename It::const_reference elem) {
+			return elem.type != value;
+		});
+		
+		CHECK(exclude_value);
+	}
+}
 
 TEST_CASE("The container holds a list of overriders", "[service_range, virtual]") {
 	enum struct Type { Base, Derived1, Derived2 };
@@ -30,7 +52,6 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 	SECTION("Can retrieve") {
 		container.emplace<BaseService>();
 		REQUIRE(container.service<BaseService>().type == Type::Base);
-		Derived1Service{}.emplace();
 		
 		container.emplace<Derived1Service>();
 		
@@ -41,19 +62,61 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 			REQUIRE(container.service<BaseService>().type == Type::Derived2);
 			
 			auto range = container.service<kgr::override_range_service<BaseService>>();
-			auto elem = range.begin();
-			REQUIRE(elem != range.end());
-			CHECK((*elem).type == Type::Base);
 			
-			++elem;
-			REQUIRE(elem != range.end());
-			CHECK((*elem).type == Type::Derived1);
+			test_iterator_values(
+				range.begin(), range.end(),
+				{Type::Base, Type::Derived1, Type::Derived2}
+			);
 			
-			++elem;
-			REQUIRE(elem != range.end());
-			CHECK((*elem).type == Type::Derived2);
-			CHECK(++elem == range.end());
 			CHECK(std::distance(range.begin(), range.end()) == 3);
 		}
+	}
+	
+	SECTION("Only service in the fork") {
+		kgr::container fork;
+		
+		SECTION("filtering except") {
+			container.emplace<BaseService>();
+			container.emplace<Derived1Service>();
+			fork = container.fork(kgr::except<Derived1Service>{});
+			fork.emplace<Derived2Service>();
+		}
+		
+		SECTION("filtering only") {
+			container.emplace<BaseService>();
+			container.emplace<Derived1Service>();
+			fork = container.fork(kgr::only<BaseService>{});
+			fork.emplace<Derived2Service>();
+		}
+		
+		SECTION("emplace in original") {
+			container.emplace<BaseService>();
+			fork = container.fork();
+			container.emplace<Derived1Service>();
+			fork.emplace<Derived2Service>();
+		}
+		
+		auto range_original = container.service<kgr::override_range_service<BaseService>>();
+		auto range_fork = fork.service<kgr::override_range_service<BaseService>>();
+		
+		test_iterator_values(
+			range_fork.begin(), range_fork.end(),
+			{Type::Base, Type::Derived2}
+		);
+		
+		test_iterator_values(
+			range_original.begin(), range_original.end(),
+			{Type::Base, Type::Derived1}
+		);
+		
+		test_iterator_not_values(
+			range_fork.begin(), range_fork.end(),
+			{Type::Derived1}
+		);
+		
+		test_iterator_not_values(
+			range_original.begin(), range_original.end(),
+			{Type::Derived2}
+		);
 	}
 }

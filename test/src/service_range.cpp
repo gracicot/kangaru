@@ -2,21 +2,23 @@
 #include <kangaru/kangaru.hpp>
 #include <algorithm>
 #include <array>
+#include <initializer_list>
 
-template<typename It, typename V, std::size_t n>
-void test_iterator_values(It b, It e, V(&&values)[n]) {
+template<typename It, typename V>
+void test_iterator_values(It b, It e, std::initializer_list<V> values) {
 	for (auto value : values) {
-		auto has_value = std::any_of(b, e, [&](typename It::const_reference elem) {
+		auto has_value = std::any_of(b, e, [&](decltype((*e)) elem) {
 			return elem.type == value;
 		});
 		
 		CHECK(has_value);
 	}
 }
-template<typename It, typename V, std::size_t n>
-void test_iterator_not_values(It b, It e, V(&&values)[n]) {
+
+template<typename It, typename V>
+void test_iterator_not_values(It b, It e, std::initializer_list<V> values) {
 	for (auto value : values) {
-		auto exclude_value = std::all_of(b, e, [&](typename It::const_reference elem) {
+		auto exclude_value = std::all_of(b, e, [&](decltype((*e)) elem) {
 			return elem.type != value;
 		});
 		

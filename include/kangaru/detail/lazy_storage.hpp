@@ -359,6 +359,8 @@ public:
 	using base::emplace;
 	using typename base::type;
 	using reference = T&;
+	using const_reference = T const&;
+	using value_type = T;
 	using pointer = T*;
 	
 	explicit operator bool() const noexcept {
@@ -405,6 +407,8 @@ public:
 	using base::emplace;
 	using typename base::type;
 	using reference = T&;
+	using const_reference = T const&;
+	using value_type = T;
 	using pointer = T*;
 	
 	lazy_storage() {

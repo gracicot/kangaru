@@ -4,6 +4,18 @@
 namespace kgr {
 namespace detail {
 
+template<typename>
+struct index_storage;
+
+struct override_storage_service;
+
+template<typename>
+struct is_index_storage : std::false_type {};
+
+template<typename T>
+struct is_index_storage<index_storage<T>> : std::true_type {};
+
+
 /*
  * Template class that hold the declaration of the id.
  * 
@@ -11,9 +23,16 @@ namespace detail {
  */
 template<typename T>
 struct type_id_ptr {
+	struct type_tag {};
+	
+	static constexpr bool is_implementation_defined() {
+		return std::is_same<T, override_storage_service>::value || is_index_storage<T>::value;
+	}
+	
+	using id_type = bool(*)();
+	
 	// Having a static data member will ensure us that it has only one address for the whole program.
-	// Furthermore, the static data member having different types will ensure it won't get optimized.
-	static const T* const id;
+	static const id_type id;
 };
 
 /*
@@ -27,14 +46,18 @@ struct type_id_ptr {
  * Using the pointer of a static data member is more stable.
  */
 template<typename T>
-const T* const type_id_ptr<T>::id = nullptr;
+typename type_id_ptr<T>::id_type const type_id_ptr<T>::id = &type_id_ptr<T>::is_implementation_defined;
+
+inline bool is_implementation_defined(void const* id) {
+	return (*static_cast<bool(*const*)()>(id))();
+}
 
 } // namespace detail
 
 /*
  * The type of a type id.
  */
-using type_id_t = const void*;
+using type_id_t = void const*;
 
 /*
  * The function that returns the type id.

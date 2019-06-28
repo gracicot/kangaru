@@ -69,7 +69,7 @@ private:
 		auto inserted = emplace_or_assign<Parent>(overriden, get_override_forward<Override, Parent>());
 		
 		auto& overrides = overrides_of<Parent>(get_override_storage());
-		overrides.emplace_back(inserted);
+		overrides.emplace_back(type_id<Override>(), inserted);
 		
 		return inserted;
 	}
@@ -107,7 +107,7 @@ private:
 	}
 	
 	template<typename T>
-	auto overrides_of(override_storage& override_storage) -> std::vector<service_storage>& {
+	auto overrides_of(override_storage& override_storage) -> std::vector<std::pair<type_id_t, service_storage>>& {
 		auto it = _services.find(type_id<index_storage<T>>());
 		
 		if (it != _services.end()) {
@@ -125,7 +125,7 @@ private:
 		auto inserted = emplace_or_assign<T>(service, get_forward<T>());
 		
 		auto& overrides = overrides_of<T>(get_override_storage());
-		overrides.emplace_back(inserted);
+		overrides.emplace_back(type_id<T>(), inserted);
 		
 		return inserted;
 	}
@@ -189,7 +189,9 @@ public:
 			_services.begin(), _services.end(),
 			std::inserter(fork._services, fork._services.begin()),
 			[&predicate](service_cont::const_reference i) {
-				return i.first != type_id<override_storage_service>() && predicate(i.first);
+				return i.first != type_id<override_storage_service>() && (
+					is_implementation_defined(i.first) || predicate(i.first)
+				);
 			}
 		);
 		
@@ -198,7 +200,7 @@ public:
 		if (it != _services.end()) {
 			auto& this_overrides = it->second.service<override_storage_service>();
 			auto fork_overrides = std::get<0>(fork.emplace<override_storage_service>());
-			static_cast<override_storage*>(fork_overrides.service)->overrides = this_overrides.forward().overrides;
+			static_cast<override_storage*>(fork_overrides.service)->overrides = this_overrides.forward().filter(predicate);
 		}
 		
 		return fork;

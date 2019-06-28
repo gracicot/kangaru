@@ -43,13 +43,14 @@ struct override_iterator {
 	);
 	
 public:
-	using value_type = service_type<T>;
+	using value_type = typename storage::value_type;
 	using reference = typename storage::reference;
+	using const_reference = typename storage::const_reference;
+	using pointer = typename storage::pointer;
 	using difference_type = std::ptrdiff_t;
 	using iterator_category = std::input_iterator_tag;
-	using pointer = typename storage::pointer;
 	
-	explicit override_iterator(std::vector<service_storage>::iterator internal) noexcept :
+	explicit override_iterator(std::vector<std::pair<type_id_t, service_storage>>::iterator internal) noexcept :
 		_internal{internal} {}
 	
 	friend auto operator!=(override_iterator const& lhs, override_iterator const& rhs) -> bool {
@@ -84,7 +85,7 @@ public:
 private:
 	auto get() -> typename storage::reference {
 		if (!_service) {
-			auto const& typed_storage = _internal->cast<T>();
+			auto const& typed_storage = _internal->second.cast<T>();
 			_service.construct(typed_storage.forward(typed_storage.service));
 		}
 		
@@ -93,7 +94,7 @@ private:
 	
 	using service = T;
 	friend struct override_range<override_iterator<T>>;
-	std::vector<service_storage>::iterator _internal;
+	std::vector<std::pair<type_id_t, service_storage>>::iterator _internal;
 	storage _service;
 };
 

@@ -1,6 +1,8 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP
 
+#include <cstdint>
+
 namespace kgr {
 namespace detail {
 
@@ -15,6 +17,17 @@ struct is_index_storage : std::false_type {};
 template<typename T>
 struct is_index_storage<index_storage<T>> : std::true_type {};
 
+struct type_id_data {
+	enum struct kind_t : std::uint8_t { normal, override_storage, index_storage } kind;
+	
+	template<typename T>
+	static constexpr auto kind_for() noexcept -> kind_t {
+		return
+			std::is_same<T, override_storage_service>::value
+			? kind_t::override_storage
+			: is_index_storage<T>::value ? kind_t::index_storage : kind_t::normal;
+	}
+};
 
 /*
  * Template class that hold the declaration of the id.
@@ -23,14 +36,8 @@ struct is_index_storage<index_storage<T>> : std::true_type {};
  */
 template<typename T>
 struct type_id_ptr {
-	static constexpr bool is_implementation_defined() {
-		return std::is_same<T, override_storage_service>::value || is_index_storage<T>::value;
-	}
-	
-	using id_type = bool(*)();
-	
 	// Having a static data member will ensure us that it has only one address for the whole program.
-	static const id_type id;
+	static const type_id_data id;
 };
 
 /*
@@ -44,10 +51,10 @@ struct type_id_ptr {
  * Using the pointer of a static data member is more stable.
  */
 template<typename T>
-typename type_id_ptr<T>::id_type const type_id_ptr<T>::id = &type_id_ptr<T>::is_implementation_defined;
+type_id_data const type_id_ptr<T>::id{type_id_data::kind_for<T>()};
 
-inline bool is_implementation_defined(void const* id) {
-	return (*static_cast<bool(*const*)()>(id))();
+inline constexpr auto type_id_kind(void const* id) -> type_id_data::kind_t {
+	return static_cast<type_id_data const*>(id)->kind;
 }
 
 } // namespace detail
@@ -64,7 +71,7 @@ using type_id_t = void const*;
  * Altough the value is not predictible, it's stable.
  */
 template <typename T>
-constexpr const void* type_id() {
+constexpr auto type_id() -> type_id_t {
 	return &detail::type_id_ptr<T>::id;
 }
 

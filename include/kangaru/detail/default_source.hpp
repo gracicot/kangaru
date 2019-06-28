@@ -190,7 +190,7 @@ public:
 			std::inserter(fork._services, fork._services.begin()),
 			[&predicate](service_cont::const_reference i) {
 				return i.first != type_id<override_storage_service>() && (
-					is_implementation_defined(i.first) || predicate(i.first)
+					type_id_kind(i.first) == type_id_data::kind_t::index_storage || predicate(i.first)
 				);
 			}
 		);

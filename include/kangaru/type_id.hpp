@@ -21,11 +21,12 @@ struct type_id_data {
 	enum struct kind_t : std::uint8_t { normal, override_storage, index_storage } kind;
 	
 	template<typename T>
-	static constexpr auto kind_for() noexcept -> kind_t {
-		return
+	static constexpr auto kind_for() noexcept -> type_id_data {
+		return type_id_data{
 			std::is_same<T, override_storage_service>::value
 			? kind_t::override_storage
-			: is_index_storage<T>::value ? kind_t::index_storage : kind_t::normal;
+			: is_index_storage<T>::value ? kind_t::index_storage : kind_t::normal
+		};
 	}
 };
 
@@ -36,8 +37,13 @@ struct type_id_data {
  */
 template<typename T>
 struct type_id_ptr {
+	struct id_t {
+		type_id_data data;
+	};
+
 	// Having a static data member will ensure us that it has only one address for the whole program.
-	static const type_id_data id;
+	// Furthermore, the static data member having different types will ensure it won't get optimized.
+	static constexpr id_t id = id_t{type_id_data::kind_for<T>()};
 };
 
 /*
@@ -51,7 +57,7 @@ struct type_id_ptr {
  * Using the pointer of a static data member is more stable.
  */
 template<typename T>
-type_id_data const type_id_ptr<T>::id{type_id_data::kind_for<T>()};
+constexpr typename type_id_ptr<T>::id_t const type_id_ptr<T>::id;
 
 inline constexpr auto type_id_kind(void const* id) -> type_id_data::kind_t {
 	return static_cast<type_id_data const*>(id)->kind;

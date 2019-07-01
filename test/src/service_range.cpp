@@ -4,6 +4,8 @@
 #include <array>
 #include <initializer_list>
 
+namespace service_range_test {
+
 template<typename It, typename V>
 void test_iterator_values(It b, It e, std::initializer_list<V> values) {
 	for (auto value : values) {
@@ -26,48 +28,50 @@ void test_iterator_not_values(It b, It e, std::initializer_list<V> values) {
 	}
 }
 
+enum struct Type { BaseT, Derived1T, Derived2T };
+
+struct Base {
+	Base(Type t = Type::BaseT) : type{ t } {}
+	Type type;
+};
+
+struct BaseService : kgr::single_service<Base>, kgr::polymorphic {};
+
+struct Derived1Service : kgr::single_service<Base>, kgr::overrides<BaseService> {
+	static auto construct() noexcept -> kgr::inject_result<Type> {
+		return kgr::inject(Type::Derived1T);
+	}
+};
+
+struct Derived2Service : kgr::single_service<Base>, kgr::overrides<BaseService> {
+	static auto construct() noexcept -> kgr::inject_result<Type> {
+		return kgr::inject(Type::Derived2T);
+	}
+};
+
+}
+
 TEST_CASE("The container holds a list of overriders", "[service_range, virtual]") {
-	enum struct Type { Base, Derived1, Derived2 };
-	
-	struct Base {
-		Base() = default;
-		Base(Type t) : type{t} {}
-		Type type = Type::Base;
-	};
-	
-	struct BaseService : kgr::single_service<Base>, kgr::polymorphic {};
-	
-	struct Derived1Service : kgr::single_service<Base>, kgr::overrides<BaseService> {
-		static auto construct() noexcept -> kgr::inject_result<Type> {
-			return kgr::inject(Type::Derived1);
-		}
-	};
-	
-	struct Derived2Service : kgr::single_service<Base>, kgr::overrides<BaseService> {
-		static auto construct() noexcept -> kgr::inject_result<Type> {
-			return kgr::inject(Type::Derived2);
-		}
-	};
-	
+	using namespace service_range_test;
 	kgr::container container;
 	
 	SECTION("Can retrieve") {
 		container.emplace<BaseService>();
-		REQUIRE(container.service<BaseService>().type == Type::Base);
+		REQUIRE(container.service<BaseService>().type == Type::BaseT);
 		
 		container.emplace<Derived1Service>();
 		
-		REQUIRE(container.service<BaseService>().type == Type::Derived1);
+		REQUIRE(container.service<BaseService>().type == Type::Derived1T);
 		
 		SECTION("All service of type") {
 			container.emplace<Derived2Service>();
-			REQUIRE(container.service<BaseService>().type == Type::Derived2);
+			REQUIRE(container.service<BaseService>().type == Type::Derived2T);
 			
 			auto range = container.service<kgr::override_range_service<BaseService>>();
 			
 			test_iterator_values(
 				range.begin(), range.end(),
-				{Type::Base, Type::Derived1, Type::Derived2}
+				{Type::BaseT, Type::Derived1T, Type::Derived2T}
 			);
 			
 			CHECK(std::distance(range.begin(), range.end()) == 3);
@@ -103,22 +107,22 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 		
 		test_iterator_values(
 			range_fork.begin(), range_fork.end(),
-			{Type::Base, Type::Derived2}
+			{Type::BaseT, Type::Derived2T}
 		);
 		
 		test_iterator_values(
 			range_original.begin(), range_original.end(),
-			{Type::Base, Type::Derived1}
+			{Type::BaseT, Type::Derived1T}
 		);
 		
 		test_iterator_not_values(
 			range_fork.begin(), range_fork.end(),
-			{Type::Derived1}
+			{Type::Derived1T}
 		);
 		
 		test_iterator_not_values(
 			range_original.begin(), range_original.end(),
-			{Type::Derived2}
+			{Type::Derived2T}
 		);
 	}
 }

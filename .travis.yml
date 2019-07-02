@@ -68,6 +68,13 @@ matrix:
         - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["clang-7"], sources: ["llvm-toolchain-trusty-7", "ubuntu-toolchain-r-test"] } }
+    - os: linux
+      env:
+        - COMPILER=clang++-8
+        - LLVM_VERSION=8.0.0
+        - ENABLE_CXX14=true
+        - ENABLE_CXX17=true
+      addons: { apt: { packages: ["clang-8"], sources: ["llvm-toolchain-trusty-8", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
@@ -110,6 +117,13 @@ matrix:
         - ENABLE_CXX14=true
         - ENABLE_CXX17=true
       addons: { apt: { packages: ["g++-8"], sources: ["ubuntu-toolchain-r-test"] } }
+
+    - os: linux
+      env:
+        - COMPILER=g++-9
+        - ENABLE_CXX14=true
+        - ENABLE_CXX17=true
+      addons: { apt: { packages: ["g++-9"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: osx
       osx_image: xcode10.1

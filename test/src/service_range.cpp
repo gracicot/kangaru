@@ -49,6 +49,10 @@ struct Derived2Service : kgr::single_service<Base>, kgr::overrides<BaseService> 
 	}
 };
 
+struct AbstractService : kgr::abstract_service<Base> {};
+struct Concrete1Service : kgr::single_service<Base>, kgr::overrides<AbstractService> {};
+struct Concrete2Service : kgr::single_service<Base>, kgr::overrides<AbstractService> {};
+
 }
 
 TEST_CASE("The container holds a list of overriders", "[service_range, virtual]") {
@@ -124,5 +128,24 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 			range_original.begin(), range_original.end(),
 			{Type::Derived2T}
 		);
+	}
+	
+	SECTION("Of abstract services") {
+		container.emplace<Concrete1Service>(Type::Derived1T);
+		container.emplace<Concrete2Service>(Type::Derived2T);
+		
+		auto range = container.service<kgr::override_range_service<AbstractService>>();
+		
+		test_iterator_values(
+			range.begin(), range.end(),
+			{Type::Derived1T, Type::Derived2T}
+		);
+		
+		test_iterator_not_values(
+			range.begin(), range.end(),
+			{Type::BaseT}
+		);
+		
+		CHECK(std::distance(range.begin(), range.end()) == 2);
 	}
 }

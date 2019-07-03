@@ -80,7 +80,15 @@ public:
 	container& operator=(const container &) = delete;
 	container(container&&) = default;
 	container& operator=(container&&) = default;
+#ifdef KGR_KANGARU_REVERSE_DESTRUCTION
+	inline ~container() {
+		for (auto it = _instances.rbegin() ; it != _instances.rend() ; ++it) {
+			it->reset();
+		}
+	}
+#else
 	~container() = default;
+#endif
 	
 	/*
 	 * This function construct and save in place a service definition with the provided arguments.

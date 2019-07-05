@@ -4,8 +4,19 @@
 
 namespace invoker_constructible_from_container {
 
+struct map1;
+struct map2;
+
 struct Service {
 	friend auto service_map(Service const&) -> kgr::autowire;
+};
+
+struct Service2 {
+	friend auto service_map(Service2 const&, kgr::map_t<map1>) -> kgr::autowire;
+};
+
+struct Service3 {
+	friend auto service_map(Service3 const&, kgr::map_t<map2>) -> kgr::autowire;
 };
 
 TEST_CASE("Invoker is constructible from a container or with a service", "[operator]") {
@@ -38,6 +49,27 @@ TEST_CASE("Invoker is constructible from a container or with a service", "[opera
 		auto lambda = [&](Service, int) { called = true; return std::string{"value-from-lambda"}; };
 		
 		REQUIRE(invoker1(lambda, 1) == "value-from-lambda");
+	}
+	
+	SECTION("Can use different maps") {
+		bool called1 = false;
+		auto lambda1 = [&](Service2) { called1 = true; return std::string{"value-from-lambda"}; };
+		bool called2 = false;
+		auto lambda2 = [&](Service3) { called2 = true; return std::string{"value-from-lambda"}; };
+		bool called3 = false;
+		auto lambda3 = [&](Service2, Service3) { called3 = true; return std::string{"value-from-lambda"}; };
+		
+		REQUIRE(invoker1(kgr::map<map1>{}, lambda1) == "value-from-lambda");
+		REQUIRE(invoker1(kgr::map<map2>{}, lambda2) == "value-from-lambda");
+		REQUIRE(invoker1(kgr::map<map1, map2>{}, lambda3) == "value-from-lambda");
+		
+		CHECK((!kgr::detail::is_callable<kgr::invoker, decltype(lambda1)>::value));
+		CHECK((!kgr::detail::is_callable<kgr::invoker, decltype(lambda2)>::value));
+		CHECK((!kgr::detail::is_callable<kgr::invoker, decltype(lambda3)>::value));
+		
+		CHECK((!kgr::detail::is_callable<kgr::mapped_invoker<kgr::map<struct other_map>>, decltype(lambda1), kgr::map<map1>>::value));
+		CHECK((!kgr::detail::is_callable<kgr::mapped_invoker<kgr::map<struct other_map>>, decltype(lambda2), kgr::map<map2>>::value));
+		CHECK((!kgr::detail::is_callable<kgr::mapped_invoker<kgr::map<struct other_map>>, decltype(lambda3), kgr::map<map1, map2>>::value));
 	}
 	
 	SECTION("Reject invalid functions") {

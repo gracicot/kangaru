@@ -105,6 +105,8 @@ Look at these two cases:
 
 As we can see, when using polymorphic service, the order of insertion into the container can change behavior.
 
+Note that it's possible to get a range of all service overriding or implementing a base service. We will see more about that in the section about [operator services](section8_operator.md).
+
 ## Final Services
 
 Overriding a service is useful but sometimes, you have a polymorphic service that is supposed to be the leaf of the hierarchy.

@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP
 
 #include <cstdint>
+#include <type_traits>
 
 namespace kgr {
 namespace detail {

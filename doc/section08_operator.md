@@ -135,9 +135,51 @@ lazy_message_bus->process_messages();
 
 And again, there's the equivalent of lazy with a forked container, named `forked_lazy<T>` and `forked_lazy_service<T>`
 
+## Override Range
+
+The `v4.2.0` version added a new operator service named `kgr::override_range_service<T>` where `T` is a polymorphic service.
+It injects a range of services that overrides `T`. It can be useful to iterate and do operation on a multiple services that offers the same interface.
+
+It return a `kgr::override_range<X>` where `X` is implementation defined. 
+
+This type should be only used to iterate on services immediately. Adding a new override in the container will invalidate the range.
+
+Here's an example of use:
+
+```
+struct Base {
+    virtual void print() { std::cout << "Base\n" << std::endl; }
+};
+
+struct Derived : Base {
+    void print() override { std::cout << "Derived\n" << std::endl; }
+};
+
+struct BaseService : kgr::single_service<Base>, kgr::polymorphic {};
+struct DerivedService : kgr::single_service<Derived>, kgr::overrides<BaseService> {};
+
+kgr::container container{};
+
+container.emplace<BaseService>();
+container.emplace<DerivedService>();
+
+auto base_range = container.service<kgr::override_range_service<BaseService>>();
+
+for (Base& service : range) {
+    service.print(); // prints Base and Derived
+}
+
+```
+
+In this example, we defined two services, one overrides the other. Then we add them both in the container.
+After that we ask the container for a range of every service that overrides `BaseService`. The base serivce instance is included in the range.
+The loop will pass over both services and will call print.
+
 ## Conclusion
 
 While you can use the container directly everywhere, you can also be more fined grained over what a particular piece of code should be able to do with the container. It eventually reduces coupling with kangaru and help expressing your intent with other programmer about what you will do with the container.
+
+Also, some special built in service exposes features of the container that is only available through them. They are great tools that can help simplify code using the container.
 
 Please visit [example8](../examples/example8/example8.cpp) to see more of operator service usage.
 

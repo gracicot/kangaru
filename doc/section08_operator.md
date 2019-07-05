@@ -98,8 +98,17 @@ kgr::invoker invoker = container.service<kgr::invoker_service>();
 
 invoker(send_message, 10); // calls send_message with 10 as it's timeout
 ```
-    
-As other thing related to service map, there is a way to specify which maps to use in case of advanced mapping.
+
+When using the default invoker, you can send a map as the first parameter of the function object. This can be used to specify which map to use for each call:
+
+```c++
+struct custom_map;
+kgr::invoker invoke = container.service<kgr::invoker_service>();
+
+invoke(kgr::map<custom_map>{}, send_message, 10);
+```
+
+If sending the map as first parameter is not the ideal, there is a way to specify which maps to use in advance. This is effectively a curried `kgr::invoker`:
 
 ```c++
 kgr::mapped_invoker<kgr::map<MyMap1, MyMap2>> invoker =

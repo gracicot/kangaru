@@ -23,6 +23,26 @@ struct invoker_base : protected Base {
 	sink operator()(not_invokable_error = {}, ...) = delete;
 };
 
+template<typename Base>
+struct invoker_base<Base, map<>> : protected Base {
+	using Base::Base;
+	using map_t = map<>;
+
+	template<typename F, typename... Args, enable_if_t<is_invoke_valid<map_t, decay_t<F>, Args...>::value, int> = 0>
+	invoke_function_result_t<map_t, decay_t<F>, Args...> operator()(F&& f, Args&&... args) {
+		kgr::container& c = this->container();
+		return c.invoke<map_t>(std::forward<F>(f), std::forward<Args>(args)...);
+	}
+
+	template<typename Map, typename F, typename... Args, enable_if_t<is_map<Map>::value && is_invoke_valid<Map, decay_t<F>, Args...>::value, int> = 0>
+	invoke_function_result_t<Map, decay_t<F>, Args...> operator()(Map map, F&& f, Args&&... args) {
+		kgr::container& c = this->container();
+		return c.invoke(map, std::forward<F>(f), std::forward<Args>(args)...);
+	}
+	
+	sink operator()(not_invokable_error = {}, ...) = delete;
+};
+
 /*
  * Base class for generators. Implements the call operator that create services.
  */

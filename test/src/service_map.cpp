@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 #include <kangaru/kangaru.hpp>
-/*
+
 namespace basic_mapping {
 	struct Service {};
 	struct Definition : kgr::service<Service> {};
@@ -221,7 +221,7 @@ namespace indirect_map_strict {
 		CHECK((std::is_same<kgr::mapped_service_t<service2&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service2 const&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
 	}
-}*/
+}
 
 namespace indirect_map_value_cat {
 	struct service {};

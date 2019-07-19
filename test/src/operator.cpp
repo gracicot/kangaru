@@ -146,8 +146,10 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	CHECK(sizeof(kgr::detail::lazy_storage<kgr::service_type<Definition1>>) == sizeof(Service1*));
 	CHECK(kgr::detail::is_trivially_copy_constructible<decltype(lazy1)>::value);
 	CHECK(kgr::detail::is_trivially_copy_assignable<decltype(lazy1)>::value);
+#if !defined(__GNUC__) || __GNUC__ >= 5 // GCC 4 has no support for move triviality
+	CHECK(kgr::detail::is_trivially_move_constructible<decltype(lazy1)>::value);
 	CHECK(kgr::detail::is_trivially_move_assignable<decltype(lazy1)>::value);
-	CHECK(kgr::detail::is_trivially_move_assignable<decltype(lazy1)>::value);
+#endif
 	
 	auto& service1 = *lazy1;
 	

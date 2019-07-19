@@ -12,7 +12,9 @@ namespace detail {
 template<typename T>
 using is_trivially_copy_constructible =
 #if __GNUC__ < 5 && !defined(__clang__) && !defined(_MSC_VER)
-	bool_constant<__has_trivial_copy(T) && std::is_copy_constructible<T>::value>
+	bool_constant<
+		(__has_trivial_copy(T) && std::is_copy_constructible<T>::value) ||
+		std::is_pointer<T>::value || std::is_arithmetic<T>::value>
 #else
 	std::is_trivially_copy_constructible<T>
 #endif
@@ -21,7 +23,9 @@ using is_trivially_copy_constructible =
 template<typename T>
 using is_trivially_copy_assignable =
 #if __GNUC__ < 5 && !defined(__clang__) && !defined(_MSC_VER)
-	bool_constant<__has_trivial_assign(T) && std::is_copy_assignable<T>::value>
+	bool_constant<
+		(__has_trivial_assign(T) && std::is_copy_assignable<T>::value) ||
+		std::is_pointer<T>::value || std::is_arithmetic<T>::value>
 #else
 	std::is_trivially_copy_assignable<T>
 #endif
@@ -30,7 +34,7 @@ using is_trivially_copy_assignable =
 template<typename T>
 using is_trivially_move_constructible =
 #if __GNUC__ < 5 && !defined(__clang__) && !defined(_MSC_VER)
-	bool_constant<false_t<T>::value>
+	bool_constant<std::is_pointer<T>::value || std::is_arithmetic<T>::value>
 #else
 	std::is_trivially_move_constructible<T>
 #endif
@@ -39,7 +43,7 @@ using is_trivially_move_constructible =
 template<typename T>
 using is_trivially_move_assignable =
 #if __GNUC__ < 5 && !defined(__clang__) && !defined(_MSC_VER)
-	bool_constant<false_t<T>::value>
+	bool_constant<std::is_pointer<T>::value || std::is_arithmetic<T>::value>
 #else
 	std::is_trivially_move_assignable<T>
 #endif

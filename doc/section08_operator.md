@@ -155,7 +155,7 @@ This type should be only used to iterate on services immediately. Adding a new o
 
 Here's an example of use:
 
-```
+```c++
 struct Base {
     virtual void print() { std::cout << "Base\n" << std::endl; }
 };
@@ -177,11 +177,11 @@ auto base_range = container.service<kgr::override_range_service<BaseService>>();
 for (Base& service : range) {
     service.print(); // prints Base and Derived
 }
-
 ```
 
 In this example, we defined two services, one overrides the other. Then we add them both in the container.
 After that we ask the container for a range of every service that overrides `BaseService`. The base serivce instance is included in the range.
+
 The loop will pass over both services and will call print.
 
 ## Conclusion

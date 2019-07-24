@@ -106,7 +106,7 @@ If you skip the installation, simply tell CMake where to find kangaru:
 
 ```sh
 # in your project build directory
-$ cmake .. -DCMAKE_PREFIX_PATH=../../path/to/kangaru
+$ cmake .. -DCMAKE_PREFIX_PATH=../../path/to/kangaru/build
 ```
 
 Compiler Requirement

@@ -134,6 +134,8 @@ struct Scene {
 
 Just with these two lines, both classes can now be used with the container just as any other services.
 
+Using friend functions also have the advantage of accelerating compilation significantly. It help reduce the amount of overloads to check for each services.
+
 ## Mapping
 
 The service map allows you to have multiple named maps. And sometimes, a service is only mapped in one specific map.

@@ -134,6 +134,10 @@ struct forwarded {
 	auto forward() -> T&& {
 		return static_cast<T&&>(value);
 	}
+	
+	operator forwarded<typename std::remove_reference<T>::type>() && {
+		return forwarded<typename std::remove_reference<T>::type>{{std::move(forward())}};
+	}
 };
 
 template<typename T>

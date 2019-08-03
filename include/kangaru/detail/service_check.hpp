@@ -11,9 +11,12 @@
 namespace kgr {
 namespace detail {
 
+template<typename T>
+using injected_forwarded_type = meta_list_transform_t<T, forwarded_type_t>;
+
 template<typename T, typename... Args>
 using curry_is_constructible_from_construct = expand_all<
-	to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>,
+	injected_forwarded_type<to_meta_list_t<detected_or<std::tuple<>, function_result_t, detected_t<construct_function_t, T, Args...>>>>,
 	is_service_instantiable, T
 >;
 

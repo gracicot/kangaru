@@ -110,11 +110,6 @@ using injected_wrapper = typename std::conditional<is_polymorphic<T>::value,
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
 
-template<typename... Ts>
-struct inject_result_helper {
-	using type = std::tuple<typename remove_rvalue_reference<Ts>::type...>;
-};
-
 template<typename, typename>
 struct single_insertion_result;
 
@@ -125,6 +120,29 @@ struct single_insertion_result<T, meta_list<Parents...>> {
 
 template<typename T>
 using single_insertion_result_t = typename single_insertion_result<T, parent_types<T>>::type;
+
+/*
+ * Simple wrapper for an injected value.
+ * Avoid confusion and conversion to tuples
+ */
+template<typename T>
+struct forwarded {
+	using forwarded_type = detail::remove_rvalue_reference_t<T>;
+	
+	detail::remove_rvalue_reference_t<T> value;
+	
+	auto forward() -> T&& {
+		return static_cast<T&&>(value);
+	}
+};
+
+template<typename T>
+using forwarded_type_t = typename T::forwarded_type;
+
+template<typename... Ts>
+struct inject_result_helper {
+	using type = std::tuple<detail::forwarded<Ts>...>;
+};
 
 } // namespace detail
 
@@ -142,8 +160,8 @@ using inject_t = detail::injected_wrapper<T>&&;
  * Single service live as long as the container lives. They can, and should be l-value references.
  */
 template<typename... Args>
-constexpr auto inject(Args&&... args) -> std::tuple<detail::remove_rvalue_reference_t<Args>...> {
-	return std::tuple<detail::remove_rvalue_reference_t<Args>...>{std::forward<Args>(args)...};
+constexpr auto inject(Args&&... args) -> std::tuple<detail::forwarded<Args>...> {
+	return std::tuple<detail::forwarded<Args>...>{detail::forwarded<Args>{{std::forward<Args>(args)}}...};
 }
 
 /*

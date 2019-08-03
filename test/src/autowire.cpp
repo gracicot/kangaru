@@ -154,6 +154,7 @@ namespace test_autowire_normal_services {
 		
 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<service1>>::value);
 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
+		
 		(void) container.service<kgr::mapped_service_t<service1>>();
 		(void) container.service<kgr::mapped_service_t<service2>>();
 	}
@@ -311,7 +312,7 @@ namespace test_autowire_mapped {
 }
 
 namespace test_autowire_default_services {
-	struct service1 { service1(kgr::invoker) {} };
+	struct service1 { explicit service1(kgr::invoker) {} };
 	struct service2 { service2(kgr::container, kgr::container&) {} };
 	
 	struct service3 { service3(std::unique_ptr<service1>, std::shared_ptr<service2>) {} };

@@ -165,3 +165,22 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	CHECK(service2_constructed);
 	REQUIRE((std::is_same<decltype(service2), Service2>::value));
 }
+
+TEST_CASE("All operator are mapped", "[service_map, operator]") {
+	struct map {};
+	struct service1 {};
+	struct definition1 : kgr::service<service1> {};
+	
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::generator<definition1>>, kgr::generator_service<definition1>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::forked_generator<definition1>>, kgr::forked_generator_service<definition1>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::invoker>, kgr::invoker_service>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::forked_invoker>, kgr::forked_invoker_service>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::mapped_invoker<kgr::map<map>>>, kgr::mapped_invoker_service<kgr::map<map>>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::forked_mapped_invoker<kgr::map<map>>>, kgr::forked_mapped_invoker_service<kgr::map<map>, kgr::all>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::lazy<definition1>>, kgr::lazy_service<definition1>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::forked_lazy<definition1>>, kgr::forked_lazy_service<definition1, kgr::all>>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::container>, kgr::fork_service>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::container&&>, kgr::fork_service>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::container const&>, kgr::container_service>::value));
+	CHECK((std::is_same<kgr::mapped_service_t<kgr::container&>, kgr::container_service>::value));
+}

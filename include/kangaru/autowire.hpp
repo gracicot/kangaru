@@ -116,7 +116,7 @@ public:
 /**
  * This class is a autowired service definition when a single should be injected as a shared pointer.
  * 
- * It will hold the service as a std::shared_ptr and inject it a s a std::shared_ptr
+ * It will hold the service as a std::shared_ptr and inject it a std::shared_ptr
  */
 template<typename Type, typename Map, std::size_t max_dependencies>
 struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : shared_service<Type> {

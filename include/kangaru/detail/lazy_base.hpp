@@ -2,6 +2,7 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_LAZY_BASE_HPP
 
 #include "../container.hpp"
+#include "operator_service_helper.hpp"
 #include "lazy_storage.hpp"
 
 namespace kgr {
@@ -49,6 +50,8 @@ public:
 	
 private:
 	lazy_storage<service_type<T>> _service;
+	
+	friend auto service_map(lazy_base const&) -> select_operator_service<Base> {}
 };
 
 } // namespace detail

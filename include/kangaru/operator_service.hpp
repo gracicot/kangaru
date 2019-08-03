@@ -120,31 +120,11 @@ using invoker_service = mapped_invoker_service<map<>>;
 
 /*
  * Alias to the forked invoker service with the default map.
+ * 
+ * TODO: add a way to use a custom predicate
  */
 using forked_invoker_service = forked_mapped_invoker_service<map<>>;
 
-/*
- * Service map entries for all the services definition written above.
- */
-auto service_map(container&&) -> fork_service;
-
-template<typename T>
-auto service_map(const generator<T>&) -> generator_service<T>;
-
-template<typename T>
-auto service_map(const forked_generator<T>&) -> forked_generator_service<T>;
-
-template<typename Map>
-auto service_map(const mapped_invoker<Map>&) -> mapped_invoker_service<Map>;
-
-template<typename Map>
-auto service_map(const forked_mapped_invoker<Map>&) -> forked_mapped_invoker_service<Map>;
-
-template<typename T>
-auto service_map(const lazy<T>&) -> lazy_service<T>;
-
-template<typename T>
-auto service_map(const forked_lazy<T>&) -> forked_lazy_service<T>;
 
 } // namespace kgr
 

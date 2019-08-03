@@ -24,8 +24,6 @@ struct map_t {};
 
 namespace detail {
 
-inline void service_map() {}
-
 /*
  * Alias to the expression of a normal named service map
  */

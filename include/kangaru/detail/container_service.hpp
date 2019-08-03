@@ -24,11 +24,6 @@ private:
 	container* _instance;
 };
 
-/*
- * We map the container in the service map.
- */
-auto service_map(container const&) -> container_service;
-
 namespace detail {
 
 /*

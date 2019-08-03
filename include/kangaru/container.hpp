@@ -23,6 +23,9 @@
 
 namespace kgr {
 
+template<typename>
+struct filtered_fork_service;
+
 /**
  * The kangaru container class.
  * 
@@ -399,7 +402,7 @@ private:
 		
 		return make_contained_service<T>(
 			detail::parent_types<T>{},
-			std::forward<detail::tuple_element_t<S, decltype(construct_args)>>(std::get<S>(construct_args))...
+			std::get<S>(construct_args).forward()...
 		);
 	}
 	
@@ -595,6 +598,12 @@ private:
 	 */
 	template<typename T, disable_if<detail::has_autocall<T>> = 0>
 	void autocall(T&) {}
+	
+	/*
+	 * We map the container in the service map.
+	 */
+	friend auto service_map(container const&) -> container_service;
+	friend auto service_map(container&&) -> filtered_fork_service<all>;
 };
 
 } // namespace kgr

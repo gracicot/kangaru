@@ -140,14 +140,31 @@ struct forwarded_inject {
 		return static_cast<T&&>(value);
 	}
 	
+	/*
+	 * We need this conversion operator to not break API compatibility
+	 */
 	operator forwarded_inject<typename std::remove_reference<T>::type>() {
 		return forwarded_inject<typename std::remove_reference<T>::type>{std::move(forward())};
 	}
 };
 
+/*
+ * This class is a necessary indirection for visual studio 2015
+ */
 template<typename T>
-using forwarded_inject_type_t = typename T::forwarded_type;
+struct forwarded_inject_type {
+	using type = typename T::forwarded_type;
+};
 
+/*
+ * Alias to the type that is forwarded by the forwarded_inject
+ */
+template<typename T>
+using forwarded_inject_type_t = typename forwarded_inject_type<T>::type;
+
+/*
+ * The result type of a kgr::inject() call
+ */
 template<typename... Ts>
 struct inject_result_helper {
 	using type = std::tuple<detail::forwarded_inject<Ts>...>;

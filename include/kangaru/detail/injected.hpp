@@ -107,9 +107,17 @@ using injected_wrapper = typename std::conditional<is_polymorphic<T>::value,
 	injected<T>
 >::type;
 
+/*
+ * Gets the type of an argument of a wrapped service
+ */
 template<std::size_t n, typename F>
 using injected_argument_t = injected_service_t<function_argument_t<n, F>>;
 
+/*
+ * Traits that create a type which hold information about the insertion of a single service
+ *
+ * The insertion result is a tuple of typed service storage for the service itself and all its overrides
+ */
 template<typename, typename>
 struct single_insertion_result;
 

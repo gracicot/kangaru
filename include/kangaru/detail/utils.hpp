@@ -6,6 +6,10 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Dependent type false
+ * Useful for static asserts
+ */
 template<typename...>
 struct to_false {
 	using type = std::false_type;
@@ -19,7 +23,6 @@ using false_t = typename to_false<Ts...>::type;
  */
 template<bool b>
 using bool_constant = std::integral_constant<bool, b>;
-
 
 /*
  * Simple alias to member type `value_type`

@@ -23,7 +23,7 @@ struct invoker_base : protected Base {
 	
 	sink operator()(not_invokable_error = {}, ...) = delete;
 	
-	friend auto service_map(invoker_base const&) -> select_operator_service<Base> {}
+	inline friend auto service_map(invoker_base const&) -> select_operator_service<Base> { return {}; }
 };
 
 template<typename Base>
@@ -66,7 +66,7 @@ struct generator_base : protected Base {
 	template<typename... Args>
 	sink operator()(service_error<T, identity_t<Args>...>, Args&&...) = delete;
 	
-	friend auto service_map(generator_base const&) -> select_operator_service<Base> {}
+	inline friend auto service_map(generator_base const&) -> select_operator_service<Base> { return {}; }
 };
 
 /*
@@ -122,7 +122,7 @@ struct mapped_invoker : detail::invoker_base<detail::operator_base, Map> {
 	mapped_invoker(const mapped_invoker<M>& other) :
 		detail::invoker_base<detail::operator_base, Map>{other.container()} {}
 	
-	friend auto service_map(mapped_invoker const&) -> detail::operator_service<mapped_invoker> {}
+	inline friend auto service_map(mapped_invoker const&) -> detail::operator_service<mapped_invoker> { return detail::sink{}; }
 };
 
 /**
@@ -140,7 +140,7 @@ struct forked_mapped_invoker : detail::invoker_base<detail::forked_operator_base
 	forked_mapped_invoker(forked_mapped_invoker<M>&& other) :
 		detail::invoker_base<detail::forked_operator_base, Map>{std::move(other.container())} {}
 	
-	friend auto service_map(forked_mapped_invoker const&) -> detail::forked_operator_service<all, forked_mapped_invoker> {}
+	inline friend auto service_map(forked_mapped_invoker const&) -> detail::forked_operator_service<all, forked_mapped_invoker> { return detail::sink{}; }
 };
 
 /**

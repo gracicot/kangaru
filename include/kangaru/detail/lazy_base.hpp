@@ -51,7 +51,7 @@ public:
 private:
 	lazy_storage<service_type<T>> _service;
 	
-	friend auto service_map(lazy_base const&) -> select_operator_service<Base> {}
+	inline friend auto service_map(lazy_base const&) -> select_operator_service<Base> { return {}; }
 };
 
 } // namespace detail

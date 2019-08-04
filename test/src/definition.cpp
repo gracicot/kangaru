@@ -35,16 +35,16 @@ TEST_CASE("The definition can have arguments including other services", "[defini
 	struct Service1 {};
 	struct Service2 {};
 	struct Definition1 {
-		static auto construct() -> kgr::inject_result<> { return {}; }
+		static auto construct() -> kgr::inject_result<> { return kgr::inject(); }
 		void emplace() {}
 		Service1 forward() { return {}; }
 	};
 	struct Definition2 {
-		static auto construct(kgr::inject_t<Definition1>, int) -> kgr::inject_result<Service1> { return {}; }
+		static auto construct(kgr::inject_t<Definition1> d1, int) -> kgr::inject_result<Service1> { return kgr::inject(d1.forward()); }
 		void emplace(Service1) {}
 		Service2 forward() { return {}; }
 	};
-
+	
 	REQUIRE(kgr::detail::is_service_valid<Definition2, int>::value);
 	(void) kgr::container{}.service<Definition2>(123);
 }

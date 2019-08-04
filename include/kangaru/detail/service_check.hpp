@@ -12,7 +12,7 @@ namespace kgr {
 namespace detail {
 
 template<typename T>
-using injected_forwarded_type = meta_list_transform_t<T, forwarded_type_t>;
+using injected_forwarded_type = meta_list_transform_t<T, forwarded_inject_type_t>;
 
 template<typename T, typename... Args>
 using curry_is_constructible_from_construct = expand_all<

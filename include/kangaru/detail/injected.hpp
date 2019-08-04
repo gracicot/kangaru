@@ -126,8 +126,13 @@ using single_insertion_result_t = typename single_insertion_result<T, parent_typ
  * Avoid confusion and conversion to tuples
  */
 template<typename T>
-struct forwarded {
+struct forwarded_inject {
 	using forwarded_type = detail::remove_rvalue_reference_t<T>;
+	
+	constexpr forwarded_inject() = default;
+	
+	template<typename U, enable_if_t<std::is_same<U&&, T&&>::value, int> = 0>
+	constexpr explicit forwarded_inject(U&& v) noexcept : value(std::forward<U>(v)) {}
 	
 	detail::remove_rvalue_reference_t<T> value;
 	
@@ -135,17 +140,17 @@ struct forwarded {
 		return static_cast<T&&>(value);
 	}
 	
-	operator forwarded<typename std::remove_reference<T>::type>() && {
-		return forwarded<typename std::remove_reference<T>::type>{{std::move(forward())}};
+	operator forwarded_inject<typename std::remove_reference<T>::type>() {
+		return forwarded_inject<typename std::remove_reference<T>::type>{std::move(forward())};
 	}
 };
 
 template<typename T>
-using forwarded_type_t = typename T::forwarded_type;
+using forwarded_inject_type_t = typename T::forwarded_type;
 
 template<typename... Ts>
 struct inject_result_helper {
-	using type = std::tuple<detail::forwarded<Ts>...>;
+	using type = std::tuple<detail::forwarded_inject<Ts>...>;
 };
 
 } // namespace detail
@@ -164,8 +169,8 @@ using inject_t = detail::injected_wrapper<T>&&;
  * Single service live as long as the container lives. They can, and should be l-value references.
  */
 template<typename... Args>
-constexpr auto inject(Args&&... args) -> std::tuple<detail::forwarded<Args>...> {
-	return std::tuple<detail::forwarded<Args>...>{detail::forwarded<Args>{{std::forward<Args>(args)}}...};
+constexpr auto inject(Args&&... args) -> std::tuple<detail::forwarded_inject<Args>...> {
+	return std::tuple<detail::forwarded_inject<Args>...>{detail::forwarded_inject<Args>{std::forward<Args>(args)}...};
 }
 
 /*

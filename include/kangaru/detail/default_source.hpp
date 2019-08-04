@@ -21,6 +21,11 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Primary storage for services in the container.
+ *
+ * Also manages override meta information.
+ */
 struct default_source {
 private:
 	using alias_t = void*;
@@ -152,6 +157,9 @@ public:
 	~default_source() = default;
 #endif
 	
+	/*
+	 * Adds a service in the service source
+	 */
 	template<typename T, typename... Parents, typename... Args>
 	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);

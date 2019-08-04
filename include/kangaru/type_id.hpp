@@ -7,17 +7,27 @@
 namespace kgr {
 namespace detail {
 
+/*
+ * Declaration of built-in private service types.
+ */
 template<typename>
 struct index_storage;
 
 struct override_storage_service;
 
+/*
+ * Trait that identify if some type is an index_storage
+ */
 template<typename>
 struct is_index_storage : std::false_type {};
 
 template<typename T>
 struct is_index_storage<index_storage<T>> : std::true_type {};
 
+/*
+ * We need to have a small amount of static data in order to
+ * get it's pointer. We reuse that space to store meta information.
+ */
 struct type_id_data {
 	enum struct kind_t : std::uint8_t { normal, override_storage, index_storage } kind;
 	

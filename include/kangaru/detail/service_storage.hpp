@@ -19,17 +19,24 @@ struct forward_storage {
 	forward_ptr<T> forward;
 };
 
+/*
+ * Pair of a pointer to a service and it's forward function
+ * Used to passe around a type erase service that yield a particular type
+ */
 template<typename T>
 struct typed_service_storage {
 	void* service;
 	forward_ptr<T> forward;
 };
 
-template<typename>
-struct override_type_id {};
-
+/*
+ * Tag type to tell service_storage that its supposed to contain an index of an override
+ */
 struct override_index_t {} constexpr override_index{};
 
+/*
+ * Type erased storage for any service type or an override index
+ */
 struct service_storage {
 private:
 	using function_pointer = void*(*)(void*);
@@ -82,6 +89,11 @@ private:
 	aligned_storage_t<sizeof(function_pointer), alignof(function_pointer)> forward_function;
 };
 
+/*
+ * A non moveable and non copyable type wrapper for a service
+ *
+ * Also conveniently choose the right constructor
+ */
 template<typename T>
 struct memory_block {
 	memory_block(memory_block const&) = delete;

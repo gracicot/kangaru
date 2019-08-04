@@ -9,6 +9,9 @@ struct all;
 
 namespace detail {
 
+/*
+ * Forward declaration of services defined in operator_service.hpp
+ */
 template<typename, typename>
 struct forked_operator_service;
 
@@ -18,6 +21,11 @@ struct operator_service;
 struct operator_base;
 struct forked_operator_base;
 
+/*
+ * Indirect map that generate a service definition for an operator service
+ *
+ * It will choose between operator_service and forked_operator_service dependening on the operator_base type
+ */
 template<typename>
 struct select_operator_service;
 

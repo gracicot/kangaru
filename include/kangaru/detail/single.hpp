@@ -7,6 +7,11 @@
 
 namespace kgr {
 
+/*
+ * Tag base class to identify a single service
+ *
+ * Also disable copy construction
+ */
 struct single {
 	single() = default;
 	~single() = default;
@@ -16,16 +21,25 @@ struct single {
 	single& operator=(single&&) = default;
 };
 
+/*
+ * Bunch of other tag types for various features
+ */
 struct polymorphic {};
 struct final {};
 struct supplied {};
 struct abstract : polymorphic, single {};
 
+/*
+ * Mixin for abstract service to set the default implementation
+ */
 template<typename T>
 struct defaults_to {
 	using default_service = T;
 };
 
+/*
+ * Used to list all types a service should override when constructing
+ */
 template<typename... Types>
 struct overrides {
 	using parent_types = detail::meta_list<Types...>;
@@ -33,6 +47,9 @@ struct overrides {
 
 namespace detail {
 
+/*
+ * Type trait to either get the specified overrides or an empty list
+ */
 template<typename, typename = void>
 struct parent_type_helper {
 	using parent_types = meta_list<>;
@@ -46,6 +63,11 @@ struct parent_type_helper<T, void_t<typename T::parent_types>> {
 template<typename T>
 using parent_types = typename parent_type_helper<T>::parent_types;
 
+/*
+ * Type trait to either get the default implementation type of an abstract serivce
+ *
+ * Also tell if there is a default or not
+ */
 template<typename, typename = void>
 struct default_type_helper {
 	using has_default = std::false_type;

@@ -208,7 +208,7 @@ bool constructor_called = false;
 
 struct Service {};
 struct Definition {
-	Definition(kgr::in_place_t) { constructor_called = true; }
+	explicit Definition(kgr::in_place_t) { constructor_called = true; }
 	static auto construct() -> decltype(kgr::inject()) { return kgr::inject(); }
 	Service forward() { return {}; }
 };

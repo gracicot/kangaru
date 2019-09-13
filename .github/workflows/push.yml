@@ -12,7 +12,7 @@ jobs:
       with:
         submodules: true
     - name: configure
-      run: mkdir build && cmake -DKANGARU_TEST=On -DKANGARU_TEST_CXX14=On -DKANGARU_TEST_CXX17=On -G Ninja -S ./ -B ./build
+      run: mkdir build && cmake -DKANGARU_TEST=On -DKANGARU_TEST_CXX14=On -DKANGARU_TEST_CXX17=On -G Ninja -S ../ -B ./
     - name: build
       run: cmake --build ./build
     - name: test

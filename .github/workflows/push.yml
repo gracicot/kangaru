@@ -14,6 +14,6 @@ jobs:
     - name: configure
       run: mkdir build && cmake -DKANGARU_TEST=On -DKANGARU_TEST_CXX14=On -DKANGARU_TEST_CXX17=On -S ../ -B ./
     - name: build
-      run: cmake --build ./build
+      run: cmake --build .
     - name: test
       run: (cd build && ctest --output-on-failure)

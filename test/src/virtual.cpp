@@ -360,3 +360,31 @@ TEST_CASE("Abtract Services Are virtual", "[virtual]") {
 	
 	REQUIRE(&container.service<AbstractDefinition>() == &container.service<AbstractDefinition>());
 }
+
+TEST_CASE("A service can depend on a avbstract service", "[virtual]") {
+	kgr::container container;
+	struct A {
+		virtual ~A() = default;
+		virtual void a() = 0;
+	};
+	
+	struct Impl : A { void a() override {} };
+	
+	struct Use {
+		Use(A const& a_) : a(a_) {}
+		A const& a;
+	};
+	
+	struct AbstractService : kgr::abstract_service<A> {};
+	struct ImplService : kgr::single_service<Impl>, kgr::overrides<AbstractService> {};
+	struct UseService : kgr::service<Use, kgr::dependency<AbstractService>> {};
+	
+	REQUIRE(kgr::detail::is_polymorphic<AbstractService>::value);
+	REQUIRE(kgr::detail::is_polymorphic<ImplService>::value);
+	REQUIRE(!kgr::detail::is_polymorphic<UseService>::value);
+	REQUIRE(kgr::detail::is_service_valid<UseService>::value);
+	
+	container.emplace<ImplService>();
+	
+	REQUIRE(&container.service<UseService>().a == &container.service<AbstractService>());
+}

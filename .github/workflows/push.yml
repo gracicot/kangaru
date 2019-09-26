@@ -1,0 +1,19 @@
+name: C++ CI
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: configure
+      run: cmake -DKANGARU_TEST=On -DKANGARU_TEST_CXX14=On -DKANGARU_TEST_CXX17=On -S ../ -B ./
+    - name: build
+      run: cmake --build .
+    - name: test
+      run: ctest --output-on-failure

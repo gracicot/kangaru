@@ -151,8 +151,9 @@ struct forwarded_inject {
 	/*
 	 * We need this conversion operator to not break API compatibility
 	 */
-	operator forwarded_inject<typename std::remove_reference<T>::type>() {
-		return forwarded_inject<typename std::remove_reference<T>::type>{std::move(forward())};
+	template<typename U, enable_if_t<!is_single<U>::value && std::is_convertible<T, U>::value, int> = 0>
+	operator forwarded_inject<typename std::remove_reference<U>::type>() {
+		return forwarded_inject<typename std::remove_reference<U>::type>{std::move(forward())};
 	}
 };
 

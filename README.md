@@ -117,6 +117,7 @@ Kangaru is tested by our continuous integration with all major compiler versions
  * MSVC: 2015 update 3 or better
  * GCC: 4.8.5 or better
  * Clang: 3.6 or better
+ * AppleClang: 7.0 or better
 
 What's next?
 ------------

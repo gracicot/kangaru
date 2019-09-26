@@ -371,7 +371,7 @@ TEST_CASE("A service can depend on a avbstract service", "[virtual]") {
 	struct Impl : A { void a() override {} };
 	
 	struct Use {
-		Use(A const& a_) : a{a_} {}
+		Use(A const& a_) : a(a_) {}
 		A const& a;
 	};
 	

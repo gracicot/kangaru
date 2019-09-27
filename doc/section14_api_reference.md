@@ -205,7 +205,7 @@ Takes any parameter to be forwarded te the service `S` after injected parameters
 Example:
 ```c++
 struct Service1 {
-	Service1(/* dependencies... */, int additional_parameter = 0) {}
+    Service1(/* dependencies... */, int additional_parameter = 0) {}
 };
 
 struct Service1Service : kgr::service<Service1, kgr::dependency</* ... */>> {};

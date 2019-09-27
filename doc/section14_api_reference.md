@@ -192,7 +192,7 @@ Same as `get`.
 
 #### `operator->`
 
-Returns a pointer to the underlying service.
+Returns a pointer to the underlying service. Construct the service if uninitialized.
 
 ## `kgr::generator<S>`
 

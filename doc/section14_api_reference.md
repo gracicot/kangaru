@@ -10,7 +10,7 @@ The kangaru container class.
 This class will construct services and share single instances for a given definition.
 It is the class that parses and manage dependency graphs and calls autocall functions.
 
-### `emplace`
+#### `emplace`
 
 This function construct and save in place a service definition with the provided arguments.
 
@@ -27,7 +27,7 @@ template<typename T, typename... Args> requires SingleService<T> && Constructibl
 auto emplace(Args&&... args) -> bool;
 ```
 
-### `replace`
+#### `replace`
 
 This function construct and save in place a service definition with the provided arguments.
 
@@ -42,7 +42,7 @@ template<typename T, typename... Args> requires SingleService<T> && Constructibl
 void replace(Args&&... args);
 ```
 
-### `service`
+#### `service`
 
 This function returns the service given by service definition `T`.
 
@@ -57,7 +57,7 @@ template<typename T, typename... Args> requires Service<T, Args...>
 void service(Args&&... args);
 ```
 
-### `invoke`
+#### `invoke`
 
 This function returns the result of the callable object of type `U`.
 
@@ -76,7 +76,7 @@ template<typename... Services, typename U, typename... Args> requires Callable<U
 void invoke(U&& function, Args&&... args);
 ```
 
-### `clear`
+#### `clear`
 
 This function clears this container.
 
@@ -86,7 +86,7 @@ Every single services are invalidated after calling this function.
 void clear();
 ```
 
-### `fork`
+#### `fork`
 
 This function fork the container into a new container.
 
@@ -105,7 +105,7 @@ template<typename Predicate = kgr::all>
 auto fork(Predicate predicate = {}) const -> kgr::container;
 ```
 
-### `merge`
+#### `merge`
 
 This function merges a container with another.
 
@@ -115,7 +115,7 @@ The receiving container will prefer it's own instances in a case of conflicts.
 void merge(container&& other);
 ```
 
-### `rebase`
+#### `rebase`
 
 This function will add all services form the container sent as parameter into this one.
 Note that the lifetime of the container sent as parameter must be at least as long as this one.
@@ -129,7 +129,7 @@ template<typename Predicate = kgr::all>
 auto fork(const container& other, Predicate predicate = {}) const -> kgr::container;
 ```
 
-### `contains`
+#### `contains`
 
 This function return `true` if the container contains the service `T`. Returns `false` otherwise.
 
@@ -146,7 +146,7 @@ A type that can call a function with injected parameters.
 
 It can be created by the container with `kgr::invoker_service`.
 
-## `operator()`
+#### `operator()`
 
 Takes a function to invoke with injectable parameters.
 
@@ -182,30 +182,30 @@ An uninitialized service that will be created on first use.
 
 The template parameter `S` must be a complete service type.
 
-## `get`
+#### `get`
 
 Returns a reference to the wrapped service. Construct the service if uninitialized.
 
-## `operator*`
+#### `operator*`
 
 Same as `get`.
 
-## `operator->`
+#### `operator->`
 
-Returns a pointer to the underlying service.
+Returns a pointer to the underlying service. Construct the service if uninitialized.
 
 ## `kgr::generator<S>`
 
 A type that contruct the non-single service `S` with given parameters.
 
-## `operator()`
+#### `operator()`
 
 Takes any parameter to be forwarded te the service `S` after injected parameters.
 
 Example:
 ```c++
 struct Service1 {
-	Service1(/* dependencies... */, int additional_parameter = 0) {}
+    Service1(/* dependencies... */, int additional_parameter = 0) {}
 };
 
 struct Service1Service : kgr::service<Service1, kgr::dependency</* ... */>> {};

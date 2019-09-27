@@ -361,7 +361,7 @@ TEST_CASE("Abtract Services Are virtual", "[virtual]") {
 	REQUIRE(&container.service<AbstractDefinition>() == &container.service<AbstractDefinition>());
 }
 
-TEST_CASE("A service can depend on a avbstract service", "[virtual]") {
+TEST_CASE("A service can depend on a abstract service", "[virtual]") {
 	kgr::container container;
 	struct A {
 		virtual ~A() = default;
@@ -371,7 +371,7 @@ TEST_CASE("A service can depend on a avbstract service", "[virtual]") {
 	struct Impl : A { void a() override {} };
 	
 	struct Use {
-		Use(A const& a_) : a(a_) {}
+		explicit Use(A const& a_) : a(a_) {}
 		A const& a;
 	};
 	

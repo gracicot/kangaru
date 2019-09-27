@@ -3,14 +3,14 @@ API Reference
 
 > NOTE: This section is still incomplete and a work in progress.
 
-## Container
+## `kgr::container`
 
 The kangaru container class.
 
 This class will construct services and share single instances for a given definition.
 It is the class that parses and manage dependency graphs and calls autocall functions.
 
-### emplace
+### `emplace`
 
 This function construct and save in place a service definition with the provided arguments.
 
@@ -27,7 +27,7 @@ template<typename T, typename... Args> requires SingleService<T> && Constructibl
 auto emplace(Args&&... args) -> bool;
 ```
 
-### replace
+### `replace`
 
 This function construct and save in place a service definition with the provided arguments.
 
@@ -42,7 +42,7 @@ template<typename T, typename... Args> requires SingleService<T> && Constructibl
 void replace(Args&&... args);
 ```
 
-### service
+### `service`
 
 This function returns the service given by service definition `T`.
 
@@ -57,7 +57,7 @@ template<typename T, typename... Args> requires Service<T, Args...>
 void service(Args&&... args);
 ```
 
-### invoke
+### `invoke`
 
 This function returns the result of the callable object of type `U`.
 
@@ -76,7 +76,7 @@ template<typename... Services, typename U, typename... Args> requires Callable<U
 void invoke(U&& function, Args&&... args);
 ```
 
-### clear
+### `clear`
 
 This function clears this container.
 
@@ -86,7 +86,7 @@ Every single services are invalidated after calling this function.
 void clear();
 ```
 
-### fork
+### `fork`
 
 This function fork the container into a new container.
 
@@ -105,7 +105,7 @@ template<typename Predicate = kgr::all>
 auto fork(Predicate predicate = {}) const -> kgr::container;
 ```
 
-### merge
+### `merge`
 
 This function merges a container with another.
 
@@ -115,7 +115,7 @@ The receiving container will prefer it's own instances in a case of conflicts.
 void merge(container&& other);
 ```
 
-### rebase
+### `rebase`
 
 This function will add all services form the container sent as parameter into this one.
 Note that the lifetime of the container sent as parameter must be at least as long as this one.
@@ -129,7 +129,7 @@ template<typename Predicate = kgr::all>
 auto fork(const container& other, Predicate predicate = {}) const -> kgr::container;
 ```
 
-### contains
+### `contains`
 
 This function return `true` if the container contains the service `T`. Returns `false` otherwise.
 
@@ -138,4 +138,80 @@ This function return `true` if the container contains the service `T`. Returns `
 ```c++
 template<typename T> requires BasicService<T>
 auto contains() const -> bool;
+```
+
+## `kgr::invoker`
+
+A type that can call a function with injected parameters.
+
+It can be created by the container with `kgr::invoker_service`.
+
+## `operator()`
+
+Takes a function to invoke with injectable parameters.
+
+Example:
+```c++
+kgr::container container;
+kgr::invoker invoker = container.service<kgr::invoker_service>();
+
+invoker([](Single1& single1, Service2 service2, int i) {
+    // stuff with single1 serivce2 and i
+    // The variable `i` is equal to 1 since we send 1 as the additional parameter.
+    // Single1 and Service2 are expected to be correctly mapped services.
+}, 1);
+```
+
+An additional overload accept a map type as first parameter:
+```c++
+struct my_own_map;
+auto service_map(Service3, kgr::map_t<my_own_map>) -> kgr::autowire;
+
+kgr::container container;
+kgr::invoker invoker = container.service<kgr::invoker_service>();
+
+invoker(kgr::map<my_own_map>{}, [](Single1& single1, Service3 service3) {
+    // service3 is only mapped in map `my_own_map` and
+    // would not be invokable without the map parameter.
+});
+```
+
+## `kgr::lazy<S>`
+
+An uninitialized service that will be created on first use.
+
+The template parameter `S` must be a complete service type.
+
+## `get`
+
+Returns a reference to the wrapped service. Construct the service if uninitialized.
+
+## `operator*`
+
+Same as `get`.
+
+## `operator->`
+
+Returns a pointer to the underlying service.
+
+## `kgr::generator<S>`
+
+A type that contruct the non-single service `S` with given parameters.
+
+## `operator()`
+
+Takes any parameter to be forwarded te the service `S` after injected parameters.
+
+Example:
+```c++
+struct Service1 {
+	Service1(/* dependencies... */, int additional_parameter = 0) {}
+};
+
+struct Service1Service : kgr::service<Service1, kgr::dependency</* ... */>> {};
+
+kgr::generator<Service1Service> make_service1 = container.service<kgr::generator_service<Service1Service>>();
+
+Service1 s1 = make_service1();
+Service1 s2 = make_service1(2);
 ```

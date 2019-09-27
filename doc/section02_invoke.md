@@ -114,7 +114,7 @@ auto function = [](Window& window, MessageBus& bus, int a, auto b) { // b to be 
 double quantity = container.invoke(function, 30, 2.1); // quantity == 42.1, b deduced as double
 ```
 
-> WARNING: To inspect the parameter types, the container must instantiate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instantiate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instantiate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instantiated one time with the right types.
+> WARNING: To inspect the parameter types, the container must instantiate the template function by using forwarded parameters, which maintain their reference type. If you're calling `container.invoke([](auto){}, std::move(some_integer))`, it will first instantiate the lambda with `int&&` as `auto` to inspect parameters, and then call the function as usual. This may make generic lambda function to instantiate two times. If you want to avoid this behavior, consider using `auto&&` for deduced parameters. That way, generic lambdas are only instantiated one time with the right types. This is expected to be solved with the version 5.
 
 To see more about invoke, I welcome you to check [example2](../examples/example2/example2.cpp) and
 [abstract factory example](../examples/abstract_factory/abstract_factory.cpp).

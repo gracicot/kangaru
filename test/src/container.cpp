@@ -247,3 +247,33 @@ TEST_CASE("the container can rebase with a predicate", "[container]") {
 		REQUIRE(c2.contains<Definition2>());
 	}
 }
+
+struct TrapPredicate {
+	auto operator()(kgr::type_id_t id) -> bool {
+		CHECK(kgr::detail::type_id_kind(id) == kgr::detail::type_id_data::kind_t::normal);
+		return true;
+	}
+};
+
+TEST_CASE("The predicate is never called with implementation defined services", "[container]") {
+	struct Service {};
+	struct Definition1 : kgr::single_service<Service> {};
+	struct Definition2 : kgr::single_service<Service> {};
+	struct DefinitionPoly : kgr::single_service<Service>, kgr::polymorphic {};
+	struct DefinitionOver : kgr::single_service<Service>, kgr::overrides<DefinitionPoly> {};
+	
+	kgr::container c;
+	kgr::container c2;
+	REQUIRE(c.emplace<Definition1>());
+	REQUIRE(c.emplace<Definition2>());
+	REQUIRE(c.emplace<DefinitionPoly>());
+	REQUIRE(c.emplace<DefinitionOver>());
+	
+	SECTION("rebase") {
+		c2.rebase(c, TrapPredicate{});
+	}
+	
+	SECTION("fork") {
+		c2 = c.fork(TrapPredicate{});
+	}
+}

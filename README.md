@@ -55,7 +55,7 @@ int main()
 Features
 --------
 
- * Non intrusive. No existing classes need modification.
+ * Non intrusive, no existing classes need modification
  * You tell the container how to construct your types, store and inject them
  * Injection by setters
  * Autowiring by class constructors
@@ -63,7 +63,7 @@ Features
  * Clean and simple API for simple cases, flexible enough for complex cases
  * Low runtime overhead
  * Header only library
- * Clean diagnostics at compile-time.
+ * Clean diagnostics at compile-time
 
 Installation
 ------------
@@ -119,7 +119,7 @@ Kangaru is tested by our continuous integration with all major compiler versions
  * Clang: 3.6 or better
  * AppleClang: 7.0 or better
 
-What's next?
+What's Next
 ------------
 There is some feature I would like to see become real. Here's a list of those,
 feel free to contribute!
@@ -140,12 +140,12 @@ Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/k
 
 Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
 
-Who's using kangaru?
+Who's Using Kangaru
 --------------------
 Here's a list of projets making use of kangaru
- - Our team's game engine
- - The people I helped integrating this library into their projects
- - Surely more!
+ * Our team's game engine
+ * The people I helped integrating this library into their projects
+ * Surely more!
    
 #### Using kangaru?
 

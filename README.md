@@ -143,6 +143,7 @@ Found an issue? Have an idea to make this library better? Please [submit an issu
 Who's Using Kangaru
 --------------------
 Here's a list of projets making use of kangaru
+
  * Our team's game engine
  * The people I helped integrating this library into their projects
  * Surely more!

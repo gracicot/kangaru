@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <iterator>
 
 #include "single.hpp"
 #include "injected.hpp"

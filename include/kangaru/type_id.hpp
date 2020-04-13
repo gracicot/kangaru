@@ -1,6 +1,12 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP
 
+#ifdef _MSC_VER
+#ifndef __clang__
+#define KGR_KANGARU_NONCONST_TYPEID
+#endif
+#endif
+
 namespace kgr {
 namespace detail {
 
@@ -13,7 +19,11 @@ template<typename T>
 struct type_id_ptr {
 	// Having a static data member will ensure us that it has only one address for the whole program.
 	// Furthermore, the static data member having different types will ensure it won't get optimized.
-	static const T* const id;
+#ifdef KGR_KANGARU_NONCONST_TYPEID
+    static T const* id;
+#else
+	static T const* id;
+#endif
 };
 
 /*
@@ -26,8 +36,13 @@ struct type_id_ptr {
  * 
  * Using the pointer of a static data member is more stable.
  */
+#ifdef KGR_KANGARU_NONCONST_TYPEID
 template<typename T>
-const T* const type_id_ptr<T>::id = nullptr;
+T const* type_id_ptr<T>::id = nullptr;
+#else
+template<typename T>
+T const* const type_id_ptr<T>::id = nullptr;
+#endif
 
 } // namespace detail
 

@@ -140,6 +140,14 @@ Want to help? Pick an issue on our [issue tracker](https://github.com/gracicot/k
 
 Found an issue? Have an idea to make this library better? Please [submit an issue](https://github.com/gracicot/kangaru/issues/new) and we will respond within a few days, and commit to address the needs.
 
+#### Running Tests
+
+Tests are enabled using the cmake option `-DKANGARU_TEST=ON`. Enabling this will make our CMake scripts to try finding the Catch2 library. We also contain a submodule for this library in our git repository in case you don't have it available in a prefix directory.
+
+Using this option adds the the `test` target.
+
+To enable tests specifically designed arount C++14 and C++17 features, there's the `-DKANGARU_TEST_CXX14=ON` and the `-DKANGARU_TEST_CXX17=ON` options.
+
 Who's Using Kangaru
 --------------------
 Here's a list of projets making use of kangaru

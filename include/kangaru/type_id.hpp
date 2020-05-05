@@ -4,18 +4,16 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "kangaru/detail/config.hpp"
+
+#ifdef KGR_KANGARU_HASH_TYPE_ID
 #include "detail/string_view.hpp"
 #include "detail/hash.hpp"
+#endif
 
 #include "detail/define.hpp"
 
 namespace kgr {
-
-/*
- * The type of a type id.
- */
-using type_id_t = std::uint64_t;
-
 namespace detail {
 
 /*
@@ -42,11 +40,6 @@ struct is_index_storage<index_storage<T>> : std::true_type {};
 enum struct service_kind_t : std::uint8_t { normal, override_storage, index_storage };
 
 /**
- * We need two bits to encode all kind of services
- */
-constexpr auto kind_significant_bits = std::uint64_t{2};
-
-/**
  * Returns which kind of service a given type is
  */
 template<typename T>
@@ -55,6 +48,18 @@ inline constexpr auto kind_for() noexcept -> service_kind_t {
 		? service_kind_t::override_storage
 		: is_index_storage<T>::value ? service_kind_t::index_storage : service_kind_t::normal;
 }
+
+#ifdef KGR_KANGARU_HASH_TYPE_ID
+
+/**
+ * The type of a generated type id.
+ */
+using type_id_t = std::uint64_t;
+
+/**
+ * We need two bits to encode all kind of services
+ */
+constexpr auto kind_significant_bits = std::uint64_t{2};
 
 /**
  * Returns the kind of service from a type id
@@ -92,7 +97,41 @@ inline constexpr auto type_name() -> string_view {
  */
 constexpr auto hash_mask = std::uint64_t{0x4FFFFFFFFFFFFFFF};
 
+template<typename T>
+inline constexpr auto type_id_impl() -> type_id_t {
+	return (
+		(hash_64_fnv1a(type_name<T>()) & hash_mask) |
+		(static_cast<std::uint64_t>(kind_for<T>()) << (64 - kind_significant_bits))
+	);
+}
+
+#else
+
+using type_id_t = void const*;
+
+template<typename T>
+struct type_id_ptr {
+	// Having a static data member will ensure us that it has only one address for the whole program.
+	static constexpr service_kind_t id = kind_for<T>();
+};
+
+template<typename T>
+constexpr service_kind_t const type_id_ptr<T>::id;
+
+inline constexpr auto type_id_kind(void const* id) -> service_kind_t {
+	return *static_cast<service_kind_t const*>(id);
+}
+
+template <typename T>
+constexpr auto type_id_impl() -> type_id_t {
+	return &detail::type_id_ptr<T>::id;
+}
+
+#endif // KGR_KANGARU_HASH_TYPE_ID
+
 } // namespace detail
+
+using detail::type_id_t;
 
 /*
  * The function that returns the type id.
@@ -102,10 +141,7 @@ constexpr auto hash_mask = std::uint64_t{0x4FFFFFFFFFFFFFFF};
  */
 template <typename T>
 inline constexpr auto type_id() -> type_id_t {
-	return (
-		(detail::hash_64_fnv1a(detail::type_name<T>()) & detail::hash_mask) |
-		(static_cast<std::uint64_t>(detail::kind_for<T>()) << (64 - detail::kind_significant_bits))
-	);
+	return detail::type_id_impl<T>();
 }
 
 } // namespace kgr

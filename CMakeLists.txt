@@ -13,6 +13,7 @@ option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)
 option(KANGARU_EXPORT "Export kangaru source tree as package" true)
 option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" false)
+option(KANGARU_HASH_TYPE_ID "Generate the type IDs using the hashed type names" false)
 option(KANGARU_NO_EXCEPTION "Disable exceptions by replacing throws by asserts" false)
 option(KANGARU_BENCHMARK "Build benchmark binaries" false)
 option(KANGARU_TEST "Build test binaries" false)
@@ -21,8 +22,9 @@ option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
 
 set(KGR_KANGARU_NOEXCEPTION ${KANGARU_NO_EXCEPTION})
 set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
+set(KGR_KANGARU_HASH_TYPE_ID ${KANGARU_HASH_TYPE_ID})
 
-if(NOT "${KGR_KANGARU_REVERSE_DESTRUCTION}")
+if(NOT KGR_KANGARU_REVERSE_DESTRUCTION)
 	message(WARNING
 		"The recommended behavior is to enable reverse destruction. This option will the the "
 		"default behavior for kangaru 5.x.y. Not enabling this option is considered deprecated."
@@ -35,7 +37,7 @@ configure_file(
 	@ONLY
 )
 
-if(${KANGARU_TEST_CXX14} OR ${KANGARU_TEST_CXX17} OR ${KANGARU_TEST})
+if(KANGARU_TEST_CXX14 OR KANGARU_TEST_CXX17 OR KANGARU_TEST)
 	set(KANGARU_ENABLE_TESTS true)
 endif()
 

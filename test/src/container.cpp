@@ -250,7 +250,7 @@ TEST_CASE("the container can rebase with a predicate", "[container]") {
 
 struct TrapPredicate {
 	auto operator()(kgr::type_id_t id) -> bool {
-		CHECK(kgr::detail::type_id_kind(id) == kgr::detail::type_id_data::kind_t::normal);
+		CHECK(kgr::detail::type_id_kind(id) == kgr::detail::service_kind_t::normal);
 		return true;
 	}
 };

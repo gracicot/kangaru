@@ -36,6 +36,7 @@ matrix:
       addons: { apt: { packages: ["clang-4.0"], sources: ["llvm-toolchain-trusty-4.0", "ubuntu-toolchain-r-test"] } }
 
     - os: linux
+      dist: bionic
       env:
         - LLVM_VERSION=5.0.0
         - ENABLE_CXX17=true

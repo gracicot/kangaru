@@ -45,14 +45,14 @@ matrix:
         - LLVM_VERSION=5.0.0
         - ENABLE_CXX14=true
         - ENABLE_CXX17=true
-      addons: { apt: { packages: ["clang-5.0"], sources: ["llvm-toolchain-trusty-5.0", "ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["clang-5.0"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:
         - LLVM_VERSION=6.0.0
         - ENABLE_CXX14=true
         - ENABLE_CXX17=true
-      addons: { apt: { packages: ["clang-6.0"], sources: ["llvm-toolchain-trusty-6.0", "ubuntu-toolchain-r-test"] } }
+      addons: { apt: { packages: ["clang-6.0"], sources: ["ubuntu-toolchain-r-test"] } }
 
     - os: linux
       env:

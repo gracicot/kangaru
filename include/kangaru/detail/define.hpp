@@ -61,11 +61,19 @@
 #endif // KGR_KANGARU_MSVC_EXACT_DECLTYPE
 
 #ifndef KGR_KANGARU_EMPTY_BASES
-#if defined(_MSC_VER)
+#ifdef _MSC_VER
 #define KGR_KANGARU_EMPTY_BASES __declspec(empty_bases)
 #else
 #define KGR_KANGARU_EMPTY_BASES
-#endif
-#endif
+#endif // _MSC_VER
+#endif // KGR_KANGARU_EMPTY_BASES
+
+#ifndef KGR_KANGARU_NONCONST_TYPEID
+#ifdef _MSC_VER
+#ifndef __clang__
+#define KGR_KANGARU_NONCONST_TYPEID
+#endif // !__clang__
+#endif // _MSC_VER
+#endif // KGR_KANGARU_NONCONST_TYPEID
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFINE

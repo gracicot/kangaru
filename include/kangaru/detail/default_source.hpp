@@ -49,6 +49,14 @@ private:
 	}
 	
 	template<typename T>
+	static inline auto evaluate_predicate(type_id_t id, T&& predicate) noexcept -> bool {
+		auto const kind = type_id_kind(id);
+		return kind != type_id_data::kind_t::override_storage && (
+			kind == type_id_data::kind_t::index_storage || predicate(id)
+		);
+	}
+	
+	template<typename T>
 	auto emplace_or_assign(alias_t service, detail::forward_ptr<T> forward) -> detail::typed_service_storage<T> {
 		auto const it = _services.find(type_id<T>());
 		
@@ -197,9 +205,7 @@ public:
 			_services.begin(), _services.end(),
 			std::inserter(fork._services, fork._services.begin()),
 			[&predicate](service_cont::const_reference i) {
-				return i.first != type_id<override_storage_service>() && (
-					type_id_kind(i.first) == type_id_data::kind_t::index_storage || predicate(i.first)
-				);
+				return evaluate_predicate(i.first, predicate);
 			}
 		);
 		
@@ -241,7 +247,7 @@ public:
 			other._services.begin(), other._services.end(),
 			std::inserter(_services, _services.end()),
 			[&predicate](service_cont::const_reference i) {
-				return i.first != type_id<override_storage_service>() && predicate(i.first);
+				return evaluate_predicate(i.first, predicate);
 			}
 		);
 	}

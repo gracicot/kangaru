@@ -65,15 +65,23 @@
 #define KGR_KANGARU_EMPTY_BASES __declspec(empty_bases)
 #else
 #define KGR_KANGARU_EMPTY_BASES
-#endif
-#endif
+#endif // _MSC_VER
+#endif // KGR_KANGARU_EMPTY_BASES
 
 #ifndef KGR_KANGARU_FUNCTION_SIGNATURE
 #if defined(_MSC_VER)
 #define KGR_KANGARU_FUNCTION_SIGNATURE __FUNCSIG__
 #else
 #define KGR_KANGARU_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
-#endif
-#endif
+#endif // _MSC_VER
+#endif // KGR_KANGARU_FUNCTION_SIGNATURE
+
+#ifndef KGR_KANGARU_NONCONST_TYPEID
+// #ifdef _MSC_VER
+// #ifndef __clang__
+#define KGR_KANGARU_NONCONST_TYPEID
+// #endif // !__clang__
+// #endif // _MSC_VER
+#endif // KGR_KANGARU_NONCONST_TYPEID
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFINE

@@ -10,6 +10,7 @@
 #undef KGR_KANGARU_MSVC_EXACT_DECLTYPE
 #undef KGR_KANGARU_EMPTY_BASES
 #undef KGR_KANGARU_FUNCTION_SIGNATURE
+#undef KGR_KANGARU_NONCONST_TYPEID
 
 // These two header are meant to be included
 // everytime they are needed since they cancel each other

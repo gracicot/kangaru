@@ -109,17 +109,32 @@ inline constexpr auto type_id_impl() -> type_id_t {
 
 using type_id_t = void const*;
 
-template<typename T>
-struct type_id_ptr {
-	// Having a static data member will ensure us that it has only one address for the whole program.
-	static constexpr service_kind_t id = kind_for<T>();
+struct type_id_data {
+	service_kind_t const kind;
 };
 
 template<typename T>
-constexpr service_kind_t const type_id_ptr<T>::id;
+struct type_id_ptr {
+#ifdef KGR_KANGARU_NONCONST_TYPEID
+	// On visual studio, we must have the id as non const since it may nonetheless be optimised away
+	// It is strongly recommended to use hash based type id on Visual Studio compiler
+	static type_id_data id;
+#else
+	// Having a static data member will ensure us that it has only one address for the whole program.
+	static constexpr type_id_data id = type_id_data{kind_for<T>()};
+#endif
+};
+
+#ifdef KGR_KANGARU_NONCONST_TYPEID
+template<typename T>
+type_id_data type_id_ptr<T>::id = type_id_data{kind_for<T>()};
+#else
+template<typename T>
+constexpr type_id_data const type_id_ptr<T>::id;
+#endif
 
 inline constexpr auto type_id_kind(void const* id) -> service_kind_t {
-	return *static_cast<service_kind_t const*>(id);
+	return static_cast<type_id_data const*>(id)->kind;
 }
 
 template <typename T>

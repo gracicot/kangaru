@@ -22,7 +22,7 @@ struct type_id_ptr {
 #ifdef KGR_KANGARU_NONCONST_TYPEID
     static T const* id;
 #else
-	static T const* id;
+	static T const* const id;
 #endif
 };
 

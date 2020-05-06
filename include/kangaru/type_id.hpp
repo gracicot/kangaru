@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <type_traits>
 
+#include "detail/define.hpp"
+
 namespace kgr {
 namespace detail {
 
@@ -29,7 +31,7 @@ struct is_index_storage<index_storage<T>> : std::true_type {};
  * get it's pointer. We reuse that space to store meta information.
  */
 struct type_id_data {
-	enum struct kind_t : std::uint8_t { normal, override_storage, index_storage } kind;
+	enum struct kind_t : std::uint8_t { normal, override_storage, index_storage } const kind;
 	
 	template<typename T>
 	static constexpr auto kind_for() noexcept -> type_id_data {
@@ -48,13 +50,14 @@ struct type_id_data {
  */
 template<typename T>
 struct type_id_ptr {
-	struct id_t {
-		type_id_data data;
-	};
 
 	// Having a static data member will ensure us that it has only one address for the whole program.
-	// Furthermore, the static data member having different types will ensure it won't get optimized.
-	static constexpr id_t id = id_t{type_id_data::kind_for<T>()};
+	// Furthermore, the static data member all the same type will ensure it won't get optimized.
+#ifdef KGR_KANGARU_NONCONST_TYPEID
+    static type_id_data id;
+#else
+	static constexpr type_id_data id = type_id_data::kind_for<T>();
+#endif
 };
 
 /*
@@ -67,8 +70,14 @@ struct type_id_ptr {
  * 
  * Using the pointer of a static data member is more stable.
  */
+
+#ifdef KGR_KANGARU_NONCONST_TYPEID
 template<typename T>
-constexpr typename type_id_ptr<T>::id_t const type_id_ptr<T>::id;
+type_id_data type_id_ptr<T>::id = type_id_data::kind_for<T>();
+#else
+template<typename T>
+constexpr type_id_data const type_id_ptr<T>::id;
+#endif
 
 inline constexpr auto type_id_kind(void const* id) -> type_id_data::kind_t {
 	return static_cast<type_id_data const*>(id)->kind;
@@ -93,5 +102,7 @@ constexpr auto type_id() -> type_id_t {
 }
 
 } // namespace kgr
+
+#include "detail/undef.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_TYPE_ID_HPP

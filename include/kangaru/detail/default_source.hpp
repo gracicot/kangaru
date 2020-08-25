@@ -51,8 +51,8 @@ private:
 	template<typename T>
 	static inline auto evaluate_predicate(type_id_t id, T&& predicate) noexcept -> bool {
 		auto const kind = type_id_kind(id);
-		return kind != type_id_data::kind_t::override_storage && (
-			kind == type_id_data::kind_t::index_storage || predicate(id)
+		return kind != service_kind_t::override_storage && (
+			kind == service_kind_t::index_storage || predicate(id)
 		);
 	}
 	

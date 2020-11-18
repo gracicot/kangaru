@@ -129,6 +129,7 @@ feel free to contribute!
  * Service sources, more detail here: [#41](https://github.com/gracicot/kangaru/issues/41)
  * Even better performance (ongoing)
  * Expose a zero-overhead interface for cases it can apply
+ * Move service definitions to service map.
 
 Got suggestions or questions? Discovered a bug? Please open an issue and we'll gladly respond!
 

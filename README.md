@@ -52,6 +52,42 @@ int main()
 
 [Try this example online](https://wandbox.org/permlink/3ekQZXqTFGRlj8ZG) to see how it runs.
 
+Autowire API
+------------
+
+Since recent version of kangaru, we support autowire api. The following is the same example as above, using autowire.
+
+
+```c++
+#include <kangaru/kangaru.hpp>
+#include <cassert>
+
+// We define some normal classes with dependencies between them
+// And we added the autowire configuration
+struct Camera {
+    friend auto service_map(Camera const&) -> kgr::autowire_single;
+};
+
+struct Scene {
+    Camera& camera;
+    
+    friend auto service_map(Scene const&) -> kgr::autowire;
+};
+
+// No need for service definitions
+
+int main()
+{
+    kgr::container container;
+    
+    // We invoke a lambda that recieves injected parameters.
+    // The container will figure how to wire the classes using their constructor parameters or aggregate initialization
+    container.invoke([](Scene scene, Camera& camera) {
+        assert(&scene.camera == &camera); // passes, both cameras are the same instance.
+    });
+}
+```
+
 Features
 --------
 

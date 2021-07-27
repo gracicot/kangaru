@@ -65,6 +65,7 @@ Since recent version of kangaru, we support autowire api. The following is the s
 // We define some normal classes with dependencies between them
 // And we added the autowire configuration
 struct Camera {
+    // friend functions are faster to lookup than plain free functions
     friend auto service_map(Camera const&) -> kgr::autowire_single;
 };
 
@@ -81,7 +82,8 @@ int main()
     kgr::container container;
     
     // We invoke a lambda that recieves injected parameters.
-    // The container will figure how to wire the classes using their constructor parameters or aggregate initialization
+    // The container will figure how to wire the classes using
+    // either the constructor parameters or aggregate initialization
     container.invoke([](Scene scene, Camera& camera) {
         assert(&scene.camera == &camera); // passes, both cameras are the same instance.
     });

@@ -44,10 +44,10 @@ jobs:
       - name: 'Run CMake with Ninja, install dependencies with vcpkg, build with CMake'
         uses: lukka/run-cmake@v3
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsOrSettingsJson: CMakeListsTxtBasic
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON'
           buildDirectory: ${{ env.buildDir }}
 
       - name: Test

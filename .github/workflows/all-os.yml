@@ -1,3 +1,4 @@
+name: All OS
 on: [push, pull_request]
 
 jobs:
@@ -20,7 +21,7 @@ jobs:
           - os: macos-latest
             triplet: x64-osx
             build-type: RelWithDebInfo
-            
+
     steps: 
       - uses: actions/checkout@v2
 
@@ -28,7 +29,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.1
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v6
+        uses: lukka/run-vcpkg@v7
         with:
           # Just install vcpkg for now, do not install any ports in this step yet.
           setupOnly: true
@@ -56,4 +57,10 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: ctest -C ${{env.build-type}}
 
-
+#  windows-msvc:
+#    runs-on: windows-latest
+#    name: windows-msvc
+#    strategy:
+#      fail-fast: false
+#      matrix:
+#        msvc-version: [2015, 2017, 2019]

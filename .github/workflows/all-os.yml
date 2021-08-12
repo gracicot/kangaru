@@ -17,19 +17,35 @@ jobs:
         include:
           - gcc: 4.8
             os: ubuntu-18.04
-            arch: [x86, x64]
+            arch: x86
 
           - gcc: 4.9
             os: ubuntu-18.04
-            arch: [x86, x64]
+            arch: x86
 
           - gcc: 5
             os: ubuntu-18.04
-            arch: [x86, x64]
+            arch: x86
 
           - gcc: 6
             os: ubuntu-18.04
-            arch: [x86, x64]
+            arch: x86
+
+          - gcc: 4.8
+            os: ubuntu-18.04
+            arch: x64
+
+          - gcc: 4.9
+            os: ubuntu-18.04
+            arch: x64
+
+          - gcc: 5
+            os: ubuntu-18.04
+            arch: x64
+
+          - gcc: 6
+            os: ubuntu-18.04
+            arch: x64
 
     steps: 
       - uses: actions/checkout@v2

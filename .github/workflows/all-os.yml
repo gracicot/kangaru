@@ -83,7 +83,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }} -DCMAKE_CXX_COMPILER=clang++'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_COMPILER=clang++'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -180,7 +180,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }}'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -248,7 +248,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_GENERATOR_PLATFORM=${{ matrix.arch }}'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test

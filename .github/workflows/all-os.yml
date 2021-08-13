@@ -2,6 +2,91 @@ name: All OS
 on: [push, pull_request]
 
 jobs:
+  linux-clang:
+    env:
+      build-dir: ${{ github.workspace }}/build
+      build-type: RelWithDebInfo
+    name: Clang ${{ matrix.clang }} Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86, x64]
+        os: [ubuntu-20.04]
+        clang: [6.0, 7, 8, 9, 10, 11, 12]
+        include:
+          - clang: 3.9
+            os: ubuntu-18.04
+            arch: x86
+
+          - clang: 4.0
+            os: ubuntu-18.04
+            arch: x86
+
+          - clang: 5.0
+            os: ubuntu-18.04
+            arch: x86
+
+          - clang: 3.9
+            os: ubuntu-18.04
+            arch: x64
+
+          - clang: 4.0
+            os: ubuntu-18.04
+            arch: x64
+
+          - clang: 5.0
+            os: ubuntu-18.04
+            arch: x64
+
+    steps: 
+      - uses: actions/checkout@v2
+
+      # Minimum GCC version required for vcpkg
+      - uses: egor-tensin/setup-gcc@v1
+        with:
+          version: 7
+          platform: ${{ matrix.arch }}
+
+      - name: get-cmake
+        uses: lukka/get-cmake@v3.21.1
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v7
+        with:
+          # Just install vcpkg for now, do not install any ports in this step yet.
+          setupOnly: true
+          # Location of the vcpkg as submodule of the repository.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
+          # compute its hash and append this to the computed cache's key.
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+          vcpkgTriplet: ${{ matrix.triplet }}
+          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
+          additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
+
+      - uses: egor-tensin/setup-clang@v1
+        with:
+          version: ${{ matrix.clang }}
+          platform: ${{ matrix.arch }}
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+          useVcpkgToolchainFile: true
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_COMPILER=clang++'
+          buildDirectory: ${{ env.build-dir }}
+
+      - name: Test
+        working-directory: ${{github.workspace}}/build
+        # Execute tests defined by the CMake configuration.  
+        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+        run: ctest -C ${{env.build-type}}
+
+
   linux-gcc:
     env:
       build-dir: ${{ github.workspace }}/build

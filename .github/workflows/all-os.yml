@@ -118,7 +118,8 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: Print cl.exe
-      - run: cl.exe
+        run: cl.exe
+        shell: pwsh
 
       - name: get-cmake
         uses: lukka/get-cmake@v3.21.1

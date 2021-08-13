@@ -31,10 +31,6 @@ jobs:
             os: ubuntu-18.04
             arch: x64
 
-          - gcc: 4.9
-            os: ubuntu-18.04
-            arch: x64
-
           - gcc: 5
             os: ubuntu-18.04
             arch: x64
@@ -120,6 +116,9 @@ jobs:
       - uses: egor-tensin/vs-shell@v2
         with:
           arch: ${{ matrix.arch }}
+
+      - name: Print cl.exe
+      - run: cl.exe
 
       - name: get-cmake
         uses: lukka/get-cmake@v3.21.1

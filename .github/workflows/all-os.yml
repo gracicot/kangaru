@@ -60,7 +60,7 @@ jobs:
           additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - name: Clang 5 workaround
-        run: vcpkg install benchmark
+        run: vcpkg install --triplet ${{ matrix.triplet }}
         shell: bash
 
       - uses: egor-tensin/setup-clang@v1

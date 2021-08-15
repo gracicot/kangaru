@@ -48,17 +48,20 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v7
         with:
+          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
-          # We run vcpkg here because we want a stable compiler to install google benchmark. Clang is broken sometimes
-          vcpkgArguments: benchmark
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
           vcpkgTriplet: ${{ matrix.triplet }}
           # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
           additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
+
+      - name: Clang 5 workaround
+        run: vcpkg install benchmark
+        shell: bash
 
       - uses: egor-tensin/setup-clang@v1
         with:

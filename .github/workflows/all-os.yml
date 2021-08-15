@@ -48,8 +48,6 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v7
         with:
-          # Just install vcpkg for now, do not install any ports in this step yet.
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
@@ -127,8 +125,6 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v7
         with:
-          # Just install vcpkg for now, do not install any ports in this step yet.
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
@@ -190,8 +186,8 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
 
-      - name: Print cl.exe
-        run: cl.exe
+      - name: vcpkg workaround
+        run: New-Item ${{ github.workspace }}/installed/${{ matrix.triplet }}/tools -ItemType Directory
         shell: pwsh
 
       - name: get-cmake

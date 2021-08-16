@@ -176,7 +176,7 @@ jobs:
       build-dir: ${{ github.workspace }}/build
       build-type: RelWithDebInfo
     runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.arch }})
+    name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.arch }}, ${{ matrix.msvc-cxx }}, ${{ matrix.permissive }})
     strategy:
       fail-fast: false
       matrix:

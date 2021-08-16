@@ -11,6 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        cxx14: [On]
+        cxx17: [On]
         arch: [x64]
         os: [ubuntu-20.04]
         clang: [6.0, 7, 8, 9, 10, 11, 12]
@@ -19,11 +21,15 @@ jobs:
             os: ubuntu-18.04
             triplet: x64-linux
             arch: x64
+            cxx14: On
+            cxx17: Off
 
           - clang: 4.0
             os: ubuntu-18.04
             triplet: x64-linux
             arch: x64
+            cxx14: On
+            cxx17: On
 
 #          - clang: 5.0
 #            os: ubuntu-18.04
@@ -70,7 +76,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_COMPILER=clang++'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On -DCMAKE_CXX_COMPILER=clang++'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -89,6 +95,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        cxx14: [Ôn]
+        cxx17: [On]
         arch: [x64]
         os: [ubuntu-20.04] 
         gcc: [7, 8, 9, 10, 11]
@@ -97,16 +105,22 @@ jobs:
             os: ubuntu-18.04
             triplet: x64-linux
             arch: x64
+            cxx14: Off
+            cxx17: Off
 
           - gcc: 5
             os: ubuntu-18.04
             triplet: x64-linux
             arch: x64
+            cxx14: On
+            cxx17: Off
 
           - gcc: 6
             os: ubuntu-18.04
             triplet: x64-linux
             arch: x64
+            cxx14: On
+            cxx17: Off
 
           - arch: x64
             triplet: x64-linux
@@ -148,7 +162,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -166,6 +180,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        cxx14: [On]
+        cxx17: [On, Off]
+        permissive: [/permissive-, /permissive]
         os: [windows-2016, windows-2019]
         arch: [x86, x64]
         include:
@@ -180,6 +197,28 @@ jobs:
 
           - arch: x64
             triplet: x64-windows
+
+          - cxx17: Off
+            msvc-cxx: /std:c++14
+
+          - cxx17: On
+            msvc-cxx: /std:c++17
+
+          - os: windows-2016
+            msvc-version: 2017
+            arch: x64
+            cxx14: On
+            cxx17: On
+            permissive: /permissive-
+            msvc-cxx: /std:c++latest
+
+          - os: windows-2019
+            msvc-version: 2019
+            arch: x64
+            cxx14: On
+            cxx17: On
+            permissive: /permissive-
+            msvc-cxx: /std:c++latest
     
     steps:
       - uses: actions/checkout@v2
@@ -216,7 +255,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test

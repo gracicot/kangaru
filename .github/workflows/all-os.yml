@@ -219,6 +219,13 @@ jobs:
             cxx17: On
             permissive: /permissive-
             msvc-cxx: /std:c++latest
+
+        exclude:
+          - arch: x86
+            cxx17: Off
+
+          - arch: x86
+            permissive: /permissive-
     
     steps:
       - uses: actions/checkout@v2
@@ -255,7 +262,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="/EHsc /utf-8 ${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test

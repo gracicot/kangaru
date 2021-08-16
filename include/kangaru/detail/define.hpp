@@ -17,7 +17,7 @@
 	!(defined(__APPLE__) && defined(__clang__) && __clang_major__ == 10 && __clang_patchlevel__ < 1) && \
 	!(defined(__APPLE__) && defined(__clang__) && __clang_major__ < 10) \
 )
-//#define KGR_KANGARU_USE_ALTERNATE_MAP_PROBE
+#define KGR_KANGARU_USE_ALTERNATE_MAP_PROBE
 #endif
 #endif
 

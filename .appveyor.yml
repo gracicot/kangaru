@@ -9,7 +9,7 @@ os:
 environment:
   matrix:
   - additional_flags: "/EHsc"
-  - additional_flags: "/EHsc/std:c++14 /utf-8"
+  - additional_flags: "/EHsc /std:c++14 /utf-8"
   - additional_flags: "/EHsc /permissive- /std:c++14 /utf-8"
   
 init: []

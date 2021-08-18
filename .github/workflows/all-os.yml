@@ -6,7 +6,7 @@ jobs:
     env:
       build-dir: ${{ github.workspace }}/build
       build-type: RelWithDebInfo
-    name: AppleClang ${{ matrix.clang }} MacOS (hash-mode ${{ matrix.hash-typeid }})
+    name: AppleClang XCode ${{ matrix.xcode }} MacOS (hash-mode ${{ matrix.hash-typeid }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -16,7 +16,7 @@ jobs:
         arch: [x64]
         hash-typeid: [Off, On]
         os: [macos-10.15]
-        xcode: [9.3, 9.4, 10, 10.1, 11, 12]
+        xcode: [10, 11, 12]
 
     steps: 
       - uses: actions/checkout@v2

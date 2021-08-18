@@ -5,30 +5,12 @@ version: '{build}'
 
 os: 
   - Visual Studio 2015
-  - Visual Studio 2017
-  - Visual Studio 2019
 
 environment:
   matrix:
   - additional_flags: "/EHsc"
-    enable_cxx17: false
-  - additional_flags: "/EHsc/std:c++14 /utf-8"
-    enable_cxx17: false
+  - additional_flags: "/EHsc /std:c++14 /utf-8"
   - additional_flags: "/EHsc /permissive- /std:c++14 /utf-8"
-    enable_cxx17: false
-  - additional_flags: "/EHsc /permissive- /std:c++17 /utf-8"
-    enable_cxx17: true
-  - additional_flags: "/EHsc /std:c++17 /utf-8"
-    enable_cxx17: true
-
-matrix:
-  exclude:
-    - additional_flags: "/EHsc /std:c++17 /utf-8"
-      os: Visual Studio 2015
-    - additional_flags: "/EHsc /permissive- /std:c++14 /utf-8"
-      os: Visual Studio 2015
-    - enable_cxx17: true
-      os: Visual Studio 2015
   
 init: []
 
@@ -37,8 +19,9 @@ install:
 
 build_script:
   - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE ( IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" ( SET GEN="Visual Studio 15 2017") ELSE ( SET GEN="Visual Studio 16 2019") )
-  - cmake . -G%GEN% -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true -DKANGARU_TEST_CXX14="%enable_cxx17%" -DCMAKE_CXX_FLAGS="%additional_flags%"
+  - cmake . -G%GEN% -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true -DCMAKE_CXX_FLAGS="%additional_flags%"
   - cmake --build .
 
 test_script:
   - ctest .
+

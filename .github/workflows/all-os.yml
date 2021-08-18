@@ -11,9 +11,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cxx14: On
-        cxx17: On
-        arch: x64
+        cxx14: [On]
+        cxx17: [On]
+        arch: [x64]
         hash-typeid: [Off, On]
         os: [macos-10.15]
         xcode: [9.3, 9.4, 10, 10.1, 11, 12]

@@ -86,7 +86,7 @@ jobs:
             triplet: x64-linux
             arch: x64
             cxx14: On
-            cxx17: On
+            cxx17: Off
             hash-typeid: Off
 
           - clang: 5.0

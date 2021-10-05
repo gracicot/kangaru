@@ -30,7 +30,7 @@ jobs:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -89,10 +89,10 @@ jobs:
             cxx17: On
             hash-typeid: Off
 
-#          - clang: 5.0
-#            os: ubuntu-18.04
-#            triplet: x64-linux
-#            arch: x64
+          - clang: 5.0
+            os: ubuntu-18.04
+            triplet: x64-linux
+            arch: x64
 
           - arch: x64
             triplet: x64-linux
@@ -115,7 +115,7 @@ jobs:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -205,7 +205,7 @@ jobs:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -317,10 +317,6 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
 
-      - name: vcpkg workaround
-        run: New-Item ${{ github.workspace }}/vcpkg_installed/${{ matrix.triplet }}/tools -ItemType Directory
-        shell: pwsh
-
       - name: get-cmake
         uses: lukka/get-cmake@v3.21.1
 
@@ -331,7 +327,7 @@ jobs:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '57bd7102d9fd880daa1b0958692294c4a125f6d8'
+          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

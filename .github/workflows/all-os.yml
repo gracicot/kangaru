@@ -48,7 +48,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -134,7 +134,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On -DCMAKE_CXX_COMPILER=clang++'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On -DCMAKE_CXX_COMPILER=clang++'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -224,7 +224,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test
@@ -238,13 +238,13 @@ jobs:
       build-dir: ${{ github.workspace }}/build
       build-type: RelWithDebInfo
     runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.arch }}, ${{ matrix.msvc-cxx }}, ${{ matrix.permissive }}, hash-mode ${{ matrix.hash-typid }})
+    name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.arch }}, ${{ matrix.msvc-cxx }}, ${{ matrix.permissive }}, hash-mode ${{ matrix.hash-typeid }})
     strategy:
       fail-fast: false
       matrix:
         cxx14: [On]
         cxx17: [On, Off]
-        hash-typid: [Off]
+        hash-typeid: [Off]
         permissive: [/permissive-, /permissive]
         os: [windows-2016, windows-2019]
         arch: [x86, x64]
@@ -341,7 +341,7 @@ jobs:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
           useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="/EHsc /utf-8 ${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typid }} -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
+          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="/EHsc /utf-8 ${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
           buildDirectory: ${{ env.build-dir }}
 
       - name: Test

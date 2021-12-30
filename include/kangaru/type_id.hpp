@@ -86,7 +86,11 @@ static_assert(signature_prefix_length != string_view::npos, "Cannot find the typ
 template<typename T>
 inline constexpr auto type_name() -> string_view {
 	return typed_signature<T>().substr(
-		signature_prefix_length,
+		typed_signature<T>().substr(signature_prefix_length).starts_with("class")
+			? signature_prefix_length + 6
+			: typed_signature<T>().substr(signature_prefix_length).starts_with("struct")
+				? signature_prefix_length + 7
+				: signature_prefix_length,
 		typed_signature<T>().size() - signature_prefix_length - signature_postfix_length
 	);
 }
@@ -98,11 +102,17 @@ inline constexpr auto type_name() -> string_view {
 constexpr auto hash_mask = std::uint64_t{0x4FFFFFFFFFFFFFFF};
 
 template<typename T>
-inline constexpr auto type_id_impl() -> type_id_t {
+inline constexpr auto type_id_impl_helper() -> type_id_t {
 	return (
 		(hash_64_fnv1a(type_name<T>()) & hash_mask) |
 		(static_cast<std::uint64_t>(kind_for<T>()) << (64 - kind_significant_bits))
 	);
+}
+
+// Here we force type_id_impl_helper to be evaluated at compile time
+template<typename T, type_id_t hash = type_id_impl_helper<T>()>
+inline constexpr auto type_id_impl() -> type_id_t {
+	return hash;
 }
 
 #else

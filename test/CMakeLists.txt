@@ -73,8 +73,12 @@ target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_
 
 if(${KANGARU_TEST_CXX14})
 	add_kgr_test(generic_lambdas)
+	add_kgr_test(type_id_cxx14)
 	set_property(TARGET generic_lambdas_test PROPERTY CXX_STANDARD 14)
 	target_compile_features(generic_lambdas_test PRIVATE cxx_std_14)
+	set_property(TARGET type_id_cxx14_test PROPERTY CXX_STANDARD 14)
+	target_compile_features(type_id_cxx14_test PRIVATE cxx_std_14)
+	target_compile_definitions(type_id_cxx14_test PRIVATE KGR_KANGARU_HASH_TYPE_ID)
 endif()
 
 if(${KANGARU_TEST_CXX17})

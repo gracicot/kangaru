@@ -72,6 +72,10 @@ struct string_view {
 		return pos > _size || pos + str._size > _size ? npos : find_impl(_data + pos, str, _size - pos - str._size - 1);
 	}
 	
+	constexpr auto starts_with(string_view str) const noexcept -> bool {
+		return _size >= str._size && strncmp(_data, str._data, str._size);
+	}
+	
 private:
 	static constexpr auto find_impl(char const* haystack, string_view needle, std::size_t max_iter) -> std::size_t {
 		return max_iter == 0 ? 0 : (

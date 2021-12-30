@@ -11,6 +11,7 @@
 #undef KGR_KANGARU_EMPTY_BASES
 #undef KGR_KANGARU_FUNCTION_SIGNATURE
 #undef KGR_KANGARU_NONCONST_TYPEID
+#undef KGR_KANGARU_HASH_EXTENDED_CONSTEXPR
 
 // These two header are meant to be included
 // everytime they are needed since they cancel each other

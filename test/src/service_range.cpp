@@ -106,8 +106,8 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 			fork.emplace<Derived2Service>();
 		}
 		
-		auto range_original = container.service<kgr::override_range_service<BaseService>>();
-		auto range_fork = fork.service<kgr::override_range_service<BaseService>>();
+		auto const range_original = container.service<kgr::override_range_service<BaseService>>();
+		auto const range_fork = fork.service<kgr::override_range_service<BaseService>>();
 		
 		test_iterator_values(
 			range_fork.begin(), range_fork.end(),
@@ -134,7 +134,7 @@ TEST_CASE("The container holds a list of overriders", "[service_range, virtual]"
 		container.emplace<Concrete1Service>(Type::Derived1T);
 		container.emplace<Concrete2Service>(Type::Derived2T);
 		
-		auto range = container.service<kgr::override_range_service<AbstractService>>();
+		auto const range = container.service<kgr::override_range_service<AbstractService>>();
 		
 		test_iterator_values(
 			range.begin(), range.end(),

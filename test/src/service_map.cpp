@@ -266,12 +266,7 @@ namespace indirect_map_value_cat {
 		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test2>>, kgr::single_service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test2>>, kgr::single_service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test2>>, kgr::single_service<service>>::value));
-		
-		// This test don't pass with GCC 9.1, a fix is expected
-		// Bug reported here: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91051
-#if !defined(__GNUC__) || __GNUC__ != 9 || defined(__clang__)
 		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test2>>, kgr::single_service<service>>::value));
-#endif
 		
 		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test3>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test3>>, kgr::single_service<service>>::value));
@@ -282,12 +277,7 @@ namespace indirect_map_value_cat {
 		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test4>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test4>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service&&, kgr::map<test4>>, kgr::service<service>>::value));
-		
-		// This test don't pass with GCC 9.1, a fix is expected
-		// Bug reported here: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91051
-#if !defined(__GNUC__) || __GNUC__ != 9 || defined(__clang__)
 		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test4>>, kgr::service<service>>::value));
-#endif
 
 		// The following test cannot pass on visual studio. A bug will be reported about this behaviour
 #ifndef _MSC_VER

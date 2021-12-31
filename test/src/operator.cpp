@@ -181,7 +181,7 @@ TEST_CASE("Optional act correctly for both value and reference", "[operator]") {
 	REQUIRE((std::is_same<decltype((opt_simple->member)), int&>::value));
 	REQUIRE((std::is_same<decltype((static_cast<kgr::optional<Simple> const&>(opt_simple)->member)), int const&>::value));
 	
-	REQUIRE(not opt_int.has_value());
+	REQUIRE(!opt_int.has_value());
 	opt_int.emplace(1);
 	
 	REQUIRE(opt_int.has_value());

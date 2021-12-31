@@ -9,6 +9,8 @@
 #include "injected.hpp"
 #include "service_storage.hpp"
 
+#include "../type_id.hpp"
+
 namespace kgr {
 namespace detail {
 

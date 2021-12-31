@@ -85,7 +85,7 @@
 #endif // KGR_KANGARU_NONCONST_TYPEID
 
 #ifndef KGR_KANGARU_HASH_EXTENDED_CONSTEXPR
-#if defined(_MSC_VER) || __cplusplus >= 201402L
+#if (defined(_MSC_VER) && _MSC_VER >= 1910) || __cplusplus >= 201402L
 #define KGR_KANGARU_HASH_EXTENDED_CONSTEXPR
 #endif
 #endif // KGR_KANGARU_HASH_EXTENDED_CONSTEXPR

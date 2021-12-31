@@ -7,6 +7,7 @@
 #include "generic.hpp"
 #include "operator.hpp"
 #include "operator_service.hpp"
+#include "optional.hpp"
 #include "predicate.hpp"
 #include "debug.hpp"
 #include "service.hpp"

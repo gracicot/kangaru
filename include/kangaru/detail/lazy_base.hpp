@@ -1,9 +1,9 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_LAZY_BASE_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_LAZY_BASE_HPP
 
-#include "../container.hpp"
 #include "operator_service_helper.hpp"
-#include "lazy_storage.hpp"
+#include "../optional.hpp"
+#include "../container.hpp"
 
 namespace kgr {
 namespace detail {
@@ -21,7 +21,7 @@ private:
 	
 	static constexpr bool nothrow_get() {
 		return noexcept(std::declval<kgr::container>().service<T>()) &&
-			noexcept(std::declval<lazy_storage<service_type<T>>>().construct(std::declval<service_type<T>>()));
+			noexcept(std::declval<optional<service_type<T>>>().construct(std::declval<service_type<T>>()));
 	}
 	
 public:
@@ -49,7 +49,7 @@ public:
 	}
 	
 private:
-	lazy_storage<service_type<T>> _service;
+	optional<service_type<T>> _service;
 	
 	inline friend auto service_map(lazy_base const&) -> select_operator_service<Base> { return {}; }
 };

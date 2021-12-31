@@ -142,8 +142,8 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	auto lazy1 = container.service<kgr::lazy_service<Definition1>>();
 	
 	CHECK(!service1_constructed);
-	CHECK(sizeof(lazy1) == sizeof(kgr::container*) + sizeof(Service1*));
-	CHECK(sizeof(kgr::detail::lazy_storage<kgr::service_type<Definition1>>) == sizeof(Service1*));
+	CHECK(sizeof(decltype(lazy1)) == sizeof(kgr::container*) + sizeof(void*));
+	CHECK(sizeof(kgr::optional<kgr::service_type<Definition1>>) == sizeof(void*));
 	CHECK(kgr::detail::is_trivially_copy_constructible<decltype(lazy1)>::value);
 	CHECK(kgr::detail::is_trivially_copy_assignable<decltype(lazy1)>::value);
 #if !defined(__GNUC__) || __GNUC__ >= 5 // GCC 4 has no support for move triviality
@@ -164,6 +164,29 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	
 	CHECK(service2_constructed);
 	REQUIRE((std::is_same<decltype(service2), Service2>::value));
+}
+
+TEST_CASE("Optional act correctly for both value and reference", "[operator]") {
+	kgr::optional<int> opt_int;
+	
+	REQUIRE((std::is_same<decltype(*opt_int), int&>::value));
+	REQUIRE((std::is_same<decltype(*static_cast<kgr::optional<int> const&>(opt_int)), int const&>::value));
+	
+	struct Simple { int member; };
+	kgr::optional<Simple> opt_simple;
+	
+	REQUIRE((std::is_same<decltype(*opt_simple), Simple&>::value));
+	REQUIRE((std::is_same<decltype(*static_cast<kgr::optional<Simple> const&>(opt_simple)), Simple const&>::value));
+	
+	REQUIRE((std::is_same<decltype((opt_simple->member)), int&>::value));
+	REQUIRE((std::is_same<decltype((static_cast<kgr::optional<Simple> const&>(opt_simple)->member)), int const&>::value));
+	
+	REQUIRE(not opt_int.has_value());
+	opt_int.emplace(1);
+	
+	REQUIRE(opt_int.has_value());
+	REQUIRE(*opt_int == 1);
+	REQUIRE(*opt_int == opt_int.value());
 }
 
 TEST_CASE("All operator are mapped", "[service_map, operator]") {

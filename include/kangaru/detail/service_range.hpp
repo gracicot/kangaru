@@ -2,10 +2,10 @@
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_SERVICE_RANGE_HPP
 
 #include "service_storage.hpp"
-#include "lazy_storage.hpp"
 #include "override_storage_service.hpp"
 
 #include "../type_id.hpp"
+#include "../optional.hpp"
 
 #include <iterator>
 #include <vector>
@@ -38,7 +38,7 @@ namespace detail {
 
 template<typename T>
 struct override_iterator {
-	using storage = lazy_storage<service_type<T>>;
+	using storage = optional<service_type<T>>;
 	
 	static_assert(
 		is_trivially_copy_constructible<storage>::value &&

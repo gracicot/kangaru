@@ -38,7 +38,7 @@ struct deducer {
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && !std::is_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped>::value
+			std::false_type, is_service_valid_circular_hard_error, Mapped>::is_valid()
 #else
 		is_different_service<For, Mapped>::value && !std::is_reference<service_type<Mapped>>::value
 #endif
@@ -52,7 +52,7 @@ struct deducer {
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped>::value
+			std::false_type, is_service_valid_circular_hard_error, Mapped>::is_valid()
 #else
 		is_different_service<For, Mapped>::value && std::is_lvalue_reference<service_type<Mapped>>::value
 #endif
@@ -65,7 +65,7 @@ struct deducer {
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
 		instantiate_if_or<
 			is_different_service<For, Mapped>::value && std::is_rvalue_reference<service_type<Mapped>>::value,
-			std::false_type, is_service_valid, Mapped>::value
+			std::false_type, is_service_valid_circular_hard_error, Mapped>::is_valid()
 #else
 		is_different_service<For, Mapped>::value && std::is_rvalue_reference<service_type<Mapped>>::value
 #endif

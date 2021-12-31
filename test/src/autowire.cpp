@@ -181,9 +181,10 @@ namespace test_autowire_circular_error {
 	
 	TEST_CASE("autowire detect circular dependency", "[autowire]") {
 #ifndef KGR_KANGARU_MSVC_DISABLE_VALIDATION_AUTOWIRE
-		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service1>>::value);
-		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
-		REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service3>>::value);
+		// Circular dependency is now a hard error
+		//REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service1>>::value);
+		//REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service2>>::value);
+		//REQUIRE(!kgr::detail::is_service_valid<kgr::mapped_service_t<service3>>::value);
 #endif
 	}
 }

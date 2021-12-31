@@ -37,6 +37,16 @@ struct is_service_valid : bool_constant<
 > {};
 
 /*
+ * Complete validity check for a particular service, but also prohibit circular dependencies with a hard error.
+ */
+template<typename T>
+struct is_service_valid_circular_hard_error {
+	static_assert(is_detected<value_type_t, is_service_valid<T>>::value, "No circular dependencies are allowed in autowire");
+	template<typename U = T>
+	static constexpr bool is_valid() { return instantiate_if_or<is_detected<value_type_t, is_service_valid<T>>::value, std::false_type, is_service_valid, U>::value; }
+};
+
+/*
  * Complete validity check for a particlar service and all it's properties
  */
 template<typename T, typename... Args>

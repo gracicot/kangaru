@@ -84,14 +84,19 @@ constexpr auto signature_postfix_length = std::size_t{typed_signature<int>().siz
 static_assert(signature_prefix_length != string_view::npos, "Cannot find the type name in the function signature");
 
 template<typename T>
+inline constexpr auto type_name_prefix_length() -> std::size_t {
+	return typed_signature<T>().substr(signature_prefix_length).starts_with("class")
+		? signature_prefix_length + 6
+		: typed_signature<T>().substr(signature_prefix_length).starts_with("struct")
+			? signature_prefix_length + 7
+			: signature_prefix_length;
+}
+
+template<typename T>
 inline constexpr auto type_name() -> string_view {
 	return typed_signature<T>().substr(
-		typed_signature<T>().substr(signature_prefix_length).starts_with("class")
-			? signature_prefix_length + 6
-			: typed_signature<T>().substr(signature_prefix_length).starts_with("struct")
-				? signature_prefix_length + 7
-				: signature_prefix_length,
-		typed_signature<T>().size() - signature_prefix_length - signature_postfix_length
+		type_name_prefix_length<T>(),
+		typed_signature<T>().size() - type_name_prefix_length<T>() - signature_postfix_length
 	);
 }
 

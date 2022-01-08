@@ -5,6 +5,7 @@
 #include "single.hpp"
 #include "service_check.hpp"
 #include "autocall_traits.hpp"
+#include "validity_check.hpp"
 
 namespace kgr {
 namespace detail {
@@ -293,7 +294,7 @@ protected:
 	template<typename Service, typename..., enable_if_t<
 		!is_service<Service>::value && !has_forward<Service>::value, int> = 0>
 	static void service(int) {
-		static_assert(false_t<Service>::value, "The type sent to kgr::Container::service(...) is not a service.");
+		static_assert(false_t<Service>::value, "The type sent to kgr::container::service(...) is not a service.");
 	}
 	
 	template<typename Service, typename..., enable_if_t<
@@ -315,13 +316,13 @@ protected:
 template<typename T, typename... Args>
 struct service_error : error_common {
 	template<typename Service = T, enable_if_t<
-		!is_service_valid<Service>::value> = 0>
+		!is_service_valid<Service>::value, int> = 0>
 	service_error() {
 		error_common::service<Service>(0);
 	}
 	
 	template<typename Arg, typename Service = T, enable_if_t<
-		!is_service_valid<Service, Arg, Args...>::value> = 0>
+		!is_service_valid<Service, Arg, Args...>::value, int> = 0>
 	service_error(Arg&&) {
 		error_common::service<Service, Arg, Args...>(0);
 	}

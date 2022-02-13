@@ -16,5 +16,3 @@
 	TEST_ERROR(kgr::debug::service<test>());
 	
 #endif
-
-static_assert(false, "This file never compiles");

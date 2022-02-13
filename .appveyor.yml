@@ -19,9 +19,9 @@ install:
 
 build_script:
   - IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2015" ( SET GEN="Visual Studio 14 2015") ELSE ( IF "%APPVEYOR_BUILD_WORKER_IMAGE%" == "Visual Studio 2017" ( SET GEN="Visual Studio 15 2017") ELSE ( SET GEN="Visual Studio 16 2019") )
-  - cmake . -G%GEN% -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true -DCMAKE_CXX_FLAGS="%additional_flags%"
-  - cmake --build .
+  - cmake . -G%GEN% -DKANGARU_BUILD_EXAMPLES=true -DKANGARU_TEST=true -DKANGARU_TEST_CXX14=true -DCMAKE_CXX_FLAGS="%additional_flags%" -DCMAKE_BUILD_TYPE=RelWithDebInfo
+  - cmake --build . --config RelWithDebInfo
 
 test_script:
-  - ctest .
+  - ctest . -C RelWithDebInfo --output-on-failure
 

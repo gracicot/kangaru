@@ -315,13 +315,13 @@ protected:
 template<typename T, typename... Args>
 struct service_error : error_common {
 	template<typename Service = T, enable_if_t<
-		!is_service_valid<Service>::value> = 0>
+		!is_service_valid<Service>::value, int> = 0>
 	service_error() {
 		error_common::service<Service>(0);
 	}
 	
 	template<typename Arg, typename Service = T, enable_if_t<
-		!is_service_valid<Service, Arg, Args...>::value> = 0>
+		!is_service_valid<Service, Arg, Args...>::value, int> = 0>
 	service_error(Arg&&) {
 		error_common::service<Service, Arg, Args...>(0);
 	}

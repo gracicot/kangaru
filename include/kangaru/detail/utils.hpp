@@ -38,15 +38,9 @@ using value_type_t = typename T::value_type;
  * 
  * We defined the variable before the type because the variable is private, but the type is public.
  */
-struct {} constexpr in_place{};
+struct in_place_t {} constexpr in_place{};
 
 } // namespace detail
-
-/*
- * This is a tag type to mark a constructor as the one the container should use to construct a definition.
- */
-using in_place_t = decltype(detail::in_place);
-
 } // namespace kgr
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_UTILS_HPP

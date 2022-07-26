@@ -25,7 +25,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.1
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v9
+        uses: lukka/run-vcpkg@v10
         with:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
@@ -110,7 +110,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.1
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v7
+        uses: lukka/run-vcpkg@v10
         with:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
@@ -129,7 +129,7 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: 'Run CMake'
-        uses: lukka/run-cmake@v3
+        uses: lukka/run-cmake@v10
         with:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
@@ -207,7 +207,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.1
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v7
+        uses: lukka/run-vcpkg@v10
         with:
           setupOnly: true
           # Location of the vcpkg as submodule of the repository.
@@ -226,7 +226,7 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: 'Run CMake'
-        uses: lukka/run-cmake@v3
+        uses: lukka/run-cmake@v10
         with:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
@@ -328,7 +328,7 @@ jobs:
         uses: lukka/get-cmake@v3.21.1
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v7
+        uses: lukka/run-vcpkg@v10
         with:
           # Just install vcpkg for now, do not install any ports in this step yet.
           setupOnly: true
@@ -343,7 +343,7 @@ jobs:
           additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - name: 'Run CMake'
-        uses: lukka/run-cmake@v3
+        uses: lukka/run-cmake@v10
         with:
           cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
           cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'

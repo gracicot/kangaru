@@ -1,6 +1,6 @@
 {
   "name": "kangaru",
-  "version-string": "4.3.0-dev",
+  "version-string": "4.3.1",
   "dependencies": [
     "catch2",
     "benchmark"

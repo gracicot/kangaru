@@ -3,9 +3,6 @@ on: [push, pull_request]
 
 jobs:
   apple-clang:
-    env:
-      build-dir: ${{ github.workspace }}/build
-      build-type: RelWithDebInfo
     name: AppleClang XCode ${{ matrix.xcode }} MacOS (hash-mode ${{ matrix.hash-typeid }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -17,26 +14,23 @@ jobs:
         hash-typeid: [Off, On]
         os: [macos-10.15]
         xcode: [10, 11, 12]
+        triplet: ["x64-osx"]
 
     steps: 
       - uses: actions/checkout@v2
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.21.1
+        uses: lukka/get-cmake@v3.23.2
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v10
         with:
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-          vcpkgTriplet: ${{ matrix.triplet }}
-          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
-          additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - uses: maxim-lobanov/setup-xcode@v1
         with:
@@ -45,22 +39,12 @@ jobs:
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-          useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
-          buildDirectory: ${{ env.build-dir }}
-
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        # Execute tests defined by the CMake configuration.  
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C ${{env.build-type}} --output-on-failure
+          configurePreset: 'ci'
+          buildPreset: 'ci'
+          testPreset: 'ci'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DKANGARU_TEST_CXX14=${{ matrix.cxx14 }}`, `-DKANGARU_TEST_CXX17=${{ matrix.cxx17 }}`, `-DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }}`]'
 
   linux-clang:
-    env:
-      build-dir: ${{ github.workspace }}/build
-      build-type: RelWithDebInfo
     name: Clang ${{ matrix.clang }} Linux (hash-mode ${{ matrix.hash-typeid }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -107,21 +91,17 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.21.1
+        uses: lukka/get-cmake@v3.23.2
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v10
         with:
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-          vcpkgTriplet: ${{ matrix.triplet }}
-          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
-          additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - uses: egor-tensin/setup-clang@v1
         with:
@@ -131,23 +111,12 @@ jobs:
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-          useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On -DCMAKE_CXX_COMPILER=clang++'
-          buildDirectory: ${{ env.build-dir }}
-
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        # Execute tests defined by the CMake configuration.  
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C ${{env.build-type}} --output-on-failure
-
+          configurePreset: 'ci'
+          buildPreset: 'ci'
+          testPreset: 'ci'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DKANGARU_TEST_CXX14=${{ matrix.cxx14 }}`, `-DKANGARU_TEST_CXX17=${{ matrix.cxx17 }}`, `-DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }}`]'
 
   linux-gcc:
-    env:
-      build-dir: ${{ github.workspace }}/build
-      build-type: RelWithDebInfo
     name: GCC ${{ matrix.gcc }} Linux (hash-mode ${{ matrix.hash-typeid }})
     runs-on: ${{ matrix.os }}
     strategy:
@@ -204,21 +173,17 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.21.1
+        uses: lukka/get-cmake@v3.23.2
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v10
         with:
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-          vcpkgTriplet: ${{ matrix.triplet }}
-          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
-          additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - uses: egor-tensin/setup-gcc@v1
         with:
@@ -228,22 +193,12 @@ jobs:
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-          useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
-          buildDirectory: ${{ env.build-dir }}
-
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        # Execute tests defined by the CMake configuration.  
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C ${{env.build-type}} --output-on-failure
+          configurePreset: 'ci'
+          buildPreset: 'ci'
+          testPreset: 'ci'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DKANGARU_TEST_CXX14=${{ matrix.cxx14 }}`, `-DKANGARU_TEST_CXX17=${{ matrix.cxx17 }}`, `-DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }}`]'
 
   windows-msvc:
-    env:
-      build-dir: ${{ github.workspace }}/build
-      build-type: RelWithDebInfo
     runs-on: windows-latest
     name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.arch }}, ${{ matrix.msvc-cxx }}, ${{ matrix.permissive }}, hash-mode ${{ matrix.hash-typeid }})
     strategy:
@@ -325,35 +280,23 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.21.1
+        uses: lukka/get-cmake@v3.23.2
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v10
         with:
-          # Just install vcpkg for now, do not install any ports in this step yet.
-          setupOnly: true
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-          vcpkgTriplet: ${{ matrix.triplet }}
-          # Ensure the vcpkg artifacts are cached, they are generated in the 'CMAKE_BINARY_DIR/vcpkg_installed'.
-          additionalCachedPaths: ${{ env.build-dir }}/vcpkg_installed
 
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-          cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-          useVcpkgToolchainFile: true
-          cmakeAppendedArgs: '-GNinja -DKANGARU_TEST=ON -DCMAKE_CXX_FLAGS="/EHsc /utf-8 ${{ matrix.permissive }} ${{ matrix.msvc-cxx }}" -DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }} -DKANGARU_TEST_CXX14=${{ matrix.cxx14 }} -DKANGARU_TEST_CXX17=${{ matrix.cxx17 }} -DKANGARU_BUILD_EXAMPLES=On -DKANGARU_REVERSE_DESTRUCTION=On'
-          buildDirectory: ${{ env.build-dir }}
-
-      - name: Test
-        working-directory: ${{github.workspace}}/build
-        # Execute tests defined by the CMake configuration.  
-        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest -C ${{env.build-type}} --output-on-failure
+          configurePreset: 'ci'
+          buildPreset: 'ci'
+          testPreset: 'ci'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DKANGARU_TEST_CXX14=${{ matrix.cxx14 }}`, `-DKANGARU_TEST_CXX17=${{ matrix.cxx17 }}`, `-DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }}`]'
 

@@ -1,13 +1,12 @@
 cmake_minimum_required(VERSION 3.0)
-project(kangaru)
-
-set(CMAKE_CXX_STANDARD 11)
 
 set(KANGARU_VERSION_MAJOR "4")
 set(KANGARU_VERSION_MINOR "3")
-set(KANGARU_VERSION_PATCH "0")
+set(KANGARU_VERSION_PATCH "1")
 
 set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU_VERSION_PATCH}")
+
+project(kangaru VERSION ${KANGARU_VERSION} LANGUAGES CXX)
 
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
 option(KANGARU_INSTALL "Generate kangaru installation target" true)

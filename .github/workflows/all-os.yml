@@ -209,16 +209,13 @@ jobs:
         hash-typeid: [Off]
         permissive: [/permissive-, /permissive]
         os: [windows-2016, windows-2019]
-        arch: [x86, x64]
+        arch: [x64]
         include:
           - os: windows-2016
             msvc-version: 2017
 
           - os: windows-2019
             msvc-version: 2019
-       
-          - arch: x86
-            triplet: x86-windows
 
           - arch: x64
             triplet: x64-windows
@@ -264,13 +261,6 @@ jobs:
             hash-typeid: On
             permissive: /permissive-
             msvc-cxx: /std:c++17
-
-        exclude:
-          - arch: x86
-            cxx17: Off
-
-          - arch: x86
-            permissive: /permissive-
     
     steps:
       - uses: actions/checkout@v2

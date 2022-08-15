@@ -27,7 +27,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
+          vcpkgGitCommitId: 'c1b768b0d6bc9b05d6272d604496d33a3faedd90'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -98,7 +98,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
+          vcpkgGitCommitId: 'c1b768b0d6bc9b05d6272d604496d33a3faedd90'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -180,7 +180,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
+          vcpkgGitCommitId: 'c1b768b0d6bc9b05d6272d604496d33a3faedd90'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -287,7 +287,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b6b6a8b63007df2ff37167a1974652a8e948f045'
+          vcpkgGitCommitId: 'c1b768b0d6bc9b05d6272d604496d33a3faedd90'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

@@ -105,17 +105,16 @@ int main()
 
 ### Build kangaru yourself
 
-To make kangaru available on your machine, you must clone the repository and create a build directory:
+To make kangaru available on your machine, you must first clone the repository:
 
 ```sh
 $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
-$ mkdir build && cd build
 ```
 
-Then use cmake to generate the makefile and export the package information:
+Then use cmake to generate the project and export the package information:
 
 ```sh
-$ cmake ..
+$ cmake --preset export # -DKANGARU_HASH_TYPE_ID=OFF # uncomment for older compiler support
 ```
 
 That's it! Link it to your project using cmake and you can already include and code!
@@ -123,7 +122,7 @@ That's it! Link it to your project using cmake and you can already include and c
 Optionally, you can also install kangaru on your system:
 
 ```sh
-$ sudo make install # optional step
+$ sudo cmake --build --preset export --target install # optional step
 ```
 
 ### Install with vcpkg
@@ -144,14 +143,14 @@ vcpkg install kangaru:x64-windows
 
 You must use the `find_package` function:
 
-```makefile
-find_package(kangaru REQUIRED)
+```cmake
+find_package(kangaru 4.3 REQUIRED)
 ```
 
 And then add the include dirs to your target:
 
-```makefile
-target_link_libraries(<YOUR TARGET> PUBLIC kangaru)
+```cmake
+target_link_libraries(<YOUR TARGET> PUBLIC kangaru::kangaru)
 ```
 
 Then you can include the library as follows:
@@ -200,11 +199,17 @@ Found an issue? Have an idea to make this library better? Please [submit an issu
 
 ### Running Tests
 
-Tests are enabled using the cmake option `-DKANGARU_TEST=ON`. Enabling this will make our CMake scripts to try finding the Catch2 library. We also contain a submodule for this library in our git repository in case you don't have it available in a prefix directory.
+Tests are enabled using the cmake profile `dev`. Enabling this will make our CMake scripts to try finding the Catch2 library. We also contain a submodule for this library in our git repository in case you don't have it available in a prefix directory. You can also enable vcpkg to download the dependencies.
 
 Using this option adds the the `test` target.
 
-To enable tests specifically designed arount C++14 and C++17 features, there's the `-DKANGARU_TEST_CXX14=ON` and the `-DKANGARU_TEST_CXX17=ON` options.
+You can run the tests like this:
+
+```cmake
+cmake --preset dev
+cmake --build --preset debug
+ctest --preset debug
+```
 
 ## Who's Using Kangaru
 

@@ -17,7 +17,7 @@
 			"displayName": "CI",
 			"inherits": "generator",
 			"cacheVariables": {
-				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystem/vcpkg.cmake",
+				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
 				"KANGARU_BUILD_EXAMPLES": "ON",
 				"KANGARU_INSTALL": "OFF",
 				"KANGARU_EXPORT": "OFF",

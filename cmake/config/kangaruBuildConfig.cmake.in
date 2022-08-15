@@ -2,3 +2,7 @@ set(KANGARU_VERSION "@KANGARU_VERSION@")
 set(KANGARU_INCLUDE_DIRS "@CMAKE_CURRENT_SOURCE_DIR@")
 
 include("${CMAKE_CURRENT_LIST_DIR}/kangaruTargets.cmake")
+
+# Namespaced aliases
+add_library(kangaru::kangaru INTERFACE IMPORTED)
+set_property(TARGET kangaru::kangaru PROPERTY INTERFACE_LINK_LIBRARIES kangaru)

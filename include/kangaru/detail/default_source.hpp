@@ -183,6 +183,11 @@ public:
 	 * Every single services are invalidated after calling this function.
 	 */
 	inline void clear() noexcept {
+#ifdef KGR_KANGARU_REVERSE_DESTRUCTION
+		for (auto it = _instances.rbegin() ; it != _instances.rend() ; ++it) {
+			it->reset();
+		}
+#endif
 		_instances.clear();
 		_services.clear();
 	}

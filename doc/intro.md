@@ -39,7 +39,7 @@ You can then use cmake to find the package and add include paths:
 
 Then, you can simply include the library:
 
-    #include <kangaru/kangaru.hpp>
+    #include <kangaru-prev/kangaru.hpp>
 
 Take note that you will need to add the library to your include paths.
 

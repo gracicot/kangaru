@@ -1,16 +1,10 @@
-#ifndef KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
-#define KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
+#ifndef KANGARU5_KANGARU_HPP
+#define KANGARU5_KANGARU_HPP
 
-#include "autocall.hpp"
-#include "autowire.hpp"
-#include "container.hpp"
-#include "generic.hpp"
-#include "operator.hpp"
-#include "operator_service.hpp"
-#include "optional.hpp"
-#include "predicate.hpp"
-#include "debug.hpp"
-#include "service.hpp"
-#include "type_id.hpp"
+namespace kangaru {
 
-#endif // KGR_KANGARU_INCLUDE_KANGARU_KANGARU_HPP
+// Hello kangaru 5
+
+} // namespace kangaru
+
+#endif

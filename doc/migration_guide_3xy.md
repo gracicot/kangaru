@@ -62,7 +62,7 @@ Here's a list of all classes and public aliases that changed:
 If you want to use the newest version of kangaru yet smoothly make the transition from `3.x.y` to `v4.0.0` in your codebase, you can use the compatibility header.
 
 That header will define a set of aliases with the old class names to the new class names.
-Simply add `#include <kangaru/compatibility.hpp>` in your codebase, and that will make your old code still compile in most cases.
+Simply add `#include <kangaru-prev/compatibility.hpp>` in your codebase, and that will make your old code still compile in most cases.
 
 ## Service Map
 

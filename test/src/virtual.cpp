@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 TEST_CASE("Definition can override another", "[virtual]") {
 	SECTION("Bases are instanciated, but not used after instanciate the derived") {

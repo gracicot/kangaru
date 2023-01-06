@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 #include <algorithm>
 #include <array>
 #include <initializer_list>

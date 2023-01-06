@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 TEST_CASE("Container returns a service from a definition", "[service]") {
 	struct Service {};

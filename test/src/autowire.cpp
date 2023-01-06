@@ -1,8 +1,8 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 // We make feature macro available
-#include <kangaru/detail/define.hpp>
+#include <kangaru-prev/detail/define.hpp>
 
 namespace test_autowire_construct {
 	struct service1 {};

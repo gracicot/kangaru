@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 TEST_CASE("emplace add a service to the container", "[container]") {
 	struct Service {};

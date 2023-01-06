@@ -1,4 +1,4 @@
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 #include <iostream>
 
 // This macro is used as a shortcut to use kgr::Method. Won't be needed in C++17

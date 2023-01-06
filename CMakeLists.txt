@@ -45,7 +45,7 @@ set(KANGARU_INSTALL_INCLUDE_DIR "include")
 add_library(kangaru INTERFACE)
 add_library(kangaru::kangaru ALIAS kangaru)
 
-target_compile_features(kangaru INTERFACE cxx_std_11)
+target_compile_features(kangaru INTERFACE cxx_std_20)
 target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

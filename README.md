@@ -18,7 +18,7 @@ Looking for the latest stable version? Check out our [release page](https://gith
 Here's a quick demo to show usage of this library. This is some basic usage of the library with two user classes.
 
 ```c++
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 #include <cassert>
 
 // We define some normal classes with dependencies between them
@@ -58,7 +58,7 @@ int main()
 Since recent versions of kangaru, we support autowire api. The following is the same example as above, using autowire.
 
 ```c++
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 #include <cassert>
 
 // We define some normal classes with dependencies between them
@@ -156,7 +156,7 @@ target_link_libraries(<YOUR TARGET> PUBLIC kangaru::kangaru)
 Then you can include the library as follows:
 
 ```c++
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 ```
 
 If you skip the installation, simply tell CMake where to find kangaru:

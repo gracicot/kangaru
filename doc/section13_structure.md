@@ -95,7 +95,7 @@ A "include kangaru" header file should look like this:
 ```c++
 #pragma once // or a header guard.
 
-#include <kangaru/kangaru.hpp> // include kangaru
+#include <kangaru-prev/kangaru.hpp> // include kangaru
 
 // Here you can put your generic service.
 // Example:
@@ -103,7 +103,7 @@ A "include kangaru" header file should look like this:
 // #include "uniqueservice.h"
 
 // You can optionally include `compatibility.hpp`
-// #include <kangaru/compatibility.hpp>
+// #include <kangaru-prev/compatibility.hpp>
 
 // declare some recommended shortcut macros
 #define METHOD(...) ::kgr::Method<decltype(__VA_ARGS__), __VA_ARGS__>

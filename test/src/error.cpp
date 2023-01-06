@@ -1,4 +1,4 @@
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 #define TEST_ERROR(...) int toplevel = (void(__VA_ARGS__), 0)
 

@@ -94,7 +94,7 @@ WARNING: This section is totally optional to follow, use an experimental API and
 While it is possible to enable autowire for custom generic services, it is still considered experimental,
 since the API may still be subject to changes, and is rather complicated at that time.
 
-To use this API, you must include `<kangaru/experimental/autowiring.hpp>`.
+To use this API, you must include `<kangaru-prev/experimental/autowiring.hpp>`.
 
 It starts with `kgr::experimental::autowire_tag<Map, max_dependencies>`. This replaces dependencies when
 specializing the generic service type:

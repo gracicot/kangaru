@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 /**
  * This example refect snippets of code found in the documentation section 7: Autocall

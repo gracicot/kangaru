@@ -1,5 +1,5 @@
 #include <benchmark/benchmark.h>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 #include <chrono>
 #include <string>
 #include <random>

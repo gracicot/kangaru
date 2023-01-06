@@ -1,5 +1,5 @@
 #include <catch2/catch.hpp>
-#include <kangaru/kangaru.hpp>
+#include <kangaru-prev/kangaru.hpp>
 
 #define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>
 

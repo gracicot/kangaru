@@ -8,3 +8,4 @@ build-*
 !.appveyor.yml
 !.github
 CMakeSettings.json
+compile_commands.json

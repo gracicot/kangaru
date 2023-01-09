@@ -1,10 +1,9 @@
 #ifndef KANGARU5_KANGARU_HPP
 #define KANGARU5_KANGARU_HPP
 
-namespace kangaru {
+#include "detail/deducer.hpp"
+#include "detail/injector.hpp"
+#include "detail/source.hpp"
+#include "detail/source_types.hpp"
 
-// Hello kangaru 5
-
-} // namespace kangaru
-
-#endif
+#endif // KANGARU5_KANGARU_HPP

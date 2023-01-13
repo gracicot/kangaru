@@ -51,7 +51,6 @@ jobs:
       fail-fast: false
       matrix:
         arch: [x64]
-        hash-typeid: [Off, On]
         os: [ubuntu-22.04]
         clang: [14, 15]
 

@@ -11,39 +11,61 @@
 #include "define.hpp"
 
 namespace kangaru::detail::injector {
-	struct decl_source {
+	struct match_any {
 		template<typename T>
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<decl_source> auto&&) -> T;
+		friend auto provide(provide_tag_t<T>, detail::concepts::forwarded<match_any> auto&&) -> T;
 	};
 	
 	template<typename T, std::size_t>
 	using expand = T;
 	
 	template<typename F, typename T, std::size_t... s>
-	concept invocable_with_sequence_expanded = std::invocable<F, expand<T, s>...>;
+	concept invocable_with_sequence_expanded = requires(F f, expand<T, s>... p) {
+		KANGARU5_FWD(f)(KANGARU5_FWD(p)...);
+	};
 	
 	template<typename Function, typename>
-	struct fill_sequence_impl { using type = std::index_sequence<>; };
+	struct parameter_sequence_impl { using type = std::index_sequence<>; };
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-	requires invocable_with_sequence_expanded<Function, deducer<decl_source>, head, tail...>
-	struct fill_sequence_impl<Function, std::index_sequence<head, tail...>> {
+	requires std::invocable<Function, deducer<match_any>, expand<deducer<match_any>, tail>...>
+	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-	struct fill_sequence_impl<Function, std::index_sequence<head, tail...>> : fill_sequence_impl<Function, std::index_sequence<(tail - 1)...>> {};
-
+	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> :
+		parameter_sequence_impl<Function, std::index_sequence<(tail - 1)...>> {};
+	
 	template<typename F, std::size_t max>
-	using fill_sequence = fill_sequence_impl<F, std::make_index_sequence<max>>;
-
+	using parameter_sequence = parameter_sequence_impl<F, std::make_index_sequence<max>>;
+	
 	template<typename F, std::size_t max>
-	using fill_sequence_t = typename fill_sequence<F, max>::type;
-
+	using parameter_sequence_t = typename parameter_sequence<F, max>::type;
+	
 	template<typename F, typename T, typename S>
 	concept invocable_with_sequence = requires(F function, S sequence) {
-		[]<std::size_t... s>(std::index_sequence<s...>) requires invocable_with_sequence_expanded<F, T, s...> {}(sequence);
+		[]<std::size_t... s>(std::index_sequence<s...>)
+			requires std::invocable<F, expand<T, s>...> {}(sequence);
 	};
+	
+	template<typename Function, typename Source, typename, typename = std::index_sequence<>>
+	struct injectable_sequence {
+		using type = std::index_sequence<>;
+	};
+	
+	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
+	requires std::invocable<Function, deducer<Source>, expand<deducer<Source>, tail>..., expand<deducer<match_any>, drop>...>
+	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
+		using type = std::index_sequence<head, tail...>;
+	};
+	
+	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
+	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> :
+		injectable_sequence<Function, Source, std::index_sequence<(tail - 1)...>, std::index_sequence<drop..., sizeof...(drop)>> {};
+	
+	template<typename Function, typename Source, std::size_t max>
+	using spread_sequence_t = typename injectable_sequence<Function, Source, parameter_sequence_t<Function, max>>::type;
 }
 
 namespace kangaru {
@@ -72,25 +94,25 @@ namespace kangaru {
 	};
 	
 	template<typename Source, std::size_t max>
-	struct basic_fill_injector {
-		explicit constexpr basic_fill_injector(Source source) noexcept : source{std::move(source)} {}
+	struct basic_spread_injector {
+		explicit constexpr basic_spread_injector(Source source) noexcept : source{std::move(source)} {}
 		
-		template<typename F, typename Seq = detail::injector::fill_sequence_t<F, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
 		constexpr auto operator()(F&& function) & requires detail::injector::invocable_with_sequence<F, deducer<Source&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<typename F, typename Seq = detail::injector::fill_sequence_t<F, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
 		constexpr auto operator()(F&& function) && requires detail::injector::invocable_with_sequence<F, deducer<Source&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
-		template<typename F, typename Seq = detail::injector::fill_sequence_t<F, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
 		constexpr auto operator()(F&& function) const& requires detail::injector::invocable_with_sequence<F, deducer<Source const&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<typename F, typename Seq = detail::injector::fill_sequence_t<F, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
 		constexpr auto operator()(F&& function) const&& requires detail::injector::invocable_with_sequence<F, deducer<Source const&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
@@ -106,13 +128,71 @@ namespace kangaru {
 	};
 	
 	template<typename Source>
-	using fast_fill_injector = basic_fill_injector<Source, 4>;
+	using fast_spread_injector = basic_spread_injector<Source, 6>;
 	
 	template<typename Source>
-	using fill_injector = basic_fill_injector<Source, 8>;
+	using spread_injector = basic_spread_injector<Source, 12>;
 	
 	template<typename Source>
-	using slow_fill_injector = basic_fill_injector<Source, 16>;
+	using slow_spread_injector = basic_spread_injector<Source, 24>;
+	
+	template<typename Injector1, typename Injector2>
+	struct composed_injector {
+		explicit constexpr composed_injector(Injector1 injector1, Injector2 injector2) noexcept :
+			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
+		
+		constexpr static auto call_function(auto&& function, auto... deduce_first) {
+			return [&function, deduce_first...](auto... deduce_second) -> decltype(KANGARU5_FWD(function)(deduce_first..., deduce_second...)) {
+				return KANGARU5_FWD(function)(deduce_first..., deduce_second...);
+			};
+		}
+		
+		template<typename Injector, typename Function>
+		struct inner_injector {
+			Injector injector;
+			Function function;
+			
+			auto operator()(auto... deduce_first) -> decltype(injector(call_function(KANGARU5_FWD(function), deduce_first...))) {
+				return injector(call_function(KANGARU5_FWD(function), deduce_first...));
+			}
+		};
+		
+		template<typename F>
+		constexpr auto operator()(F&& function) -> decltype(std::declval<Injector1>()(inner_injector<Injector2, F&&>{std::declval<Injector2>(), KANGARU5_FWD(function)})) {
+			return injector1(inner_injector<Injector2, F&&>{injector2, KANGARU5_FWD(function)});
+		}
+		
+	private:
+		Injector1 injector1;
+		Injector2 injector2;
+	};
+	
+	auto compose(auto&& injector) -> decltype(KANGARU5_FWD(injector)) {
+		return KANGARU5_FWD(injector);
+	}
+	
+	auto compose(auto&& first, auto&& second, auto&&... rest) {
+		return composed_injector{KANGARU5_FWD(first), compose(KANGARU5_FWD(second), KANGARU5_FWD(rest)...)};
+	}
+	
+	// TODO: While this implementation is simpler, it makes GCC cry
+	/* auto compose(auto first, auto second) {
+		constexpr auto call_function = [](auto function, auto... args_first) {
+			return [function, args_first...](auto... args_second) -> decltype(function(args_first..., args_second...)) {
+				return function(args_first..., args_second...);
+			};
+		};
+		
+		auto inner_injector = [second, call_function](auto function) {
+			return [call_function, function, second](auto... args_first) -> decltype(second(call_function(function, args_first...))) {
+				return second(call_function(function, args_first...));
+			};
+		};
+		
+		return [inner_injector, first](auto function) -> decltype(first(inner_injector(function))) {
+			return first(inner_injector(function));
+		};
+	} */
 }
 
 #include "undef.hpp"

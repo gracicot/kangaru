@@ -10,16 +10,14 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::source_types {
-}
-
 namespace kangaru::sources {
 	template<source... Sources>
 	struct composed_source {
 		explicit constexpr composed_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
 		
-		template<typename T> requires (((source_of<Sources, T> ? 1 : 0) + ...) == 1)
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<composed_source> auto&& source) -> T {
+		template<typename T>
+		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<composed_source> auto&& source) -> T
+		requires (((source_of<Sources, T> ? 1 : 0) + ...) == 1) {
 			/* static */ constexpr auto index = index_of<T>(std::index_sequence_for<Sources...>{});
 			return kangaru::provide(provide_tag<T>, std::get<index>(KANGARU5_FWD(source).sources));
 		}
@@ -62,8 +60,9 @@ namespace kangaru::sources {
 	struct ref_source {
 		ref_source(Source& source) noexcept : source{std::addressof(source)} {}
 		
-		template<typename T> requires source_of<Source, T>
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<ref_source> auto&& source) {
+		template<typename T> 
+		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<ref_source> auto&& source)
+		requires source_of<Source, T> {
 			return kangaru::provide(provide_tag<T>, detail::utility::forward_like<decltype(source)>(*source.source));
 		}
 		
@@ -71,7 +70,7 @@ namespace kangaru::sources {
 		Source* source;
 	};
 	
-	inline auto compose(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
+	inline auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
 		return composed_source{std::tuple{KANGARU5_FWD(sources)...}};
 	}
 	
@@ -80,7 +79,7 @@ namespace kangaru::sources {
 	}
 
 	inline auto tie(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
-		return compose(ref(KANGARU5_FWD(sources))...);
+		return concat(ref(KANGARU5_FWD(sources))...);
 	}
 }
 

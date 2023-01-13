@@ -42,24 +42,28 @@
 // ScreenService is a single service of Screen, that depends on a scene and camera
 //struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService, CameraService>> {};
 
+struct Test {};
+struct Camera {};
+struct Model {};
+
+struct Scene {
+	Camera camera;
+	Model model;
+};
 
 int main() {
-	struct Camera {};
-	struct Model {};
-
-	struct Scene {
-		Camera camera;
-		Model model;
-	};
 	
+	auto test_source = kgr::object_source{Test{}};
 	auto camera_source = kgr::object_source{Camera{}};
 	auto model_source = kgr::object_source{Model{}};
-	auto source = kgr::tie(camera_source, model_source);
+	auto source = kgr::tie(model_source, camera_source);
 	
-	auto injector = kgr::fast_fill_injector{source};
+	auto injector1 = kgr::simple_injector<decltype(test_source)>{test_source};
+	auto injector2 = kgr::spread_injector<decltype(source)>{source};
+
+	auto injector = kgr::compose(injector1, injector2);
 	
-	auto scene = injector([](Camera c, Model m) { return Scene{c, m}; });
-	
+	auto scene = injector([](Test, Model) { return Scene{}; });
 	
 	(void) scene;
 

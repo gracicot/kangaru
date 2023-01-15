@@ -51,7 +51,7 @@ jobs:
       matrix:
         arch: [x64]
         os: [ubuntu-22.04]
-        clang: [13, 14, 15]
+        clang: [10, 11, 12, 13, 14, 15]
 
     steps: 
       - uses: actions/checkout@v2
@@ -96,7 +96,7 @@ jobs:
       matrix:
         arch: [x64]
         os: [ubuntu-22.04] 
-        gcc: [11, 12]
+        gcc: [10, 11, 12]
 
     steps: 
       - uses: actions/checkout@v2

@@ -38,11 +38,16 @@ namespace kangaru::detail::injector {
 	template<typename F, std::size_t max>
 	using parameter_sequence_t = typename parameter_sequence<F, max>::type;
 	
+	namespace constraints {
+		template<typename F, typename T>
+		struct invocable_with_sequence_test {
+			template<std::size_t... s> requires detail::concepts::callable<F, expand<T, s>...>
+			inline constexpr auto operator()(std::index_sequence<s...>) -> void {}
+		};
+	}
+	
 	template<typename F, typename T, typename S>
-	concept invocable_with_sequence = requires(F function, S sequence) {
-		[]<std::size_t... s>(std::index_sequence<s...>)
-			requires detail::concepts::callable<F, expand<T, s>...> {}(sequence);
-	};
+	concept invocable_with_sequence = detail::concepts::callable<constraints::invocable_with_sequence_test<F, T>, S>;
 	
 	template<typename Function, typename Source, typename, typename = std::index_sequence<>>
 	struct injectable_sequence {

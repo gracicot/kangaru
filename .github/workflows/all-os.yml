@@ -3,17 +3,14 @@ on: [push, pull_request]
 
 jobs:
   apple-clang:
-    name: AppleClang XCode ${{ matrix.xcode }} MacOS (hash-mode ${{ matrix.hash-typeid }})
+    name: AppleClang XCode ${{ matrix.xcode }} MacOS
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        cxx14: [On]
-        cxx17: [On]
         arch: [x64]
         os: [macos-12]
-        xcode: [14]
-        triplet: ["x64-osx"]
+        xcode: [11, 12, 13, 14]
 
     steps: 
       - uses: actions/checkout@v2
@@ -41,7 +38,7 @@ jobs:
           configurePreset: 'ci'
           buildPreset: 'ci'
           testPreset: 'ci'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DKANGARU_TEST_CXX14=${{ matrix.cxx14 }}`, `-DKANGARU_TEST_CXX17=${{ matrix.cxx17 }}`, `-DKANGARU_HASH_TYPE_ID=${{ matrix.hash-typeid }}`]'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux

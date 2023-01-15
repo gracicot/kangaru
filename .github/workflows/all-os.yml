@@ -51,7 +51,7 @@ jobs:
       matrix:
         arch: [x64]
         os: [ubuntu-22.04]
-        clang: [14, 15]
+        clang: [13, 14, 15]
 
     steps: 
       - uses: actions/checkout@v2

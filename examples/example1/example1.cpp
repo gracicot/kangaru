@@ -1,6 +1,5 @@
-#include "kangaru/detail/injector.hpp"
 //#include <kangaru-prev/kangaru.hpp>
-// #include <kangaru/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
 #include <kangaru/short.hpp>
 //#include <iostream>
 //#include <string>
@@ -52,7 +51,6 @@ struct Scene {
 };
 
 int main() {
-	
 	auto test_source = kgr::object_source{Test{}};
 	auto camera_source = kgr::object_source{Camera{}};
 	auto model_source = kgr::object_source{Model{}};
@@ -60,13 +58,13 @@ int main() {
 	
 	auto injector1 = kgr::simple_injector<decltype(test_source)>{test_source};
 	auto injector2 = kgr::spread_injector<decltype(source)>{source};
-
+	
 	auto injector = kgr::compose(injector1, injector2);
 	
 	auto scene = injector([](Test, Model) { return Scene{}; });
 	
 	(void) scene;
-
+	
 	// kgr::container container;
 	
 	// We create two cameras.

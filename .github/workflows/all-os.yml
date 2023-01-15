@@ -11,7 +11,6 @@ jobs:
         cxx14: [On]
         cxx17: [On]
         arch: [x64]
-        hash-typeid: [Off, On]
         os: [macos-12]
         xcode: [14]
         triplet: ["x64-osx"]
@@ -136,7 +135,7 @@ jobs:
 
   windows-msvc:
     runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows (${{ matrix.msvc-cxx }})
+    name: MSVC ${{ matrix.msvc-version }} Windows
     strategy:
       fail-fast: false
       matrix:

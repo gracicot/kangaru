@@ -55,10 +55,10 @@ namespace kangaru::sources {
 	private:
 		T object;
 	};
-
+	
 	template<typename Source>
 	struct ref_source {
-		ref_source(Source& source) noexcept : source{std::addressof(source)} {}
+		constexpr ref_source(Source& source) noexcept : source{std::addressof(source)} {}
 		
 		template<typename T> 
 		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<ref_source> auto&& source)
@@ -70,15 +70,15 @@ namespace kangaru::sources {
 		Source* source;
 	};
 	
-	inline auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
+	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
 		return composed_source{std::tuple{KANGARU5_FWD(sources)...}};
 	}
 	
-	inline auto ref(source auto& source) {
+	inline constexpr auto ref(source auto& source) {
 		return ref_source{source};
 	}
-
-	inline auto tie(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
+	
+	inline constexpr auto tie(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
 		return concat(ref(KANGARU5_FWD(sources))...);
 	}
 }

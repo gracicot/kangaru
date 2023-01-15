@@ -19,16 +19,11 @@ namespace kangaru::detail::injector {
 	template<typename T, std::size_t>
 	using expand = T;
 	
-	template<typename F, typename T, std::size_t... s>
-	concept invocable_with_sequence_expanded = requires(F f, expand<T, s>... p) {
-		KANGARU5_FWD(f)(KANGARU5_FWD(p)...);
-	};
-	
 	template<typename Function, typename>
 	struct parameter_sequence_impl { using type = std::index_sequence<>; };
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-	requires std::invocable<Function, deducer<match_any>, expand<deducer<match_any>, tail>...>
+	requires detail::concepts::callable<Function, deducer<match_any>, expand<deducer<match_any>, tail>...>
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -46,7 +41,7 @@ namespace kangaru::detail::injector {
 	template<typename F, typename T, typename S>
 	concept invocable_with_sequence = requires(F function, S sequence) {
 		[]<std::size_t... s>(std::index_sequence<s...>)
-			requires std::invocable<F, expand<T, s>...> {}(sequence);
+			requires detail::concepts::callable<F, expand<T, s>...> {}(sequence);
 	};
 	
 	template<typename Function, typename Source, typename, typename = std::index_sequence<>>
@@ -55,7 +50,7 @@ namespace kangaru::detail::injector {
 	};
 	
 	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
-	requires std::invocable<Function, deducer<Source>, expand<deducer<Source>, tail>..., expand<deducer<match_any>, drop>...>
+	requires detail::concepts::callable<Function, deducer<Source>, expand<deducer<Source>, tail>..., expand<deducer<match_any>, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -73,19 +68,19 @@ namespace kangaru {
 	struct simple_injector {
 		explicit constexpr simple_injector(Source source) noexcept : source{std::move(source)} {}
 		
-		constexpr auto operator()(std::invocable<deducer<Source&>> auto&& function) & -> decltype(auto) {
+		constexpr auto operator()(auto&& function) & -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source&>> {
 			return KANGARU5_FWD(function)(deducer<Source&>{source});
 		}
 		
-		constexpr auto operator()(std::invocable<deducer<Source const&>> auto&& function) const& -> decltype(auto) {
+		constexpr auto operator()(detail::concepts::callable<deducer<Source const&>> auto&& function) const& -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source const&>> {
 			return KANGARU5_FWD(function)(deducer<Source const&>{source});
 		}
 		
-		constexpr auto operator()(std::invocable<deducer<Source&&>> auto&& function) && -> decltype(auto) {
+		constexpr auto operator()(detail::concepts::callable<deducer<Source&&>> auto&& function) && -> decltype(auto) {
 			return KANGARU5_FWD(function)(deducer<Source&&>{std::move(source)});
 		}
 		
-		constexpr auto operator()(std::invocable<deducer<Source const&&>> auto&& function) const&& -> decltype(auto) {
+		constexpr auto operator()(detail::concepts::callable<deducer<Source const&&>> auto&& function) const&& -> decltype(auto) {
 			return KANGARU5_FWD(function)(deducer<Source const&&>{std::move(source)});
 		}
 		
@@ -152,14 +147,29 @@ namespace kangaru {
 			Injector injector;
 			Function function;
 			
-			auto operator()(auto... deduce_first) -> decltype(injector(call_function(KANGARU5_FWD(function), deduce_first...))) {
-				return injector(call_function(KANGARU5_FWD(function), deduce_first...));
+			constexpr auto operator()(auto... deduce_first) -> decltype(KANGARU5_FWD(injector)(call_function(KANGARU5_FWD(function), deduce_first...))) {
+				return KANGARU5_FWD(injector)(call_function(KANGARU5_FWD(function), deduce_first...));
 			}
 		};
 		
 		template<typename F>
-		constexpr auto operator()(F&& function) -> decltype(std::declval<Injector1>()(inner_injector<Injector2, F&&>{std::declval<Injector2>(), KANGARU5_FWD(function)})) {
-			return injector1(inner_injector<Injector2, F&&>{injector2, KANGARU5_FWD(function)});
+		constexpr auto operator()(F&& function) & -> decltype(std::declval<Injector1&>()(inner_injector<Injector2&, F&&>{std::declval<Injector2&>(), KANGARU5_FWD(function)})) {
+			return injector1(inner_injector<Injector2&, F&&>{injector2, KANGARU5_FWD(function)});
+		}
+		
+		template<typename F>
+		constexpr auto operator()(F&& function) const& -> decltype(std::declval<Injector1 const&>()(inner_injector<Injector2 const&, F&&>{std::declval<Injector2 const&>(), KANGARU5_FWD(function)})) {
+			return injector1(inner_injector<Injector2 const&, F&&>{injector2, KANGARU5_FWD(function)});
+		}
+		
+		template<typename F>
+		constexpr auto operator()(F&& function) && -> decltype(std::declval<Injector1&&>()(inner_injector<Injector2&&, F&&>{std::declval<Injector2&&>(), KANGARU5_FWD(function)})) {
+			return std::move(injector1)(inner_injector<Injector2&&, F&&>{std::move(injector2), KANGARU5_FWD(function)});
+		}
+		
+		template<typename F>
+		constexpr auto operator()(F&& function) const&& -> decltype(std::declval<Injector1 const&&>()(inner_injector<Injector2 const&&, F&&>{std::declval<Injector2 const&&>(), KANGARU5_FWD(function)})) {
+			return std::move(injector1)(inner_injector<Injector2 const&&, F&&>{std::move(injector2), KANGARU5_FWD(function)});
 		}
 		
 	private:
@@ -167,11 +177,11 @@ namespace kangaru {
 		Injector2 injector2;
 	};
 	
-	auto compose(auto&& injector) -> decltype(KANGARU5_FWD(injector)) {
+	inline constexpr auto compose(auto&& injector) -> decltype(KANGARU5_FWD(injector)) {
 		return KANGARU5_FWD(injector);
 	}
 	
-	auto compose(auto&& first, auto&& second, auto&&... rest) {
+	inline constexpr auto compose(auto&& first, auto&& second, auto&&... rest) {
 		return composed_injector{KANGARU5_FWD(first), compose(KANGARU5_FWD(second), KANGARU5_FWD(rest)...)};
 	}
 	

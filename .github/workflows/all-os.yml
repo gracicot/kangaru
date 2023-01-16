@@ -11,14 +11,6 @@ jobs:
         arch: [x64]
         os: [macos-12]
         xcode: [13, 14]
-        include:
-          - os: macos-11
-            xcode: 11
-            arch: x64
-
-          - os: macos-11
-            xcode: 12
-            arch: x64
 
     steps: 
       - uses: actions/checkout@v2

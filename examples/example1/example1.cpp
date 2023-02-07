@@ -1,6 +1,9 @@
 //#include <kangaru-prev/kangaru.hpp>
+#include "kangaru/detail/recursive_source.hpp"
 #include <kangaru/kangaru.hpp>
 #include <kangaru/short.hpp>
+#include <array>
+#include <vector>
 //#include <iostream>
 //#include <string>
 
@@ -46,25 +49,40 @@ struct Camera {};
 struct Model {};
 
 struct Scene {
+	explicit constexpr Scene(Camera c, Model m) : camera{c}, model{} {}
 	Camera camera;
 	Model model;
 };
 
+struct RecTest {
+	explicit constexpr RecTest(Scene s) : scene{s} {}
+	Scene scene;
+};
+
 int main() {
-	auto test_source = kgr::object_source{Test{}};
 	auto camera_source = kgr::object_source{Camera{}};
 	auto model_source = kgr::object_source{Model{}};
 	auto source = kgr::tie(model_source, camera_source);
-	
-	auto injector1 = kgr::simple_injector<decltype(test_source)>{test_source};
-	auto injector2 = kgr::spread_injector<decltype(source)>{source};
-	
-	auto injector = kgr::compose(injector1, injector2);
-	
-	auto scene = injector([](Test, Model) { return Scene{}; });
-	
-	(void) scene;
-	
+	auto rec = kgr::recursive_source{source};
+
+	auto injector = kgr::spread_injector<decltype(rec)>{rec};
+
+	injector([](RecTest) {});
+
+	//auto make = kangaru::constructor<Scene>();
+	//auto lambda = [make](auto deduce1, auto... deduce) -> decltype(make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...)) { return make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...); };
+	// kangaru::spread_injector test{kgr::ref(rec)};
+	//static_assert(kangaru::detail::concepts::callable<decltype(lambda), kangaru::deducer<kangaru::detail::injector::match_any>, kangaru::deducer<kangaru::detail::injector::match_any>>);
+	//using G = kangaru::detail::injector::parameter_sequence_t<decltype(lambda), 12>;
+	//using G2 = kangaru::detail::injector::injectable_sequence<decltype(lambda), decltype(rec)&, G>::type;
+	//using aa = G::patate;
+	//using a = G2::patate;
+	// lambda(kangaru::deducer<decltype(rec)&>{rec}, kangaru::deducer<decltype(rec)&>{rec});
+	//test(lambda);
+	//injector([](Scene) {});
+
+	// (void) scene;
+
 	// kgr::container container;
 	
 	// We create two cameras.

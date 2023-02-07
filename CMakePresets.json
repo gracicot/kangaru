@@ -41,7 +41,8 @@
 				"KANGARU_BENCHMARK": "OFF",
 				"KANGARU_TEST": "ON",
 				"KANGARU_TEST_CXX14": "ON",
-				"KANGARU_TEST_CXX17": "ON"
+				"KANGARU_TEST_CXX17": "ON",
+				"CMAKE_COLOR_DIAGNOSTICS": "ON"
 			}
 		},
 		{

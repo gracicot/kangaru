@@ -21,6 +21,11 @@ namespace kangaru::detail::concepts {
 	concept callable = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f)(KANGARU5_FWD(args)...);
 	};
+
+	template<typename T, typename... Args>
+	concept brace_constructible = requires(Args&&... args) {
+		::new T{KANGARU5_FWD(args)...};
+	};
 }
 
 #include "undef.hpp"

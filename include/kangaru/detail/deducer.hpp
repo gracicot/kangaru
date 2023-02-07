@@ -9,40 +9,54 @@
 
 #include "define.hpp"
 
+struct Scene;
+struct Camera;
+
 namespace kangaru {
-	template<typename Deducer, typename T>
-	concept deducer_for = requires(Deducer deducer) {
-		{ deducer.operator T() } -> std::same_as<T>;
-	};
+	template<typename Source>
+	struct deducer;
 	
 	template<typename Exclude, typename Deducer>
 	struct exclude_deducer;
 	
+	namespace detail::deducer {
+		template<typename Deducer, typename T>
+		concept deducer_for = requires(Deducer deducer) {
+			{ deducer.operator T() } -> std::same_as<T>;
+		};
+		
+		template<typename>
+		inline constexpr auto is_any_deducer_v = false;
+		
+		template<typename Source>
+		inline constexpr auto is_any_deducer_v<kangaru::deducer<Source>> = true;
+		
+		template<typename Exclude, typename Deducer>
+		inline constexpr auto is_any_deducer_v<kangaru::exclude_deducer<Exclude, Deducer>> = true;
+		
+		template<typename T, typename Source>
+		concept deducible = not is_any_deducer_v<std::remove_cvref_t<T>> and kangaru::source_of<Source, T>;
+	}
+
 	template<typename Source>
 	struct deducer {
 		explicit constexpr deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
 			source{std::addressof(source)} {}
 		
-		template<typename T> requires (detail::concepts::different_from<deducer, T> and source_of<Source, T>)
-		constexpr operator T() const& {
+		template<typename T>
+		constexpr operator T() const& requires detail::deducer::deducible<T, Source> {
 			return provide(provide_tag<T>, static_cast<Source&&>(*source));
 		}
 		
-		template<typename T> requires (detail::concepts::different_from<deducer, T> and source_of<Source, T&>)
-		constexpr operator T&() & {
+		template<typename T>
+		constexpr operator T&() & requires detail::deducer::deducible<T&, Source> {
 			return provide(provide_tag<T&>, static_cast<Source&&>(*source));
 		}
 		
-		template<typename T> requires (detail::concepts::different_from<deducer, T> and source_of<Source, T&&>)
-		constexpr operator T&&() & {
+		template<typename T>
+		constexpr operator T&&() & requires detail::deducer::deducible<T&&, Source> {
 			return provide(provide_tag<T&&>, static_cast<Source&&>(*source));
 		}
-		
-		template<typename S>
-		constexpr operator deducer<S>() = delete;
-		
-		template<typename E, typename D>
-		constexpr operator exclude_deducer<E, D>() const& = delete;
 		
 	private:
 		std::remove_reference_t<Source>* source;
@@ -50,32 +64,26 @@ namespace kangaru {
 	
 	template<typename Exclude, typename Deducer>
 	struct exclude_deducer {
-		explicit constexpr exclude_deducer(Deducer deducer) noexcept :
+		explicit constexpr exclude_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
 		template<typename T>
-		requires (detail::concepts::different_from<exclude_deducer, T> and detail::concepts::different_from<Exclude, T> and deducer_for<Deducer, T>)
+		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer, T>)
 		constexpr operator T() const& {
 			return deducer.operator T();
 		}
 		
 		template<typename T>
-		requires (detail::concepts::different_from<exclude_deducer, T> and detail::concepts::different_from<Exclude, T&> and deducer_for<Deducer, T&>)
+		requires (detail::concepts::different_from<Exclude, T&> and detail::deducer::deducer_for<Deducer, T&>)
 		constexpr operator T&() & {
 			return deducer.operator T&();
 		}
 		
 		template<typename T>
-		requires (detail::concepts::different_from<exclude_deducer, T> and detail::concepts::different_from<Exclude, T&&> and deducer_for<Deducer, T&&>)
+		requires (detail::concepts::different_from<Exclude, T&&> and detail::deducer::deducer_for<Deducer, T&&>)
 		constexpr operator T&&() & {
 			return deducer.operator T&&();
 		}
-		
-		template<typename E, typename D>
-		constexpr operator exclude_deducer<E, D>() const& = delete;
-		
-		template<typename S>
-		constexpr operator deducer<S>() = delete;
 		
 	private:
 		Deducer deducer;

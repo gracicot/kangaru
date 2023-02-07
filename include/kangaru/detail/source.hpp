@@ -4,6 +4,7 @@
 #include "concepts.hpp"
 
 #include <concepts>
+#include <cstdint>
 
 #include "define.hpp"
 

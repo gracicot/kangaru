@@ -35,7 +35,7 @@ namespace kangaru {
 		inline constexpr auto is_any_deducer_v<kangaru::exclude_deducer<Exclude, Deducer>> = true;
 		
 		template<typename T, typename Source>
-		concept deducible = not is_any_deducer_v<std::remove_cvref_t<T>> and kangaru::source_of<Source, T>;
+		concept deducible = (std::is_reference_v<T> or not std::is_const_v<T>) and not is_any_deducer_v<std::remove_cvref_t<T>> and kangaru::source_of<Source, T>;
 	}
 
 	template<typename Source>

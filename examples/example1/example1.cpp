@@ -1,5 +1,4 @@
 //#include <kangaru-prev/kangaru.hpp>
-#include "kangaru/detail/recursive_source.hpp"
 #include <kangaru/kangaru.hpp>
 #include <kangaru/short.hpp>
 #include <array>

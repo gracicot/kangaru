@@ -34,8 +34,25 @@ namespace kangaru {
 		template<typename Exclude, typename Deducer>
 		inline constexpr auto is_any_deducer_v<kangaru::exclude_deducer<Exclude, Deducer>> = true;
 		
+		// Deducible prvalue cannot deduce a const prvalue
 		template<typename T, typename Source>
-		concept deducible = (std::is_reference_v<T> or not std::is_const_v<T>) and not is_any_deducer_v<std::remove_cvref_t<T>> and kangaru::source_of<Source, T>;
+		concept deducible =
+			    detail::concepts::object<T>
+			and not std::is_const_v<T>
+			and not is_any_deducer_v<std::remove_cv_t<T>>
+			and kangaru::source_of<Source, T>;
+
+		template<typename T, typename Source>
+		concept deducible_lvalue =
+			    detail::concepts::object<T>
+			and is_any_deducer_v<std::remove_cv_t<T>>
+			and kangaru::source_of<Source, T&>;
+
+		template<typename T, typename Source>
+		concept deducible_rvalue =
+			    detail::concepts::object<T>
+			and is_any_deducer_v<std::remove_cv_t<T>>
+			and kangaru::source_of<Source, T&&>;
 	}
 
 	template<typename Source>
@@ -44,17 +61,17 @@ namespace kangaru {
 			source{std::addressof(source)} {}
 		
 		template<typename T>
-		constexpr operator T() const& requires detail::deducer::deducible<T, Source> {
+		constexpr operator T() const requires detail::deducer::deducible<T, Source> {
 			return provide(provide_tag<T>, static_cast<Source&&>(*source));
 		}
-		
+
 		template<typename T>
-		constexpr operator T&() & requires detail::deducer::deducible<T&, Source> {
+		constexpr operator T&() requires (detail::deducer::deducible_lvalue<T, Source>) {
 			return provide(provide_tag<T&>, static_cast<Source&&>(*source));
 		}
 		
 		template<typename T>
-		constexpr operator T&&() & requires detail::deducer::deducible<T&&, Source> {
+		constexpr operator T&&() requires (detail::deducer::deducible_rvalue<T, Source>) {
 			return provide(provide_tag<T&&>, static_cast<Source&&>(*source));
 		}
 		
@@ -68,20 +85,21 @@ namespace kangaru {
 			deducer{deducer} {}
 		
 		template<typename T>
-		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer, T>)
-		constexpr operator T() const& {
-			return deducer.operator T();
+		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T>)
+		constexpr operator T() const {
+			// Call with const so we can only call the prvalue conversion operator
+			return std::as_const(deducer).operator T();
 		}
 		
 		template<typename T>
 		requires (detail::concepts::different_from<Exclude, T&> and detail::deducer::deducer_for<Deducer, T&>)
-		constexpr operator T&() & {
+		constexpr operator T&() {
 			return deducer.operator T&();
 		}
 		
 		template<typename T>
 		requires (detail::concepts::different_from<Exclude, T&&> and detail::deducer::deducer_for<Deducer, T&&>)
-		constexpr operator T&&() & {
+		constexpr operator T&&() {
 			return deducer.operator T&&();
 		}
 		

@@ -41,7 +41,7 @@ namespace kangaru {
 			and not std::is_const_v<T>
 			and not is_any_deducer_v<std::remove_cv_t<T>>
 			and kangaru::source_of<Source, T>;
-
+		
 		template<typename T, typename Source>
 		concept deducible_lvalue =
 			    detail::concepts::object<T>

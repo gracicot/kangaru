@@ -10,15 +10,6 @@
 
 #include "define.hpp"
 
-struct Test;
-struct Camera;
-struct Model;
-
-struct Scene;
-
-struct RecTest;
-
-
 namespace kangaru::sources {
 	template<typename Source>
 	struct recursive_source {

@@ -25,7 +25,7 @@
 	}
 
 #define KANGARU5_ALL_COMBINAISONS \
-	KANGARU5_X(typename) \
+	KANGARU5_X(kangaru::detail::concepts::object) \
 	/* KANGARU5_X(template<typename...> typename) \
 	KANGARU5_X(template<auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, typename...> typename) \

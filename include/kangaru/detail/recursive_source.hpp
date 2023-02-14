@@ -15,14 +15,14 @@ namespace kangaru::sources {
 	struct recursive_source {
 		constexpr explicit recursive_source(Source source) noexcept : source{std::move(source)} {}
 		
-		template<typename T>
+		template<detail::concepts::object T>
 		struct recurse_construct {
 			auto operator()(auto deduce1, auto... deduce) -> decltype(constructor<T>()(kangaru::exclude_deduction<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...)) {
 				return constructor<T>()(kangaru::exclude_deduction<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...);
 			}
 		};
 		
-		template<typename T> requires (not source_of<Source, T>)
+		template<detail::concepts::object T> requires (not source_of<Source, T>)
 		struct provide_recursive {
 			auto operator()(detail::concepts::forwarded<recursive_source> auto&& source) -> decltype(spread_injector<decltype(kangaru::ref(source))>{kangaru::ref(source)}(recurse_construct<T>{})) {
 				auto self = ref(source);

@@ -18,6 +18,7 @@
 			"inherits": "generator",
 			"cacheVariables": {
 				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+				"CMAKE_MAKE_PROGRAM": "ninja",
 				"KANGARU_BUILD_EXAMPLES": "ON",
 				"KANGARU_INSTALL": "OFF",
 				"KANGARU_EXPORT": "OFF",

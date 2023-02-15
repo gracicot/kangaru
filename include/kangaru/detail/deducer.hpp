@@ -19,6 +19,9 @@ namespace kangaru {
 	template<typename Exclude, typename Deducer>
 	struct exclude_deducer;
 	
+	template<typename Exclude, typename Deducer>
+	struct exclude_special_constructors_deducer;
+	
 	namespace detail::deducer {
 		template<typename Deducer, typename T>
 		concept deducer_for = requires(Deducer deducer) {
@@ -33,6 +36,9 @@ namespace kangaru {
 		
 		template<typename Exclude, typename Deducer>
 		inline constexpr auto is_any_deducer_v<kangaru::exclude_deducer<Exclude, Deducer>> = true;
+		
+		template<typename Exclude, typename Deducer>
+		inline constexpr auto is_any_deducer_v<kangaru::exclude_special_constructors_deducer<Exclude, Deducer>> = true;
 		
 		// Deducible prvalue cannot deduce a const prvalue
 		template<typename T, typename Source>
@@ -84,20 +90,20 @@ namespace kangaru {
 		explicit constexpr exclude_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
-		template<typename T>
+		template<detail::concepts::object T>
 		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T>)
-		constexpr operator T() const {
+		constexpr operator T() const& {
 			// Call with const so we can only call the prvalue conversion operator
 			return std::as_const(deducer).operator T();
 		}
 		
-		template<typename T>
+		template<detail::concepts::object T>
 		requires (detail::concepts::different_from<Exclude, T&> and detail::deducer::deducer_for<Deducer, T&>)
 		constexpr operator T&() {
 			return deducer.operator T&();
 		}
 		
-		template<typename T>
+		template<detail::concepts::object T>
 		requires (detail::concepts::different_from<Exclude, T&&> and detail::deducer::deducer_for<Deducer, T&&>)
 		constexpr operator T&&() {
 			return deducer.operator T&&();
@@ -110,6 +116,39 @@ namespace kangaru {
 	template<typename T>
 	inline constexpr auto exclude_deduction(auto deducer) {
 		return exclude_deducer<T, decltype(deducer)>{deducer};
+	}
+
+	template<typename Exclude, typename Deducer>
+	struct exclude_special_constructors_deducer {
+		explicit constexpr exclude_special_constructors_deducer(std::same_as<Deducer> auto deducer) noexcept :
+			deducer{deducer} {}
+		
+		template<detail::concepts::object T>
+		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T>)
+		constexpr operator T() const& {
+			// Call with const so we can only call the prvalue conversion operator
+			return std::as_const(deducer).operator T();
+		}
+		
+		template<detail::concepts::object T>
+		requires (detail::concepts::different_from<Exclude, std::remove_cv_t<T>> and detail::deducer::deducer_for<Deducer, T&>)
+		constexpr operator T&() {
+			return deducer.operator T&();
+		}
+		
+		template<detail::concepts::object T>
+		requires (detail::concepts::different_from<Exclude, std::remove_cv_t<T>> and detail::deducer::deducer_for<Deducer, T&&>)
+		constexpr operator T&&() {
+			return deducer.operator T&&();
+		}
+
+	private:
+		Deducer deducer;
+	};
+	
+	template<detail::concepts::object T> requires (not std::is_const_v<T>)
+	inline constexpr auto exclude_special_constructors_for(auto deducer) {
+		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
 	}
 } // namespace kangaru
 

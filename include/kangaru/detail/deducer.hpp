@@ -92,7 +92,7 @@ namespace kangaru {
 		
 		template<detail::concepts::object T>
 		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T>)
-		constexpr operator T() const& {
+		constexpr operator T() const {
 			// Call with const so we can only call the prvalue conversion operator
 			return std::as_const(deducer).operator T();
 		}
@@ -125,7 +125,7 @@ namespace kangaru {
 		
 		template<detail::concepts::object T>
 		requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T>)
-		constexpr operator T() const& {
+		constexpr operator T() const {
 			// Call with const so we can only call the prvalue conversion operator
 			return std::as_const(deducer).operator T();
 		}

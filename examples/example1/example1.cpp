@@ -3,6 +3,8 @@
 #include <kangaru/short.hpp>
 #include <array>
 #include <vector>
+#include <fmt/core.h>
+#include <cassert>
 //#include <iostream>
 //#include <string>
 
@@ -43,30 +45,43 @@
 // ScreenService is a single service of Screen, that depends on a scene and camera
 //struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService, CameraService>> {};
 
-struct Test {};
-struct Camera {};
-struct Model {};
+auto main() -> int {
+	struct Camera {
+		int id;
+	};
 
-struct Scene {
-	explicit constexpr Scene(Camera c, Model m) : camera{c}, model{} {}
-	Camera camera;
-	Model model;
-};
+	struct Model {
+		int id;
+	};
 
-struct RecTest {
-	explicit constexpr RecTest(Scene s) : scene{s} {}
-	Scene scene;
-};
+	struct Scene {
+		explicit constexpr Scene(Camera& c, Model m) : camera{c}, model{m} {}
+		Camera& camera;
+		Model model;
+	};
 
-int main() {
-	auto camera_source = kgr::object_source{Camera{}};
-	auto model_source = kgr::object_source{Model{}};
-	auto source = kgr::tie(model_source, camera_source);
-	auto rec = kgr::recursive_source{source};
+	struct Movie {
+		explicit constexpr Movie(Scene s) : scene{s} {}
+		Scene scene;
+	};
 
-	auto injector = kgr::spread_injector<decltype(rec)>{rec};
+	auto camera = Camera{.id = 2};
+	auto model = Model{.id = 8};
+	
+	auto camera_source = kangaru::reference_source{camera};
+	auto model_source = kangaru::rvalue_source{std::move(model)};
+	auto source = kangaru::recursive_source{kangaru::tie(model_source, camera_source)};
 
-	injector([](RecTest) {});
+	auto injector = kangaru::simple_injector{source};
+
+	injector([&camera](Movie movie) {
+ 		fmt::print("camera id: {}\nmodel id: {}\nis equal: {}\n",
+			movie.scene.camera.id,
+			movie.scene.model.id,
+			&camera == &movie.scene.camera
+		);
+		assert(&camera == &movie.scene.camera);
+	});
 
 	//auto make = kangaru::constructor<Scene>();
 	//auto lambda = [make](auto deduce1, auto... deduce) -> decltype(make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...)) { return make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...); };

@@ -23,13 +23,13 @@ namespace kangaru::detail::injector {
 	struct parameter_sequence_impl {};
 
 	template<typename Function>
-	requires detail::concepts::callable<Function>
+		requires detail::concepts::callable<Function>
 	struct parameter_sequence_impl<Function, std::index_sequence<>> {
 		using type = std::index_sequence<>;
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-	requires detail::concepts::callable<Function, kangaru::deducer<match_any>, expand<kangaru::deducer<match_any>, tail>...>
+		requires detail::concepts::callable<Function, kangaru::deducer<match_any>, expand<kangaru::deducer<match_any>, tail>...>
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -59,13 +59,13 @@ namespace kangaru::detail::injector {
 	struct injectable_sequence {};
 
 	template<typename Function, typename Source, std::size_t... drop>
-	requires detail::concepts::callable<Function, expand<kangaru::deducer<match_any>, drop>...>
+		requires detail::concepts::callable<Function, expand<kangaru::deducer<match_any>, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<>;
 	};
 	
 	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
-	requires detail::concepts::callable<Function, kangaru::deducer<Source>, expand<kangaru::deducer<Source>, tail>..., expand<kangaru::deducer<match_any>, drop>...>
+		requires detail::concepts::callable<Function, kangaru::deducer<Source>, expand<kangaru::deducer<Source>, tail>..., expand<kangaru::deducer<match_any>, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -107,22 +107,22 @@ namespace kangaru {
 	struct basic_spread_injector {
 		explicit constexpr basic_spread_injector(Source source) noexcept : source{std::move(source)} {}
 		
-		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source&, max>>
 		constexpr auto operator()(F&& function) & -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source&&, max>>
 		constexpr auto operator()(F&& function) && -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
-		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source const&, max>>
 		constexpr auto operator()(F&& function) const& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source const&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source, max>>
+		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source const&&, max>>
 		constexpr auto operator()(F&& function) const&& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source const&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
@@ -138,13 +138,13 @@ namespace kangaru {
 	};
 	
 	template<typename Source>
-	using fast_spread_injector = basic_spread_injector<Source, 6>;
+	using fast_spread_injector = basic_spread_injector<Source, 4>;
 	
 	template<typename Source>
-	using spread_injector = basic_spread_injector<Source, 12>;
+	using spread_injector = basic_spread_injector<Source, 8>;
 	
 	template<typename Source>
-	using slow_spread_injector = basic_spread_injector<Source, 24>;
+	using slow_spread_injector = basic_spread_injector<Source, 16>;
 	
 	template<typename Injector1, typename Injector2>
 	struct composed_injector {

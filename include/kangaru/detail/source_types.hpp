@@ -18,21 +18,22 @@ namespace kangaru::sources {
 		
 		template<typename T>
 		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<composed_source> auto&& source) -> T
-		requires (((source_of<Sources, T> ? 1 : 0) + ...) == 1) {
-			/* static */ constexpr auto index = index_of<T>(std::index_sequence_for<Sources...>{});
+		requires (((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) == 1) {
+			// TODO: C++23 uncomment static
+			/* static */ constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
 			return kangaru::provide(provide_tag<T>, std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
 	private:
-		template<typename T, std::size_t... S>
+		template<typename T, typename Self, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<Sources, T> ? S : 0) + ...);
+			return ((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? S : 0) + ...);
 		}
 		
 		std::tuple<Sources...> sources;
 	};
 	
-	template<std::move_constructible... Ts>
+	template<detail::concepts::object... Ts>
 	struct tuple_source {
 		explicit constexpr tuple_source(std::tuple<Ts...> objects) noexcept : objects{std::move(objects)} {}
 		
@@ -45,7 +46,7 @@ namespace kangaru::sources {
 		std::tuple<Ts...> objects;
 	};
 	
-	template<std::move_constructible T>
+	template<detail::concepts::object T>
 	struct object_source {
 		explicit constexpr object_source(T object) noexcept : object{std::move(object)} {}
 		
@@ -56,15 +57,39 @@ namespace kangaru::sources {
 	private:
 		T object;
 	};
+
+	template<detail::concepts::object T>
+	struct rvalue_source {
+		explicit constexpr rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
+		
+		friend constexpr auto provide(provide_tag_t<T&&>, rvalue_source const& source) -> T&& {
+			return std::move(*source.reference);
+		}
+		
+	private:
+		T* reference;
+	};
+
+	template<detail::concepts::object T>
+	struct reference_source {
+		explicit constexpr reference_source(T& reference) noexcept : reference{std::addressof(reference)} {}
+		
+		friend constexpr auto provide(provide_tag_t<T&>, reference_source const& source) -> T& {
+			return *source.reference;
+		}
+		
+	private:
+		T* reference;
+	};
 	
-	template<typename Source>
-	struct ref_source {
-		constexpr ref_source(Source& source) noexcept : source{std::addressof(source)} {}
+	template<source Source>
+	struct source_reference_wrapper {
+		constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
 		template<typename T> 
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<ref_source> auto&& source)
-		requires source_of<Source, T> {
-			return kangaru::provide(provide_tag<T>, detail::utility::forward_like<decltype(source)>(*source.source));
+		friend constexpr auto provide(provide_tag_t<T>, source_reference_wrapper const& source) -> T
+		requires source_of<Source&, T> {
+			return kangaru::provide(provide_tag<T>, *source.source);
 		}
 		
 	private:
@@ -76,7 +101,7 @@ namespace kangaru::sources {
 	}
 	
 	inline constexpr auto ref(source auto& source) {
-		return ref_source{source};
+		return source_reference_wrapper{source};
 	}
 	
 	inline constexpr auto tie(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {

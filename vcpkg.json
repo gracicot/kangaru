@@ -3,6 +3,7 @@
   "version-string": "4.3.1",
   "dependencies": [
     "catch2",
-    "benchmark"
+    "benchmark",
+    "fmt"
   ]
 }

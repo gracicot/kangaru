@@ -2,11 +2,7 @@ find_package(Catch2 QUIET)
 
 add_library(kangaru_test_common INTERFACE)
 
-target_link_libraries(kangaru_test_common INTERFACE Catch2::Catch2)
-target_compile_features(kangaru_test_common INTERFACE cxx_std_11)
-target_compile_definitions(kangaru_test_common INTERFACE CATCH_CONFIG_MAIN)
-
-target_include_directories(kangaru_test_common INTERFACE $<TARGET_PROPERTY:kangaru::kangaru,INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain)
 
 target_compile_options(kangaru_test_common INTERFACE
 	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wall -Wextra>
@@ -54,6 +50,7 @@ function(add_kgr_test TEST_NAME)
 endfunction()
 
 if(KANGARU_TEST)
+	add_kgr_test(5-reference-deducer)
 	add_kgr_test(autocall)
 	add_kgr_test(autowire)
 	add_kgr_test(basic)

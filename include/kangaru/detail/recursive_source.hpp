@@ -1,7 +1,7 @@
 #ifndef KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 #define KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 
-#include "kangaru/detail/utility.hpp"
+#include "utility.hpp"
 #include "source_types.hpp"
 #include "constructor.hpp"
 #include "injector.hpp"
@@ -22,7 +22,7 @@ namespace kangaru::sources {
 			}
 		};
 		
-		template<detail::concepts::object T> requires (not source_of<Source, T>)
+		template<detail::concepts::object T, typename S> requires (not source_of<S, T>)
 		struct provide_recursive {
 			auto operator()(detail::concepts::forwarded<recursive_source> auto&& source) -> decltype(spread_injector<decltype(kangaru::ref(source))>{kangaru::ref(source)}(recurse_construct<T>{})) {
 				auto self = ref(source);
@@ -32,14 +32,16 @@ namespace kangaru::sources {
 			}
 		};
 		
-		template<typename T> requires source_of<Source, T>
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<recursive_source> auto&& source) -> T {
+		template<typename T, detail::concepts::forwarded<recursive_source> Self>
+			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
+		friend constexpr auto provide(provide_tag_t<T>, Self&& source) -> T {
 			return kangaru::provide(provide_tag<T>, KANGARU5_FWD(source).source);
 		}
 		
-		template<detail::concepts::object T> requires (not source_of<Source, T>)
-		friend constexpr auto provide(provide_tag_t<T>, detail::concepts::forwarded<recursive_source> auto&& source) -> decltype(provide_recursive<T>{}(KANGARU5_FWD(source))) {
-			return provide_recursive<T>{}(KANGARU5_FWD(source));
+		template<detail::concepts::object T, detail::concepts::forwarded<recursive_source> Self, typename S = detail::utility::forward_like_t<Self, Source>>
+			requires (not source_of<S, T>)
+		friend constexpr auto provide(provide_tag_t<T>, Self&& source) -> decltype(provide_recursive<T, S>{}(KANGARU5_FWD(source))) {
+			return provide_recursive<T, S>{}(KANGARU5_FWD(source));
 		}
 		
 	private:

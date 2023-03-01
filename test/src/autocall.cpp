@@ -1,4 +1,4 @@
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <kangaru-prev/kangaru.hpp>
 
 #define METHOD(...) ::kgr::method<decltype(__VA_ARGS__), __VA_ARGS__>

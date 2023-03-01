@@ -1,3 +1,5 @@
 add_executable(example1 example1.cpp)
 
-target_link_libraries(example1 PUBLIC kangaru-example)
+find_package(fmt REQUIRED)
+
+target_link_libraries(example1 PUBLIC kangaru-example fmt::fmt)

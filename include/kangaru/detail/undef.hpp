@@ -7,6 +7,7 @@
 
 #undef KANGARU5_NO_UNIQUE_ADDRESS
 #undef KANGARU5_FWD
+#undef NEEDS_PRVALUE_PREPASS
 
 // We make those header re-includable
 #undef KANGARU5_DETAIL_DEFINE_HPP

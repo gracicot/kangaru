@@ -28,15 +28,18 @@
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 
 #if KANGARU5_IS_CLANG == 1
-#define INLINE
+#define INLINE [[gnu::always_inline]]
+#define NEEDS_PRVALUE_PREPASS 1
 #endif
 
 #if KANGARU5_IS_GNU == 1
 #define INLINE [[gnu::always_inline]]
+#define NEEDS_PRVALUE_PREPASS 0
 #endif
 
 #if KANGARU5_IS_MSVC == 1
 #define INLINE [[msvc::forceinline]]
+#define NEEDS_PRVALUE_PREPASS 1
 #endif
 
 #undef KANGARU5_IS_MSVC

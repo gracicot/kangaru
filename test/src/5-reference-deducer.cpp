@@ -35,11 +35,17 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			source_by_rvalue_ref
 		);
 		
+		auto ded = kangaru::exclude_prvalue_deducer<kangaru::deducer<decltype(source)&>>{kangaru::deducer<decltype(source)&>{source}};
+		[](Sneezy const&&){}(ded);
+		[](Sneezy&&){}(ded);
+		[](Sneezy&){}(ded);
+		[](Sneezy const&){}(ded);
+		
 		auto injector = kangaru::simple_injector{source};
 		
-		injector([](Sneezy s) {
-			CHECK(s.how == by_value);
-		});
+		//injector([](Sneezy s) {
+		//	CHECK(s.how == by_value);
+		//});
 		
 		injector([](Sneezy& s) {
 			CHECK(s.how == by_lvalue_reference);

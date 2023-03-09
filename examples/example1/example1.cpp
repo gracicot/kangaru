@@ -74,7 +74,7 @@ auto main() -> int {
 
 	auto injector = kangaru::simple_injector{source};
 
-	injector([&camera](Movie movie) {
+	injector([&camera](Movie movie) -> void {
  		fmt::print("camera id: {}\nmodel id: {}\nis equal: {}\n",
 			movie.scene.camera.id,
 			movie.scene.model.id,

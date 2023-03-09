@@ -5,20 +5,13 @@
 #include "source_types.hpp"
 #include "deducer.hpp"
 #include "concepts.hpp"
+#include "utility.hpp"
 
 #include <utility>
 
 #include "define.hpp"
 
 namespace kangaru::detail::injector {
-	struct match_any {
-		template<typename T>
-		friend auto provide(provide_tag_t<T>, detail::concepts::forwarded<match_any> auto&&) -> T;
-	};
-	
-	template<typename T, std::size_t>
-	using expand = T;
-	
 	template<typename Function, typename>
 	struct parameter_sequence_impl {};
 
@@ -29,7 +22,7 @@ namespace kangaru::detail::injector {
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-		requires detail::concepts::callable<Function, kangaru::deducer<match_any>, expand<kangaru::deducer<match_any>, tail>...>
+		requires detail::concepts::callable<Function, kangaru::placeholder_deducer, detail::utility::expand<kangaru::placeholder_deducer, tail>...>
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -47,7 +40,7 @@ namespace kangaru::detail::injector {
 	namespace constraints {
 		template<typename F, typename T>
 		struct invocable_with_sequence_test {
-			template<std::size_t... s> requires detail::concepts::callable<F, expand<T, s>...>
+			template<std::size_t... s> requires detail::concepts::callable<F, detail::utility::expand<T, s>...>
 			inline constexpr auto operator()(std::index_sequence<s...>) -> void {}
 		};
 	}
@@ -59,13 +52,13 @@ namespace kangaru::detail::injector {
 	struct injectable_sequence {};
 
 	template<typename Function, typename Source, std::size_t... drop>
-		requires detail::concepts::callable<Function, expand<kangaru::deducer<match_any>, drop>...>
+		requires detail::concepts::callable<Function, detail::utility::expand<kangaru::placeholder_deducer, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<>;
 	};
 	
 	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
-		requires detail::concepts::callable<Function, kangaru::deducer<Source>, expand<kangaru::deducer<Source>, tail>..., expand<kangaru::deducer<match_any>, drop>...>
+		requires detail::concepts::callable<Function, kangaru::deducer<Source>, detail::utility::expand<kangaru::deducer<Source>, tail>..., detail::utility::expand<kangaru::placeholder_deducer, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -84,19 +77,19 @@ namespace kangaru {
 		explicit constexpr simple_injector(Source source) noexcept : source{std::move(source)} {}
 		
 		constexpr auto operator()(auto&& function) & -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source&>> {
-			return KANGARU5_FWD(function)(deducer<Source&>{source});
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source&>{source});
 		}
 		
 		constexpr auto operator()(detail::concepts::callable<deducer<Source const&>> auto&& function) const& -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source const&>> {
-			return KANGARU5_FWD(function)(deducer<Source const&>{source});
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source const&>{source});
 		}
 		
 		constexpr auto operator()(detail::concepts::callable<deducer<Source&&>> auto&& function) && -> decltype(auto) {
-			return KANGARU5_FWD(function)(deducer<Source&&>{std::move(source)});
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source&&>{std::move(source)});
 		}
 		
 		constexpr auto operator()(detail::concepts::callable<deducer<Source const&&>> auto&& function) const&& -> decltype(auto) {
-			return KANGARU5_FWD(function)(deducer<Source const&&>{std::move(source)});
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source const&&>{std::move(source)});
 		}
 		
 	private:
@@ -131,7 +124,7 @@ namespace kangaru {
 		template<std::size_t... s>
 		static constexpr auto fill_impl(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
 			using Deducer = deducer<decltype(source)>;
-			return KANGARU5_FWD(function)((void(s), Deducer{KANGARU5_FWD(source)})...);
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), (void(s), Deducer{KANGARU5_FWD(source)})...);
 		}
 		
 		Source source;

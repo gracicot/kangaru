@@ -1,4 +1,4 @@
-find_package(Catch2 QUIET)
+find_package(Catch2 REQUIRED)
 
 add_library(kangaru_test_common INTERFACE)
 
@@ -22,20 +22,6 @@ function(add_kgr_error_test testname error_message)
 	add_test(NAME error_${testname} COMMAND ${CMAKE_COMMAND} --build "${CMAKE_BINARY_DIR}" --target error_${testname}_test --config $<CONFIGURATION>)
 	set_tests_properties(error_${testname} PROPERTIES PASS_REGULAR_EXPRESSION "${error_message}")
 endfunction()
-
-if (NOT Catch2_FOUND)
-	add_subdirectory(third_party/Catch2)
-	mark_as_advanced(Catch2_DIR)
-	mark_as_advanced(CATCH_USE_VALGRIND)
-	mark_as_advanced(CATCH_BUILD_TESTING)
-	mark_as_advanced(CATCH_BUILD_EXAMPLES)
-	mark_as_advanced(CATCH_BUILD_EXTRA_TESTS)
-	mark_as_advanced(CATCH_ENABLE_COVERAGE)
-	mark_as_advanced(CATCH_ENABLE_WERROR)
-	mark_as_advanced(CATCH_INSTALL_DOCS)
-	mark_as_advanced(CATCH_INSTALL_HELPERS)
-	mark_as_advanced(BUILD_TESTING)
-endif()
 
 function(add_kgr_test TEST_NAME)
 	if(${ARGC} GREATER_EQUAL 2)

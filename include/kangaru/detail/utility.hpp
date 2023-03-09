@@ -25,6 +25,9 @@ namespace kangaru::detail::utility {
 
 	template<typename T, typename U>
 	using forward_like_t = decltype(forward_like<T>(std::declval<U&>()));
+	
+	template<typename T, std::size_t>
+	using expand = T;
 }
 
 #endif // KANGARU5_DETAIL_UTILITY_HPP

@@ -83,7 +83,7 @@ auto main() -> int {
 		assert(&camera == &movie.scene.camera);
 	});
 
-	//auto make = kangaru::constructor<Scene>();
+	//auto make = kangaru::<Scene>();
 	//auto lambda = [make](auto deduce1, auto... deduce) -> decltype(make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...)) { return make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...); };
 	// kangaru::spread_injector test{kgr::ref(rec)};
 	//static_assert(kangaru::detail::concepts::callable<decltype(lambda), kangaru::deducer<kangaru::detail::injector::match_any>, kangaru::deducer<kangaru::detail::injector::match_any>>);

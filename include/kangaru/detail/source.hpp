@@ -33,12 +33,11 @@ namespace kangaru {
 	
 	inline constexpr auto provide = detail::source::provide_function{};
 	
-	
 	template<typename Source, typename T>
 	concept source_of = detail::source::adl_nonmember_source_of<Source, T>;
 	
 	template<typename T>
-	concept source = detail::concepts::object<T> and std::move_constructible<T>;
+	concept source = detail::concepts::object<T> and std::movable<T>;
 } // namespace kangaru
 
 #include "undef.hpp"

@@ -17,109 +17,105 @@ struct Camera;
 namespace kangaru {
 	struct kangaru_deducer_tag {};
 	
-	namespace detail::deducer {
-		template<typename Deducer>
-		concept weak_deducer = requires {
-			requires std::same_as<typename Deducer::is_deducer, kangaru::kangaru_deducer_tag>;
+	template<typename Deducer>
+	concept deducer =
+		    detail::concepts::object<Deducer>
+		and requires {
+			requires std::same_as<typename Deducer::is_deducer, kangaru_deducer_tag>;
 		};
-		
-		template<typename Deducer, typename T>
-		concept deducer_for = weak_deducer<Deducer> and requires(Deducer deducer) {
-			{ deducer.operator T() } -> std::same_as<T>;
-		};
-		
-		template<typename T>
-		concept maybe_const_weak_deducible =
-			    detail::concepts::object<T>
-			and not weak_deducer<std::remove_cv_t<T>>;
-		
-		template<typename T>
-		concept weak_deducible =
-			    maybe_const_weak_deducible<T>
-			and not std::is_const_v<T>;
-		
-		template<typename T, typename Source>
-		concept deducible =
-			    weak_deducible<T>
-			and kangaru::source_of<Source, T>;
-		
-		template<typename T, typename Source>
-		concept deducible_lvalue =
-			    weak_deducible<T>
-			and kangaru::source_of<Source, T&>;
-		
-		template<typename T, typename Source>
-		concept deducible_const_lvalue =
-			    weak_deducible<T>
-			and (
-				   kangaru::source_of<Source, T const&>
-				or kangaru::source_of<Source, T&>
-			);
-
-		template<typename T, typename Source>
-		concept deducible_rvalue =
-			    weak_deducible<T>
-			and kangaru::source_of<Source, T&&>;
-		
-		template<typename T, typename Source>
-		concept deducible_const_rvalue =
-			    weak_deducible<T>
-			and (
-				   kangaru::source_of<Source, T const&&>
-				or kangaru::source_of<Source, T&&>
-			);
-	}
 	
-	struct prvalue_tripper_deducer {
+	template<typename Deducer, typename T>
+	concept deducer_for = deducer<Deducer> and requires(Deducer deducer) {
+		{ deducer.operator T() } -> std::same_as<T>;
+	};
+
+	template<typename T>
+	concept deducible =
+			detail::concepts::object<T>
+		and not deducer<std::remove_cv_t<T>>
+		and not std::is_const_v<T>;
+	
+	template<typename T, typename Source>
+	concept deducible_prvalue =
+			deducible<T>
+		and source_of<Source, T>;
+	
+	template<typename T, typename Source>
+	concept deducible_lvalue =
+			deducible<T>
+		and source_of<Source, T&>;
+	
+	template<typename T, typename Source>
+	concept deducible_const_lvalue =
+			deducible<T>
+		and (
+				source_of<Source, T const&>
+			or source_of<Source, T&>
+		);
+
+	template<typename T, typename Source>
+	concept deducible_rvalue =
+			deducible<T>
+		and source_of<Source, T&&>;
+	
+	template<typename T, typename Source>
+	concept deducible_const_rvalue =
+			deducible<T>
+		and (
+				source_of<Source, T const&&>
+			or source_of<Source, T&&>
+		);
+	
+	struct ambiguous_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T () const;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T& () const;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T const& () const;
 	};
 	
 	struct placeholder_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T ();
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T& () const;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T const& () const;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T&& () const;
 		
-		template<detail::deducer::weak_deducible T>
+		template<deducible T>
 		operator T const&& () const;
 	};
 	
 	template<typename Source>
-	struct deducer {
+	struct basic_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
-		explicit constexpr deducer(detail::concepts::forwarded<std::remove_reference_t<Source>> auto&& source) noexcept :
+		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_reference_t<Source>> auto&& source) noexcept :
 			source{std::addressof(source)} {}
 		
-		template<detail::deducer::deducible<Source> T>
+		template<deducible_prvalue<Source> T>
 		constexpr operator T() {
 			return provide(provide_tag<T>, static_cast<Source&&>(*source));
 		}
 
-		template<detail::deducer::deducible_lvalue<Source> T>
+		template<deducible_lvalue<Source> T>
 		constexpr operator T&() const {
 			return provide(provide_tag<T&>, static_cast<Source&&>(*source));
 		}
 
-		template<detail::deducer::deducible_const_lvalue<Source> T>
+		template<deducible_const_lvalue<Source> T>
 		constexpr operator T const&() const {
 			if constexpr (source_of<Source, T const&>) {
 				return provide(provide_tag<T const&>, static_cast<Source&&>(*source));
@@ -128,12 +124,12 @@ namespace kangaru {
 			}
 		}
 
-		template<detail::deducer::deducible_rvalue<Source> T>
+		template<deducible_rvalue<Source> T>
 		constexpr operator T&&() const {
 			return provide(provide_tag<T&&>, static_cast<Source&&>(*source));
 		}
 		
-		template<detail::deducer::deducible_const_rvalue<Source> T>
+		template<deducible_const_rvalue<Source> T>
 		constexpr operator T const&&() const {
 			if constexpr (source_of<Source, T const&&>) {
 				return provide(provide_tag<T const&&>, static_cast<Source&&>(*source));
@@ -146,39 +142,39 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	template<typename Exclude, typename Deducer>
+	template<typename Exclude, deducer Deducer>
 	struct exclude_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		explicit constexpr exclude_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer, T>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer, T>)
 		constexpr operator T() {
 			return deducer.operator T();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T&> and detail::deducer::deducer_for<Deducer const, T&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T&> and deducer_for<Deducer const, T&>)
 		constexpr operator T&() const {
 			return deducer.operator T&();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T const&> and detail::deducer::deducer_for<Deducer const, T const&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T const&> and deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() const {
 			return deducer.operator T const&();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T&&> and detail::deducer::deducer_for<Deducer const, T&&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T&&> and deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() const {
 			return deducer.operator T&&();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T const&&> and detail::deducer::deducer_for<Deducer const, T const&&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T const&&> and deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() const {
 			return deducer.operator T const&&();
 		}
@@ -188,44 +184,44 @@ namespace kangaru {
 	};
 	
 	template<typename T>
-	inline constexpr auto exclude_deduction(auto deducer) {
+	inline constexpr auto exclude_deduction(deducer auto deducer) {
 		return exclude_deducer<T, decltype(deducer)>{deducer};
 	}
 
-	template<typename Exclude, typename Deducer>
+	template<typename Exclude, deducer Deducer>
 	struct exclude_special_constructors_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		explicit constexpr exclude_special_constructors_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer, T>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer, T>)
 		constexpr operator T() {
 			// Call with const so we can only call the prvalue conversion operator
 			return deducer.operator T();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer const, T&>)
 		constexpr operator T&() const {
 			return deducer.operator T&();
 		}
 
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T const&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() const {
 			return deducer.operator T const&();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T&&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() const {
 			return deducer.operator T&&();
 		}
 		
-		template<detail::deducer::weak_deducible T>
-			requires (detail::concepts::different_from<Exclude, T> and detail::deducer::deducer_for<Deducer const, T const&&>)
+		template<deducible T>
+			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() const {
 			return deducer.operator T const&&();
 		}
@@ -234,33 +230,33 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<typename Deducer>
+	template<deducer Deducer>
 	struct exclude_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		explicit constexpr exclude_prvalue_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
-		template<detail::deducer::maybe_const_weak_deducible T>
-			requires detail::deducer::deducer_for<Deducer const, T&>
+		template<deducible T>
+			requires deducer_for<Deducer const, T&>
 		constexpr operator T&() const {
 			return deducer.operator T&();
 		}
 
-		template<detail::deducer::maybe_const_weak_deducible T>
-			requires detail::deducer::deducer_for<Deducer const, T const&>
+		template<deducible T>
+			requires deducer_for<Deducer const, T const&>
 		constexpr operator T const&() const {
 			return deducer.operator T const&();
 		}
 		
-		template<detail::deducer::maybe_const_weak_deducible T>
-			requires detail::deducer::deducer_for<Deducer const, T&&>
+		template<deducible T>
+			requires deducer_for<Deducer const, T&&>
 		constexpr operator T&&() const {
 			return deducer.operator T&&();
 		}
 		
-		template<detail::deducer::maybe_const_weak_deducible T>
-			requires detail::deducer::deducer_for<Deducer const, T const&&>
+		template<deducible T>
+			requires deducer_for<Deducer const, T const&&>
 		constexpr operator T const&&() const {
 			return deducer.operator T const&&();
 		}
@@ -269,15 +265,15 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<typename Deducer>
+	template<deducer Deducer>
 	struct exclude_references_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		explicit constexpr exclude_references_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
-		template<detail::deducer::weak_deducible T>
-			requires detail::deducer::deducer_for<Deducer, T>
+		template<deducible T>
+			requires deducer_for<Deducer, T>
 		constexpr operator T() {
 			return deducer.operator T();
 		}
@@ -286,8 +282,8 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<detail::deducer::weak_deducible T> requires (not std::is_const_v<T>)
-	inline constexpr auto exclude_special_constructors_for(auto deducer) {
+	template<deducible T>
+	inline constexpr auto exclude_special_constructors_for(deducer auto deducer) {
 		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
 	}
 	
@@ -295,9 +291,9 @@ namespace kangaru {
 		template<typename, typename, typename, typename>
 		inline constexpr bool callbale_with_nth_parameter_being_expand = false;
 		
-		template<typename F, typename S, std::size_t... before, std::size_t... after>
+		template<typename S, typename F, std::size_t... before, std::size_t... after>
 		inline constexpr bool callbale_with_nth_parameter_being_expand<
-			F, S,
+			S, F,
 			std::index_sequence<before...>,
 			std::index_sequence<after...>
 		> = detail::concepts::callable<
@@ -307,19 +303,19 @@ namespace kangaru {
 			detail::utility::expand<placeholder_deducer, after>...
 		>;
 		
-		template<typename F, typename S, std::size_t nth, std::size_t max>
+		template<typename S, typename F, std::size_t nth, std::size_t max>
 		concept callbale_with_nth_parameter_being = callbale_with_nth_parameter_being_expand<
-			F, S,
+			S, F,
 			std::make_index_sequence<nth>,
 			std::make_index_sequence<max - nth - 1>
 		>;
 		
-		template<typename F, typename... Deducers, std::size_t... S>
-		inline constexpr auto invoke_with_deducers_prvalue_filter(F&& function, std::index_sequence<S...>, Deducers... deduce) -> std::invoke_result_t<F, Deducers...> {
+		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
+		inline constexpr auto invoke_with_deducers_prvalue_filter(F&& function, std::index_sequence<S...>, Deducers... deduce) -> decltype(auto) requires detail::concepts::callable<F, Deducers...> {
 			return KANGARU5_FWD(function)(
 				detail::type_traits::conditional_t<
-					    callbale_with_nth_parameter_being<F, prvalue_tripper_deducer, S, sizeof...(S)>
-					and callbale_with_nth_parameter_being<F, exclude_prvalue_deducer<Deducers>, S, sizeof...(S)>,
+					    callbale_with_nth_parameter_being<ambiguous_prvalue_deducer, F, S, sizeof...(S)>
+					and callbale_with_nth_parameter_being<exclude_prvalue_deducer<Deducers>, F, S, sizeof...(S)>,
 					exclude_prvalue_deducer<Deducers>,
 					exclude_references_deducer<Deducers>
 				>{deduce}...
@@ -327,7 +323,7 @@ namespace kangaru {
 		}
 	}
 	
-	template<typename F, typename... Deducers>
+	template<typename F, deducer... Deducers>
 	inline constexpr auto invoke_with_deducers(F&& function, Deducers... deduce) -> decltype(auto) requires detail::concepts::callable<F, Deducers...> {
 		#if NEEDS_PRVALUE_PREPASS == 1
 			return detail::deducer::invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);

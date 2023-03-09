@@ -11,13 +11,13 @@
 #include "define.hpp"
 
 namespace kangaru::sources {
-	template<typename Source>
+	template<source Source>
 	struct recursive_source {
 		constexpr explicit recursive_source(Source source) noexcept : source{std::move(source)} {}
 		
 		template<detail::concepts::object T>
 		struct recurse_construct {
-			auto operator()(auto deduce1, auto... deduce) -> decltype(constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...)) {
+			auto operator()(deducer auto deduce1, deducer auto... deduce) -> decltype(constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...)) {
 				return constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...);
 			}
 		};

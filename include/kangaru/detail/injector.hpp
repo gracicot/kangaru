@@ -58,7 +58,7 @@ namespace kangaru::detail::injector {
 	};
 	
 	template<typename Function, typename Source, std::size_t head, std::size_t... tail, std::size_t... drop>
-		requires detail::concepts::callable<Function, kangaru::deducer<Source>, detail::utility::expand<kangaru::deducer<Source>, tail>..., detail::utility::expand<kangaru::placeholder_deducer, drop>...>
+		requires detail::concepts::callable<Function, kangaru::basic_deducer<Source>, detail::utility::expand<kangaru::basic_deducer<Source>, tail>..., detail::utility::expand<kangaru::placeholder_deducer, drop>...>
 	struct injectable_sequence<Function, Source, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
@@ -76,20 +76,20 @@ namespace kangaru {
 	struct simple_injector {
 		explicit constexpr simple_injector(Source source) noexcept : source{std::move(source)} {}
 		
-		constexpr auto operator()(auto&& function) & -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source&>> {
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source&>{source});
+		constexpr auto operator()(auto&& function) & -> decltype(auto) requires detail::concepts::callable<decltype(function), basic_deducer<Source&>> {
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), basic_deducer<Source&>{source});
 		}
 		
-		constexpr auto operator()(detail::concepts::callable<deducer<Source const&>> auto&& function) const& -> decltype(auto) requires detail::concepts::callable<decltype(function), deducer<Source const&>> {
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source const&>{source});
+		constexpr auto operator()(detail::concepts::callable<basic_deducer<Source const&>> auto&& function) const& -> decltype(auto) requires detail::concepts::callable<decltype(function), basic_deducer<Source const&>> {
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), basic_deducer<Source const&>{source});
 		}
 		
-		constexpr auto operator()(detail::concepts::callable<deducer<Source&&>> auto&& function) && -> decltype(auto) {
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source&&>{std::move(source)});
+		constexpr auto operator()(detail::concepts::callable<basic_deducer<Source&&>> auto&& function) && -> decltype(auto) {
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), basic_deducer<Source&&>{std::move(source)});
 		}
 		
-		constexpr auto operator()(detail::concepts::callable<deducer<Source const&&>> auto&& function) const&& -> decltype(auto) {
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), deducer<Source const&&>{std::move(source)});
+		constexpr auto operator()(detail::concepts::callable<basic_deducer<Source const&&>> auto&& function) const&& -> decltype(auto) {
+			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), basic_deducer<Source const&&>{std::move(source)});
 		}
 		
 	private:
@@ -101,29 +101,29 @@ namespace kangaru {
 		explicit constexpr basic_spread_injector(Source source) noexcept : source{std::move(source)} {}
 		
 		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source&, max>>
-		constexpr auto operator()(F&& function) & -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source&>, Seq> {
+		constexpr auto operator()(F&& function) & -> decltype(auto) requires detail::injector::invocable_with_sequence<F, basic_deducer<Source&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source&&, max>>
-		constexpr auto operator()(F&& function) && -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source&&>, Seq> {
+		constexpr auto operator()(F&& function) && -> decltype(auto) requires detail::injector::invocable_with_sequence<F, basic_deducer<Source&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
 		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source const&, max>>
-		constexpr auto operator()(F&& function) const& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source const&>, Seq> {
+		constexpr auto operator()(F&& function) const& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, basic_deducer<Source const&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<typename F, typename Seq = detail::injector::spread_sequence_t<F, Source const&&, max>>
-		constexpr auto operator()(F&& function) const&& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, deducer<Source const&&>, Seq> {
+		constexpr auto operator()(F&& function) const&& -> decltype(auto) requires detail::injector::invocable_with_sequence<F, basic_deducer<Source const&&>, Seq> {
 			return fill_impl(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
 	private:
 		template<std::size_t... s>
 		static constexpr auto fill_impl(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
-			using Deducer = deducer<decltype(source)>;
+			using Deducer = basic_deducer<decltype(source)>;
 			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), (void(s), Deducer{KANGARU5_FWD(source)})...);
 		}
 		
@@ -144,8 +144,8 @@ namespace kangaru {
 		explicit constexpr composed_injector(Injector1 injector1, Injector2 injector2) noexcept :
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
 		
-		constexpr static auto call_function(auto&& function, auto... deduce_first) {
-			return [&function, deduce_first...](auto... deduce_second) -> decltype(KANGARU5_FWD(function)(deduce_first..., deduce_second...)) {
+		constexpr static auto call_function(auto&& function, deducer auto... deduce_first) {
+			return [&function, deduce_first...](deducer auto... deduce_second) -> decltype(KANGARU5_FWD(function)(deduce_first..., deduce_second...)) {
 				return KANGARU5_FWD(function)(deduce_first..., deduce_second...);
 			};
 		}
@@ -155,7 +155,7 @@ namespace kangaru {
 			Injector injector;
 			Function function;
 			
-			constexpr auto operator()(auto... deduce_first) -> decltype(KANGARU5_FWD(injector)(call_function(KANGARU5_FWD(function), deduce_first...))) {
+			constexpr auto operator()(deducer auto... deduce_first) -> decltype(KANGARU5_FWD(injector)(call_function(KANGARU5_FWD(function), deduce_first...))) {
 				return KANGARU5_FWD(injector)(call_function(KANGARU5_FWD(function), deduce_first...));
 			}
 		};

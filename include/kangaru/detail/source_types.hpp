@@ -46,7 +46,7 @@ namespace kangaru::sources {
 		std::tuple<Ts...> objects;
 	};
 	
-	template<detail::concepts::object T>
+	template<detail::concepts::prvalue T>
 	struct object_source {
 		explicit constexpr object_source(T object) noexcept : object{std::move(object)} {}
 		

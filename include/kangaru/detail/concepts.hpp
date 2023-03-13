@@ -16,6 +16,9 @@ namespace kangaru::detail::concepts {
 	template<typename T>
 	concept object = std::is_object_v<T>;
 	
+	template<typename T>
+	concept prvalue = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
+	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
 	concept callable = requires(F&& f, Args&&... args) {

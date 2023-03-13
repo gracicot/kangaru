@@ -30,39 +30,30 @@ namespace kangaru {
 	};
 
 	template<typename T>
-	concept deducible =
-			detail::concepts::object<T>
-		and not deducer<std::remove_cv_t<T>>
-		and not std::is_const_v<T>;
+	concept deducible = detail::concepts::prvalue<T> and not deducer<T>;
 	
 	template<typename T, typename Source>
-	concept deducible_prvalue =
-			deducible<T>
-		and source_of<Source, T>;
+	concept deducible_prvalue = deducible<T> and source_of<Source, T>;
 	
 	template<typename T, typename Source>
-	concept deducible_lvalue =
-			deducible<T>
-		and source_of<Source, T&>;
+	concept deducible_lvalue = deducible<T> and source_of<Source, T&>;
 	
 	template<typename T, typename Source>
 	concept deducible_const_lvalue =
-			deducible<T>
+		    deducible<T>
 		and (
-				source_of<Source, T const&>
+			   source_of<Source, T const&>
 			or source_of<Source, T&>
 		);
 
 	template<typename T, typename Source>
-	concept deducible_rvalue =
-			deducible<T>
-		and source_of<Source, T&&>;
+	concept deducible_rvalue = deducible<T> and source_of<Source, T&&>;
 	
 	template<typename T, typename Source>
 	concept deducible_const_rvalue =
-			deducible<T>
+		    deducible<T>
 		and (
-				source_of<Source, T const&&>
+			   source_of<Source, T const&&>
 			or source_of<Source, T&&>
 		);
 	
@@ -98,7 +89,7 @@ namespace kangaru {
 		operator T const&& () const;
 	};
 	
-	template<typename Source>
+	template<source_ref Source>
 	struct basic_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
@@ -198,7 +189,6 @@ namespace kangaru {
 		template<deducible T>
 			requires (detail::concepts::different_from<Exclude, T> and deducer_for<Deducer, T>)
 		constexpr operator T() {
-			// Call with const so we can only call the prvalue conversion operator
 			return deducer.operator T();
 		}
 		
@@ -288,6 +278,7 @@ namespace kangaru {
 	}
 	
 	namespace detail::deducer {
+		// These traits and function are only required for compilers that always prefer prvalue
 		template<typename, typename, typename, typename>
 		inline constexpr bool callbale_with_nth_parameter_being_expand = false;
 		

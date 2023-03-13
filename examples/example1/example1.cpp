@@ -70,7 +70,7 @@ auto main() -> int {
 	
 	auto camera_source = kangaru::reference_source{camera};
 	auto model_source = kangaru::rvalue_source{std::move(model)};
-	auto source = kangaru::recursive_source{kangaru::tie(model_source, camera_source)};
+	auto source = kangaru::with_recursive_construct{kangaru::tie(model_source, camera_source)};
 
 	auto injector = kangaru::simple_injector{source};
 

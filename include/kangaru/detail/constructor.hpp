@@ -25,8 +25,8 @@
 	}
 
 #define KANGARU5_ALL_COMBINAISONS \
-	KANGARU5_X(kangaru::detail::concepts::object) \
-	/* KANGARU5_X(template<typename...> typename) \
+	KANGARU5_X(kangaru::detail::concepts::prvalue) \
+	KANGARU5_X(template<typename...> typename) \
 	KANGARU5_X(template<auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, typename...> typename) \
 	KANGARU5_X(template<auto, auto, typename...> typename) \
@@ -41,9 +41,8 @@
 	KANGARU5_X(template<typename, typename, auto, auto, typename...> typename) \
 	KANGARU5_X(template<auto, typename, auto, auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, auto, auto, typename...> typename) \
-	KANGARU5_X(template<auto, auto, auto, auto, typename...> typename) \ */
-	/* special case for nlohmann basic_json */
-	//KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename, typename, typename, typename, typename, template<typename...> typename, template<typename...> typename, typename...> typename)
+	KANGARU5_X(template<auto, auto, auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename, typename, typename, typename, typename, template<typename...> typename, template<typename...> typename, typename...> typename)
 
 namespace kangaru {
 	namespace detail::constructor {

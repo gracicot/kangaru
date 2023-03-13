@@ -15,13 +15,21 @@ namespace kangaru {
 	template<typename T>
 	inline constexpr auto provide_tag = provide_tag_t<T>{}; 
 	
+	template<typename T>
+	concept source = detail::concepts::prvalue<T> and std::move_constructible<T>;
+	
+	template<typename T>
+	concept source_ref = std::is_reference_v<T> and source<std::remove_cvref_t<T>>;
+	
 	namespace detail::source {
 		auto provide(provide_tag_t<struct poison>, auto&&) = delete;
 
 		template<typename Source, typename T>
-		concept adl_nonmember_source_of = requires(provide_tag_t<T> tag, Source&& source) {
-			{ provide(tag, KANGARU5_FWD(source)) } -> std::same_as<T>;
-		};
+		concept adl_nonmember_source_of =
+			    kangaru::source<std::remove_cvref_t<T>>
+			and requires(provide_tag_t<T> tag, Source&& source) {
+				{ provide(tag, KANGARU5_FWD(source)) } -> std::same_as<T>;
+			};
 		
 		struct provide_function {
 			template<typename T, typename Source> requires adl_nonmember_source_of<Source, T>
@@ -35,9 +43,6 @@ namespace kangaru {
 	
 	template<typename Source, typename T>
 	concept source_of = detail::source::adl_nonmember_source_of<Source, T>;
-	
-	template<typename T>
-	concept source = detail::concepts::object<T> and std::movable<T>;
 } // namespace kangaru
 
 #include "undef.hpp"

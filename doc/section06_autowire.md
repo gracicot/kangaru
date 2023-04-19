@@ -24,7 +24,7 @@ And we will see how to autowire these services together!
 
 ## From Dependencies to Autowiring
 
-With fixed dependencies, our service definitions are specefied like this:
+With fixed dependencies, our service definitions are specified like this:
 
 ```c++
 struct CameraService : kgr::single_service<Camera> {};

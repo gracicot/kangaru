@@ -26,7 +26,7 @@ When using `kgr::mapped_service_t<Service>`, that will yield `Definition2`. Beca
 
 ## Named Map
 
-The additional parameter can be feeded with a name. This is how to make a map with a particular name.
+The additional parameter can be configured with a name. This is how to make a map with a particular name.
 
 A named map in not gonna be used unless to tell the container to use that map.
 
@@ -123,6 +123,6 @@ auto service_map(ServiceBase const&) -> misleading_map;
 ```
 
 Even though `ServiceDerived` is convertible to `ServiceBase const&` and the generated service definition yield the right type,
-this particular mapping won't be picked, since the mapping was intendended for `ServiceBase`.
+this particular mapping won't be picked, since the mapping was intended for `ServiceBase`.
 
 [Next chapter: Debugging](section11_debug.md)

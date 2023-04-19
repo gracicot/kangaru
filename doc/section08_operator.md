@@ -4,7 +4,7 @@ Operator Services
 In kangaru, there are built-in services that their purpose is to make specific operations on the container.
 They help encapsulate which jobs on the container a class is able to do.
 
-They generaly wrap the container and allow only an operation to do with the container.
+They generally wrap the container and allow only an operation to do with the container.
 
 ## Container
 
@@ -20,7 +20,7 @@ struct Type {
 struct TypeService : kgr::service<Type, kgr::dependency<kgr::container_service>> {};
 
 kgr::container container1;
-kgr::container& container2 = conatiner1.service<container_service>();
+kgr::container& container2 = container1.service<container_service>();
 
 assert(&container1 == &container2); // passes, both are the same
 
@@ -45,7 +45,7 @@ kgr::container container1;
 kgr::container container2 = container1.service<fork_service>();
 
 container.invoke([](kgr::container fork) {
-    // fork is a forked container, we recieved by value.
+    // fork is a forked container, we received by value.
 });
 ```
 
@@ -180,7 +180,7 @@ for (Base& service : range) {
 ```
 
 In this example, we defined two services, one overrides the other. Then we add them both in the container.
-After that we ask the container for a range of every service that overrides `BaseService`. The base serivce instance is included in the range.
+After that we ask the container for a range of every service that overrides `BaseService`. The base service instance is included in the range.
 
 The loop will pass over both services and will call print.
 

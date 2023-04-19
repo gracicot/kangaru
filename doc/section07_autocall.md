@@ -19,7 +19,7 @@ Alternatively, if you only have C++11 or C++14 on hand, you can use a macro:
 ```
 
 Of course, you are free to name them as you want.
-Once your shotcut is declared, let's get started!
+Once your shortcut is declared, let's get started!
 
 ## Enabling Autocall
 
@@ -127,7 +127,7 @@ struct MessageBusService : kgr::service<MessageBus>, kgr::autocall<
 
 ## Specifying The Service Map
 
-In previous examples, we used the default service map. If you deal with advanced mapping, you might want to specity which maps to use.
+In previous examples, we used the default service map. If you deal with advanced mapping, you might want to specify which maps to use.
 You can set the default map to use in the first parameter of autocall:
 
 ```c++

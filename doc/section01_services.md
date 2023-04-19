@@ -120,7 +120,7 @@ Single services are created and saved in the container for reuse.
 They are created one time at the first call to `service()`, and then saved inside the container.
 The container will then reuse the instance for all future injections.
 
-Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwading is disabled.
+Also, since the constructor will only be called at the first injection, or the first `service()` call, argument forwarding is disabled.
 We'll see how to counter this limitation in the section about [supplied services](section05_supplied.md).
 
 Now, let's say we want only one scene in our application. We want the same scene to be injected and returned by the container.

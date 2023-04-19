@@ -13,12 +13,12 @@ struct Shape {
 };
 
 struct Square : Shape {
-	explicit Square(int l) noexcept : lenght{l} {}
-	int lenght;
+	explicit Square(int l) noexcept : length{l} {}
+	int length;
 	
 	int area() override {
 		std::cout << "Square!\n";
-		return lenght * lenght;
+		return length * length;
 	}
 };
 
@@ -42,7 +42,7 @@ struct Circle : Shape {
 	}
 };
 
-// Other classes. Contains information we need to instanciate shape classes.
+// Other classes. Contains information we need to instantiate shape classes.
 struct Window {
 	int height, width;
 };
@@ -53,7 +53,7 @@ struct CursorState {
 
 // This is our factory.
 // You can add a type associated with a lambda that constructs it.
-// Since that lambda is called through the invoker, we can recieve any number of services.
+// Since that lambda is called through the invoker, we can receive any number of services.
 struct Factory {
 	explicit Factory(kgr::invoker i) noexcept : invoker{i} {}
 	
@@ -93,13 +93,13 @@ Factory setup_factory(Factory factory) {
 	});
 	
 	// To make a square, we need the window and the cursor state.
-	factory.add("Square", [](Window& window, CursorState& cusor_state) {
-		return new Square{(window.height / 10 ) - cusor_state.dragging_distance};
+	factory.add("Square", [](Window& window, CursorState& cursor_state) {
+		return new Square{(window.height / 10 ) - cursor_state.dragging_distance};
 	});
 	
 	// To make a circle, we only need the cursor state.
-	factory.add("Circle", [](CursorState& cusor_state) {
-		return new Circle{cusor_state.dragging_distance};
+	factory.add("Circle", [](CursorState& cursor_state) {
+		return new Circle{cursor_state.dragging_distance};
 	});
 	
 	return factory;
@@ -112,7 +112,7 @@ int main() {
 	// Since FactoryService, we can simply ask the container to invoke it.
 	Factory factory = container.invoke(setup_factory);
 	
-	// We instanciate the other services with parameters.
+	// We instantiate the other services with parameters.
 	container.emplace<WindowService>(640, 480);
 	container.emplace<CursorStateService>(20);
 	

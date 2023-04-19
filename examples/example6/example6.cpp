@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 6: Autowire
+ * This example reflects snippets of code found in the documentation section 6: Autowire
  * It explains how to autowire services using the service map.
  */
 

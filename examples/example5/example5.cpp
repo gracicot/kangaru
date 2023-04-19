@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 5: Supplied Services
+ * This example reflects snippets of code found in the documentation section 5: Supplied Services
  * It explains how to make single services not constructible implicitly by the container.
  */
 
@@ -29,10 +29,10 @@ int main()
 		kgr::container container;
 		bool inserted;
 		
-		inserted = container.emplace<SceneService>(1920, 1080); // contruct a scene in the container.
+		inserted = container.emplace<SceneService>(1920, 1080); // construct a scene in the container.
 		std::cout << std::boolalpha << "Is inserted? " << inserted << '\n';
 		
-		inserted = container.emplace<SceneService>(1024, 768); // contruct a scene in the container.
+		inserted = container.emplace<SceneService>(1024, 768); // construct a scene in the container.
 		std::cout << std::boolalpha << "Is inserted a second time? " << inserted << '\n';
 
 		Scene& scene = container.service<SceneService>(); // works, won't try to construct it.

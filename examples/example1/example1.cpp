@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 1: Services
+ * This example reflects snippets of code found in the documentation section 1: Services
  * It explains how to branch containers and operate between them.
  */
 

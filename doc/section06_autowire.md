@@ -96,13 +96,12 @@ int main()
 }
 ```
 
-Here we cna see the absence of service definition.
-This is because while invoking the lambda, the container uses the mapping above,
-generate definitions and autowire these services!
+Here we can see the absence of service definition. This is because while invoking the lambda the container
+uses the mapping above to generate definitions and autowire these services!
 
-As you can notice, the mapping for `Camera` yields a `kgr::autowire_single`. This is because we want the container
-to generate a definition of a single service for our camera.
-There is `kgr::autowire_unique` and `kgr::autowire_shared` of you want those kind if service to be generated.
+As you can see, the mapping for `Camera` yields a `kgr::autowire_single`. This is because we want the container
+to generate a definition of a single service for our camera. There is `kgr::autowire_unique` and `kgr::autowire_shared`
+if you want those kinds of service to be generated.
 
 If you want to get the generated service definition type, you can use the mapping:
 
@@ -134,7 +133,8 @@ struct Scene {
 
 Just with these two lines, both classes can now be used with the container just as any other services.
 
-Using friend functions also have the advantage of accelerating compilation significantly. It help reduce the amount of overloads to check for each services.
+Using friend functions also have the advantage of accelerating compilation significantly. It help reduce
+the amount of overloads to check for each services.
 
 ## Mapping
 

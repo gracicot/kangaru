@@ -85,7 +85,7 @@ container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Service1_Definition1 an
 
 # Indirect Maps
 
-Since kangaru 4.1.0, the service map allows you de define an indirect mapping.
+Since kangaru 4.1.0, the service map allows you to define an indirect mapping.
 Instead of having the service definition type at the right of the arrow, you can put a class type that has a member template named `mapped_service`.
 
 It can be used to generate the service definition type automatically by the service map with a decent syntax.

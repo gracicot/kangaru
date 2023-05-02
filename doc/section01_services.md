@@ -142,7 +142,9 @@ assert(&scene1 == &scene2); // Passes! Both scenes are the same object.
 
 ## Multiple Dependency
 
-A service can have multiple dependencies. `kgr::dependency` can receive as many dependent definition as needed. Consider we want a screen class. A screen both need a scene and it's own camera. Here's how the class and it's definition would look like:
+A service can have multiple dependencies. `kgr::dependency` can receive as many dependent definition as needed.
+
+Consider the following example where we want a screen class. A Screen needs both a Scene and it's own camera. Here's how the class and its definition could be defined:
 
 ```c++
 struct Screen {

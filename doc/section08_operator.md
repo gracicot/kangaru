@@ -186,9 +186,9 @@ The loop will pass over both services and will call print.
 
 ## Conclusion
 
-While you can use the container directly everywhere, you can also be more fined grained over what a particular piece of code should be able to do with the container. It eventually reduces coupling with kangaru and help expressing your intent with other programmer about what you will do with the container.
+While you can use the container directly everywhere, you can also be more fined grained over what a particular piece of code should be able to do with the container. It eventually reduces coupling in your code and helps to express your intent with other programmers about what you will do with the container.
 
-Also, some special built in service exposes features of the container that is only available through them. They are great tools that can help simplify code using the container.
+Also, some special built in services expose features of the container. They are great tools that can help simplify your code using containers.
 
 Please visit [example8](../examples/example8/example8.cpp) to see more of operator service usage.
 

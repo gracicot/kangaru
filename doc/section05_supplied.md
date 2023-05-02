@@ -139,4 +139,4 @@ The lifetime of the first `SceneService` is not affected, and will be destroyed 
 
 To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
 
-[Next chapter: Autocall](section06_autowire.md)
+[Next chapter: Autowire](section06_autowire.md)

@@ -4,7 +4,7 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example refect snippets of code found in the documentation section 8: Operator Services
+ * This example reflects snippets of code found in the documentation section 8: Operator Services
  * It explains how to use services bundled with kangaru that helps making specific operation on the container.
  */
 

@@ -2,11 +2,11 @@ Structuring projects
 ====================
 
 Have a large codebase? Want to structure your code correctly and scale better?
-Here's some suggestions to keep usage of kangaru in your projects well organised!
+Here's some suggestions to keep usage of kangaru in your projects well organized!
 
 ## Definition completeness
 
-When you use a service definition, it must be complete. For a sevice definition to be valid, it's service must be complete too!
+When you use a service definition, it must be complete. For a service definition to be valid, it's service must be complete too!
 
 *How can we keep a fast compilation and minimize dependencies?*
 

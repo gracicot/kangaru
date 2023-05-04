@@ -26,7 +26,7 @@ When using `kgr::mapped_service_t<Service>`, that will yield `Definition2`. Beca
 
 ## Named Map
 
-The additional parameter can be feeded with a name. This is how to make a map with a particular name.
+The additional parameter can be configured with a name. This is how to make a map with a particular name.
 
 A named map in not gonna be used unless to tell the container to use that map.
 
@@ -85,7 +85,7 @@ container.invoke<kgr::map<MyMap1, MyMap2>>(function); // Service1_Definition1 an
 
 # Indirect Maps
 
-Since kangaru 4.1.0, the service map allows you de define an indirect mapping.
+Since kangaru 4.1.0, the service map allows you to define an indirect mapping.
 Instead of having the service definition type at the right of the arrow, you can put a class type that has a member template named `mapped_service`.
 
 It can be used to generate the service definition type automatically by the service map with a decent syntax.
@@ -123,6 +123,6 @@ auto service_map(ServiceBase const&) -> misleading_map;
 ```
 
 Even though `ServiceDerived` is convertible to `ServiceBase const&` and the generated service definition yield the right type,
-this particular mapping won't be picked, since the mapping was intendended for `ServiceBase`.
+this particular mapping won't be picked, since the mapping was intended for `ServiceBase`.
 
 [Next chapter: Debugging](section11_debug.md)

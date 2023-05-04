@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example only show basic usage of services and the conatainer.
+ * This example only show basic usage of services and the container.
  */
 
 // Normal classes with dependency between them

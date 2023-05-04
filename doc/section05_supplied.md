@@ -13,7 +13,7 @@ Scene& scene2 = c.service<SceneService>(1920, 1080); // Oops! Constructor not ca
 ```
 
 As a matter of fact, the `service` function has no mean to tell if the service has actually been created here.
-To resolve this, you can instead request the constuction of a service with the `emplace(...)` function.
+To resolve this, you can instead request the construction of a service with the `emplace(...)` function.
 That function will perform injection like `service()`, but serves only to save a single into the container.
 Just like `std::map`, emplace only perform initialization if the container don't contain and instance yet.
 It returns `true` if the service is created, and `false` if there's already an instance in the container:
@@ -64,7 +64,7 @@ struct SceneService : kgr::single_service<Scene, kgr::dependency<CameraService>>
 Now, we can use the service like this:
 
 ```c++
-container.emplace<SceneService>(1920, 1080); // contruct a scene in the container.
+container.emplace<SceneService>(1920, 1080); // construct a scene in the container.
 
 Scene& scene = container.service<SceneService>(); // works, won't try to construct it.
 ```
@@ -139,4 +139,4 @@ The lifetime of the first `SceneService` is not affected, and will be destroyed 
 
 To see more about supplied services, please see [example5](../examples/example5/example5.cpp).
 
-[Next chapter: Autocall](section06_autowire.md)
+[Next chapter: Autowire](section06_autowire.md)

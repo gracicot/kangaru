@@ -4,8 +4,8 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example refect snippets of code found in the documentation section 7: Autocall
- * It explains how to call member functions of a service upen construction and injection by setters.
+ * This example reflects snippets of code found in the documentation section 7: Autocall
+ * It explains how to call member functions of a service upon construction and injection by setters.
  */
 
 // This is a utility macro to workaround the lack of type inference for non-type template parameter

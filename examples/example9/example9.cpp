@@ -4,7 +4,7 @@
 #include <kangaru/kangaru.hpp>
 
 /**
- * This example refect snippets of code found in the documentation section 9: Custom Definitions
+ * This example reflects snippets of code found in the documentation section 9: Custom Definitions
  * It explains how to make your own service definition without using generic ones from kangaru.
  */
 
@@ -27,7 +27,7 @@ struct WindowService : kgr::single_service<Window> {};
 struct CameraService : kgr::service<Camera> {};
 
 
-// Custom defintion. We kind of reinplement what `kgr::service` is doing
+// Custom defintion. We kind of reimplement what `kgr::service` is doing
 struct BasicFileManagerService {
 	explicit BasicFileManagerService(kgr::in_place_t) : instance{} {
 		std::cout << "BasicFileManagerService::BasicFileManagerService called\n";
@@ -47,7 +47,7 @@ private:
 	BasicFileManager instance;
 };
 
-// Custom defintion. We kind of reinplement what `kgr::single_service` is doing,
+// Custom defintion. We kind of reimplement what `kgr::single_service` is doing,
 // and we defined injected parameter in construct.
 // Parameter returned from construct are sent to the constructor
 struct FileManagerService : kgr::single {
@@ -70,7 +70,7 @@ private:
 
 // and we defined injected parameter in construct.
 // Parameter returned from construct are sent to the constructor
-// We are recieving a int parameter, which must be sent from the caller.
+// We are receiving a int parameter, which must be sent from the caller.
 struct FileManagerParamService {
 	FileManagerParamService(kgr::in_place_t, Window& w, Camera c, int p) : instance{w, std::move(c), p} {}
 	
@@ -91,7 +91,7 @@ private:
 
 // and we defined injected parameter in construct.
 // Parameter returned from construct are sent to the constructor
-// We are recieving a parameter pack, which can be empty or parameters.
+// We are receiving a parameter pack, which can be empty or parameters.
 struct FileManagerParamTemplService {
 	template<typename... Args>
 	FileManagerParamTemplService(kgr::in_place_t, Args&&... args) : instance{std::forward<Args>(args)...} {}

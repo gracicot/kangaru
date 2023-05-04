@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 2: Invoke
+ * This example reflects snippets of code found in the documentation section 2: Invoke
  * It explains how to do service injection through the parameters of a function.
  */
 

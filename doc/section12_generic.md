@@ -34,7 +34,7 @@ Then, we must implement three member functions: `construct`, `forward` and `call
 There's a function we haven't seen before. What is this mysterious `call` function? It's a function to call a function on the contained instance. It is used by `kgr::autocall`.
 
 The first parameter is a pointer to the method to be called.
-Then it recieves a pack of parameters as argument to the function to be called.
+Then it receives a pack of parameters as argument to the function to be called.
 
 Here's the typical implementation:
 
@@ -122,7 +122,7 @@ It's parameters are:
  * The maximum amount of deductible services
  * And finally, the additional arguments sent to the construct function.
 
-We recomend defining this template alias at class scope:
+We recommend defining this template alias at class scope:
 
 ```c++
 template<typename... Args>

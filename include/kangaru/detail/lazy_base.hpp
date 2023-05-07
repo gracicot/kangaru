@@ -42,6 +42,17 @@ public:
 	rref operator*() && {
 		return std::move(get());
 	}
+
+	operator bool() const {
+		return has_value();
+	}
+
+	bool has_value() const {
+		if (_service.has_value())
+			return true;
+		const kgr::container& c = this->container();
+		return c.contains<T>();
+	}
 	
 private:
 	optional<service_type<T>> _service;

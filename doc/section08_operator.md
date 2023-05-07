@@ -134,9 +134,15 @@ You can use it like this:
 ```c++
 // The contained 'MessageBus&' is not constructed yet.
 kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
+ 
+// Has not yet been constructed
+std::cout << "Constructed?: " << static_cast<bool>(lazy_message_bus);
 
 // MessageBusService is constructed here, the operator* is used.
 std::cout << *lazy_message_bus;
+
+// Now has been constructed
+std::cout << "Constructed?: " << lazy_message_bus.has_value();
 
 // The same instance is reused again and returned by operator->
 lazy_message_bus->process_messages();

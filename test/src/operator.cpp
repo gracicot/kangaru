@@ -142,6 +142,8 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	auto lazy1 = container.service<kgr::lazy_service<Definition1>>();
 	
 	CHECK(!service1_constructed);
+	CHECK(!lazy1.has_value());
+	CHECK(!lazy1);
 	CHECK(sizeof(decltype(lazy1)) == sizeof(kgr::container*) + sizeof(void*));
 	CHECK(sizeof(kgr::optional<kgr::service_type<Definition1>>) == sizeof(void*));
 	CHECK(kgr::detail::is_trivially_copy_constructible<decltype(lazy1)>::value);
@@ -154,6 +156,8 @@ TEST_CASE("Lazy service defer service call", "[operator]") {
 	auto& service1 = *lazy1;
 	
 	CHECK(service1_constructed);
+	CHECK(lazy1.has_value());
+	CHECK(lazy1);
 	REQUIRE((std::is_same<decltype(service1), Service1&>::value));
 	
 	auto lazy2 = container.service<kgr::lazy_service<Definition2>>();

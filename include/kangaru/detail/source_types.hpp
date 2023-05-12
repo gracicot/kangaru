@@ -1,5 +1,5 @@
-#ifndef KANGARU5_DETAIL_TUPLE_SOURCE_HPP
-#define KANGARU5_DETAIL_TUPLE_SOURCE_HPP
+#ifndef KANGARU5_DETAIL_SOURCE_TYPES_HPP
+#define KANGARU5_DETAIL_SOURCE_TYPES_HPP
 
 #include "source.hpp"
 #include "concepts.hpp"
@@ -57,29 +57,41 @@ namespace kangaru::sources {
 	private:
 		T object;
 	};
-
+	
 	template<detail::concepts::object T>
-	struct rvalue_source {
-		explicit constexpr rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
+	struct external_rvalue_source {
+		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(provide_tag_t<T&&>, rvalue_source const& source) -> T&& {
+		friend constexpr auto provide(provide_tag_t<T&&>, external_rvalue_source const& source) -> T&& {
 			return std::move(*source.reference);
 		}
 		
 	private:
 		T* reference;
 	};
-
+	
 	template<detail::concepts::object T>
-	struct reference_source {
-		explicit constexpr reference_source(T& reference) noexcept : reference{std::addressof(reference)} {}
+	struct external_reference_source {
+		explicit constexpr external_reference_source(T& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(provide_tag_t<T&>, reference_source const& source) -> T& {
+		friend constexpr auto provide(provide_tag_t<T&>, external_reference_source const& source) -> T& {
 			return *source.reference;
 		}
 		
 	private:
 		T* reference;
+	};
+	
+	template<detail::concepts::object T>
+	struct reference_source {
+		explicit constexpr reference_source(T object) noexcept : object{std::move(object)} {}
+		
+		friend constexpr auto provide(provide_tag_t<T&>, reference_source& source) -> T& {
+			return source.object;
+		}
+		
+	private:
+		T object;
 	};
 	
 	template<source Source>
@@ -115,4 +127,4 @@ namespace kangaru {
 
 #include "undef.hpp"
 
-#endif // KANGARU5_DETAIL_TUPLE_SOURCE_HPP
+#endif // KANGARU5_DETAIL_SOURCE_TYPES_HPP

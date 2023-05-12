@@ -2,25 +2,24 @@
 #define KANGARU5_DETAIL_CONSTRUCOR_HPP
 
 #include "concepts.hpp"
+#include "utility.hpp"
 
 #include "define.hpp"
-
-#define KANGARU5_DEFINE_CONSTRUCT_COMBINAISON(...) \
-	template<__VA_ARGS__ Type> INLINE \
-	inline constexpr auto construct(int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) { \
-		return Type(KANGARU5_FWD(args)...); \
-	} \
-	\
-	template<__VA_ARGS__ Type> INLINE \
-	inline constexpr auto construct(void*, auto&&... args) -> decltype(Type{KANGARU5_FWD(args)...}) { \
-		return Type{KANGARU5_FWD(args)...}; \
-	}
 
 #define KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(...) \
 	template<__VA_ARGS__ Type> \
 	inline constexpr auto constructor() { \
-		return [](auto&&... args) -> decltype(detail::constructor::construct<Type>(0, KANGARU5_FWD(args)...)) { \
-			return detail::constructor::construct<Type>(0, KANGARU5_FWD(args)...); \
+		auto const call_constructor = detail::utility::overload{ \
+			[](int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) { \
+				return Type(KANGARU5_FWD(args)...); \
+			}, \
+			[](void*, auto&&... args) -> decltype(Type{KANGARU5_FWD(args)...}) { \
+				return Type{KANGARU5_FWD(args)...}; \
+			}, \
+		}; \
+		using constructor_t = decltype(call_constructor); \
+		return [call_constructor](auto&&... args) -> decltype(std::declval<constructor_t>()(0, KANGARU5_FWD(args)...)) { \
+			return call_constructor(0, KANGARU5_FWD(args)...); \
 		}; \
 	}
 
@@ -28,29 +27,88 @@
 	KANGARU5_X(kangaru::detail::concepts::prvalue) \
 	KANGARU5_X(template<typename...> typename) \
 	KANGARU5_X(template<auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename...> typename) \
 	KANGARU5_X(template<typename, auto, typename...> typename) \
 	KANGARU5_X(template<auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename...> typename) \
 	KANGARU5_X(template<typename, typename, auto, typename...> typename) \
 	KANGARU5_X(template<auto, typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, auto, typename...> typename) \
 	KANGARU5_X(template<auto, auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, auto, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
 	KANGARU5_X(template<typename, typename, typename, auto, typename...> typename) \
 	KANGARU5_X(template<auto, typename, typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, typename, auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, typename, auto, typename...> typename) \
 	KANGARU5_X(template<auto, auto, typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, typename, auto, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename, auto, typename...> typename) \
 	KANGARU5_X(template<typename, typename, auto, auto, typename...> typename) \
 	KANGARU5_X(template<auto, typename, auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, auto, auto, typename...> typename) \
 	KANGARU5_X(template<typename, auto, auto, auto, typename...> typename) \
 	KANGARU5_X(template<auto, auto, auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, auto, auto, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, auto, auto, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, auto, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, auto, auto, typename...> typename) \
+	KANGARU5_X(template<typename, typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<auto, typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, auto, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<auto, auto, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, template<typename...> typename, auto, typename...> typename) \
+	KANGARU5_X(template<typename, typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, auto, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, auto, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, auto, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, auto, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, auto, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, auto, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, auto, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, auto, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<typename, template<typename...> typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<auto, template<typename...> typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
+	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, template<typename...> typename, template<typename...> typename, typename...> typename) \
 	KANGARU5_X(template<template<typename...> typename, template<typename...> typename, typename, typename, typename, typename, typename, template<typename...> typename, template<typename...> typename, typename...> typename)
 
 namespace kangaru {
-	namespace detail::constructor {
-		#define KANGARU5_X(...) KANGARU5_DEFINE_CONSTRUCT_COMBINAISON(__VA_ARGS__)
-		KANGARU5_ALL_COMBINAISONS
-		#undef KANGARU5_X
-	}
-	
 	#define KANGARU5_X(...) KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(__VA_ARGS__)
 	KANGARU5_ALL_COMBINAISONS
 	#undef KANGARU5_X
@@ -58,6 +116,7 @@ namespace kangaru {
 
 #undef KANGARU5_DEFINE_CONSTRUCT_COMBINAISON
 #undef KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON
+#undef KANGARU5_ALL_COMBINAISONS
 
 #include "undef.hpp"
 

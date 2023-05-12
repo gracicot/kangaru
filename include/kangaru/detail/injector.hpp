@@ -145,8 +145,8 @@ namespace kangaru {
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
 		
 		constexpr static auto call_function(auto&& function, deducer auto... deduce_first) {
-			return [&function, deduce_first...](deducer auto... deduce_second) -> decltype(KANGARU5_FWD(function)(deduce_first..., deduce_second...)) {
-				return KANGARU5_FWD(function)(deduce_first..., deduce_second...);
+			return [&function, deduce_first...](deducer auto... deduce_second) -> decltype(KANGARU5_FWD(function)(detail::utility::decay_copy(deduce_first)..., deduce_second...)) {
+				return KANGARU5_FWD(function)(detail::utility::decay_copy(deduce_first)..., deduce_second...);
 			};
 		}
 		

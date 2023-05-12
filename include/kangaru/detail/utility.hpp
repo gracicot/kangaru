@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <utility>
 
+#include "define.hpp"
+
 namespace kangaru::detail::utility {
 	template<typename T, typename U> [[nodiscard]]
 	constexpr auto forward_like(U&& x) noexcept -> auto&& {
@@ -22,12 +24,26 @@ namespace kangaru::detail::utility {
 			}
 		}
 	}
-
+	
+	auto decay_copy(auto&& v) -> std::decay_t<decltype(v)> {
+		return KANGARU5_FWD(v);
+	}
+	
 	template<typename T, typename U>
 	using forward_like_t = decltype(forward_like<T>(std::declval<U&>()));
 	
 	template<typename T, std::size_t>
 	using expand = T;
+	
+	template<typename... Functions>
+	struct overload : Functions... {
+		using Functions::operator()...;
+	};
+	
+	template<typename... Functions>
+	overload(Functions...) -> overload<Functions...>;
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU5_DETAIL_UTILITY_HPP

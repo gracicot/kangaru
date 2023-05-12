@@ -39,23 +39,18 @@ namespace kangaru {
 	concept deducible_lvalue = deducible<T> and source_of<Source, T&>;
 	
 	template<typename T, typename Source>
-	concept deducible_const_lvalue =
-		    deducible<T>
-		and (
-			   source_of<Source, T const&>
-			or source_of<Source, T&>
-		);
+	concept deducible_const_lvalue = deducible<T> and (
+		   source_of<Source, T const&>
+		or source_of<Source, T&>
+		or source_of<Source, T const&&>
+		or source_of<Source, T&&>
+	);
 
 	template<typename T, typename Source>
 	concept deducible_rvalue = deducible<T> and source_of<Source, T&&>;
 	
 	template<typename T, typename Source>
-	concept deducible_const_rvalue =
-		    deducible<T>
-		and (
-			   source_of<Source, T const&&>
-			or source_of<Source, T&&>
-		);
+	concept deducible_const_rvalue = deducible<T> and (source_of<Source, T const&&> or source_of<Source, T&&>);
 	
 	struct ambiguous_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;
@@ -93,28 +88,35 @@ namespace kangaru {
 	struct basic_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
-		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_reference_t<Source>> auto&& source) noexcept :
+		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto const&& source) noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
+			source{std::addressof(source)} {}
+		
+		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
 			source{std::addressof(source)} {}
 		
 		template<deducible_prvalue<Source> T>
 		constexpr operator T() {
 			return provide(provide_tag<T>, static_cast<Source&&>(*source));
 		}
-
+		
 		template<deducible_lvalue<Source> T>
 		constexpr operator T&() const {
 			return provide(provide_tag<T&>, static_cast<Source&&>(*source));
 		}
-
+		
 		template<deducible_const_lvalue<Source> T>
 		constexpr operator T const&() const {
 			if constexpr (source_of<Source, T const&>) {
 				return provide(provide_tag<T const&>, static_cast<Source&&>(*source));
-			} else {
+			} else if constexpr (source_of<Source, T&>) {
 				return std::as_const(provide(provide_tag<T&>, static_cast<Source&&>(*source)));
+			} else if constexpr (source_of<Source, T const&&>) {
+				return static_cast<T const&>(provide(provide_tag<T const&&>, static_cast<Source&&>(*source)));
+			} else {
+				return static_cast<T const&>(provide(provide_tag<T&&>, static_cast<Source&&>(*source)));
 			}
 		}
-
+		
 		template<deducible_rvalue<Source> T>
 		constexpr operator T&&() const {
 			return provide(provide_tag<T&&>, static_cast<Source&&>(*source));
@@ -282,27 +284,32 @@ namespace kangaru {
 		template<typename, typename, typename, typename>
 		inline constexpr bool callbale_with_nth_parameter_being_expand = false;
 		
-		template<typename S, typename F, std::size_t... before, std::size_t... after>
+		template<typename T, typename F, std::size_t... before, std::size_t... after>
 		inline constexpr bool callbale_with_nth_parameter_being_expand<
-			S, F,
+			T, F,
 			std::index_sequence<before...>,
 			std::index_sequence<after...>
 		> = detail::concepts::callable<
 			F,
 			detail::utility::expand<placeholder_deducer, before>...,
-			S,
+			T,
 			detail::utility::expand<placeholder_deducer, after>...
 		>;
 		
-		template<typename S, typename F, std::size_t nth, std::size_t max>
+		template<typename T, typename F, std::size_t nth, std::size_t max>
 		concept callbale_with_nth_parameter_being = callbale_with_nth_parameter_being_expand<
-			S, F,
+			T, F,
 			std::make_index_sequence<nth>,
 			std::make_index_sequence<max - nth - 1>
 		>;
 		
-		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
-		inline constexpr auto invoke_with_deducers_prvalue_filter(F&& function, std::index_sequence<S...>, Deducers... deduce) -> decltype(auto) requires detail::concepts::callable<F, Deducers...> {
+		template<kangaru::deducer... Deducers, std::size_t... S>
+		inline constexpr auto invoke_with_deducers_prvalue_filter(
+			detail::concepts::callable<Deducers...> auto&& function,
+			std::index_sequence<S...>,
+			Deducers... deduce
+		) -> decltype(auto) {
+			using F = decltype(function);
 			return KANGARU5_FWD(function)(
 				detail::type_traits::conditional_t<
 					    callbale_with_nth_parameter_being<ambiguous_prvalue_deducer, F, S, sizeof...(S)>
@@ -314,8 +321,8 @@ namespace kangaru {
 		}
 	}
 	
-	template<typename F, deducer... Deducers>
-	inline constexpr auto invoke_with_deducers(F&& function, Deducers... deduce) -> decltype(auto) requires detail::concepts::callable<F, Deducers...> {
+	template<deducer... Deducers>
+	inline constexpr auto invoke_with_deducers(detail::concepts::callable<Deducers...> auto&& function, Deducers... deduce) -> decltype(auto) {
 		#if NEEDS_PRVALUE_PREPASS == 1
 			return detail::deducer::invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 		#else

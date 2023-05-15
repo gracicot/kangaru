@@ -185,7 +185,8 @@ namespace kangaru {
 	private:
 		template<typename F, typename... DeduceFirst>
 		struct decltype_helper {
-			auto operator()(auto... args) -> decltype(std::declval<F>()(std::declval<DeduceFirst>()..., args...));
+			template<typename... Args>
+			auto operator()(Args...) -> decltype(std::declval<F>()(std::declval<DeduceFirst>()..., std::declval<Args>()...));
 		};
 
 		Injector1 injector1;

@@ -25,7 +25,8 @@ namespace kangaru::detail::utility {
 		}
 	}
 	
-	auto decay_copy(auto&& v) -> std::decay_t<decltype(v)> {
+	template<typename T>
+	auto decay_copy(T&& v) -> std::decay_t<T> {
 		return KANGARU5_FWD(v);
 	}
 	

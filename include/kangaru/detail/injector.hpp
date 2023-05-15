@@ -145,7 +145,9 @@ namespace kangaru {
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
 		
 		constexpr static auto call_function(auto&& function, deducer auto... deduce_first) {
-			return [&function, deduce_first...](deducer auto... deduce_second) -> decltype(KANGARU5_FWD(function)(detail::utility::decay_copy(deduce_first)..., deduce_second...)) {
+			// Workaround for clang bug: https://github.com/llvm/llvm-project/issues/61589
+			using helper = decltype_helper<decltype(function), decltype(deduce_first)...>;
+			return [&function, deduce_first...](deducer auto... deduce_second) -> decltype(std::declval<helper>()(deduce_second...)) {
 				return KANGARU5_FWD(function)(detail::utility::decay_copy(deduce_first)..., deduce_second...);
 			};
 		}
@@ -181,6 +183,11 @@ namespace kangaru {
 		}
 		
 	private:
+		template<typename F, typename... DeduceFirst>
+		struct decltype_helper {
+			auto operator()(auto... args) -> decltype(std::declval<F>()(std::declval<DeduceFirst>()..., args...));
+		};
+
 		Injector1 injector1;
 		Injector2 injector2;
 	};

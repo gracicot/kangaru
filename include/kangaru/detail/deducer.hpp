@@ -88,7 +88,8 @@ namespace kangaru {
 	struct basic_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
-		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto const&& source) noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
+		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto const&& source)
+		noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
 			source{std::addressof(source)} {}
 		
 		explicit constexpr basic_deducer(detail::concepts::forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
@@ -281,27 +282,20 @@ namespace kangaru {
 	
 	namespace detail::deducer {
 		// These traits and function are only required for compilers that always prefer prvalue
-		template<typename, typename, typename, typename>
-		inline constexpr bool callbale_with_nth_parameter_being_expand = false;
-		
 		template<typename T, typename F, std::size_t... before, std::size_t... after>
-		inline constexpr bool callbale_with_nth_parameter_being_expand<
-			T, F,
-			std::index_sequence<before...>,
-			std::index_sequence<after...>
-		> = detail::concepts::callable<
+		inline constexpr auto callbale_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
+			return detail::concepts::callable<
 			F,
 			detail::utility::expand<placeholder_deducer, before>...,
 			T,
 			detail::utility::expand<placeholder_deducer, after>...
-		>;
+			>;
+		}
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		concept callbale_with_nth_parameter_being = callbale_with_nth_parameter_being_expand<
-			T, F,
-			std::make_index_sequence<nth>,
-			std::make_index_sequence<max - nth - 1>
-		>;
+		inline constexpr auto callbale_with_nth_parameter_being() -> bool {
+			return callbale_with_nth_parameter_being_expand<T, F>(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{});
+		}
 		
 		template<kangaru::deducer... Deducers, std::size_t... S>
 		inline constexpr auto invoke_with_deducers_prvalue_filter(
@@ -312,8 +306,8 @@ namespace kangaru {
 			using F = decltype(function);
 			return KANGARU5_FWD(function)(
 				detail::type_traits::conditional_t<
-					    callbale_with_nth_parameter_being<ambiguous_prvalue_deducer, F, S, sizeof...(S)>
-					and callbale_with_nth_parameter_being<exclude_prvalue_deducer<Deducers>, F, S, sizeof...(S)>,
+					    callbale_with_nth_parameter_being<ambiguous_prvalue_deducer, F, S, sizeof...(S)>()
+					and callbale_with_nth_parameter_being<exclude_prvalue_deducer<Deducers>, F, S, sizeof...(S)>(),
 					exclude_prvalue_deducer<Deducers>,
 					exclude_references_deducer<Deducers>
 				>{deduce}...

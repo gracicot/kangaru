@@ -54,9 +54,6 @@ using conditional_t = typename std::conditional<b, T, F>::type;
 template<std::size_t S, typename T>
 using tuple_element_t = typename std::tuple_element<S, T>::type;
 
-template<std::size_t size, std::size_t align>
-using aligned_storage_t = alignas(align) unsigned char[size];
-
 template<typename F>
 using function_seq = tuple_seq<function_arguments_t<F>>;
 

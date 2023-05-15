@@ -65,8 +65,7 @@ protected:
 	
 private:
 	friend detail::generic_service_destruction<generic_service<Type>, Type>;
-	
-	detail::aligned_storage_t<sizeof(Type), alignof(Type)> _instance;
+	alignas(alignof(Type)) unsigned char _instance[sizeof(Type)];
 };
 
 /*

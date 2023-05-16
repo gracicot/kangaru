@@ -107,9 +107,6 @@ jobs:
           - gcc: 8
             hash-typeid: On
 
-          - arch: x64
-            triplet: x64-linux
-
     steps: 
       - uses: actions/checkout@v2
 

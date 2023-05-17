@@ -101,10 +101,6 @@ jobs:
         os: [ubuntu-20.04] 
         gcc: [7, 8, 9, 10, 11]
 
-        include:
-          - gcc: 12
-          - os: ubuntu-22.04
-
         exclude:
           - gcc: 7
             hash-typeid: On

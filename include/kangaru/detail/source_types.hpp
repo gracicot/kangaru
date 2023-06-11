@@ -134,13 +134,14 @@ namespace kangaru::sources {
 		Source source;
 	};
 	
-	template<typename T>
-	inline constexpr auto filter(auto&& source) -> filter_source<std::decay_t<decltype(source)>, T> {
-		return filter_source<decltype(source), T>{KANGARU5_FWD(source)};
+	template<typename T, typename Source>
+	inline constexpr auto filter(Source&& source) -> filter_source<std::decay_t<Source>, T> {
+		return filter_source<std::decay_t<Source>, T>{KANGARU5_FWD(source)};
 	}
 	
-	inline constexpr auto filter_if(auto&& source, auto filter) -> filter_if_source<std::decay_t<decltype(source)>, decltype(filter)> {
-		return filter_if_source<std::decay_t<decltype(source)>, decltype(filter)>{KANGARU5_FWD(source)};
+	template<typename Source, typename Filter>
+	inline constexpr auto filter_if(Source&& source, [[maybe_unused]] Filter filter) -> filter_if_source<std::decay_t<Source>, Filter> {
+		return filter_if_source<std::decay_t<Source>, Filter>{KANGARU5_FWD(source)};
 	}
 	
 	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {

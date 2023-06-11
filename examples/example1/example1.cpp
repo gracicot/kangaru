@@ -68,13 +68,16 @@ auto main() -> int {
 	auto camera = Camera{.id = 2};
 	auto model = Model{.id = 8};
 	
-	auto camera_source = kangaru::reference_source{camera};
-	auto model_source = kangaru::external_rvalue_source{std::move(model)};
-	auto source = kangaru::with_recursive_construct{kangaru::tie(model_source, camera_source)};
+	auto camera_source = kangaru::external_reference_source{camera};
+	auto model_source = kangaru::object_source{model};
+	
+	auto source = kangaru::make_source_with_recursive_construct(
+		kangaru::tie(model_source, camera_source)
+	);
 
-	auto injector = kangaru::simple_injector{source};
+	auto injector = kangaru::make_spread_injector(source);
 
-	injector([&camera](Movie movie) -> void {
+	injector([&](Movie movie) -> void {
  		fmt::print("camera id: {}\nmodel id: {}\nis equal: {}\n",
 			movie.scene.camera.id,
 			movie.scene.model.id,
@@ -86,7 +89,7 @@ auto main() -> int {
 	//auto make = kangaru::<Scene>();
 	//auto lambda = [make](auto deduce1, auto... deduce) -> decltype(make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...)) { return make(kangaru::exclude_deduction<Scene>(deduce1), kangaru::exclude_deduction<Scene>(deduce)...); };
 	// kangaru::spread_injector test{kgr::ref(rec)};
-	//static_assert(kangaru::detail::concepts::callable<decltype(lambda), kangaru::deducer<kangaru::detail::injector::match_any>, kangaru::deducer<kangaru::detail::injector::match_any>>);
+	//static_assert(kangaru::::callable<decltype(lambda), kangaru::deducer<kangaru::detail::injector::match_any>, kangaru::deducer<kangaru::detail::injector::match_any>>);
 	//using G = kangaru::detail::injector::parameter_sequence_t<decltype(lambda), 12>;
 	//using G2 = kangaru::detail::injector::injectable_sequence<decltype(lambda), decltype(rec)&, G>::type;
 	//using aa = G::patate;

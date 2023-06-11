@@ -9,7 +9,7 @@
 #define KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(...) \
 	template<__VA_ARGS__ Type> \
 	inline constexpr auto constructor() { \
-		auto const call_constructor = detail::utility::overload{ \
+		auto const call_constructor = ::kangaru::detail::utility::overload{ \
 			[](int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) { \
 				return Type(KANGARU5_FWD(args)...); \
 			}, \
@@ -18,13 +18,13 @@
 			}, \
 		}; \
 		using constructor_t = decltype(call_constructor); \
-		return [call_constructor](auto&&... args) -> decltype(std::declval<constructor_t>()(0, KANGARU5_FWD(args)...)) { \
+		return [call_constructor](auto&&... args) -> decltype(::std::declval<constructor_t>()(0, KANGARU5_FWD(args)...)) { \
 			return call_constructor(0, KANGARU5_FWD(args)...); \
 		}; \
 	}
 
 #define KANGARU5_ALL_COMBINAISONS \
-	KANGARU5_X(kangaru::detail::concepts::prvalue) \
+	KANGARU5_X(::kangaru::unqualified_object) \
 	KANGARU5_X(template<typename...> typename) \
 	KANGARU5_X(template<auto, typename...> typename) \
 	KANGARU5_X(template<template<typename...> typename, typename...> typename) \

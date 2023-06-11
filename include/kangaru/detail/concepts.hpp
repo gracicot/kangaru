@@ -6,7 +6,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::concepts {
+namespace kangaru {
 	template<typename T, typename U>
 	concept different_from = not std::same_as<T, U>;
 	
@@ -17,7 +17,7 @@ namespace kangaru::detail::concepts {
 	concept object = std::is_object_v<T>;
 	
 	template<typename T>
-	concept prvalue = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
+	concept unqualified_object = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
 	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
@@ -28,6 +28,11 @@ namespace kangaru::detail::concepts {
 	template<typename T, typename... Args>
 	concept brace_constructible = requires(Args&&... args) {
 		::new T{KANGARU5_FWD(args)...};
+	};
+	
+	template<typename F, typename T, typename... Args>
+	concept callable_template1 = requires(F&& f, Args&&... args) {
+		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);
 	};
 }
 

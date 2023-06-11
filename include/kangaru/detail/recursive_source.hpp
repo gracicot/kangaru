@@ -38,10 +38,8 @@ namespace kangaru::sources {
 		template<typename T, forwarded<with_recursion> Self, typename S = detail::utility::forward_like_t<Self, Source>>
 			requires (not source_of<S, T> and callable<injector_type<Self>, call_construct_function<T>>)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			auto self = ref(source);
-			auto injector = spread_injector<decltype(self)>{self};
-			
-			return injector(call_construct_function<T>{std::addressof(source.construct)});
+			auto injector = make_spread_injector(ref(source));
+			return std::move(injector)(call_construct_function<T>{std::addressof(source.construct)});
 		}
 		
 		KANGARU5_NO_UNIQUE_ADDRESS

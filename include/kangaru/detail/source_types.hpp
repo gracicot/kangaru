@@ -94,6 +94,8 @@ namespace kangaru::sources {
 		T object;
 	};
 	
+	struct noop_source {};
+	
 	template<source Source>
 	struct source_reference_wrapper {
 		constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}

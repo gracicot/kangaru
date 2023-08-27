@@ -45,7 +45,9 @@
 				"KANGARU_TEST": "ON",
 				"KANGARU_TEST_CXX14": "ON",
 				"KANGARU_TEST_CXX17": "ON",
-				"CMAKE_COLOR_DIAGNOSTICS": "ON"
+				"CMAKE_COLOR_DIAGNOSTICS": "ON",
+				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+				"CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fsanitize=address"
 			}
 		},
 		{

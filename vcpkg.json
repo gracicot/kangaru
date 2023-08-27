@@ -5,6 +5,5 @@
     "catch2",
     "benchmark",
     "fmt"
-  ],
-  "builtin-baseline": "b3e0a1e625a0cc00073efb763e39088e5b75939e"
+  ]
 }

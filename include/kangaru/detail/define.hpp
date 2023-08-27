@@ -29,18 +29,29 @@
 #define KANGARU5_CONSTRUCTOR_T(...) decltype(::kangaru::constructor<__VA_ARGS__>())
 
 #if KANGARU5_IS_CLANG == 1
-#define INLINE [[gnu::always_inline]]
-#define NEEDS_PRVALUE_PREPASS 1
+#define KANGARU5_INLINE [[gnu::always_inline]]
+#define KANGARU5_RVALUE_AMBIGUOUS 0
+#define KANGARU5_LVALUE_CONST_AMBIGUOUS 1
 #endif
 
 #if KANGARU5_IS_GNU == 1
-#define INLINE [[gnu::always_inline]]
-#define NEEDS_PRVALUE_PREPASS 0
+#define KANGARU5_INLINE [[gnu::always_inline]]
+#define KANGARU5_RVALUE_AMBIGUOUS 1
+#define KANGARU5_LVALUE_CONST_AMBIGUOUS 0
 #endif
 
 #if KANGARU5_IS_MSVC == 1
-#define INLINE [[msvc::forceinline]]
-#define NEEDS_PRVALUE_PREPASS 1
+#define KANGARU5_INLINE [[msvc::forceinline]]
+#define KANGARU5_RVALUE_AMBIGUOUS 0
+#define KANGARU5_LVALUE_CONST_AMBIGUOUS 1
+#endif
+
+// #define KANGARU5_DEBUG_SKIP_PRVALUE_PREPASS
+
+#ifdef KANGARU5_DEBUG_SKIP_PRVALUE_PREPASS
+#define KANGARU5_SKIP_PRVALUE_PREPASS 1
+#else
+#define KANGARU5_SKIP_PRVALUE_PREPASS 0
 #endif
 
 #undef KANGARU5_IS_MSVC

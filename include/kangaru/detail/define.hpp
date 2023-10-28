@@ -25,6 +25,12 @@
 #define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 #endif
 
+#if KANGARU_IS_MSVC == 1
+#define KANGARU5_FUNCTION_SIGNATURE __FUNCSIG__
+#else
+#define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
+#endif
+
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 #define KANGARU5_CONSTRUCTOR_T(...) decltype(::kangaru::constructor<__VA_ARGS__>())
 
@@ -57,6 +63,14 @@
 #undef KANGARU5_IS_MSVC
 #undef KANGARU5_IS_GNU
 #undef KANGARU5_IS_CLANG
+
+#define KANGARU5_CONSTEVAL_IF_POSSIBLE consteval
+
+#if __cplusplus >= 202302L
+#define KANGARU5_CONSTEXPR_VOIDSTAR constexpr
+#else
+#define KANGARU5_CONSTEXPR_VOIDSTAR
+#endif
 
 #else
 #error "A previous header seem to have leaked macros"

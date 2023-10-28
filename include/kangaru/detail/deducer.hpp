@@ -484,6 +484,9 @@ namespace kangaru {
 	template<typename Deducer>
 	using exclude_references_deducer = filtered_value_category_deducer<Deducer, reference_kind::none>;
 	
+	template<typename Deducer>
+	using lvalue_reference_deducer = filtered_value_category_deducer<Deducer, reference_kind::lvalue_reference>;
+	
 	template<deducible T>
 	inline constexpr auto exclude_special_constructors_for(deducer auto deducer) {
 		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};

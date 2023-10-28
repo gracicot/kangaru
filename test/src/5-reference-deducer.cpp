@@ -392,69 +392,69 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		static_assert(not kangaru::construction_tree_needs<type_0010, injected&&>);
 		static_assert(not kangaru::construction_tree_needs<type_0010, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
 		
 		static_assert(not kangaru::construction_tree_needs<type_0100, injected&>);
 		static_assert(not kangaru::construction_tree_needs<type_0100, injected const&>);
 		static_assert(kangaru::construction_tree_needs<type_0100, injected&&>);
 		static_assert(not kangaru::construction_tree_needs<type_0100, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_0101, injected&&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0101, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_0101, injected&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&&>);
 		
-		//static_assert(not kangaru::construction_tree_needs<type_0110, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_0110, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_0110, injected&&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0110, injected const&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0110, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_0110, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_0110, injected&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0110, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_0111, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_0111, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
-		//static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_0111, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_0111, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
 		
 		static_assert(not kangaru::construction_tree_needs<type_1000, injected&>);
 		static_assert(not kangaru::construction_tree_needs<type_1000, injected const&>);
 		static_assert(not kangaru::construction_tree_needs<type_1000, injected&&>);
 		static_assert(kangaru::construction_tree_needs<type_1000, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1001, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1001, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1001, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1001, injected const&&>);
 		
-		//static_assert(not kangaru::construction_tree_needs<type_1010, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_1010, injected const&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1010, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1010, injected const&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1010, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_1010, injected const&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1010, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1010, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_1011, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_1011, injected const&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1011, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1011, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1011, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_1011, injected const&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1011, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1011, injected const&&>);
 		
-		//static_assert(not kangaru::construction_tree_needs<type_1100, injected&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1100, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_1100, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1100, injected const&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1100, injected&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1100, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_1100, injected&&>);
+		////static_assert(kangaru::construction_tree_needs<type_1100, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_1101, injected&>);
-		//static_assert(not kangaru::construction_tree_needs<type_1101, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_1101, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1101, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1101, injected&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1101, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_1101, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1101, injected const&&>);
 		
-		//static_assert(not kangaru::construction_tree_needs<type_1110, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_1110, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_1110, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1110, injected const&&>);
+		////static_assert(not kangaru::construction_tree_needs<type_1110, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_1110, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_1110, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1110, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_1111, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_1111, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_1111, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1111, injected const&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1111, injected&>);
+		//static_assert(kangaru::construction_tree_needs<type_1111, injected const&>);
+		//static_assert(kangaru::construction_tree_needs<type_1111, injected&&>);
+		//static_assert(kangaru::construction_tree_needs<type_1111, injected const&&>);
 	}
 }

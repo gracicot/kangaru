@@ -8,17 +8,19 @@
 
 #define KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(...) \
 	template<__VA_ARGS__ Type> \
-	inline constexpr auto constructor() { \
+	inline constexpr auto constructor() noexcept { \
 		auto const call_constructor = ::kangaru::detail::utility::overload{ \
-			[](int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) { \
+			[](int, auto&&... args) noexcept(noexcept(Type(KANGARU5_FWD(args)...))) -> decltype(Type(KANGARU5_FWD(args)...)) { \
 				return Type(KANGARU5_FWD(args)...); \
 			}, \
-			[](void*, auto&&... args) -> decltype(Type{KANGARU5_FWD(args)...}) { \
+			[](void*, auto&&... args) noexcept(noexcept(Type{KANGARU5_FWD(args)...})) -> decltype(Type{KANGARU5_FWD(args)...}) { \
 				return Type{KANGARU5_FWD(args)...}; \
 			}, \
 		}; \
 		using constructor_t = decltype(call_constructor); \
-		return [call_constructor](auto&&... args) -> decltype(::std::declval<constructor_t>()(0, KANGARU5_FWD(args)...)) { \
+		return [call_constructor](auto&&... args) \
+		noexcept(noexcept(::std::declval<constructor_t>()(0, KANGARU5_FWD(args)...))) \
+		-> decltype(::std::declval<constructor_t>()(0, KANGARU5_FWD(args)...)) { \
 			return call_constructor(0, KANGARU5_FWD(args)...); \
 		}; \
 	}

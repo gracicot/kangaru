@@ -1,5 +1,6 @@
 //#include <kangaru-prev/kangaru.hpp>
 #include <kangaru/kangaru.hpp>
+#include <kangaru/detail/runtime_cached_source.hpp>
 #include <kangaru/short.hpp>
 #include <array>
 #include <vector>
@@ -45,26 +46,26 @@
 // ScreenService is a single service of Screen, that depends on a scene and camera
 //struct ScreenService : kgr::service<Screen, kgr::dependency<SceneService, CameraService>> {};
 
+struct Camera {
+	int id;
+};
+
+struct Model {
+	int id;
+};
+
+struct Scene {
+	explicit constexpr Scene(Camera& c, Model m) : camera{c}, model{m} {}
+	Camera& camera;
+	Model model;
+};
+
+struct Movie {
+	explicit constexpr Movie(Scene s) : scene{s} {}
+	Scene scene;
+};
+
 auto main() -> int {
-	struct Camera {
-		int id;
-	};
-
-	struct Model {
-		int id;
-	};
-
-	struct Scene {
-		explicit constexpr Scene(Camera& c, Model m) : camera{c}, model{m} {}
-		Camera& camera;
-		Model model;
-	};
-
-	struct Movie {
-		explicit constexpr Movie(Scene s) : scene{s} {}
-		Scene scene;
-	};
-
 	auto camera = Camera{.id = 2};
 	auto model = Model{.id = 8};
 	

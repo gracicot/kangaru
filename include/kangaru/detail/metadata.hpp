@@ -54,20 +54,17 @@ namespace kangaru {
 	concept provides_metadata = weak_metadata<metadata_t<T>>;
 	
 	template<typename T>
-	struct is_empty_injection_constructible : std::false_type {};
-	
-	template<typename T>
 	concept metadata_empty_injection_constructible =
 		    provides_metadata<T>
 		and requires {
 			requires std::same_as<typename metadata_t<T>::allow_empty_injection, std::true_type>;
 		};
 	
-	template<metadata_empty_injection_constructible T>
-	struct is_empty_injection_constructible<T> : std::true_type {};
+	template<typename T>
+	inline constexpr auto is_empty_injection_constructible_v = metadata_empty_injection_constructible<T>;
 	
 	template<typename T>
-	concept empty_injection_constructible = is_empty_injection_constructible<T>::value;
+	inline constexpr auto is_cachable_v = metadata_empty_injection_constructible<T>;
 	
 	struct empty_injectable {
 		using meta = metadata_tag;

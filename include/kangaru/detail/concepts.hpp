@@ -19,6 +19,12 @@ namespace kangaru {
 	template<typename T>
 	concept unqualified_object = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
 	
+	template<typename T>
+	concept reference = not object<T> and not unqualified_object<T> and std::is_reference_v<T>;
+	
+	template<typename T, typename Self>
+	concept not_self = unqualified_object<T> and different_from<T, std::decay_t<Self>>;
+	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
 	concept callable = requires(F&& f, Args&&... args) {

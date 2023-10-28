@@ -84,13 +84,17 @@ namespace kangaru {
 	template<typename T>
 	concept injector = object<T> and std::move_constructible<T>;
 	
+	template<typename F, std::size_t max>
+	concept reflectable_function = requires {
+		requires detail::injector::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
+	};
+	
 	template<source Source>
 	struct simple_injector {
 		explicit constexpr simple_injector(Source source) noexcept : source{std::move(source)} {}
 		
 		constexpr auto operator()(auto&& function) & -> decltype(auto) requires callable<decltype(function), basic_deducer<Source&>> {
 			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), basic_deducer<Source&>{source});
-			return function(basic_deducer<Source&>{source});
 		}
 		
 		constexpr auto operator()(callable<basic_deducer<Source const&>> auto&& function) const& -> decltype(auto) requires callable<decltype(function), basic_deducer<Source const&>> {

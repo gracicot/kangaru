@@ -171,7 +171,7 @@ namespace kangaru::sources {
 		}
 		
 		template<unqualified_object T>
-			requires (callable<KANGARU5_CONSTRUCTOR_T(T)> and empty_injection_constructible<T>)
+			requires (callable<KANGARU5_CONSTRUCTOR_T(T)> and is_empty_injection_constructible_v<T>)
 		constexpr auto operator()() const -> T {
 			return constructor<T>()();
 		}

@@ -12,18 +12,18 @@ jobs:
         os: [macos-12]
         xcode: [13, 14]
 
-    steps: 
-      - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v4
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.23.0
+        uses: lukka/get-cmake@v3.26.0
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b3e0a1e625a0cc00073efb763e39088e5b75939e'
+          vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -54,8 +54,8 @@ jobs:
             os: ubuntu-20.04
             arch: x64
 
-    steps: 
-      - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v4
 
       # Minimum GCC version required for vcpkg
       - uses: egor-tensin/setup-gcc@v1
@@ -64,14 +64,14 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.23.0
+        uses: lukka/get-cmake@v3.26.0
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b3e0a1e625a0cc00073efb763e39088e5b75939e'
+          vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -99,8 +99,8 @@ jobs:
         os: [ubuntu-22.04] 
         gcc: [11, 12]
 
-    steps: 
-      - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v4
 
       # Minimum GCC version required for vcpkg
       - uses: egor-tensin/setup-gcc@v1
@@ -109,14 +109,14 @@ jobs:
           platform: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.23.0
+        uses: lukka/get-cmake@v3.26.0
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b3e0a1e625a0cc00073efb763e39088e5b75939e'
+          vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -144,21 +144,21 @@ jobs:
         arch: [x64]
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - uses: egor-tensin/vs-shell@v2
         with:
           arch: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.23.0
+        uses: lukka/get-cmake@v3.26.0
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'b3e0a1e625a0cc00073efb763e39088e5b75939e'
+          vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

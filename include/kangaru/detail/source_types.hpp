@@ -63,7 +63,7 @@ namespace kangaru::sources {
 		injectable_object_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
 			object{deduce...} {}
 		
-		friend constexpr auto provide(provide_tag<T>, forwarded<object_source> auto&& source) -> T {
+		friend constexpr auto provide(provide_tag<T>, forwarded<injectable_object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
 		}
 		
@@ -76,7 +76,7 @@ namespace kangaru::sources {
 		injectable_reference_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
 			object{deduce...} {}
 		
-		friend constexpr auto provide(provide_tag<T&>, object_source auto& source) -> T& {
+		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source source) -> T& {
 			return source.object;
 		}
 		

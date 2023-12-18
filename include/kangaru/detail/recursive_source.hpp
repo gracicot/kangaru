@@ -43,7 +43,7 @@ namespace kangaru::sources {
 			Construct const* construct;
 			
 			constexpr auto operator()(deducer auto... deduce) const -> T
-			requires callable_template1<Construct const&, T, decltype(deduce)...>
+				requires callable_template1<Construct const&, T, decltype(deduce)...>
 			{
 				return construct->template operator()<T>(deduce...);
 			}

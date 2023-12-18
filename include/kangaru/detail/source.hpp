@@ -33,7 +33,7 @@ namespace kangaru {
 		
 		struct provide_function {
 			template<typename T, typename Source> requires adl_nonmember_source_of<Source, T>
-			constexpr auto operator()(provide_tag<T> tag, Source&& source) const -> T {
+			KANGARU5_INLINE constexpr auto operator()(provide_tag<T> tag, Source&& source) const -> T {
 				return provide(tag, KANGARU5_FWD(source));
 			}
 		};

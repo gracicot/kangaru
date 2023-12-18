@@ -12,15 +12,15 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		by_rvalue_const_reference
 	};
 
-	struct Sneezy {
+	struct sneezy {
 		how_t how;
 	};
 	
-	auto by_plain_value = Sneezy{.how = by_value};
-	auto by_reference = Sneezy{.how = by_lvalue_reference};
-	auto const by_reference_const = Sneezy{.how = by_lvalue_const_reference};
-	auto by_rvalue = Sneezy{.how = by_rvalue_reference};
-	auto const by_rvalue_const = Sneezy{.how = by_rvalue_const_reference};
+	auto by_plain_value = sneezy{.how = by_value};
+	auto by_reference = sneezy{.how = by_lvalue_reference};
+	auto const by_reference_const = sneezy{.how = by_lvalue_const_reference};
+	auto by_rvalue = sneezy{.how = by_rvalue_reference};
+	auto const by_rvalue_const = sneezy{.how = by_rvalue_const_reference};
 	
 	auto source_by_value = kangaru::object_source{by_plain_value};
 	auto source_by_lvalue_ref = kangaru::external_reference_source{by_reference};
@@ -39,23 +39,23 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		
 		auto injector = kangaru::simple_injector{source};
 		
-		injector([](Sneezy s) {
+		injector([](sneezy s) {
 			CHECK(s.how == by_value);
 		});
 		
-		injector([](Sneezy& s) {
+		injector([](sneezy& s) {
 			CHECK(s.how == by_lvalue_reference);
 		});
 		
-		injector([](Sneezy&& s) {
+		injector([](sneezy&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 		
-		injector([](Sneezy const& s) {
+		injector([](sneezy const& s) {
 			CHECK(s.how == by_lvalue_const_reference);
 		});
 		
-		injector([](Sneezy const&& s) {
+		injector([](sneezy const&& s) {
 			CHECK(s.how == by_rvalue_const_reference);
 		});
 	}
@@ -68,19 +68,19 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		
 		auto injector = kangaru::simple_injector{source};
 		
-		injector([](Sneezy& s) {
+		injector([](sneezy& s) {
 			CHECK(s.how == by_lvalue_reference);
 		});
 		
-		injector([](Sneezy&& s) {
+		injector([](sneezy&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 		
-		injector([](Sneezy const& s) {
+		injector([](sneezy const& s) {
 			CHECK(s.how == by_lvalue_reference);
 		});
 		
-		injector([](Sneezy const&& s) {
+		injector([](sneezy const&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 	}
@@ -92,15 +92,15 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		
 		auto injector = kangaru::simple_injector{source};
 		
-		injector([](Sneezy&& s) {
+		injector([](sneezy&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 		
-		injector([](Sneezy const& s) {
+		injector([](sneezy const& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 		
-		injector([](Sneezy const&& s) {
+		injector([](sneezy const&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 
@@ -112,15 +112,15 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			
 			auto injector = kangaru::simple_injector{source};
 			
-			injector([](Sneezy&& s) {
+			injector([](sneezy&& s) {
 				CHECK(s.how == by_rvalue_reference);
 			});
 			
-			injector([](Sneezy const& s) {
+			injector([](sneezy const& s) {
 				CHECK(s.how == by_rvalue_const_reference);
 			});
 			
-			injector([](Sneezy const&& s) {
+			injector([](sneezy const&& s) {
 				CHECK(s.how == by_rvalue_const_reference);
 			});
 		}
@@ -133,19 +133,19 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		
 		auto injector = kangaru::simple_injector{source};
 		
-		injector([](Sneezy s) {
+		injector([](sneezy s) {
 			CHECK(s.how == by_value);
 		});
 		
-		injector([](Sneezy&& s) {
+		injector([](sneezy&& s) {
 			CHECK(s.how == by_value);
 		});
 		
-		injector([](Sneezy const& s) {
+		injector([](sneezy const& s) {
 			CHECK(s.how == by_value);
 		});
 		
-		injector([](Sneezy const&& s) {
+		injector([](sneezy const&& s) {
 			CHECK(s.how == by_value);
 		});
 	}
@@ -155,15 +155,15 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		auto injector_const_rvalue = kangaru::simple_injector{source_by_rvalue_ref_const};
 		auto injector_lvalue = kangaru::simple_injector{source_by_lvalue_ref};
 		
-		injector_rvalue([](Sneezy const& s) {
+		injector_rvalue([](sneezy const& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
 		
-		injector_const_rvalue([](Sneezy const& s) {
+		injector_const_rvalue([](sneezy const& s) {
 			CHECK(s.how == by_rvalue_const_reference);
 		});
 		
-		injector_lvalue([](Sneezy const& s) {
+		injector_lvalue([](sneezy const& s) {
 			CHECK(s.how == by_lvalue_reference);
 		});
 	}

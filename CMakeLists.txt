@@ -58,7 +58,7 @@ endif()
 
 if(KANGARU_ENABLE_TESTS)
 	enable_testing()
-	add_subdirectory(test)
+	add_subdirectory(tests)
 endif()
 
 if(KANGARU_BENCHMARK)

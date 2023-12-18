@@ -25,6 +25,12 @@ namespace kangaru {
 	template<typename T, typename Self>
 	concept not_self = unqualified_object<T> and different_from<T, std::decay_t<Self>>;
 	
+	template<typename T>
+	concept pointer = object<T> and std::is_pointer_v<T>;
+	
+	template<typename Rhs, typename Lhs>
+	concept assign_into = std::assignable_from<Lhs, Rhs>;
+	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
 	concept callable = requires(F&& f, Args&&... args) {
@@ -40,6 +46,9 @@ namespace kangaru {
 	concept callable_template1 = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);
 	};
+	
+	template<typename T, typename U>
+	concept allows_construction_of = std::constructible_from<U, T>;
 }
 
 #include "undef.hpp"

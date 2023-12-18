@@ -5,7 +5,7 @@
 #include "source_types.hpp"
 #include "constructor.hpp"
 #include "injector.hpp"
-#include "metadata.hpp"
+#include "tag.hpp"
 #include "noreturn.hpp"
 
 #include <type_traits>

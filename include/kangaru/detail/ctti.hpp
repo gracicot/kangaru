@@ -46,9 +46,13 @@ namespace kangaru::detail::ctti {
 		);
 	}
 	
+	// TODO: This cannot be private since it's needs to be in the public interface
 	template<typename T>
-	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_id_for() {
-		return detail::murmur::murmur64a(type_name<T>());
+	struct type_id_for_result : std::integral_constant<std::size_t, detail::murmur::murmur64a(type_name<T>())> {};
+	
+	template<typename T>
+	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_id_for() -> type_id_for_result<T> {
+		return type_id_for_result<T>{};
 	}
 }
 

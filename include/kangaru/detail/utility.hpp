@@ -43,6 +43,23 @@ namespace kangaru::detail::utility {
 	
 	template<typename... Functions>
 	overload(Functions...) -> overload<Functions...>;
+	
+	template<typename>
+	struct make_sequence_tuple_impl;
+	
+	template<std::size_t... S>
+	struct make_sequence_tuple_impl<std::index_sequence<S...>> {
+		using type = std::tuple<std::integral_constant<std::size_t, S>...>;
+	};
+	
+	template<std::size_t Size>
+	using make_sequence_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<Size>>::type;
+	
+	template<typename... Ts>
+	using sequence_tuple_for = typename make_sequence_tuple_impl<std::index_sequence_for<Ts...>>::type;
+	
+	template<typename Tuple>
+	using sequence_tuple_for_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<std::tuple_size_v<Tuple>>>::type;
 }
 
 #include "undef.hpp"

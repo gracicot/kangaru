@@ -20,7 +20,7 @@ namespace kangaru {
 	};
 	
 	namespace detail::tag {
-		auto tag(tag_for<struct tag_poison>) = delete;
+		auto tag(auto) requires false = delete;
 		
 		template<typename T>
 		concept adl_nonmember_tag =

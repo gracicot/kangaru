@@ -73,12 +73,12 @@ namespace kangaru {
 		template<deducible T>
 		operator T& () const;
 		
-		#if KANGARU5_LVALUE_CONST_AMBIGUOUS == 1
+		#if KANGARU5_LVALUE_CONST_AMBIGUOUS() == 1
 		template<deducible T>
 		operator T const& () const;
 		#endif
 		
-		#if KANGARU5_RVALUE_AMBIGUOUS == 1
+		#if KANGARU5_RVALUE_AMBIGUOUS() == 1
 		template<typename T>
 		operator T&& () const;
 		#endif
@@ -93,12 +93,12 @@ namespace kangaru {
 		template<deducible T>
 		operator T& ();
 		
-		#if KANGARU5_LVALUE_CONST_AMBIGUOUS == 1
+		#if KANGARU5_LVALUE_CONST_AMBIGUOUS() == 1
 		template<deducible T>
 		operator T const& ();
 		#endif
 		
-		#if KANGARU5_RVALUE_AMBIGUOUS == 1
+		#if KANGARU5_RVALUE_AMBIGUOUS() == 1
 		template<typename T>
 		operator T&& ();
 		#endif

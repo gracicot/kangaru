@@ -13,30 +13,37 @@
 
 #include "define.hpp"
 
-struct Scene;
-struct Clapperboard;
-
 namespace kangaru::sources {
 	struct make_spread_injector_function {
-		constexpr auto operator()(auto&& source) const noexcept requires kangaru::source<std::remove_cvref_t<decltype(source)>> {
-			return make_spread_injector(KANGARU5_FWD(source));
+		constexpr auto operator()(source auto& source) const noexcept {
+			return make_spread_injector(ref(source));
 		}
 	};
 	
 	struct make_strict_spread_injector_function {
-		constexpr auto operator()(auto&& source) const noexcept requires kangaru::source<std::remove_cvref_t<decltype(source)>> {
-			return make_strict_spread_injector(KANGARU5_FWD(source));
+		constexpr auto operator()(source auto& source) const noexcept {
+			return make_strict_spread_injector(ref(source));
 		}
 	};
 	
-	template<source Source, std::move_constructible Construct, std::move_constructible MakeInjector = make_spread_injector_function>
+	template<source Source, movable_object Construct, movable_object MakeInjector = make_spread_injector_function>
 	struct with_recursion {
-		constexpr explicit with_recursion(Source source) noexcept requires std::default_initializable<Construct> : construct{}, source{std::move(source)} {}
-		constexpr with_recursion(Source source, Construct construct) noexcept : construct{std::move(construct)}, source{std::move(source)} {}
+		constexpr explicit with_recursion(Source source) noexcept
+			requires (std::default_initializable<Construct> and std::default_initializable<MakeInjector>) :
+			source{std::move(source)}, construct{}, make_injector{} {}
+		
+		constexpr with_recursion(Source source, Construct construct) noexcept
+			requires std::default_initializable<MakeInjector> :
+			source{std::move(source)}, construct{std::move(construct)}, make_injector{} {}
+		
+		constexpr with_recursion(Source source, Construct construct, MakeInjector make_injector) noexcept :
+			source{std::move(source)}, construct{std::move(construct)}, make_injector{std::move(make_injector)} {}
+		
+		Source source;
 		
 	private:
 		template<typename Self>
-		using injector_type = decltype(std::declval<MakeInjector>()(std::declval<source_reference_wrapper<std::remove_reference_t<Self>>>()));
+		using injector_type = decltype(std::declval<MakeInjector>()(std::declval<Self&>()));
 		
 		template<typename T>
 		struct call_construct_function {
@@ -58,16 +65,15 @@ namespace kangaru::sources {
 		template<typename T, forwarded<with_recursion> Self, typename S = detail::utility::forward_like_t<Self, Source>>
 			requires (not source_of<S, T> and callable<injector_type<Self>, call_construct_function<T>>)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			auto injector = source.make_injector(ref(source));
+			auto injector = source.make_injector(source);
 			return std::move(injector)(call_construct_function<T>{std::addressof(source.construct)});
 		}
-
-		KANGARU5_NO_UNIQUE_ADDRESS
-		MakeInjector make_injector;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construct construct;
-		Source source;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		MakeInjector make_injector;
 	};
 	
 	struct non_empty_construction {
@@ -185,11 +191,23 @@ namespace kangaru::sources {
 		return with_exhaustive_recursive_construct<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source, typename Lambda>
+	template<source Source, movable_object Lambda, movable_object MakeInjector = make_spread_injector_function>
 	struct with_lambda_source {
-		with_lambda_source(Source source, Lambda lambda) noexcept :
+		with_lambda_source(Source source, Lambda lambda) noexcept requires std::default_initializable<MakeInjector> :
 			source{std::move(source)},
-			lambda{std::move(lambda)} {}
+			lambda{std::move(lambda)},
+			make_injector{} {}
+		
+		with_lambda_source(Source source, Lambda lambda, MakeInjector make_injector) noexcept :
+			source{std::move(source)},
+			lambda{std::move(lambda)},
+			make_injector{std::move(make_injector)} {}
+		
+		Source source;
+		
+	private:
+		template<typename Self>
+		using injector_type = decltype(std::declval<MakeInjector>()(std::declval<Self&>()));
 		
 		template<typename T, forwarded<with_lambda_source> Self>
 			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
@@ -197,17 +215,18 @@ namespace kangaru::sources {
 			return kangaru::provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
 		}
 		
-		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, forwarded<with_lambda_source> auto&& source) -> T {
-			auto injector = make_spread_injector(ref(source));
+		template<typename T, forwarded<with_lambda_source> Self>
+			requires (not source_of<Source, T> and callable<injector_type<Self>, detail::utility::forward_like_t<Self, Lambda>>)
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			auto injector = source.make_injector(source);
 			return std::move(injector)(KANGARU5_FWD(source).lambda);
 		}
 		
-	private:
-		Source source;
-		
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Lambda lambda;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		MakeInjector make_injector;
 	};
 	
 	template<source Source>

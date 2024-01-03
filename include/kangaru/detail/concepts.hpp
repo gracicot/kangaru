@@ -36,7 +36,7 @@ namespace kangaru {
 	concept callable = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f)(KANGARU5_FWD(args)...);
 	};
-
+	
 	template<typename T, typename... Args>
 	concept brace_constructible = requires(Args&&... args) {
 		::new T{KANGARU5_FWD(args)...};
@@ -49,6 +49,9 @@ namespace kangaru {
 	
 	template<typename T, typename U>
 	concept allows_construction_of = std::constructible_from<U, T>;
+	
+	template<typename T>
+	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 }
 
 #include "undef.hpp"

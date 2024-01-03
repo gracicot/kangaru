@@ -294,7 +294,24 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		using constructor_1110_t = decltype(constructor_1110);
 		auto constructor_1111 = restricted_constructor<type_1111>();
 		using constructor_1111_t = decltype(constructor_1111);
-		
+
+		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0011_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0100_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0101_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0110_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0111_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1000_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1001_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1010_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1011_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1100_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>()));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>()));
+
 		CHECK((
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()
 		) == kangaru::reference_kind::none);
@@ -359,48 +376,31 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
 		) == kangaru::reference_kind::all_reference_kind);
 		
-		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0011_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0100_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0101_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0110_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0111_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1000_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1001_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1010_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1011_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1100_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>()));
+		CHECK(kangaru::construction_tree_needs<type_0000, injected>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, injected&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, injected&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_0000, injected>);
-		static_assert(not kangaru::construction_tree_needs<type_0000, injected&>);
-		static_assert(not kangaru::construction_tree_needs<type_0000, injected const&>);
-		static_assert(not kangaru::construction_tree_needs<type_0000, injected&&>);
-		static_assert(not kangaru::construction_tree_needs<type_0000, injected const&&>);
+		CHECK(kangaru::construction_tree_needs<type_0001, injected&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, injected&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&&>);
 		
-		static_assert(kangaru::construction_tree_needs<type_0001, injected&>);
-		static_assert(not kangaru::construction_tree_needs<type_0001, injected const&>);
-		static_assert(not kangaru::construction_tree_needs<type_0001, injected&&>);
-		static_assert(not kangaru::construction_tree_needs<type_0001, injected const&&>);
-		
-		static_assert(not kangaru::construction_tree_needs<type_0010, injected&>);
-		static_assert(kangaru::construction_tree_needs<type_0010, injected const&>);
-		static_assert(not kangaru::construction_tree_needs<type_0010, injected&&>);
-		static_assert(not kangaru::construction_tree_needs<type_0010, injected const&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, injected&>);
+		CHECK(kangaru::construction_tree_needs<type_0010, injected const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, injected&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, injected const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
 		//static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
 		
-		static_assert(not kangaru::construction_tree_needs<type_0100, injected&>);
-		static_assert(not kangaru::construction_tree_needs<type_0100, injected const&>);
-		static_assert(kangaru::construction_tree_needs<type_0100, injected&&>);
-		static_assert(not kangaru::construction_tree_needs<type_0100, injected const&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, injected&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&>);
+		CHECK(kangaru::construction_tree_needs<type_0100, injected&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
@@ -417,10 +417,10 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		//static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
 		
-		static_assert(not kangaru::construction_tree_needs<type_1000, injected&>);
-		static_assert(not kangaru::construction_tree_needs<type_1000, injected const&>);
-		static_assert(not kangaru::construction_tree_needs<type_1000, injected&&>);
-		static_assert(kangaru::construction_tree_needs<type_1000, injected const&&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, injected&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, injected const&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, injected&&>);
+		CHECK(kangaru::construction_tree_needs<type_1000, injected const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
 		////static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);

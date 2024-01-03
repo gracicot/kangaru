@@ -53,7 +53,7 @@ namespace kangaru {
 	
 	template<typename T>
 	concept provides_tags = weak_tag<tags_of_t<T>>;
-	
+	 
 	template<typename T>
 	concept tag_empty_injection_constructible =
 		    provides_tags<T>
@@ -62,18 +62,15 @@ namespace kangaru {
 		};
 	
 	template<typename T>
+	inline constexpr auto is_empty_injection_constructible_v = tag_empty_injection_constructible<T>;
+	
+	template<typename T>
 	concept tag_overrides_types_in_cache =
 		    provides_tags<T>
 		and requires {
 			typename tags_of_t<T>::overrides_types_in_cache;
 			{ detail::utility::decay_copy(std::tuple_size<typename tags_of_t<T>::overrides_types_in_cache>::value) } -> std::same_as<std::size_t>;
 		};
-	
-	template<typename T>
-	inline constexpr auto is_empty_injection_constructible_v = tag_empty_injection_constructible<T>;
-	
-	template<typename T>
-	inline constexpr auto is_cachable_v = tag_empty_injection_constructible<T>;
 	
 	template<typename>
 	struct overrides_types_in_cache {
@@ -98,6 +95,9 @@ namespace kangaru {
 		using allow_runtime_caching = std::true_type;
 	};
 	
+	template<typename T>
+	inline constexpr auto is_cachable_v = tag_empty_injection_constructible<T>;
+	
 	template<typename... Ts> requires (sizeof...(Ts) > 0)
 	struct overrides {
 		using meta = tags_tag;
@@ -108,6 +108,14 @@ namespace kangaru {
 	
 	template<typename... Tags>
 	struct tags : Tags... {};
+	
+	template<typename T>
+	concept tag_cache_using_source =
+		    provides_tags<T>
+		and requires {
+			typename tags_of_t<T>::cache_using_source;
+			{ detail::utility::decay_copy(std::tuple_size<typename tags_of_t<T>::overrides_types_in_cache>::value) } -> std::same_as<std::size_t>;
+		};
 }
 
 #endif // KANGARU5_DETAIL_tag_HPP

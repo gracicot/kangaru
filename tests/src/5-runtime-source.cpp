@@ -20,8 +20,16 @@ struct Derived final : Base {
 	friend auto tag(kangaru::tag_for<Derived>) -> kangaru::overrides<Base>;
 };
 
+struct increment_source {
+	int n = 0;
+	
+	friend constexpr auto provide(kangaru::provide_tag<int>, increment_source& source) -> int {
+		return source.n++;
+	}
+};
+
 TEST_CASE("Runtime source will cache sources results", "[deducer]") {
-	auto source = kangaru::function_source{[n = 0]() mutable { return n++; }};
+	auto source = increment_source{};
 	
 	SECTION("Will cache the result of sources") {
 		auto runtime_source = kangaru::runtime_source{kangaru::ref(source)};

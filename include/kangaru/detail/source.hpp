@@ -23,7 +23,7 @@ namespace kangaru {
 	
 	namespace detail::source {
 		auto provide(provide_tag<struct poison>, auto&&) = delete;
-
+		
 		template<typename Source, typename T>
 		concept adl_nonmember_source_of =
 			    kangaru::source<std::remove_cvref_t<Source>>
@@ -43,6 +43,9 @@ namespace kangaru {
 	
 	template<typename Source, typename T>
 	concept source_of = detail::source::adl_nonmember_source_of<Source, T>;
+	
+	template<typename T>
+	concept wrapping_source = source<T> and source<std::decay_t<decltype(std::declval<T>().source)>>;
 } // namespace kangaru
 
 #include "undef.hpp"

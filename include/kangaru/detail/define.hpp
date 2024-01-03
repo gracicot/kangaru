@@ -31,6 +31,12 @@
 #define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 #endif
 
+#if KANGARU5_IS_MSVC() == 1
+#define KANGARU5_MSVC_FEEDBACK_10551677_WORKAROUND_NEEDED() 1
+#else
+#define KANGARU5_MSVC_FEEDBACK_10551677_WORKAROUND_NEEDED() 0
+#endif
+
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 #define KANGARU5_CONSTRUCTOR_T(...) decltype(::kangaru::constructor<__VA_ARGS__>())
 

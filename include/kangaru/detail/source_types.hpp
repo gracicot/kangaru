@@ -84,25 +84,24 @@ namespace kangaru::sources {
 		T object;
 	};
 	
-	template<unqualified_object F> requires requires(F function) { { function() } -> unqualified_object; }
-	struct function_source {
-		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
-	
-	private:
-		using T = decltype(std::declval<F>()());
+	template<unqualified_object T>
+	struct injectable_rvalue_source {
+		injectable_rvalue_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
+			object{deduce...} {}
 		
-		friend constexpr auto provide(provide_tag<T>, forwarded<function_source> auto&& source) -> T {
-			return KANGARU5_FWD(source).function();
+		friend constexpr auto provide(provide_tag<T&&>, injectable_rvalue_source& source) -> T&& {
+			return std::move(source).object;
 		}
 		
-		F function;
+	private:
+		T object;
 	};
 	
 	template<object T>
 	struct external_rvalue_source {
 		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(provide_tag<T&&>, external_rvalue_source const& source) -> T&& {
+		friend constexpr auto provide(provide_tag<T&&>, external_rvalue_source& source) -> T&& {
 			return std::move(*source.reference);
 		}
 		

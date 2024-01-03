@@ -286,6 +286,7 @@ namespace kangaru {
 		constexpr auto insert_overrides(T* ptr) -> void {
 			using overrides = overrides_types_in_cache_t<T>;
 			std::apply([this, ptr](auto... s) {
+				[[maybe_unused]]
 				auto const for_each = [this](auto i, T* ptr) {
 					using override = std::tuple_element_t<i, overrides>;
 					constexpr auto id = detail::ctti::type_id_for<override>();

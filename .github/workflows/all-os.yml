@@ -47,11 +47,11 @@ jobs:
       fail-fast: false
       matrix:
         arch: [x64]
-        os: [ubuntu-22.04]
-        clang: [11, 12, 13, 14, 15]
+        os: [ubuntu-20.04]
+        clang: [10, 11, 12, 13, 14]
         include:
-          - clang: 10
-            os: ubuntu-20.04
+          - clang: 15
+            os: ubuntu-22.04
             arch: x64
 
     steps:

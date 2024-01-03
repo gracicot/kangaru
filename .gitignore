@@ -7,5 +7,6 @@ build-*
 !.travis.yml
 !.appveyor.yml
 !.github
+!.envrc
 CMakeSettings.json
 compile_commands.json

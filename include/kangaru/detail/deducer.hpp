@@ -37,21 +37,27 @@ namespace kangaru {
 	concept deducible_lvalue = deducible<T> and source_of<Source, T&>;
 	
 	template<typename T, typename Source>
-	concept deducible_const_lvalue = deducible<T> and (
-		   source_of<Source, T const&>
-		or source_of<Source, T&>
-		or source_of<Source, T const&&>
-		or source_of<Source, T&&>
-	);
-	
-	template<typename T, typename Source>
-	concept deducible_prvalue = deducible<T> and (source_of<Source, T> or deducible_const_lvalue<T, Source>);
-	
-	template<typename T, typename Source>
 	concept deducible_rvalue = deducible<T> and source_of<Source, T&&>;
 	
 	template<typename T, typename Source>
-	concept deducible_const_rvalue = deducible<T> and (source_of<Source, T const&&> or source_of<Source, T&&>);
+	concept deducible_rvalue_const = deducible<T> and (source_of<Source, T const&&> or deducible_rvalue<T, Source>);
+	
+	template<typename T, typename Source>
+	concept deducible_lvalue_const = deducible<T> and (
+		   source_of<Source, T const&>
+		or deducible_lvalue<T, Source>
+		or deducible_rvalue_const<T, Source>
+		or deducible_rvalue<T, Source>
+	);
+	
+	template<typename T, typename Source>
+	concept deducible_prvalue = deducible<T> and (
+		   source_of<Source, T>
+		or deducible_rvalue<T, Source>
+		or deducible_rvalue_const<T, Source>
+		or deducible_lvalue_const<T, Source>
+		or deducible_lvalue<T, Source>
+	);
 	
 	template<typename T, typename Source>
 	concept deducible_strict_prvalue = deducible<T> and source_of<Source, T>;
@@ -60,13 +66,13 @@ namespace kangaru {
 	concept deducible_strict_lvalue = deducible<T> and source_of<Source, T&>;
 	
 	template<typename T, typename Source>
-	concept deducible_strict_const_lvalue = deducible<T> and source_of<Source, T const&>;
+	concept deducible_strict_lvalue_const = deducible<T> and source_of<Source, T const&>;
 	
 	template<typename T, typename Source>
 	concept deducible_strict_rvalue = deducible<T> and source_of<Source, T&&>;
 	
 	template<typename T, typename Source>
-	concept deducible_strict_const_rvalue = deducible<T> and source_of<Source, T const&&>;
+	concept deducible_strict_rvalue_const = deducible<T> and source_of<Source, T const&&>;
 	
 	struct ambiguous_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;
@@ -142,14 +148,16 @@ namespace kangaru {
 		constexpr operator T() {
 			if constexpr (source_of<Source, T>) {
 				return provide(provide_tag_v<T>, static_cast<Source&&>(*source));
+			} else if constexpr (source_of<Source, T&&>) {
+				return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+			} else if constexpr (source_of<Source, T const&&>) {
+				return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T const&>) {
 				return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
-				return std::as_const(provide(provide_tag_v<T&>, static_cast<Source&&>(*source)));
-			} else if constexpr (source_of<Source, T const&&>) {
-				return static_cast<T const&>(provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source)));
+				return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
 			} else {
-				return static_cast<T const&>(provide(provide_tag_v<T&&>, static_cast<Source&&>(*source)));
+				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
 		}
 		
@@ -158,7 +166,7 @@ namespace kangaru {
 			return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
 		}
 		
-		template<deducible_const_lvalue<Source> T>
+		template<deducible_lvalue_const<Source> T>
 		constexpr operator T const&() const {
 			if constexpr (source_of<Source, T const&>) {
 				return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
@@ -166,8 +174,10 @@ namespace kangaru {
 				return std::as_const(provide(provide_tag_v<T&>, static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T const&&>) {
 				return static_cast<T const&>(provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source)));
-			} else {
+			} else if constexpr (source_of<Source, T&&>) {
 				return static_cast<T const&>(provide(provide_tag_v<T&&>, static_cast<Source&&>(*source)));
+			} else {
+				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
 		}
 		
@@ -176,12 +186,14 @@ namespace kangaru {
 			return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
 		}
 		
-		template<deducible_const_rvalue<Source> T>
+		template<deducible_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
 			if constexpr (source_of<Source, T const&&>) {
 				return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
-			} else {
+			} else if constexpr (source_of<Source, T&&>) {
 				return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+			} else {
+				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
 		}
 		
@@ -210,7 +222,7 @@ namespace kangaru {
 			return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
 		}
 		
-		template<deducible_strict_const_lvalue<Source> T>
+		template<deducible_strict_lvalue_const<Source> T>
 		constexpr operator T const&() const {
 			return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
 		}
@@ -220,7 +232,7 @@ namespace kangaru {
 			return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
 		}
 		
-		template<deducible_strict_const_rvalue<Source> T>
+		template<deducible_strict_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
 			return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
 		}
@@ -526,33 +538,57 @@ namespace kangaru {
 			if constexpr (is_nth_parameter_prvalue<F, nth, max>()) {
 				return reference_kind::none;
 			} else {
+				// Only one kind of parameter will accept a lvalue const reference, and it's a lvalue const reference.
+				// If the function is callable with a lvalue const reference, then it means there's an overload that accepts it.
 				constexpr auto callable_with_lvalue_const_ref = callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference>, F, nth, max>();
 				
+				// Now we have something harder to match. Sending a rvalue constant reference would indeed match a rvalue
+				// constant reference parameter, but would also match a lvalue constant reference. This means that if we
+				// Match for a lvalue constant reference before, we need to apply a different logic.
+				//
+				// If we match the lvalue constant reference:
+				//  - We try to match with deducer for a lvalue constant reference AND a rvalue constant reference,
+				//    it will result in a ambiguous match, so not callable. This is why we check that it's not callable
+				//    with such deducer and ultimately means that there is a candidate with a rvalue constant reference
+				//
+				// On the contrary, if there was no match for lvalue constant reference:
+				// - We match for rvalue constant reference. If it matches, we're gold.
+				// - If we don't match, we used to do some magic and I'm not sure why. Excluding normal rvalue references?
+				//   Removing it don't trigger the tests, but I'm too afraid to remove it.
 				constexpr auto callable_with_rvalue_const_ref = callable_with_lvalue_const_ref
 					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>, F, nth, max>()
 					: (
 						callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>, F, nth, max>()
-						or (
-							callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>()
-							and not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
-						)
+						//or (
+						//	    callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>()
+						//	and not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
+						//)
 					);
 				
+				// To check for normal lvalue references, we need to first check if we already match with a const reference.
+				// If we did match, then we'll do the trick where we try to call the function with a deducer that can
+				// Deduce both kind. If the call is ambiguous, then we have a candidate in the overload set that take a lvalue ref.
+				// Otherwise, we can just match with lvalue references.
 				constexpr auto callable_with_lvalue_ref = callable_with_lvalue_const_ref
 					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>, F, nth, max>()
 					: callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_reference>, F, nth, max>();
 				
+				// Here we finally check for value references. They can match rvalue references, rvalue cosnt references, and
+				// lvalue const references. We need to check for those two if we matched them before in order to do the check
+				// With the little dance of checking for ambiguous calls
 				constexpr auto callable_with_rvalue_ref = callable_with_rvalue_const_ref
 					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
 					: callable_with_lvalue_const_ref
 						? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>, F, nth, max>()
 						: callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>();
 				
-				return
-					(callable_with_lvalue_ref ? reference_kind::lvalue_reference : reference_kind::none)
+				// We build the bitmask enum to express what overloads of different reference kind exists
+				return (
+					  (callable_with_lvalue_ref ? reference_kind::lvalue_reference : reference_kind::none)
 					| (callable_with_lvalue_const_ref ? reference_kind::lvalue_const_reference : reference_kind::none)
 					| (callable_with_rvalue_ref ? reference_kind::rvalue_reference : reference_kind::none)
-					| (callable_with_rvalue_const_ref ? reference_kind::rvalue_const_reference : reference_kind::none);
+					| (callable_with_rvalue_const_ref ? reference_kind::rvalue_const_reference : reference_kind::none)
+				);
 			}
 		}
 		

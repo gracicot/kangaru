@@ -76,7 +76,11 @@ namespace kangaru::sources {
 		injectable_reference_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
 			object{deduce...} {}
 		
-		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source source) -> T& {
+		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source& source) -> T& {
+			return source.object;
+		}
+		
+		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source&& source) -> T& {
 			return source.object;
 		}
 		
@@ -93,6 +97,26 @@ namespace kangaru::sources {
 			return std::move(source).object;
 		}
 		
+		friend constexpr auto provide(provide_tag<T&&>, injectable_rvalue_source&& source) -> T&& {
+			return std::move(source).object;
+		}
+		
+	private:
+		T object;
+	};
+	
+	template<object T>
+	struct rvalue_source {
+		explicit constexpr rvalue_source(T object) noexcept : object{std::move(object)} {}
+		
+		friend constexpr auto provide(provide_tag<T&&>, rvalue_source& source) -> T&& {
+			return std::move(source.object);
+		}
+		
+		friend constexpr auto provide(provide_tag<T&&>, rvalue_source&& source) -> T&& {
+			return std::move(source.object);
+		}
+		
 	private:
 		T object;
 	};
@@ -101,7 +125,7 @@ namespace kangaru::sources {
 	struct external_rvalue_source {
 		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(provide_tag<T&&>, external_rvalue_source& source) -> T&& {
+		friend constexpr auto provide(provide_tag<T&&>, external_rvalue_source const& source) -> T&& {
 			return std::move(*source.reference);
 		}
 		
@@ -126,6 +150,10 @@ namespace kangaru::sources {
 		explicit constexpr reference_source(T object) noexcept : object{std::move(object)} {}
 		
 		friend constexpr auto provide(provide_tag<T&>, reference_source& source) -> T& {
+			return source.object;
+		}
+		
+		friend constexpr auto provide(provide_tag<T&>, reference_source&& source) -> T& {
 			return source.object;
 		}
 		
@@ -193,8 +221,8 @@ namespace kangaru::sources {
 		return source_reference_wrapper{source};
 	}
 	
-	inline constexpr auto tie(auto&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
-		return concat(ref(KANGARU5_FWD(sources))...);
+	inline constexpr auto tie(source auto&... sources) {
+		return concat(ref(sources)...);
 	}
 }
 

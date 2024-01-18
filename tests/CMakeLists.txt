@@ -37,6 +37,7 @@ endfunction()
 
 if(KANGARU_TEST)
 	add_kgr_test(5-reference-deducer)
+	add_kgr_test(5-deducer-source)
 	add_kgr_test(5-compose-injector)
 	add_kgr_test(5-runtime-source)
 	add_kgr_test(autocall)

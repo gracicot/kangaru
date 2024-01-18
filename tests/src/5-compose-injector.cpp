@@ -29,7 +29,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	}
 	
 	SECTION("Spread injector") {
-		auto injector = kangaru::spread_injector<decltype(kangaru::tie(sleepy_value, grumpy_value))>{kangaru::tie(sleepy_value, grumpy_value)};
+		auto injector = kangaru::make_spread_injector(kangaru::tie(sleepy_value, grumpy_value));
 		
 		REQUIRE(42 == injector([](sleepy) {
 			return 42;
@@ -59,7 +59,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	SECTION("Composed simple then spread injector") {
 		auto injector = kangaru::compose(
 			kangaru::simple_injector{sleepy_value},
-			kangaru::spread_injector<decltype(grumpy_value)>{grumpy_value}
+			kangaru::make_spread_injector(grumpy_value)
 		);
 		
 		REQUIRE(42 == injector([](sleepy) {
@@ -85,7 +85,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	
 	SECTION("Composed spread then simple injector") {
 		auto injector = kangaru::compose(
-			kangaru::spread_injector<decltype(grumpy_value)>{grumpy_value},
+			kangaru::make_spread_injector(grumpy_value),
 			kangaru::simple_injector{sleepy_value}
 		);
 		
@@ -108,8 +108,8 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	
 	SECTION("Composed spread then spread injector") {
 		auto injector = kangaru::compose(
-			kangaru::spread_injector<decltype(grumpy_value)>{grumpy_value},
-			kangaru::spread_injector<decltype(sleepy_value)>{sleepy_value}
+			kangaru::make_spread_injector(grumpy_value),
+			kangaru::make_spread_injector(sleepy_value)
 		);
 		
 		REQUIRE(42 == injector([](sleepy) {

@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_tag_HPP
 #define KANGARU5_DETAIL_tag_HPP
 
+#include "source.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"
 #include <type_traits>
@@ -110,12 +111,61 @@ namespace kangaru {
 	struct tags : Tags... {};
 	
 	template<typename T>
-	concept tag_cache_using_source =
+	concept tag_cache_using_source_base =
 		    provides_tags<T>
 		and requires {
 			typename tags_of_t<T>::cache_using_source;
-			{ detail::utility::decay_copy(std::tuple_size<typename tags_of_t<T>::overrides_types_in_cache>::value) } -> std::same_as<std::size_t>;
 		};
+	
+	template<typename T>
+	concept tag_cache_using_source_template =
+		    tag_cache_using_source_base<T>
+		and requires {
+			typename tags_of_t<T>::cache_using_source::template source_for<T>;
+			requires source_of<typename tags_of_t<T>::cache_using_source::template source_for<T>, T>;
+		};
+	
+	template<typename T>
+	concept tag_cache_using_source_type =
+		    tag_cache_using_source_base<T>
+		and requires {
+			typename tags_of_t<T>::cache_using_source::source;
+			requires source_of<typename tags_of_t<T>::cache_using_source::source, T>;
+		};
+	
+	template<typename T>
+	concept tag_cache_using_source = tag_cache_using_source_type<T> or tag_cache_using_source_template<T>;
+	
+	template<tag_cache_using_source T>
+	struct cache_using_source {};
+	
+	template<tag_cache_using_source_type T>
+	struct cache_using_source<T> {
+		using type = typename tags_of_t<T>::cache_using_source::source;
+	};
+	
+	template<tag_cache_using_source_template T>
+	struct cache_using_source<T> {
+		using type = typename tags_of_t<T>::cache_using_source::template source_for<T>;
+	};
+	
+	template<tag_cache_using_source T>
+	using cache_using_source_t = typename cache_using_source<T>::type;
+	
+	template<typename T>
+	struct cache_using {
+		struct cache_using_source {
+			using source = T;
+		};
+	};
+	
+	template<template<typename> typename Source>
+	struct cache_using_source_type {
+		struct cache_using_source {
+			template<typename T>
+			using source_for = Source<T>;
+		};
+	};
 }
 
 #endif // KANGARU5_DETAIL_tag_HPP

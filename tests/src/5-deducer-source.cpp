@@ -21,7 +21,7 @@ struct grumpy_source {
 };
 
 
-TEST_CASE("Sources can provide", "[injector]") {
+TEST_CASE("Sources can provide", "[source]") {
 	CHECK((std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, sleepy_source{}))>));
 	
 	CHECK((kangaru::source_of<sleepy_source, sleepy>));
@@ -90,7 +90,7 @@ TEST_CASE("Sources can provide", "[injector]") {
 	}
 }
 
-TEST_CASE("Deducer uses sources to deduce") {
+TEST_CASE("Deducer uses sources to deduce", "[deducer]") {
 	auto source = grumpy_source{};
 	
 	SECTION("Can deduce values prvalues") {

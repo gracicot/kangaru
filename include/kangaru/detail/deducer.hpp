@@ -559,10 +559,10 @@ namespace kangaru {
 					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>, F, nth, max>()
 					: (
 						callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>, F, nth, max>()
-						//or (
-						//	    callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>()
-						//	and not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
-						//)
+						or (
+							    callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>()
+							and not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
+						)
 					);
 				
 				// To check for normal lvalue references, we need to first check if we already match with a const reference.

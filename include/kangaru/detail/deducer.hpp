@@ -553,8 +553,7 @@ namespace kangaru {
 				//
 				// On the contrary, if there was no match for lvalue constant reference:
 				// - We match for rvalue constant reference. If it matches, we're gold.
-				// - If we don't match, we used to do some magic and I'm not sure why. Excluding normal rvalue references?
-				//   Removing it don't trigger the tests, but I'm too afraid to remove it.
+				// - If we don't match, we exclude matching with mutable rvalue for clang
 				constexpr auto callable_with_rvalue_const_ref = callable_with_lvalue_const_ref
 					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>, F, nth, max>()
 					: (

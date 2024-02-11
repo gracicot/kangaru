@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 set(KANGARU_VERSION_MAJOR "4")
 set(KANGARU_VERSION_MINOR "3")

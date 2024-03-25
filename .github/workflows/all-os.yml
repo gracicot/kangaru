@@ -208,21 +208,22 @@ jobs:
             msvc-cxx: /std:c++17
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       
       - uses: egor-tensin/vs-shell@v2
         with:
           arch: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.23.0
+        uses: lukka/get-cmake@v3.26.0
 
       - name: Run vcpkg
-        uses: lukka/run-vcpkg@v10
+        uses: lukka/run-vcpkg@v11
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           vcpkgGitCommitId: 'c1b768b0d6bc9b05d6272d604496d33a3faedd90'
+          useVcpkgToolchainFile: true
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

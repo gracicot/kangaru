@@ -1,5 +1,5 @@
-#ifndef KANGARU5_DETAIL_RUNTIME_CACHED_SOURCE_HPP
-#define KANGARU5_DETAIL_RUNTIME_CACHED_SOURCE_HPP
+#ifndef KANGARU5_DETAIL_CACHE_HPP
+#define KANGARU5_DETAIL_CACHE_HPP
 
 #include "utility.hpp"
 #include "source.hpp"
@@ -262,4 +262,4 @@ namespace kangaru {
 
 #include "undef.hpp"
 
-#endif // KANGARU5_DETAIL_RUNTIME_CACHED_SOURCE_HPP
+#endif // KANGARU5_DETAIL_CACHE_HPP

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef KANGARU5_DETAIL_SOURCE_FROM_TAG_HPP
+#define KANGARU5_DETAIL_SOURCE_FROM_TAG_HPP
 
 #include "allocator.hpp"
 #include "recursive_source.hpp"
@@ -30,11 +31,6 @@ namespace kangaru::sources {
 		MakeInjector make_injector;
 	};
 	
-	template<typename T, source Source, movable_object MakeInjector = make_spread_injector_function>
-	struct from_tag_source {
-		
-	};
-	
 	template<source Source>
 	struct with_source_from_tag {
 		explicit constexpr with_source_from_tag(Source source) noexcept : source{std::move(source)} {}
@@ -51,3 +47,5 @@ namespace kangaru::sources {
 }
 
 #include "undef.hpp"
+
+#endif // KANGARU5_DETAIL_SOURCE_FROM_TAG_HPP

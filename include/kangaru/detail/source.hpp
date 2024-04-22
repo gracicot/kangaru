@@ -62,8 +62,8 @@ namespace kangaru {
 			}
 		};
 	}
-
-	inline namespace neibloid {	
+	
+	inline namespace neibloid {
 		inline constexpr auto provide = detail::source::provide_function{};
 	}
 	

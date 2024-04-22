@@ -45,6 +45,13 @@ set(KANGARU_INSTALL_INCLUDE_DIR "include")
 add_library(kangaru INTERFACE)
 add_library(kangaru::kangaru ALIAS kangaru)
 
+add_library(kangaru-internal-warnings INTERFACE)
+target_compile_options(kangaru-internal-warnings INTERFACE
+	$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field>
+	$<$<CXX_COMPILER_ID:GNU>:-Werror -Wall -Wextra>
+	$<$<CXX_COMPILER_ID:MSVC>:/W3>
+)
+
 target_compile_features(kangaru INTERFACE cxx_std_20)
 target_include_directories(kangaru INTERFACE
 	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>

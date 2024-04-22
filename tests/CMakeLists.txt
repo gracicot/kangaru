@@ -2,11 +2,10 @@ find_package(Catch2 REQUIRED)
 
 add_library(kangaru_test_common INTERFACE)
 
-target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain)
+target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain kangaru-internal-warnings)
 
 target_compile_options(kangaru_test_common INTERFACE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wall -Wextra>
-	$<$<CXX_COMPILER_ID:MSVC>:/W3>
+	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wno-missing-field-initializers>
 )
 
 function(add_kgr_error_test testname error_message)

@@ -88,6 +88,13 @@ TEST_CASE("Sources can provide", "[source]") {
 		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy>, source).token == 4);
 		CHECK(std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, source))>);
 	}
+	
+	SECTION("Source reference wrapper") {
+		auto source = sleepy_source{};
+		auto source_ref = kangaru::ref(source);
+		CHECK(std::addressof(source) == std::addressof(source_ref.unwrap()));
+		CHECK(std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, source_ref))>);
+	}
 }
 
 TEST_CASE("Deducer uses sources to deduce", "[deducer]") {

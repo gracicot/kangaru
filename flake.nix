@@ -24,10 +24,15 @@
           mkShell = pkgs.mkShell.override {stdenv = pkgs.gcc13Stdenv;};
         in {
           default = mkShell {
+            nativeBuildInputs = with pkgs; [
+              clang-tools_17
+              lldb_17
+            ];
             buildInputs = with pkgs; [
               cmake
               ninja
               vcpkg
+              gdb
 
               # to make vcpkg work
               autoconf

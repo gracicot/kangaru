@@ -6,6 +6,8 @@
 #include "detail/source.hpp"
 #include "detail/source_types.hpp"
 #include "detail/recursive_source.hpp"
+#include "detail/source_source.hpp"
+#include "detail/heap_storage.hpp"
 #include "detail/runtime_cached_source.hpp"
 #include "detail/constructor.hpp"
 

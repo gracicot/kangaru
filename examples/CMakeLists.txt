@@ -1,11 +1,11 @@
 add_library(kangaru-example INTERFACE)
 
 target_compile_options(kangaru-example INTERFACE
-	$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Werror -Wall -Wextra -Wno-unused-parameter -Wno-unused-private-field -Wno-unused-variable>
-	$<$<CXX_COMPILER_ID:GNU>:-Werror -Wall -Wextra -Wno-missing-field-initializers -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-comment>
+	$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wno-unused-parameter -Wno-unused-private-field -Wno-unused-variable>
+	$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-comment>
 )
 
-target_link_libraries(kangaru-example INTERFACE kangaru)
+target_link_libraries(kangaru-example INTERFACE kangaru kangaru-internal-warnings)
 
 add_subdirectory(abstract_factory)
 add_subdirectory(cars)

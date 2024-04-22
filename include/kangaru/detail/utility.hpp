@@ -31,6 +31,9 @@ namespace kangaru::detail::utility {
 		return KANGARU5_FWD(v);
 	}
 	
+	template<typename T> requires std::is_function_v<T>
+	using function_pointer_t = std::add_pointer_t<T>;
+	
 	template<typename T, typename U>
 	using forward_like_t = decltype(forward_like<T>(std::declval<U&>()));
 	

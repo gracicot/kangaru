@@ -63,8 +63,10 @@
 #undef KANGARU5_IS_CLANG
 
 #define KANGARU5_CONSTEVAL_IF_POSSIBLE consteval
+#define KANGARU5_UNSAFE /* left undefined */
+#define KANGARU5_UNSAFE_BLOCK /* left undefined */
 
-#if __cplusplus >= 202302L
+#if __cplusplus > 202302L // C++26
 #define KANGARU5_CONSTEXPR_VOIDSTAR constexpr
 #else
 #define KANGARU5_CONSTEXPR_VOIDSTAR

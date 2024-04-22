@@ -1,0 +1,13 @@
+# top-most EditorConfig file
+root = true
+
+# Newline ending every file and tab indentation
+[*]
+insert_final_newline = true
+charset = utf-8
+indent_style = tab
+
+# Newline ending every file and tab indentation
+[*.{nix,json}]
+indent_style = space
+indent_size = 2

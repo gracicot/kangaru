@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_SOURCE_TYPES_HPP
 #define KANGARU5_DETAIL_SOURCE_TYPES_HPP
 
+#include "deducer.hpp"
 #include "source.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"
@@ -11,7 +12,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::sources {
+namespace kangaru {
 	template<source... Sources>
 	struct composed_source {
 		explicit constexpr composed_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
@@ -19,9 +20,8 @@ namespace kangaru::sources {
 		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, forwarded<composed_source> auto&& source) -> T
 		requires (((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) == 1) {
-			// TODO: C++23 uncomment static
-			/* static */ constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
-			return kangaru::provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
+			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
+			return provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
 	private:
@@ -44,6 +44,20 @@ namespace kangaru::sources {
 		
 	private:
 		std::tuple<Ts...> objects;
+	};
+	
+	template<unqualified_object F> requires std::invocable<F>
+	struct function_source {
+		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
+	
+	private:
+		using T = decltype(std::declval<F>()());
+		
+		friend constexpr auto provide(provide_tag<T>, forwarded<function_source> auto&& source) -> T {
+			return KANGARU5_FWD(source).function();
+		}
+		
+		F function;
 	};
 	
 	template<unqualified_object T>
@@ -161,16 +175,19 @@ namespace kangaru::sources {
 		T object;
 	};
 	
-	struct noop_source {};
-	
 	template<source Source>
 	struct source_reference_wrapper {
 		constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
-		template<typename T> 
+		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, source_reference_wrapper const& source) -> T
 		requires source_of<Source&, T> {
-			return kangaru::provide(provide_tag_v<T>, *source.source);
+			return provide(provide_tag_v<T>, *source.source);
+		}
+		
+		[[nodiscard]]
+		constexpr auto unwrap() const noexcept -> Source& {
+			return *source;
 		}
 		
 	private:
@@ -184,7 +201,7 @@ namespace kangaru::sources {
 	private:
 		template<different_from<Type> T>
 		friend constexpr auto provide(provide_tag<T>, forwarded<filter_source> auto const& source) -> T {
-			return kangaru::provide(provide_tag_v<T>, source.source);
+			return provide(provide_tag_v<T>, source.source);
 		}
 		
 		Source source;
@@ -197,7 +214,7 @@ namespace kangaru::sources {
 	private:
 		template<typename T> requires(requires { requires Filter{}.template operator()<T>(); })
 		friend constexpr auto provide(provide_tag<T>, forwarded<filter_if_source> auto const& source) -> T {
-			return kangaru::provide(provide_tag_v<T>, source.source);
+			return provide(provide_tag_v<T>, source.source);
 		}
 		
 		Source source;
@@ -217,17 +234,25 @@ namespace kangaru::sources {
 		return composed_source{std::tuple{KANGARU5_FWD(sources)...}};
 	}
 	
-	inline constexpr auto ref(source auto& source) {
-		return source_reference_wrapper{source};
+	template<source Source>
+	struct source_reference_wrapper_for {
+		using type = source_reference_wrapper<Source>;
+	};
+	
+	template<source Source>
+	using source_reference_wrapper_for_t = typename source_reference_wrapper_for<Source>::type;
+	
+	template<source Source>
+	inline constexpr auto ref(Source& source) -> source_reference_wrapper_for_t<Source> {
+		static_assert(requires(source_reference_wrapper_for_t<Source>& ref) {
+			{ ref.unwrap() } -> std::same_as<Source&>;
+		});
+		return source_reference_wrapper_for_t<Source>{source};
 	}
 	
 	inline constexpr auto tie(source auto&... sources) {
 		return concat(ref(sources)...);
 	}
-}
-
-namespace kangaru {
-	using namespace kangaru::sources;
 }
 
 #include "undef.hpp"

@@ -13,7 +13,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::sources {
+namespace kangaru {
 	struct make_spread_injector_function {
 		constexpr auto operator()(source auto& source) const noexcept {
 			return make_spread_injector(ref(source));

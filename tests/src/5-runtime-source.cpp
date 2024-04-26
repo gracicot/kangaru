@@ -33,7 +33,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 
 	
 	SECTION("Will cache the result of sources") {
-		auto runtime_source = kangaru::with_cache{kangaru::with_heap_storage{kangaru::ref(source)}};
+		auto runtime_source = kangaru::with_cache<kangaru::with_heap_storage<decltype(kangaru::ref(source))>>{kangaru::with_heap_storage{kangaru::ref(source)}};
 		
 		CHECK(*kangaru::provide(kangaru::provide_tag_v<int*>, runtime_source) == 0);
 		CHECK(*kangaru::provide(kangaru::provide_tag_v<int*>, runtime_source) == 0);

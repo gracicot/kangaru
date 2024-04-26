@@ -67,12 +67,12 @@ namespace kangaru {
 		}
 		
 		[[nodiscard]]
-		constexpr auto begin() -> cache_type::iterator {
+		constexpr auto begin() -> typename cache_type::iterator {
 			return cache.begin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto end() -> cache_type::iterator {
+		constexpr auto end() -> typename cache_type::iterator {
 			return cache.end();
 		}
 		
@@ -87,12 +87,12 @@ namespace kangaru {
 		}
 		
 		[[nodiscard]]
-		constexpr auto cbegin() const -> cache_type::const_iterator {
+		constexpr auto cbegin() const -> typename cache_type::const_iterator {
 			return cache.cbegin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto cend() const -> cache_type::const_iterator {
+		constexpr auto cend() const -> typename cache_type::const_iterator {
 			return cache.cend();
 		}
 		
@@ -178,22 +178,22 @@ namespace kangaru {
 		}
 		
 		[[nodiscard]]
-		constexpr auto begin() const -> cache_type::iterator {
+		constexpr auto begin() const -> typename cache_type::iterator {
 			return cache->begin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto end() const -> cache_type::iterator {
+		constexpr auto end() const -> typename cache_type::iterator {
 			return cache->end();
 		}
 		
 		[[nodiscard]]
-		constexpr auto cbegin() const -> cache_type::const_iterator {
+		constexpr auto cbegin() const -> typename cache_type::const_iterator {
 			return cache->cbegin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto cend() const -> cache_type::const_iterator {
+		constexpr auto cend() const -> typename cache_type::const_iterator {
 			return cache->cend();
 		}
 		

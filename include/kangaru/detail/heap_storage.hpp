@@ -168,12 +168,13 @@ namespace kangaru {
 	};
 	
 	static_assert(heap_storage<with_heap_storage<noop_source>>);
+	static_assert(heap_storage<with_heap_storage<noop_source, with_heap_storage<noop_source>>>);
 	
-	template<source Source>
+	template<source Source, heap_storage InnerStorage = default_heap_storage>
 	struct with_heap_storage_reference_wrapper {
-		using source_type = source_reference_wrapper_for_t<decltype(std::declval<Source>().source)>;
+		using source_type = source_reference_wrapper_for_t<Source>;
 		
-		explicit constexpr with_heap_storage_reference_wrapper(with_heap_storage<Source>& source) noexcept :
+		explicit constexpr with_heap_storage_reference_wrapper(with_heap_storage<Source, InnerStorage>& source) noexcept :
 			source{ref(source.source)}, storage{std::addressof(source)} {}
 		
 		template<std::copy_constructible F>
@@ -189,17 +190,17 @@ namespace kangaru {
 		source_type source;
 		
 	private:
-		template<object T> requires source_of<with_heap_storage<Source>, T*>
+		template<object T> requires source_of<with_heap_storage<Source, InnerStorage>, T*>
 		friend constexpr auto provide(provide_tag<T*> tag, forwarded<with_heap_storage_reference_wrapper> auto&& source) -> T* {
 			return provide(tag, *source.storage);
 		}
 		
-		with_heap_storage<Source>* storage;
+		with_heap_storage<Source, InnerStorage>* storage;
 	};
 	
-	template<source Source>
-	struct source_reference_wrapper_for<with_heap_storage<Source>> {
-		using type = with_heap_storage_reference_wrapper<Source>;
+	template<source Source, heap_storage Storage>
+	struct source_reference_wrapper_for<with_heap_storage<Source, Storage>> {
+		using type = with_heap_storage_reference_wrapper<Source, Storage>;
 	};
 	
 	static_assert(heap_storage<with_heap_storage_reference_wrapper<with_heap_storage<noop_source>>>);

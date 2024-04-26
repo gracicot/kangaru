@@ -33,6 +33,26 @@ namespace kangaru {
 		std::tuple<Sources...> sources;
 	};
 	
+	template<source... Sources>
+	struct pick_first_source {
+		explicit constexpr pick_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
+		
+		template<typename T>
+		friend constexpr auto provide(provide_tag<T>, forwarded<pick_first_source> auto&& source) -> T
+		requires ((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> or ...)) {
+			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
+			return provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
+		}
+		
+	private:
+		template<typename T, typename Self, std::size_t... S>
+		constexpr static auto index_of(std::index_sequence<S...>) {
+			return 0;
+		}
+		
+		std::tuple<Sources...> sources;
+	};
+	
 	template<object... Ts>
 	struct tuple_source {
 		explicit constexpr tuple_source(std::tuple<Ts...> objects) noexcept : objects{std::move(objects)} {}

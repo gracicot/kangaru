@@ -142,12 +142,12 @@ namespace kangaru {
 
 	static_assert(cache_map<with_cache<noop_source>>);
 	
-	template<source Source>
+	template<source Source, cache_map InnerCache = std::unordered_map<std::size_t, void*>>
 	struct with_cache_reference_wrapper {
-		using source_type = source_reference_wrapper_for_t<decltype(std::declval<Source>().source)>;
-		using cache_type = Source;
+		using source_type = source_reference_wrapper_for_t<Source>;
+		using cache_type = with_cache<Source>;
 		
-		explicit constexpr with_cache_reference_wrapper(with_cache<Source>& source) noexcept :
+		explicit constexpr with_cache_reference_wrapper(with_cache<Source, InnerCache>& source) noexcept :
 			source{ref(source.source)}, cache{std::addressof(source)} {}
 		
 		using key_type = typename cache_type::key_type;
@@ -222,6 +222,11 @@ namespace kangaru {
 			swap(cache, other.cache);
 		}
 		
+		[[nodiscard]]
+		constexpr auto unwrap() -> with_cache<Source, InnerCache>& {
+			return *cache;
+		}
+		
 	private:
 		template<object T, forwarded<with_cache_reference_wrapper> Self>
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, T>
@@ -232,9 +237,9 @@ namespace kangaru {
 		cache_type* cache = {};
 	};
 	
-	template<source Source>
-	struct source_reference_wrapper_for<with_cache<Source>> {
-		using type = with_cache_reference_wrapper<Source>;
+	template<source Source, cache_map Cache>
+	struct source_reference_wrapper_for<with_cache<Source, Cache>> {
+		using type = with_cache_reference_wrapper<Source, Cache>;
 	};
 	
 	static_assert(cache_map<with_cache_reference_wrapper<with_cache<noop_source>>>);

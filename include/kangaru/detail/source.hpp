@@ -16,7 +16,7 @@ namespace kangaru {
 	inline constexpr auto provide_tag_v = provide_tag<T>{}; 
 	
 	template<typename T>
-	concept source = object<T> and std::move_constructible<T>;
+	concept source = object<T> and std::move_constructible<T> and std::is_class_v<T>;
 	
 	template<typename T>
 	concept source_ref = std::is_reference_v<T> and source<std::remove_cvref_t<T>>;
@@ -74,7 +74,9 @@ namespace kangaru {
 		or detail::source::member_source_of<Source, T>;
 	
 	template<typename T>
-	concept wrapping_source = source<T> and source<std::decay_t<decltype(std::declval<T>().source)>>;
+	concept wrapping_source =
+		    source<T>
+		and source<std::decay_t<decltype(std::declval<T>().source)>>;
 	
 	struct noop_source {};
 } // namespace kangaru

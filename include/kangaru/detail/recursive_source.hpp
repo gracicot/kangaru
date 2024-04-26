@@ -248,6 +248,83 @@ namespace kangaru {
 	private:
 		Source source;
 	};
+	
+	// deep
+	template<wrapping_source>
+	struct rebind_wrapper {};
+	
+	template<template<typename> typename Branch, source Source>
+	struct rebind_wrapper<Branch<Source>> {
+		template<source NewSource>
+		using ttype = Branch<NewSource>;
+	};
+	
+	template<template<typename, typename> typename Branch, source Source, typename State>
+	struct rebind_wrapper<Branch<Source, State>> {
+		template<source NewSource, typename NewState = State>
+		using ttype = Branch<NewSource, NewState>;
+	};
+	
+	template<typename Source>
+	concept rebindable_wrapping_source =
+		    wrapping_source<Source>
+		and requires(Source source) {
+			typename std::type_identity<typename rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>>::type;
+			requires std::constructible_from<
+				typename rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>,
+				std::decay_t<decltype(source.source)>
+			>;
+		};
+	
+	template<typename Source>
+	concept stateful_rebindable_wrapping_source =
+		    rebindable_wrapping_source<Source>
+		and requires(Source source) {
+			typename std::type_identity<typename rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>, decltype(ref(source))>>::type;
+			requires std::constructible_from<
+				typename rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>, decltype(ref(source))>,
+				std::decay_t<decltype(source.source)>,
+				decltype(ref(source))
+			>;
+		};
+
+	template<source Source>
+	struct with_tree_recursion {
+		Source source;
+		
+		auto test() {
+			return rebind_tree(source);
+		}
+		
+	private:
+		template<kangaru::source Leaf>
+		constexpr auto rebind_tree(Leaf& source) noexcept -> auto {
+			return ref(source);
+		}
+		
+		template<rebindable_wrapping_source Wrapper>
+		constexpr auto rebind_tree(Wrapper& source) -> auto {
+			return typename rebind_wrapper<Wrapper>::ttype{rebind_tree(source.source)};
+		}
+		
+		template<stateful_rebindable_wrapping_source Wrapper>
+		constexpr auto rebind_tree(Wrapper& source) -> auto {
+			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree(source.source)), decltype(ref(source))>{
+				rebind_tree(source.source),
+				ref(source),
+			};
+		}
+		
+		template<typename T> requires source_of<Source, T>
+		friend constexpr auto provide(provide_tag<T> tag, forwarded<with_tree_recursion> auto&& source) {
+			return provide(tag, KANGARU5_FWD(source).source);
+		}
+		
+		template<typename T> requires (not source_of<Source, T>)
+		friend constexpr auto provide(provide_tag<T> tag, with_tree_recursion& source) {
+			return provide(tag, source.rebind_tree(source.source));
+		}
+	};
 }
 
 #include "undef.hpp"

@@ -71,7 +71,9 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		static_assert(kangaru::stateful_rebindable_wrapping_source<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>);
 	}
 
-	auto basic_recursion_test = kangaru::with_tree_recursion{kangaru::with_cache{kangaru::with_heap_storage{increment_source{}}}};
+	auto basic_recursion_test = kangaru::with_tree_recursion<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>{
+		kangaru::with_cache<kangaru::with_heap_storage<increment_source>>{kangaru::with_heap_storage<increment_source>{increment_source{}}}
+	};
 
 	CHECK(kangaru::provide(kangaru::provide_tag_v<int*>, basic_recursion_test));
 }

@@ -61,10 +61,14 @@ namespace kangaru {
 				return KANGARU5_FWD(source).provide();
 			}
 		};
+		
+		namespace niebloid {
+			inline constexpr auto provide = detail::source::provide_function{};
+		}
 	}
 	
-	inline namespace neibloid {
-		inline constexpr auto provide = detail::source::provide_function{};
+	inline namespace niebloid {
+		using namespace detail::source::niebloid;
 	}
 	
 	template<typename Source, typename T>

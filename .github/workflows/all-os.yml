@@ -59,6 +59,9 @@ jobs:
           - clang: 17
             os: ubuntu-22.04
             arch: x64
+          - clang: 18
+            os: ubuntu-22.04
+            arch: x64
 
     steps:
       - uses: actions/checkout@v4

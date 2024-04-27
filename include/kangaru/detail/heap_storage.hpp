@@ -55,8 +55,7 @@ namespace kangaru {
 			{ std::as_const(container).end() } -> std::same_as<typename T::const_iterator>;
 			{ std::as_const(container).empty() } -> std::same_as<bool>;
 			{ container.clear() } -> std::same_as<void>;
-			{ container.insert(container.begin(), container.begin(), container.end()) };
-			{ container.insert(container.begin(), std::as_const(container).begin(), std::as_const(container).end()) };
+			{ container.insert(container.begin(), std::make_move_iterator(container.begin()), std::make_move_iterator(container.end())) };
 			{ container.erase(container.begin()) } -> std::same_as<typename T::iterator>;
 			{ container.erase(std::as_const(container).begin()) } -> std::same_as<typename T::iterator>;
 		};

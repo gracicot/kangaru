@@ -16,6 +16,9 @@
 #include <memory>
 #include <iterator>
 
+#include <string>
+#include <iostream>
+
 #include "define.hpp"
 
 namespace kgr {
@@ -169,10 +172,26 @@ public:
 	 * Adds a service in the service source
 	 */
 	template<typename T, typename... Parents, typename... Args>
-	auto emplace(Args&&... args) -> single_insertion_result_t<T> {
+	auto emplace(std::false_type emplaceable, Args&&... args) -> single_insertion_result_t<T> {
+		static_cast<void>(emplaceable);
 		auto instance_ptr = make_instance_ptr<T>(std::forward<Args>(args)...);
 		auto ptr = &instance_ptr->service;
 		
+		_instances.emplace_back(std::move(instance_ptr));
+		
+		return single_insertion_result_t<T>{insert_self<T>(ptr), insert_override<T, Parents>(ptr)...};
+	}
+	
+	/*
+	 * Adds a service in the service source
+	 */
+	template<typename T, typename... Parents, typename... Args>
+	auto emplace(std::true_type emplaceable, Args&&... args) -> single_insertion_result_t<T> {
+		static_cast<void>(emplaceable);
+		auto instance_ptr = make_instance_ptr<T>();
+		auto ptr = &instance_ptr->service;
+		
+		ptr->emplace(std::forward<Args>(args)...);
 		_instances.emplace_back(std::move(instance_ptr));
 		
 		return single_insertion_result_t<T>{insert_self<T>(ptr), insert_override<T, Parents>(ptr)...};
@@ -213,7 +232,7 @@ public:
 		
 		if (it != _services.end()) {
 			auto& this_overrides = it->second.service<override_storage_service>();
-			auto fork_overrides = std::get<0>(fork.emplace<override_storage_service>());
+			auto fork_overrides = std::get<0>(fork.emplace<override_storage_service>(std::false_type{}));
 			static_cast<override_storage*>(fork_overrides.service)->overrides = this_overrides.forward().filter(predicate);
 		}
 		

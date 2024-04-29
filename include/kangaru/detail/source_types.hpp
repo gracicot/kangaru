@@ -15,7 +15,7 @@
 namespace kangaru {
 	template<source... Sources>
 	struct composed_source {
-		explicit constexpr composed_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
+		explicit constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
 		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, forwarded<composed_source> auto&& source) -> T
@@ -34,11 +34,11 @@ namespace kangaru {
 	};
 	
 	template<source... Sources>
-	struct pick_first_source {
-		explicit constexpr pick_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
+	struct select_first_source {
+		explicit constexpr select_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
 		
 		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, forwarded<pick_first_source> auto&& source) -> T
+		friend constexpr auto provide(provide_tag<T>, forwarded<select_first_source> auto&& source) -> T
 		requires ((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> or ...)) {
 			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
 			return provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
@@ -47,7 +47,13 @@ namespace kangaru {
 	private:
 		template<typename T, typename Self, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
-			return 0;
+			for (auto [valid, index] : {std::pair{source_of<detail::utility::forward_like_t<Self, Sources>, T>, S}...}) {
+				if (valid) {
+					return index;
+				}
+			}
+			
+			return sizeof...(S);
 		}
 		
 		std::tuple<Sources...> sources;
@@ -251,7 +257,7 @@ namespace kangaru {
 	}
 	
 	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
-		return composed_source{std::tuple{KANGARU5_FWD(sources)...}};
+		return composed_source{KANGARU5_FWD(sources)...};
 	}
 	
 	template<source Source>

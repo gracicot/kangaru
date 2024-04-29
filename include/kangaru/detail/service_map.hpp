@@ -74,20 +74,11 @@ struct probe {
 	operator T&& ();
 	
 	template<typename T, enable_if_t<
-
-		std::is_same<T const&, S>::value
-#ifdef KGR_KANGARU_MSVC_RELAX_PROBE
-    || std::is_same<T const&, constify<S>>
-#endif
-  , int> = 0>
+		std::is_same<T const&, S>::value, int> = 0>
 	operator T const& () const;
 	
 	template<typename T, enable_if_t<
-		std::is_same<T const&&, S&&>::value
-#ifdef KGR_KANGARU_MSVC_RELAX_PROBE
-    || std::is_same<T const&&, constify<S>&&>
-#endif
-  , int> = 0>
+		std::is_same<T const&&, S&&>::value, int> = 0>
 	operator T const&& () const;
 };
 

@@ -154,6 +154,7 @@ namespace kangaru {
 	
 	template<typename T>
 	struct cache_using {
+		using meta = tags_tag;
 		struct cache_using_source {
 			using source = T;
 		};
@@ -161,6 +162,7 @@ namespace kangaru {
 	
 	template<template<typename> typename Source>
 	struct cache_using_source_type {
+		using meta = tags_tag;
 		struct cache_using_source {
 			template<typename T>
 			using source_for = Source<T>;

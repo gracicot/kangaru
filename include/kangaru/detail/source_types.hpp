@@ -9,6 +9,7 @@
 
 #include <tuple>
 #include <concepts>
+#include <algorithm>
 
 #include "define.hpp"
 
@@ -47,13 +48,13 @@ namespace kangaru {
 	private:
 		template<typename T, typename Self, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
-			for (auto [valid, index] : {std::pair{source_of<detail::utility::forward_like_t<Self, Sources>, T>, S}...}) {
-				if (valid) {
-					return index;
-				}
-			}
+			auto const source_handles = std::array{std::pair{S, source_of<detail::utility::forward_like_t<Self, Sources>, T>}...};
 			
-			return sizeof...(S);
+			auto const it = std::find_if(source_handles.begin(), source_handles.end(), [](std::pair<std::size_t, bool> source) {
+				return source.second;
+			});
+			
+			return std::distance(source_handles.begin(), it);
 		}
 		
 		std::tuple<Sources...> sources;

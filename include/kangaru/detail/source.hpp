@@ -77,10 +77,15 @@ namespace kangaru {
 		or detail::source::member_template_source_of<Source, T>
 		or detail::source::member_source_of<Source, T>;
 	
-	template<typename T>
+	template<typename Source>
 	concept wrapping_source =
-		    source<T>
-		and source<std::decay_t<decltype(std::declval<T>().source)>>;
+		    source<Source>
+		and requires(Source s) {
+			requires source<std::remove_cvref_t<decltype(s.source)>>;
+		};
+	
+	template<typename T>
+	using wrapped_source_t = std::remove_cvref_t<decltype(std::declval<T>().source)>;
 	
 	struct noop_source {};
 } // namespace kangaru

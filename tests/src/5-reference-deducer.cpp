@@ -254,10 +254,7 @@ struct type_1111 {
 
 template<typename T>
 auto restricted_constructor() {
-	auto const construct = kangaru::non_empty_construction{};
-	return [construct](kangaru::deducer auto... deduce) -> decltype(construct.template operator()<T>(deduce...)) {
-		return construct.template operator()<T>(deduce...);
-	};
+	return kangaru::non_empty_construction::construct<T>{};
 }
 
 TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
@@ -375,7 +372,7 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		CHECK((
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
 		) == kangaru::reference_kind::all_reference_kind);
-		
+
 		CHECK(kangaru::construction_tree_needs<type_0000, injected>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected&>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&>);

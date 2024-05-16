@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_SOURCE_HPP
 
 #include "concepts.hpp"
+#include "utility.hpp"
 
 #include <concepts>
 #include <cstdint>
@@ -73,21 +74,30 @@ namespace kangaru {
 	
 	template<typename Source, typename T>
 	concept source_of =
-		   detail::source::adl_nonmember_source_of<Source, T>
+		   detail::source::member_source_of<Source, T>
 		or detail::source::member_template_source_of<Source, T>
-		or detail::source::member_source_of<Source, T>;
+		or detail::source::adl_nonmember_source_of<Source, T>;
+	
+	template<typename Source>
+	concept weak_wrapping_source = source<Source> and requires(Source source) {
+		{ source.source };
+	};
+	
+	template<typename Source> requires weak_wrapping_source<std::remove_reference_t<Source>>
+	using wrapped_source_t = std::remove_reference_t<decltype(std::declval<Source&&>().source)>;
 	
 	template<typename Source>
 	concept wrapping_source =
-		    source<Source>
-		and requires(Source s) {
-			requires source<std::remove_cvref_t<decltype(s.source)>>;
-		};
-	
-	template<typename T>
-	using wrapped_source_t = std::remove_cvref_t<decltype(std::declval<T>().source)>;
+		    weak_wrapping_source<Source>
+		and source<std::remove_reference_t<wrapped_source_t<Source>>>;
 	
 	struct noop_source {};
+	static_assert(source<noop_source>);
+	
+	template<typename Source, typename T>
+	concept wrapping_source_of =
+		    wrapping_source<std::remove_reference_t<Source>>
+		and source_of<detail::utility::forward_like_t<Source, wrapped_source_t<Source>>, T>;
 } // namespace kangaru
 
 #include "undef.hpp"

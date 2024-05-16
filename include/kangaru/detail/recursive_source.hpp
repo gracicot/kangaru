@@ -34,7 +34,7 @@ namespace kangaru {
 		
 		explicit constexpr basic_non_empty_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
-
+		
 		template<unqualified_object T>
 		struct construct {
 			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
@@ -65,7 +65,7 @@ namespace kangaru {
 		
 		explicit constexpr basic_unsafe_exhaustive_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
-
+		
 		template<unqualified_object T>
 		struct construct {
 			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
@@ -86,7 +86,7 @@ namespace kangaru {
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
-
+	
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -100,7 +100,7 @@ namespace kangaru {
 		
 		explicit constexpr basic_exhaustive_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
-
+		
 		template<typename T>
 		struct construct {
 			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
@@ -135,11 +135,9 @@ namespace kangaru {
 		
 		explicit constexpr placeholder_construct_except(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
-
+		
 		template<typename T>
 		struct construct {
-			// auto operator()(deducer auto...) const -> T requires std::same_as<Type, T> = delete;
-			
 			[[noreturn]]
 			auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
 			requires (different_from<T, Type> and callable<
@@ -154,7 +152,7 @@ namespace kangaru {
 		
 		template<typename T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		auto operator()(Source&& source) const -> T;
-
+	
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -166,7 +164,7 @@ namespace kangaru {
 		
 		explicit constexpr basic_placeholder_construct(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
-
+		
 		template<unqualified_object T>
 		struct construct {
 			[[noreturn]]
@@ -180,10 +178,10 @@ namespace kangaru {
 			[[noreturn]]
 			auto operator()() const -> T requires callable<KANGARU5_CONSTRUCTOR_T(T)>;
 		};
-
+		
 		template<typename T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		auto operator()(Source&& source) const -> T;
-
+	
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -284,7 +282,7 @@ namespace kangaru {
 				decltype(ref(source))
 			>;
 		};
-
+	
 	template<source Source>
 	struct with_tree_recursion {
 		Source source;

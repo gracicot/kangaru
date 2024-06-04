@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_SOURCE_FROM_TAG_HPP
 
 #include "allocator.hpp"
+#include "concepts.hpp"
 #include "recursive_source.hpp"
 #include "source.hpp"
 #include "constructor.hpp"
@@ -12,37 +13,59 @@
 
 #include "define.hpp"
 
-namespace kangaru::sources {
-	template<source Source, movable_object MakeInjector = make_spread_injector_function>
-	struct source_from_tag_source {
-		explicit constexpr source_from_tag_source(Source source) noexcept
-			requires std::default_initializable<MakeInjector> :
+namespace kangaru {
+	template<source Source, construction Construct>
+	struct with_construction {
+		explicit constexpr with_construction(Source source) noexcept
+			requires std::default_initializable<Construct> :
 			source{std::move(source)} {}
+		
+		constexpr with_construction(Source source, Construct construct) noexcept :
+			source{std::move(source)},
+			construct{std::move(construct)} {}
+		
+		template<typename T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+		}
+		
+		template<typename T, forwarded<with_construction> Self> requires (callable_template1<Construct const&, T, wrapped_source_t<Self>>)
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return source.construct.template operator()<T>(KANGARU5_FWD(source).source);
+		}
 		
 		Source source;
 		
-		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, forwarded<source_from_tag_source> auto&& source) {
-			return source.make_injector(source.source)(constructor<T>());
-		}
-		
 	private:
-		KANGARU5_NO_UNIQUE_ADDRESS
-		MakeInjector make_injector;
+		Construct construct;
 	};
 	
-	template<source Source>
+	template<typename Source, typename Construct> requires (source<std::remove_cvref_t<Source>> and movable_object<std::remove_cvref_t<Construct>>)
+	inline constexpr auto make_source_with_construction(Source&& source, Construct&& construct) {
+		return with_construction<std::remove_cvref_t<Source>, std::remove_cvref_t<Construct>>{KANGARU5_FWD(source), KANGARU5_FWD(construct)};
+	}
+	
+	template<source Source, movable_object Construct>
 	struct with_source_from_tag {
-		explicit constexpr with_source_from_tag(Source source) noexcept : source{std::move(source)} {}
+		explicit constexpr with_source_from_tag(Source source) noexcept
+			requires std::default_initializable<Construct> :
+			source{std::move(source)} {}
+		
+		constexpr with_source_from_tag(Source source, Construct construct) noexcept :
+			source{std::move(source)},
+			construct{std::move(construct)} {}
 		
 		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, forwarded<with_source_from_tag> auto&& source) -> T {
-			auto source_source = source_from_tag_source{kangaru::ref(KANGARU5_FWD(source).source)};
-			auto source_for_t = provide(provide_tag_v<cache_using_source_t<T>>, source_source);
-			return provide(provide_tag_v<T>, source_for_t);
+			auto source_source = kangaru::make_source_with_construction(kangaru::ref(KANGARU5_FWD(source).source), source.construct);
+			auto source_for_t = provide(provide_tag_v<cache_using_source_t<T>>, std::move(source_source));
+			return provide(provide_tag_v<T>, std::move(source_for_t));
 		}
 		
 		Source source;
+		
+	private:
+		Construct construct;
 	};
 }
 

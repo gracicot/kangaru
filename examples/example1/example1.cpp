@@ -71,9 +71,12 @@ auto main() -> int {
 	auto camera_source = kangaru::external_reference_source{camera};
 	auto model_source = kangaru::object_source{model};
 	
-	auto source = kangaru::make_source_with_recursive_construct(
-		kangaru::tie(model_source, camera_source)
-	);
+	auto source = kangaru::with_tree_recursion{
+		kangaru::with_construction{
+			kangaru::tie(camera_source, model_source),
+			kangaru::non_empty_construction{},
+		}
+	};
 
 	auto injector = kangaru::make_spread_injector(source);
 

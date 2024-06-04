@@ -202,6 +202,27 @@ namespace kangaru {
 		T object;
 	};
 	
+	template<wrapping_source Source, typename Filtered>
+	struct with_filter_passthrough {
+		explicit constexpr with_filter_passthrough(Source source) noexcept : source{std::move(source)} {}
+		
+		template<different_from<Filtered> T, forwarded<with_filter_passthrough> Self> requires source_of<wrapped_source_t<Self>, T>
+		friend constexpr auto provide(provide_tag<T> tag, Self&& source) {
+			return provide(tag, KANGARU5_FWD(source).source);
+		}
+		
+		friend constexpr auto provide(provide_tag<Filtered> tag, forwarded<with_filter_passthrough> auto&& source) requires wrapping_source_of<detail::utility::forward_like_t<decltype(source), Source>, Filtered> {
+			return provide(tag, KANGARU5_FWD(source).source.source);
+		}
+		
+		Source source;
+	};
+	
+	template<typename T, typename Source> requires source<std::remove_reference_t<Source>>
+	constexpr auto make_source_with_filter_passthrough(Source&& source) {
+		return with_filter_passthrough<std::remove_cvref_t<Source>, T>{KANGARU5_FWD(source)};
+	}
+	
 	template<source Source>
 	struct source_reference_wrapper {
 		constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
@@ -221,7 +242,7 @@ namespace kangaru {
 		Source* source;
 	};
 	
-	template<typename Source, typename Type>
+	template<source Source, typename Type>
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
 		
@@ -234,7 +255,7 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<typename Source, std::default_initializable Filter>
+	template<source Source, std::default_initializable Filter>
 	struct filter_if_source {
 		constexpr filter_if_source(Source source) noexcept : source{std::move(source)} {}
 		
@@ -269,11 +290,22 @@ namespace kangaru {
 	template<source Source>
 	using source_reference_wrapper_for_t = typename source_reference_wrapper_for<Source>::type;
 	
+	template<typename T>
+	concept reference_wrapper = source<T> and requires(T ref) {
+		{ ref.unwrap() } -> reference;
+	};
+	
+	template<typename Wrapper, typename T>
+	concept reference_wrapper_for = requires(Wrapper ref) {
+		{ ref.unwrap() } -> std::same_as<T&>;
+	};
+	
+	template<reference_wrapper Wrapper>
+	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
+	
 	template<source Source>
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper_for_t<Source> {
-		static_assert(requires(source_reference_wrapper_for_t<Source>& ref) {
-			{ ref.unwrap() } -> std::same_as<Source&>;
-		});
+		static_assert(reference_wrapper_for<source_reference_wrapper_for_t<Source>, Source>);
 		return source_reference_wrapper_for_t<Source>{source};
 	}
 	

@@ -64,6 +64,12 @@ namespace kangaru::detail::utility {
 	
 	template<typename Tuple>
 	using sequence_tuple_for_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<std::tuple_size_v<Tuple>>>::type;
+	
+	template<template<typename...> typename Template>
+	struct template_type_identity {
+		template<typename... Args>
+		using ttype = Template<Args...>;
+	};
 }
 
 #include "undef.hpp"

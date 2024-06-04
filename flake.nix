@@ -21,12 +21,12 @@
           pkgs = nixpkgsFor.${system};
           vcpkg = pkgs.vcpkg;
           frameworks = pkgs.darwin.apple_sdk_11_0.frameworks;
-          mkShell = pkgs.mkShell.override {stdenv = pkgs.gcc13Stdenv;};
+          mkShell = pkgs.mkShell.override {stdenv = pkgs.llvmPackages_18.stdenv;};
         in {
           default = mkShell {
             nativeBuildInputs = with pkgs; [
-              clang-tools_17
-              lldb_17
+              clang-tools_18
+              lldb_18
             ];
             buildInputs = with pkgs; [
               cmake
@@ -54,7 +54,6 @@
 
             hardeningDisable = [ "fortify" ];
             VCPKG_ROOT = "${pkgs.vcpkg}/share/vcpkg";
-
           };
         });
     };

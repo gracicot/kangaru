@@ -29,9 +29,11 @@ struct increment_source {
 	}
 } source{};
 
-TEST_CASE("Runtime source will cache sources results", "[deducer]") {
+struct needs_int_pointer {
+	int* ptr;
+};
 
-	
+TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	SECTION("Will cache the result of sources") {
 		auto runtime_source = kangaru::with_cache<kangaru::with_heap_storage<decltype(kangaru::ref(source))>>{kangaru::with_heap_storage{kangaru::ref(source)}};
 		
@@ -46,7 +48,10 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 			kangaru::object_source{Derived{3}},
 			kangaru::object_source{Base{}}
 		);
-		auto runtime_source = kangaru::with_cache<kangaru::with_heap_storage<decltype(source)>, kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>>{kangaru::with_heap_storage<decltype(source)>{source}};
+		auto runtime_source = kangaru::make_source_with_cache(
+			kangaru::make_source_with_heap_storage(source),
+			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
+		);
 		
 		CHECK(kangaru::provide(kangaru::provide_tag_v<Derived*>, runtime_source)->get() == 3);
 		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 3);
@@ -57,23 +62,32 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 			kangaru::object_source{Derived{3}},
 			kangaru::object_source{Base{}}
 		);
-		auto runtime_source = kangaru::with_cache<kangaru::with_heap_storage<decltype(source)>, kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>>{kangaru::with_heap_storage<decltype(source)>{source}};
+		auto runtime_source = kangaru::make_source_with_cache(
+			kangaru::make_source_with_heap_storage(source),
+			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
+		);
 		
 		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 0);
 		CHECK(kangaru::provide(kangaru::provide_tag_v<Derived*>, runtime_source)->get() == 3);
 		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 0);
 	}
-
-	{
-		auto source = kangaru::with_heap_storage<increment_source>{increment_source{}};
-	 
+	
+	SECTION("Recursion with heap and cache") {
 		static_assert(kangaru::stateful_rebindable_wrapping_source<kangaru::with_heap_storage<increment_source>>);
 		static_assert(kangaru::stateful_rebindable_wrapping_source<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>);
+		
+		auto basic_recursion_test = kangaru::with_tree_recursion<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>{
+			kangaru::with_cache<kangaru::with_heap_storage<increment_source>>{kangaru::with_heap_storage<increment_source>{increment_source{}}}
+		};
+		
+		CHECK(kangaru::provide(kangaru::provide_tag_v<int*>, basic_recursion_test));
 	}
+	
+	SECTION("Recursion with heap and cache and construction") {
+		auto source = kangaru::with_tree_recursion{
+			kangaru::make_source_with_cache(kangaru::make_source_with_heap_storage(kangaru::make_source_with_construction(increment_source{}, kangaru::non_empty_construction{})))
+		};
 
-	auto basic_recursion_test = kangaru::with_tree_recursion<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>{
-		kangaru::with_cache<kangaru::with_heap_storage<increment_source>>{kangaru::with_heap_storage<increment_source>{increment_source{}}}
-	};
-
-	CHECK(kangaru::provide(kangaru::provide_tag_v<int*>, basic_recursion_test));
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_pointer*>, source));
+	}
 }

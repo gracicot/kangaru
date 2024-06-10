@@ -242,6 +242,25 @@ namespace kangaru {
 		Source* source;
 	};
 	
+	template<source Source>
+	struct source_const_reference_wrapper {
+		constexpr source_const_reference_wrapper(Source const& source) noexcept : source{std::addressof(source)} {}
+		constexpr source_const_reference_wrapper(source_reference_wrapper<Source> const& source) noexcept : source{source.unwrap()} {}
+		
+		template<typename T> requires source_of<Source const&, T>
+		friend constexpr auto provide(provide_tag<T>, source_const_reference_wrapper const& source) -> T {
+			return provide(provide_tag_v<T>, *source.source);
+		}
+		
+		[[nodiscard]]
+		constexpr auto unwrap() const noexcept -> Source const& {
+			return *source;
+		}
+		
+	private:
+		Source const* source;
+	};
+	
 	template<source Source, typename Type>
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
@@ -288,6 +307,11 @@ namespace kangaru {
 	};
 	
 	template<source Source>
+	struct source_reference_wrapper_for<Source const> {
+		using type = source_const_reference_wrapper<Source>;
+	};
+	
+	template<source Source>
 	using source_reference_wrapper_for_t = typename source_reference_wrapper_for<Source>::type;
 	
 	template<typename T>
@@ -296,14 +320,14 @@ namespace kangaru {
 	};
 	
 	template<typename Wrapper, typename T>
-	concept reference_wrapper_for = requires(Wrapper ref) {
+	concept reference_wrapper_for = requires(Wrapper const& ref) {
 		{ ref.unwrap() } -> std::same_as<T&>;
 	};
 	
 	template<reference_wrapper Wrapper>
 	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
 	
-	template<source Source>
+	template<typename Source> requires source<std::remove_const_t<Source>>
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper_for_t<Source> {
 		static_assert(reference_wrapper_for<source_reference_wrapper_for_t<Source>, Source>);
 		return source_reference_wrapper_for_t<Source>{source};

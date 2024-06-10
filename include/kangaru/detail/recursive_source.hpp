@@ -53,9 +53,11 @@ namespace kangaru {
 			}
 		};
 		
-		template<unqualified_object T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		// Why const appear in callable?
+		template<unqualified_object T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, source_reference_wrapper_for_t<std::remove_reference_t<Source>>>, construct<T>>)
 		constexpr auto operator()(Source&& source) const {
-			return make_injector(KANGARU5_FWD(source))(construct<T>{});
+			// Workaround: always send reference wrapper
+			return make_injector(kangaru::ref(source))(construct<T>{});
 		}
 
 	private:
@@ -303,52 +305,44 @@ namespace kangaru {
 		explicit constexpr with_tree_recursion(Source source) noexcept : source{std::move(source)} {}
 		
 		Source source;
-		
 	private:
-		template<typename T, kangaru::source Leaf> requires reference_wrapper<Source>
-		constexpr auto rebind_tree_for(Leaf&) const noexcept -> auto {
-			return make_source_with_filter_passthrough<T>(*this);
-		}
-		
-		template<typename T, kangaru::source Leaf>
-		constexpr auto rebind_tree_for(Leaf&) const noexcept -> auto {
-			return make_source_with_filter_passthrough<T>(with_tree_recursion<decltype(ref(source))>{ref(source)});
-		}
-		
-		template<typename T, kangaru::source Leaf> requires (reference_wrapper<Source> and source_of<Source, T>)
-		constexpr auto rebind_tree_for(Leaf&) const noexcept -> auto {
-			return source;
-		}
-		
-		template<typename T, kangaru::source Leaf> requires (source_of<Source, T>)
-		constexpr auto rebind_tree_for(Leaf&) const noexcept -> auto {
-			return ref(source);
+		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<Leaf> and not reference_wrapper<Leaf>)
+		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Leaf&) noexcept -> auto {
+			if constexpr (source_of<Source, T> and reference_wrapper<Source>) {
+				return self.source;
+			} else if constexpr (source_of<Source, T>) {
+				return kangaru::ref(self.source);
+			} else if constexpr (reference_wrapper<Source>) {
+				return make_source_with_filter_passthrough<T>(self);
+			} else {
+				return make_source_with_filter_passthrough<T>(with_tree_recursion<decltype(kangaru::ref(self.source))>{kangaru::ref(self.source)});
+			}
 		}
 		
 		template<typename T, rebindable_wrapping_source Wrapper>
-		constexpr auto rebind_tree_for(Wrapper& source) const noexcept -> auto {
-			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(source.source))>{rebind_tree_for<T>(source.source)};
+		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(KANGARU5_FWD(self), source.source))>{rebind_tree_for<T>(KANGARU5_FWD(self), source.source)};
 		}
 		
 		template<typename T, stateful_rebindable_wrapping_source Wrapper>
-		constexpr auto rebind_tree_for(Wrapper& source) const noexcept -> auto {
-			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(source.source)), decltype(ref(source))>{
-				rebind_tree_for(source.source),
-				ref(source),
+		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(KANGARU5_FWD(self), source.source)), decltype(kangaru::ref(source))>{
+				rebind_tree_for<T>(KANGARU5_FWD(self), source.source),
+				kangaru::ref(source),
 			};
 		}
 		
-		template<typename T>
-		constexpr auto rebind_tree_for(reference_wrapper auto wrapper) const -> auto {
-			return rebind_tree_for<T>(wrapper.unwrap());
+		template<typename T, kangaru::source Wrapper> requires reference_wrapper<Wrapper>
+		constexpr auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper wrapper) -> auto {
+			return rebind_tree_for<T>(KANGARU5_FWD(self), wrapper.unwrap());
 		}
 		
 		template<forwarded<with_tree_recursion> Self, typename T>
-		using rebind_tree_t = decltype(std::declval<Self>().template rebind_tree_for<T>(std::declval<Self>().source));
+		using rebind_tree_t = decltype(std::declval<Self>().template rebind_tree_for<T>(std::declval<Self>(), std::declval<Self>().source));
 		
 		template<typename T, forwarded<with_tree_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebind_tree_t<Self, T>, T> {
-			return provide(tag, source.template rebind_tree_for<T>(KANGARU5_FWD(source).source));
+			return provide(tag, source.template rebind_tree_for<T>(KANGARU5_FWD(source), KANGARU5_FWD(source).source));
 		}
 		
 		template<typename T, forwarded<with_tree_recursion> Self> requires wrapping_source_of<Self, T>

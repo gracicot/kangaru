@@ -166,6 +166,13 @@ namespace kangaru {
 		Storage storage = {};
 	};
 	
+	template<typename Source, typename Storage = default_heap_storage> requires(source<std::remove_cvref_t<Source>> and heap_storage<std::remove_cvref_t<Storage>>)
+	constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage = default_heap_storage{}) {
+		return with_heap_storage<std::remove_cvref_t<Source>, std::remove_cvref_t<Storage>>{
+			KANGARU5_FWD(source), KANGARU5_FWD(storage)
+		};
+	}
+	
 	static_assert(heap_storage<with_heap_storage<noop_source>>);
 	static_assert(heap_storage<with_heap_storage<noop_source, with_heap_storage<noop_source>>>);
 	
@@ -182,7 +189,7 @@ namespace kangaru {
 		}
 		
 		[[nodiscard]]
-		constexpr auto unwrap() const noexcept -> with_heap_storage<Source>& {
+		constexpr auto unwrap() const noexcept -> with_heap_storage<Source, InnerStorage>& {
 			return *storage;
 		}
 		

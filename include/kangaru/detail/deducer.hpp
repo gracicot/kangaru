@@ -21,11 +21,7 @@ namespace kangaru {
 			requires std::same_as<typename Deducer::is_deducer, kangaru_deducer_tag>;
 		};
 	
-	template<typename Deducer, typename T
-		#if KANGARU5_MSVC_FEEDBACK_10551677_WORKAROUND_NEEDED() == 1
-		, auto = []{}
-		#endif
-	>
+	template<typename Deducer, typename T>
 	concept deducer_for = deducer<Deducer> and requires(Deducer deducer) {
 		{ deducer.operator T() } -> std::same_as<T>;
 	};

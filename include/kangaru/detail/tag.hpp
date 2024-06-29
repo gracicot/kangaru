@@ -165,7 +165,7 @@ namespace kangaru {
 		using meta = tags_tag;
 		struct cache_using_source {
 			template<typename T>
-			using source_for = Source<T>;
+			using source_for = Source<std::remove_cvref_t<T>>;
 		};
 	};
 }

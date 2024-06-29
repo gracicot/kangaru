@@ -10,6 +10,7 @@
 #include <tuple>
 #include <concepts>
 #include <algorithm>
+#include <type_traits>
 
 #include "define.hpp"
 
@@ -33,6 +34,10 @@ namespace kangaru {
 		
 		std::tuple<Sources...> sources;
 	};
+	
+	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
+		return composed_source{KANGARU5_FWD(sources)...};
+	}
 	
 	template<source... Sources>
 	struct select_first_source {
@@ -101,7 +106,7 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_object_source {
-		injectable_object_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
+		injectable_object_source(deducer auto... deduce) requires std::constructible_from<T, decltype(deduce)...> :
 			object{deduce...} {}
 		
 		friend constexpr auto provide(provide_tag<T>, forwarded<injectable_object_source> auto&& source) -> T {
@@ -114,7 +119,8 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_reference_source {
-		injectable_reference_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
+		template<deducer... Deducer> requires std::constructible_from<T, Deducer...>
+		injectable_reference_source(Deducer... deduce) :
 			object{deduce...} {}
 		
 		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source& source) -> T& {
@@ -131,7 +137,7 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_rvalue_source {
-		injectable_rvalue_source(deducer auto&&... deduce) requires std::constructible_from<T, decltype(deduce)...> :
+		injectable_rvalue_source(deducer auto... deduce) requires std::constructible_from<T, decltype(deduce)...> :
 			object{deduce...} {}
 		
 		friend constexpr auto provide(provide_tag<T&&>, injectable_rvalue_source& source) -> T&& {
@@ -207,11 +213,12 @@ namespace kangaru {
 		explicit constexpr with_filter_passthrough(Source source) noexcept : source{std::move(source)} {}
 		
 		template<different_from<Filtered> T, forwarded<with_filter_passthrough> Self> requires source_of<wrapped_source_t<Self>, T>
-		friend constexpr auto provide(provide_tag<T> tag, Self&& source) {
+		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
 			return provide(tag, KANGARU5_FWD(source).source);
 		}
 		
-		friend constexpr auto provide(provide_tag<Filtered> tag, forwarded<with_filter_passthrough> auto&& source) requires wrapping_source_of<detail::utility::forward_like_t<decltype(source), Source>, Filtered> {
+		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
+		friend constexpr auto provide(provide_tag<Filtered> tag, Self&& source) -> Filtered {
 			return provide(tag, KANGARU5_FWD(source).source.source);
 		}
 		
@@ -297,10 +304,6 @@ namespace kangaru {
 		return filter_if_source<std::decay_t<Source>, Filter>{KANGARU5_FWD(source)};
 	}
 	
-	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
-		return composed_source{KANGARU5_FWD(sources)...};
-	}
-	
 	template<source Source>
 	struct source_reference_wrapper_for {
 		using type = source_reference_wrapper<Source>;
@@ -334,7 +337,68 @@ namespace kangaru {
 	}
 	
 	inline constexpr auto tie(source auto&... sources) {
-		return concat(ref(sources)...);
+		return kangaru::concat(kangaru::ref(sources)...);
+	}
+	
+	template<source Source>
+	struct with_reference_passthrough {
+		explicit constexpr with_reference_passthrough(Source source) noexcept : source{std::move(source)} {}
+		
+		Source source;
+		
+		template<object T, forwarded<with_reference_passthrough> Self>
+			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
+		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
+			return provide(tag, KANGARU5_FWD(source).source);
+		}
+		
+		template<reference T, forwarded<with_reference_passthrough> Self>
+			requires source_of<detail::utility::forward_like_t<Self, decltype(std::declval<Source>().source)>, T>
+		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
+			return provide(tag, KANGARU5_FWD(source).source.source);
+		}
+	};
+	
+	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	inline constexpr auto make_source_with_reference_passthrough(Source&& source) noexcept {
+		return with_reference_passthrough<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	template<source Source>
+	struct with_dereference {
+		explicit constexpr with_dereference(Source source) noexcept : source{std::move(source)} {}
+		
+		Source source;
+		
+		template<typename T> requires source_of<Source, T*>
+		friend constexpr auto provide(provide_tag<T&>, forwarded<with_dereference> auto&& source) -> T& {
+			return *provide(provide_tag_v<T*>, KANGARU5_FWD(source).source);
+		}
+		
+		template<typename T> requires (not std::is_pointer_v<T> and source_of<Source, T>)
+		friend constexpr auto provide(provide_tag<T>, forwarded<with_dereference> auto&& source) -> T {
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+		}
+	};
+	
+	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	inline constexpr auto make_source_with_dereference(Source&& source) {
+		return with_dereference<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	template<source Source>
+	struct basic_wrapping_source {
+		template<typename T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return provide(provide_tag_v<T>, std::forward<Self>(source).source);
+		}
+		
+		Source source;
+	};
+	
+	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	constexpr auto wrap_source(Source&& source) {
+		return basic_wrapping_source<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 	}
 }
 

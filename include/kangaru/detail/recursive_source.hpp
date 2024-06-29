@@ -304,7 +304,13 @@ namespace kangaru {
 	struct with_tree_recursion {
 		explicit constexpr with_tree_recursion(Source source) noexcept : source{std::move(source)} {}
 		
+		template<typename T>
+		auto test() {
+			return rebind_tree_for<T>(*this, this->source);
+		}
+		
 		Source source;
+		
 	private:
 		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<Leaf> and not reference_wrapper<Leaf>)
 		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Leaf&) noexcept -> auto {
@@ -340,6 +346,7 @@ namespace kangaru {
 		template<forwarded<with_tree_recursion> Self, typename T>
 		using rebind_tree_t = decltype(std::declval<Self>().template rebind_tree_for<T>(std::declval<Self>(), std::declval<Self>().source));
 		
+	public:
 		template<typename T, forwarded<with_tree_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebind_tree_t<Self, T>, T> {
 			return provide(tag, source.template rebind_tree_for<T>(KANGARU5_FWD(source), KANGARU5_FWD(source).source));

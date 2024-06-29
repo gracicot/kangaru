@@ -60,8 +60,22 @@ namespace kangaru {
 			{ container.erase(std::as_const(container).begin()) } -> std::same_as<typename T::iterator>;
 		};
 	
+	namespace detail::heap_storage {
+		template<object_allocator Allocator>
+		struct basic_heap_storage_base {
+			template<typename ObjectType>
+			static constexpr auto destroyer() {
+				return [](void* ptr, void* allocator) KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
+					auto const object_ptr = static_cast<ObjectType*>(ptr);
+					std::destroy_at(object_ptr);
+					static_cast<Allocator*>(allocator)->template deallocate_object<ObjectType>(object_ptr);
+				};
+			}
+		};
+	} // namespace detail::heap_storage
+	
 	template<heap_storage_container Container, object_allocator Allocator = default_allocator>
-	struct basic_heap_storage {
+	struct basic_heap_storage : private detail::heap_storage::basic_heap_storage_base<Allocator> {
 		constexpr basic_heap_storage() = default;
 		
 		constexpr basic_heap_storage(Container container) noexcept
@@ -106,11 +120,7 @@ namespace kangaru {
 			
 			container.push_back(runtime_dynamic_storage{
 				ptr,
-				[](void* ptr, void* allocator) KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
-					auto const object_ptr = static_cast<object_type*>(ptr);
-					std::destroy_at(object_ptr);
-					static_cast<Allocator*>(allocator)->template deallocate_object<object_type>(object_ptr);
-				}
+				basic_heap_storage::template destroyer<object_type>(),
 			});
 			
 			return ptr;

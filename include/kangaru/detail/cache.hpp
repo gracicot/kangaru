@@ -250,25 +250,6 @@ namespace kangaru {
 	
 	static_assert(cache_map<with_cache_reference_wrapper<with_cache<noop_source>>>);
 	static_assert(cache_map<with_cache<noop_source, with_cache_reference_wrapper<with_cache<noop_source>>>>);
-	
-	template<source Source>
-	struct with_reference_passthrough {
-		explicit constexpr with_reference_passthrough(Source source) noexcept : source{std::move(source)} {}
-		
-		Source source;
-		
-		template<object T, forwarded<with_reference_passthrough> Self>
-			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
-		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source);
-		}
-		
-		template<reference T, forwarded<with_reference_passthrough> Self>
-			requires source_of<detail::utility::forward_like_t<Self, decltype(std::declval<Source>().source)>, T>
-		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source.source);
-		}
-	};
 }
 
 #include "undef.hpp"

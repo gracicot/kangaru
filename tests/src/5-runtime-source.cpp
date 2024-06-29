@@ -1,8 +1,11 @@
+#include "kangaru/detail/deducer.hpp"
 #include "kangaru/detail/recursive_source.hpp"
+#include "kangaru/detail/source.hpp"
+#include "kangaru/detail/source_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
-#include <iostream>
+#include <fmt/core.h>
 
 struct Base {
 	virtual auto get() -> int {
@@ -29,8 +32,33 @@ struct increment_source {
 	}
 } source{};
 
+struct int_ref_source {
+	int n = 5;
+	
+	constexpr auto provide() -> int& {
+		return n;
+	}
+};
+
 struct needs_int_pointer {
 	int* ptr;
+};
+
+struct needs_int_ref {
+	explicit needs_int_ref(int& ref) : ref{ref} {}
+	int& ref;
+};
+
+struct service_a {
+	explicit service_a(int a) : a{a} {}
+	int a = 0;
+	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
+};
+
+struct service_b {
+	service_a& a;
+
+	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
 };
 
 TEST_CASE("Runtime source will cache sources results", "[deducer]") {
@@ -85,9 +113,41 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	
 	SECTION("Recursion with heap and cache and construction") {
 		auto source = kangaru::with_tree_recursion{
-			kangaru::make_source_with_cache(kangaru::make_source_with_heap_storage(kangaru::make_source_with_construction(increment_source{}, kangaru::non_empty_construction{})))
+			kangaru::make_source_with_dereference(
+				kangaru::make_source_with_cache(
+					kangaru::make_source_with_heap_storage(
+						kangaru::make_source_with_construction(
+							increment_source{},
+							kangaru::non_empty_construction{}
+						)
+					)
+				)
+			)
 		};
 
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_pointer*>, source));
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_ref&>, source).ref == 0);
+	}
+
+	SECTION("Recursion 2 with heap and cache and construction") {
+		auto source = kangaru::with_tree_recursion{
+			kangaru::with_source_from_tag{
+				kangaru::make_source_with_cache(
+					kangaru::make_source_with_heap_storage(
+						kangaru::make_source_with_construction(
+							increment_source{},
+							kangaru::unsafe_exhaustive_construction{}
+						)
+					)
+				)
+			}
+		};
+		
+		kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+
+		// TODO: For now, just make it equal 0, fix sources later
+		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 0);
+		decltype(auto) ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
+		decltype(auto) rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		CHECK(std::addressof(ra) == std::addressof(rb.a));
 	}
 }

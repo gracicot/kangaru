@@ -1,5 +1,5 @@
-#ifndef KANGARU5_DETAIL_tag_HPP
-#define KANGARU5_DETAIL_tag_HPP
+#ifndef KANGARU5_DETAIL_TAG_HPP
+#define KANGARU5_DETAIL_TAG_HPP
 
 #include "source.hpp"
 #include "concepts.hpp"
@@ -170,4 +170,4 @@ namespace kangaru {
 	};
 }
 
-#endif // KANGARU5_DETAIL_tag_HPP
+#endif // KANGARU5_DETAIL_TAG_HPP

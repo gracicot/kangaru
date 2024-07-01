@@ -18,6 +18,8 @@ namespace kangaru::detail::ctti {
 	inline constexpr auto signature_prefix_length = std::size_t{raw_typed_signature<int>().find("int")};
 	inline constexpr auto signature_postfix_length = std::size_t{raw_typed_signature<int>().size() - signature_prefix_length - std::string_view{"int"}.size()};
 	
+	static_assert(raw_typed_signature<int>().substr(signature_prefix_length, 3) == "int");
+	
 	static_assert(signature_prefix_length != std::string_view::npos, "Cannot find the type name in the function signature");
 	
 	// TODO: Get stable type name on all compilers
@@ -40,7 +42,7 @@ namespace kangaru::detail::ctti {
 	template<typename T>
 	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_name() -> std::string_view {
 		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(type_name_prefix_length<T>());
-		return raw_typed_signature<T>().substr(
+		return sig_prefix_trimmed.substr(
 			0,
 			sig_prefix_trimmed.size() - signature_postfix_length
 		);

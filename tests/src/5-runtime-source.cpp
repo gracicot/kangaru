@@ -128,26 +128,24 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_ref&>, source).ref == 0);
 	}
 
-	SECTION("Recursion 2 with heap and cache and construction") {
+	SECTION("Support the service idiom and cache and construction") {
 		auto source = kangaru::with_tree_recursion{
 			kangaru::with_source_from_tag{
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(
 						kangaru::make_source_with_construction(
-							increment_source{},
-							kangaru::unsafe_exhaustive_construction{}
+							increment_source{.n = 3}, // just a source of int
+							kangaru::exhaustive_construction{}
 						)
 					)
 				)
 			}
 		};
 		
-		kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 3);
 
-		// TODO: For now, just make it equal 0, fix sources later
-		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 0);
-		decltype(auto) ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
-		decltype(auto) rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
+		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
 	}
 }

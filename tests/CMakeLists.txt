@@ -1,8 +1,9 @@
 find_package(Catch2 REQUIRED)
+find_package(fmt REQUIRED)
 
 add_library(kangaru_test_common INTERFACE)
 
-target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain kangaru-internal-warnings)
+target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain kangaru-internal-warnings fmt::fmt)
 
 target_compile_options(kangaru_test_common INTERFACE
 	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wno-missing-field-initializers>
@@ -36,6 +37,7 @@ endfunction()
 
 if(KANGARU_TEST)
 	add_kgr_test(5-reference-deducer)
+	add_kgr_test(5-ctti)
 	add_kgr_test(5-deducer-source)
 	add_kgr_test(5-compose-injector)
 	add_kgr_test(5-runtime-source)

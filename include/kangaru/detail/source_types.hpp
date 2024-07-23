@@ -106,8 +106,16 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_object_source {
-		injectable_object_source(deducer auto... deduce) requires std::constructible_from<T, decltype(deduce)...> :
-			object{deduce...} {}
+		template<deducer Deducer1, deducer... Deducer>
+			requires std::constructible_from<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		injectable_object_source(Deducer1 deduce1, Deducer... deduce) :
+			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		
+		injectable_object_source() requires std::default_initializable<T> : object{} {}
 		
 		friend constexpr auto provide(provide_tag<T>, forwarded<injectable_object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
@@ -119,9 +127,16 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_reference_source {
-		template<deducer... Deducer> requires std::constructible_from<T, Deducer...>
-		injectable_reference_source(Deducer... deduce) :
-			object{deduce...} {}
+		template<deducer Deducer1, deducer... Deducer>
+			requires std::constructible_from<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		injectable_reference_source(Deducer1 deduce1, Deducer... deduce) :
+			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		
+		injectable_reference_source() requires std::default_initializable<T> : object{} {}
 		
 		friend constexpr auto provide(provide_tag<T&>, injectable_reference_source& source) -> T& {
 			return source.object;
@@ -137,8 +152,16 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct injectable_rvalue_source {
-		injectable_rvalue_source(deducer auto... deduce) requires std::constructible_from<T, decltype(deduce)...> :
-			object{deduce...} {}
+		template<deducer Deducer1, deducer... Deducer>
+			requires std::constructible_from<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		injectable_rvalue_source(Deducer1 deduce1, Deducer... deduce) :
+			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		
+		injectable_rvalue_source() requires std::default_initializable<T> : object{} {}
 		
 		friend constexpr auto provide(provide_tag<T&&>, injectable_rvalue_source& source) -> T&& {
 			return std::move(source).object;

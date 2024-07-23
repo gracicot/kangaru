@@ -8,5 +8,5 @@ struct service_b {};
 
 TEST_CASE("CTTI Gives reliable names", "[ctti]") {
 	using namespace kangaru::detail::ctti;
-	CHECK(type_name<kangaru::injectable_reference_source<service_a>*>() == "kangaru::injectable_reference_source<service_a> *");
+	CHECK(type_name<kangaru::injectable_reference_source<service_a>>() == "kangaru::injectable_reference_source<service_a>");
 }

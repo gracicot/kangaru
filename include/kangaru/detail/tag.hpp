@@ -21,7 +21,7 @@ namespace kangaru {
 	};
 	
 	namespace detail::tag {
-		auto tag(auto) requires false = delete;
+		auto tag(struct poison) -> void = delete;
 		
 		template<typename T>
 		concept adl_nonmember_tag =
@@ -107,8 +107,10 @@ namespace kangaru {
 		using overrides_types_in_cache = std::tuple<Ts...>;
 	};
 	
-	template<typename... Tags>
-	struct tags : Tags... {};
+	template<weak_tag... Tags>
+	struct tags : Tags... {
+		using meta = tags_tag;
+	};
 	
 	template<typename T>
 	concept tag_cache_using_source_base =

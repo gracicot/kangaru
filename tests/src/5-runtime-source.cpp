@@ -143,7 +143,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		};
 		
 		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 3);
-
+		
 		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
 		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));

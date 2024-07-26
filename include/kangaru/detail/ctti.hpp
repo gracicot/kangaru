@@ -28,12 +28,12 @@ namespace kangaru::detail::ctti {
 		using namespace std::literals;
 		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(signature_prefix_length);
 		
-		if (sig_prefix_trimmed.starts_with("class")) {
-			return signature_prefix_length + "class"sv.size();
+		if (sig_prefix_trimmed.starts_with("class ")) {
+			return signature_prefix_length + "class "sv.size();
 		}
 		
 		if (sig_prefix_trimmed.starts_with("struct")) {
-			return signature_prefix_length + "struct"sv.size();
+			return signature_prefix_length + "struct "sv.size();
 		}
 		
 		return signature_prefix_length;

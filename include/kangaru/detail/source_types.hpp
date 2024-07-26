@@ -107,13 +107,13 @@ namespace kangaru {
 	template<unqualified_object T>
 	struct injectable_object_source {
 		template<deducer Deducer1, deducer... Deducer>
-			requires std::constructible_from<
-				T,
+			requires callable<
+				KANGARU5_CONSTRUCTOR_T(T),
 				exclude_special_constructors_deducer<T, Deducer1>,
 				Deducer&...
 			>
-		injectable_object_source(Deducer1 deduce1, Deducer... deduce) :
-			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		explicit(sizeof...(Deducer) == 0) injectable_object_source(Deducer1 deduce1, Deducer... deduce) :
+			object(kangaru::constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), deduce...)) {}
 		
 		injectable_object_source() requires std::default_initializable<T> : object{} {}
 		
@@ -128,13 +128,13 @@ namespace kangaru {
 	template<unqualified_object T>
 	struct injectable_reference_source {
 		template<deducer Deducer1, deducer... Deducer>
-			requires std::constructible_from<
-				T,
+			requires callable<
+				KANGARU5_CONSTRUCTOR_T(T),
 				exclude_special_constructors_deducer<T, Deducer1>,
 				Deducer&...
 			>
-		injectable_reference_source(Deducer1 deduce1, Deducer... deduce) :
-			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		explicit(sizeof...(Deducer) == 0) injectable_reference_source(Deducer1 deduce1, Deducer... deduce) :
+			object(kangaru::constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), deduce...)) {}
 		
 		injectable_reference_source() requires std::default_initializable<T> : object{} {}
 		
@@ -153,13 +153,13 @@ namespace kangaru {
 	template<unqualified_object T>
 	struct injectable_rvalue_source {
 		template<deducer Deducer1, deducer... Deducer>
-			requires std::constructible_from<
-				T,
+			requires callable<
+				KANGARU5_CONSTRUCTOR_T(T),
 				exclude_special_constructors_deducer<T, Deducer1>,
 				Deducer&...
 			>
-		injectable_rvalue_source(Deducer1 deduce1, Deducer... deduce) :
-			object{kangaru::exclude_special_constructors_for<T>(deduce1), deduce...} {}
+		explicit(sizeof...(Deducer) == 0) injectable_rvalue_source(Deducer1 deduce1, Deducer... deduce) :
+			object(kangaru::constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), deduce...)) {}
 		
 		injectable_rvalue_source() requires std::default_initializable<T> : object{} {}
 		

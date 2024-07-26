@@ -29,7 +29,7 @@ namespace kangaru {
 			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
 		}
 		
-		template<typename T, forwarded<with_construction> Self> requires (callable_template1<Construct const&, T, wrapped_source_t<Self>>)
+		template<typename T, forwarded<with_construction> Self> requires (callable_template1<Construct const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
 			return source.construct.template operator()<T>(KANGARU5_FWD(source).source);
 		}

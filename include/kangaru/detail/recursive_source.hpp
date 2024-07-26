@@ -111,7 +111,7 @@ namespace kangaru {
 		explicit constexpr basic_exhaustive_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<typename T>
+		template<unqualified_object T>
 		struct construct {
 			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
 			requires callable<
@@ -127,7 +127,7 @@ namespace kangaru {
 			}
 		};
 		
-		template<typename T, typename Source> requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		template<unqualified_object T, typename Source> requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}

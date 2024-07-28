@@ -104,7 +104,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		static_assert(kangaru::stateful_rebindable_wrapping_source<kangaru::with_heap_storage<increment_source>>);
 		static_assert(kangaru::stateful_rebindable_wrapping_source<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>);
 		
-		auto basic_recursion_test = kangaru::with_tree_recursion<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>{
+		auto basic_recursion_test = kangaru::with_recursion<kangaru::with_cache<kangaru::with_heap_storage<increment_source>>>{
 			kangaru::with_cache<kangaru::with_heap_storage<increment_source>>{kangaru::with_heap_storage<increment_source>{increment_source{}}}
 		};
 		
@@ -112,7 +112,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	}
 	
 	SECTION("Recursion with heap and cache and construction") {
-		auto source = kangaru::with_tree_recursion{
+		auto source = kangaru::with_recursion{
 			kangaru::make_source_with_dereference(
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(
@@ -129,7 +129,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	}
 
 	SECTION("Support the service idiom and cache and construction") {
-		auto source = kangaru::with_tree_recursion{
+		auto source = kangaru::with_recursion{
 			kangaru::with_source_from_tag{
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(

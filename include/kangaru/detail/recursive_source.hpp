@@ -131,7 +131,7 @@ namespace kangaru {
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
-
+		
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -199,61 +199,6 @@ namespace kangaru {
 	
 	using placeholder_construct = basic_placeholder_construct<make_spread_injector_function>;
 	
-	template<source Source, movable_object Construct>
-	struct with_recursion {
-		constexpr explicit with_recursion(Source source) noexcept
-			requires (std::default_initializable<Construct>) :
-			source{std::move(source)}, construct{} {}
-		
-		constexpr with_recursion(Source source, Construct construct) noexcept :
-			source{std::move(source)}, construct{std::move(construct)} {}
-		
-		Source source;
-		
-	private:
-		template<typename T, forwarded<with_recursion> Self>
-			requires wrapping_source_of<Self, T>
-		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
-		}
-		
-		template<typename T, forwarded<with_recursion> Self>
-			requires (not wrapping_source_of<Self, T> and callable_template1<Construct const&, T, source_reference_wrapper_for_t<std::remove_reference_t<Self>>>)
-		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return source.construct.template operator()<T>(ref(source));
-		}
-		
-		KANGARU5_NO_UNIQUE_ADDRESS
-		Construct construct;
-	};
-	
-	template<source Source>
-	using with_recursive_construct = with_recursion<Source, non_empty_construction>;
-	
-	template<typename Source> requires source<std::decay_t<Source>>
-	inline constexpr auto make_source_with_recursive_construct(Source&& source) {
-		return with_recursive_construct<std::decay_t<Source>>{KANGARU5_FWD(source)};
-	}
-	
-	template<source Source>
-	using with_unsafe_exhaustive_recursive_construct = with_recursion<Source, unsafe_exhaustive_construction>;
-	
-	template<typename Source> requires source<std::decay_t<Source>>
-	inline constexpr auto make_source_with_unsafe_exhaustive_recursive_construct(Source&& source) {
-		return with_unsafe_exhaustive_recursive_construct<std::decay_t<Source>>{KANGARU5_FWD(source)};
-	}
-	
-	template<source Source>
-	using with_exhaustive_recursive_construct = with_recursion<Source, exhaustive_construction>;
-	
-	template<typename Source> requires source<std::decay_t<Source>>
-	inline constexpr auto make_source_with_exhaustive_recursive_construct(Source&& source) {
-		return with_exhaustive_recursive_construct<std::decay_t<Source>>{KANGARU5_FWD(source)};
-	}
-	
-	template<typename Tree, typename Type>
-	concept construction_tree_needs = not source_of<with_recursion<noop_source, placeholder_construct_except<Type, make_strict_spread_injector_function>>, Tree>;
-	
 	// deep
 	template<wrapping_source>
 	struct rebind_wrapper {};
@@ -301,8 +246,8 @@ namespace kangaru {
 		};
 	
 	template<source Source>
-	struct with_tree_recursion {
-		explicit constexpr with_tree_recursion(Source source) noexcept : source{std::move(source)} {}
+	struct with_recursion {
+		explicit constexpr with_recursion(Source source) noexcept : source{std::move(source)} {}
 		
 		template<typename T>
 		auto test() {
@@ -313,7 +258,7 @@ namespace kangaru {
 		
 	private:
 		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<Leaf> and not reference_wrapper<Leaf>)
-		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Leaf&) noexcept -> auto {
+		constexpr static auto rebind_tree_for(forwarded<with_recursion> auto&& self, Leaf&) noexcept -> auto {
 			if constexpr (source_of<Source, T> and reference_wrapper<Source>) {
 				return self.source;
 			} else if constexpr (source_of<Source, T>) {
@@ -321,17 +266,17 @@ namespace kangaru {
 			} else if constexpr (reference_wrapper<Source>) {
 				return make_source_with_filter_passthrough<T>(self);
 			} else {
-				return make_source_with_filter_passthrough<T>(with_tree_recursion<decltype(kangaru::ref(self.source))>{kangaru::ref(self.source)});
+				return make_source_with_filter_passthrough<T>(with_recursion<decltype(kangaru::ref(self.source))>{kangaru::ref(self.source)});
 			}
 		}
 		
 		template<typename T, rebindable_wrapping_source Wrapper>
-		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+		constexpr static auto rebind_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
 			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(KANGARU5_FWD(self), source.source))>{rebind_tree_for<T>(KANGARU5_FWD(self), source.source)};
 		}
 		
 		template<typename T, stateful_rebindable_wrapping_source Wrapper>
-		constexpr static auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+		constexpr static auto rebind_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
 			return typename rebind_wrapper<Wrapper>::template ttype<decltype(rebind_tree_for<T>(KANGARU5_FWD(self), source.source)), decltype(kangaru::ref(source))>{
 				rebind_tree_for<T>(KANGARU5_FWD(self), source.source),
 				kangaru::ref(source),
@@ -339,24 +284,66 @@ namespace kangaru {
 		}
 		
 		template<typename T, kangaru::source Wrapper> requires reference_wrapper<Wrapper>
-		constexpr auto rebind_tree_for(forwarded<with_tree_recursion> auto&& self, Wrapper wrapper) -> auto {
+		constexpr auto rebind_tree_for(forwarded<with_recursion> auto&& self, Wrapper wrapper) -> auto {
 			return rebind_tree_for<T>(KANGARU5_FWD(self), wrapper.unwrap());
 		}
 		
-		template<forwarded<with_tree_recursion> Self, typename T>
+		template<forwarded<with_recursion> Self, typename T>
 		using rebind_tree_t = decltype(std::declval<Self>().template rebind_tree_for<T>(std::declval<Self>(), std::declval<Self>().source));
 		
 	public:
-		template<typename T, forwarded<with_tree_recursion> Self> requires (not wrapping_source_of<Self, T>)
+		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebind_tree_t<Self, T>, T> {
 			return provide(tag, source.template rebind_tree_for<T>(KANGARU5_FWD(source), KANGARU5_FWD(source).source));
 		}
 		
-		template<typename T, forwarded<with_tree_recursion> Self> requires wrapping_source_of<Self, T>
+		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
 			return provide(tag, KANGARU5_FWD(source).source);
 		}
 	};
+	
+	template<source Source, construction Construct>
+	struct with_construction {
+		explicit constexpr with_construction(Source source) noexcept
+			requires std::default_initializable<Construct> :
+			source{std::move(source)} {}
+		
+		constexpr with_construction(Source source, Construct construct) noexcept :
+			source{std::move(source)},
+			construct{std::move(construct)} {}
+		
+		template<typename T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+		}
+		
+		template<typename T, forwarded<with_construction> Self> requires (callable_template1<Construct const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return source.construct.template operator()<T>(KANGARU5_FWD(source).source);
+		}
+		
+		Source source;
+		
+	private:
+		Construct construct;
+	};
+	
+	template<typename Source, typename Construct> requires (source<std::remove_cvref_t<Source>> and movable_object<std::remove_cvref_t<Construct>>)
+	inline constexpr auto make_source_with_construction(Source&& source, Construct&& construct) {
+		return with_construction<std::remove_cvref_t<Source>, std::remove_cvref_t<Construct>>{KANGARU5_FWD(source), KANGARU5_FWD(construct)};
+	}
+	
+	template<typename Tree, typename Type>
+	concept construction_tree_needs = not source_of<
+		with_recursion<
+			with_construction<
+				noop_source,
+				placeholder_construct_except<Type, make_strict_spread_injector_function>
+			>
+		>&,
+		Tree
+	>;
 }
 
 #include "undef.hpp"

@@ -71,7 +71,7 @@ auto main() -> int {
 	auto camera_source = kangaru::external_reference_source{camera};
 	auto model_source = kangaru::object_source{model};
 	
-	auto source = kangaru::with_tree_recursion{
+	auto source = kangaru::with_recursion{
 		kangaru::with_construction{
 			kangaru::tie(camera_source, model_source),
 			kangaru::non_empty_construction{},

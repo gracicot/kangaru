@@ -651,7 +651,6 @@ namespace kangaru {
 		and requires(F&& f, Deducers... deduce) {
 			invoke_with_strict_deducers(KANGARU5_FWD(f), deduce...);
 		};
-
 } // namespace kangaru
 
 #include "undef.hpp"

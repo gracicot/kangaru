@@ -53,15 +53,13 @@ namespace kangaru {
 			}
 		};
 		
-		// Why const appear in callable?
 		template<unqualified_object T, typename Source>
 			requires (
 				    source<std::remove_cvref_t<Source>>
-				and callable<std::invoke_result_t<MakeInjector const&, source_reference_wrapper_for_t<std::remove_reference_t<Source>>>, construct<T>>
+				and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>
 			)
 		constexpr auto operator()(Source&& source) const {
-			// Workaround: always send reference wrapper
-			return make_injector(kangaru::ref(source))(construct<T>{});
+			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
 
 	private:

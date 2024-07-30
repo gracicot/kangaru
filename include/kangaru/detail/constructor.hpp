@@ -29,7 +29,6 @@
 		}; \
 	}
 
-
 namespace kangaru {
 	KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(::kangaru::unqualified_object)
 	KANGARU5_DEFINE_CONSTRUCTOR_COMBINAISON(template<typename...> typename)

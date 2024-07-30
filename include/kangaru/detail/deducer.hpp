@@ -433,25 +433,41 @@ namespace kangaru {
 		}
 		
 		template<deducible T>
-			requires ((kind & reference_kind::lvalue_reference) != reference_kind::none and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
+			requires (
+				    (kind & reference_kind::lvalue_reference) != reference_kind::none
+				and deducer_for<Deducer, T&>
+				and not deducer_for<Deducer const, T&>
+			)
 		constexpr operator T&() {
 			return deducer.operator T&();
 		}
 		
 		template<deducible T>
-			requires ((kind & reference_kind::lvalue_const_reference) != reference_kind::none and deducer_for<Deducer, T const&> and not deducer_for<Deducer const, T const&>)
+			requires (
+				    (kind & reference_kind::lvalue_const_reference) != reference_kind::none
+				and deducer_for<Deducer, T const&>
+				and not deducer_for<Deducer const, T const&>
+			)
 		constexpr operator T const&() {
 			return deducer.operator T const&();
 		}
 		
 		template<deducible T>
-			requires ((kind & reference_kind::rvalue_reference) != reference_kind::none and deducer_for<Deducer, T&&> and not deducer_for<Deducer const, T&&>)
+			requires (
+				    (kind & reference_kind::rvalue_reference) != reference_kind::none
+				and deducer_for<Deducer, T&&>
+				and not deducer_for<Deducer const, T&&>
+			)
 		constexpr operator T&&() {
 			return deducer.operator T&&();
 		}
 		
 		template<deducible T>
-			requires ((kind & reference_kind::rvalue_const_reference) != reference_kind::none and deducer_for<Deducer, T const&&> and not deducer_for<Deducer const, T const&&>)
+			requires (
+				    (kind & reference_kind::rvalue_const_reference) != reference_kind::none
+				and deducer_for<Deducer, T const&&>
+				and not deducer_for<Deducer const, T const&&>
+			)
 		constexpr operator T const&&() {
 			return deducer.operator T const&&();
 		}
@@ -505,7 +521,6 @@ namespace kangaru {
 	}
 	
 	namespace detail::deducer {
-		// These traits and function are only required for compilers that always prefer prvalue
 		template<typename T, typename F, std::size_t... before, std::size_t... after>
 		inline constexpr auto callable_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
 			return callable<
@@ -536,7 +551,12 @@ namespace kangaru {
 			} else {
 				// Only one kind of parameter will accept a lvalue const reference, and it's a lvalue const reference.
 				// If the function is callable with a lvalue const reference, then it means there's an overload that accepts it.
-				constexpr auto callable_with_lvalue_const_ref = callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference>, F, nth, max>();
+				constexpr auto callable_with_lvalue_const_ref = callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_const_reference>,
+					F,
+					nth,
+					max
+				>();
 				
 				// Now we have something harder to match. Sending a rvalue constant reference would indeed match a rvalue
 				// constant reference parameter, but would also match a lvalue constant reference. This means that if we
@@ -551,12 +571,30 @@ namespace kangaru {
 				// - We match for rvalue constant reference. If it matches, we're gold.
 				// - If we don't match, we exclude matching with mutable rvalue for clang
 				constexpr auto callable_with_rvalue_const_ref = callable_with_lvalue_const_ref
-					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>, F, nth, max>()
+					? not callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>,
+							F,
+							nth,
+							max
+						>()
 					: (
-						callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>, F, nth, max>()
-						or (
-							    callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>()
-							and not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
+						callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
+							F,
+							nth,
+							max
+						>() or (
+							callable_with_nth_parameter_being<
+								filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+								F,
+								nth,
+								max
+							>() and not callable_with_nth_parameter_being<
+								filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+								F,
+								nth,
+								max
+							>()
 						)
 					);
 				
@@ -565,17 +603,42 @@ namespace kangaru {
 				// Deduce both kind. If the call is ambiguous, then we have a candidate in the overload set that take a lvalue ref.
 				// Otherwise, we can just match with lvalue references.
 				constexpr auto callable_with_lvalue_ref = callable_with_lvalue_const_ref
-					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>, F, nth, max>()
-					: callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_reference>, F, nth, max>();
+					? not callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>,
+							F,
+							nth,
+							max
+						>()
+					: callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
+							F,
+							nth,
+							max
+						>();
 				
 				// Here we finally check for value references. They can match rvalue references, rvalue cosnt references, and
 				// lvalue const references. We need to check for those two if we matched them before in order to do the check
 				// With the little dance of checking for ambiguous calls
 				constexpr auto callable_with_rvalue_ref = callable_with_rvalue_const_ref
-					? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>, F, nth, max>()
+					? not callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+							F,
+							nth,
+							max
+						>()
 					: callable_with_lvalue_const_ref
-						? not callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>, F, nth, max>()
-						: callable_with_nth_parameter_being<filtered_value_category_deducer<T, reference_kind::rvalue_reference>, F, nth, max>();
+						? not callable_with_nth_parameter_being<
+								filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>,
+								F,
+								nth,
+								max
+							>()
+						: callable_with_nth_parameter_being<
+								filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+								F,
+								nth,
+								max
+							>();
 				
 				// We build the bitmask enum to express what overloads of different reference kind exists
 				return (
@@ -602,41 +665,55 @@ namespace kangaru {
 		>;
 		
 		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
+			requires callable<F, prvalue_filtered_deducer_for<F, Deducers, S, sizeof...(S)>...>
 		inline constexpr auto invoke_with_deducers_prvalue_filter(
 			F&& function,
 			std::index_sequence<S...>,
 			Deducers... deduce
-		) -> decltype(auto) requires callable<F, prvalue_filtered_deducer_for<F, Deducers, S, sizeof...(S)>...> {
+		) -> decltype(auto) {
 			return KANGARU5_FWD(function)(prvalue_filtered_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
 		}
 		
 		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
+			requires callable<F, filtered_value_category_deducer_for<F, Deducers, S, sizeof...(S)>...>
 		inline constexpr auto invoke_with_deducers_strict_reference(
 			F&& function,
 			std::index_sequence<S...>,
 			Deducers... deduce
-		) -> decltype(auto) requires callable<F, filtered_value_category_deducer_for<F, Deducers, S, sizeof...(S)>...> {
+		) -> decltype(auto) {
 			return KANGARU5_FWD(function)(filtered_value_category_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
 		}
 		
 		template<std::size_t... S>
-		inline constexpr auto invoke_with_deducer_sequence(std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce) -> decltype(invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)) {
+		inline constexpr auto invoke_with_deducer_sequence(
+			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
+		) -> decltype(
+			invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
+		) {
 			return invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
 		}
 		
 		template<std::size_t... S>
-		inline constexpr auto invoke_with_strict_deducer_sequence(std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce) -> decltype(invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)) {
+		inline constexpr auto invoke_with_strict_deducer_sequence(
+			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
+		) -> decltype(
+			invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
+		) {
 			return invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
 		}
 	}
 	
 	template<deducer... Deducers>
-	inline constexpr auto invoke_with_deducers(callable<Deducers...> auto&& function, Deducers... deduce) -> decltype(auto) {
+	inline constexpr auto invoke_with_deducers(
+		callable<Deducers...> auto&& function, Deducers... deduce
+	) -> decltype(auto) {
 		return detail::deducer::invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 	}
 	
 	template<deducer... Deducers>
-	inline constexpr auto invoke_with_strict_deducers(auto&& function, Deducers... deduce) -> decltype(detail::deducer::invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)) {
+	inline constexpr auto invoke_with_strict_deducers(auto&& function, Deducers... deduce) -> decltype(
+		detail::deducer::invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)
+	) {
 		return detail::deducer::invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 	}
 	

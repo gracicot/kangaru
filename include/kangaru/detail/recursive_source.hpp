@@ -94,7 +94,8 @@ namespace kangaru {
 			}
 		};
 		
-		template<unqualified_object T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		template<unqualified_object T, typename Source>
+			requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -105,6 +106,8 @@ namespace kangaru {
 	};
 	
 	using unsafe_exhaustive_construction = basic_unsafe_exhaustive_construction<make_spread_injector_function>;
+	
+	static_assert(construction<unsafe_exhaustive_construction>);
 	
 	template<movable_object MakeInjector>
 	struct basic_exhaustive_construction {
@@ -129,7 +132,8 @@ namespace kangaru {
 			}
 		};
 		
-		template<unqualified_object T, typename Source> requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		template<unqualified_object T, typename Source>
+			requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -141,11 +145,13 @@ namespace kangaru {
 	
 	using exhaustive_construction = basic_exhaustive_construction<make_spread_injector_function>;
 	
+	static_assert(construction<exhaustive_construction>);
+	
 	template<typename Type, movable_object MakeInjector>
-	struct placeholder_construct_except {
-		constexpr placeholder_construct_except() requires std::default_initializable<MakeInjector> = default;
+	struct basic_placeholder_construct_except {
+		constexpr basic_placeholder_construct_except() requires std::default_initializable<MakeInjector> = default;
 		
-		explicit constexpr placeholder_construct_except(MakeInjector make_injector) noexcept :
+		explicit constexpr basic_placeholder_construct_except(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<typename T>
@@ -162,13 +168,19 @@ namespace kangaru {
 			auto operator()() const -> T requires (different_from<T, Type> and constructor_callable<std::decay_t<T>>);
 		};
 		
-		template<typename T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		template<typename T, typename Source>
+			requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		auto operator()(Source&& source) const -> T;
 	
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
 	};
+	
+	template<typename Type>
+	using placeholder_construct_except = basic_placeholder_construct_except<Type, make_spread_injector_function>;
+	
+	static_assert(construction<placeholder_construct_except<int>>);
 	
 	template<movable_object MakeInjector>
 	struct basic_placeholder_construct {
@@ -191,7 +203,8 @@ namespace kangaru {
 			auto operator()() const -> T requires constructor_callable<T>;
 		};
 		
-		template<typename T, typename Source> requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+		template<typename T, typename Source>
+			requires (source<std::remove_cvref_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
 		auto operator()(Source&& source) const -> T;
 	
 	private:
@@ -200,6 +213,8 @@ namespace kangaru {
 	};
 	
 	using placeholder_construct = basic_placeholder_construct<make_spread_injector_function>;
+	
+	static_assert(construction<placeholder_construct>);
 	
 	namespace detail::recursive_source {
 		template<wrapping_source>
@@ -224,7 +239,11 @@ namespace kangaru {
 		and not reference_wrapper<Source>
 		and wrapping_source<Source>
 		and requires(Source source) {
-			typename std::type_identity<typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>>::type;
+			typename std::type_identity<
+				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
+					std::decay_t<decltype(source.source)>
+				>
+			>::type;
 			requires std::constructible_from<
 				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>,
 				std::decay_t<decltype(source.source)>
@@ -237,9 +256,17 @@ namespace kangaru {
 		and not reference_wrapper<Source>
 		and rebindable_wrapping_source<Source>
 		and requires(Source source) {
-			typename std::type_identity<typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>, decltype(ref(source))>>::type;
+			typename std::type_identity<
+				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
+						std::decay_t<decltype(source.source)>,
+						decltype(ref(source))
+					>
+			>::type;
 			requires std::constructible_from<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>, decltype(ref(source))>,
+				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
+					std::decay_t<decltype(source.source)>,
+					decltype(ref(source))
+				>,
 				std::decay_t<decltype(source.source)>,
 				decltype(ref(source))
 			>;
@@ -267,7 +294,9 @@ namespace kangaru {
 		
 		template<typename T, rebindable_wrapping_source Wrapper>
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source))>;
+			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
+				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source))
+			>;
 			return rebound{
 				rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source)
 			};
@@ -357,7 +386,7 @@ namespace kangaru {
 		with_recursion<
 			with_construction<
 				noop_source,
-				placeholder_construct_except<Type, make_strict_spread_injector_function>
+				basic_placeholder_construct_except<Type, make_strict_spread_injector_function>
 			>
 		>&,
 		Tree

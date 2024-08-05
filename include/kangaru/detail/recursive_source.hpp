@@ -279,7 +279,7 @@ namespace kangaru {
 		Source source;
 		
 	private:
-		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<std::remove_cvref_t<Leaf>> and not reference_wrapper<std::remove_cvref_t<Leaf>>)
+		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<std::remove_cv_t<Leaf>> and not reference_wrapper<std::remove_cv_t<Leaf>>)
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Leaf&) noexcept -> auto {
 			if constexpr (source_of<Source, T> and reference_wrapper<Source>) {
 				return self.source;
@@ -292,9 +292,9 @@ namespace kangaru {
 			}
 		}
 		
-		template<typename T, typename Wrapper> requires rebindable_wrapping_source<std::remove_cvref_t<Wrapper>>
-		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper&& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cvref_t<Wrapper>>::template ttype<
+		template<typename T, typename Wrapper> requires rebindable_wrapping_source<std::remove_cv_t<Wrapper>>
+		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cv_t<Wrapper>>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source))
 			>;
 			return rebound{
@@ -302,9 +302,9 @@ namespace kangaru {
 			};
 		}
 		
-		template<typename T, typename Wrapper> requires stateful_rebindable_wrapping_source<std::remove_cvref_t<Wrapper>>
-		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper&& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cvref_t<Wrapper>>::template ttype<
+		template<typename T, typename Wrapper> requires stateful_rebindable_wrapping_source<std::remove_cv_t<Wrapper>>
+		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
+			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cv_t<Wrapper>>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source)),
 				decltype(kangaru::ref(source))
 			>;
@@ -320,12 +320,12 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_recursion> Self, typename T>
-		using rebound_source_t = decltype(std::declval<Self>().template rebind_source_tree_for<T>(std::declval<Self>(), std::declval<Self>().source));
+		using rebound_source_t = decltype(std::declval<Self>().template rebind_source_tree_for<T>(std::declval<Self>(), std::declval<Self&>().source));
 		
 	public:
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
-			return provide(tag, source.template rebind_source_tree_for<T>(KANGARU5_FWD(source), KANGARU5_FWD(source).source));
+			return provide(tag, source.template rebind_source_tree_for<T>(KANGARU5_FWD(source), source.source));
 		}
 		
 		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>

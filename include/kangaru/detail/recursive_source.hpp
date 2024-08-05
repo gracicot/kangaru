@@ -279,7 +279,7 @@ namespace kangaru {
 		Source source;
 		
 	private:
-		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<Leaf> and not reference_wrapper<Leaf>)
+		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<std::remove_cvref_t<Leaf>> and not reference_wrapper<std::remove_cvref_t<Leaf>>)
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Leaf&) noexcept -> auto {
 			if constexpr (source_of<Source, T> and reference_wrapper<Source>) {
 				return self.source;
@@ -292,9 +292,9 @@ namespace kangaru {
 			}
 		}
 		
-		template<typename T, rebindable_wrapping_source Wrapper>
-		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
+		template<typename T, typename Wrapper> requires rebindable_wrapping_source<std::remove_cvref_t<Wrapper>>
+		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper&& source) noexcept -> auto {
+			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cvref_t<Wrapper>>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source))
 			>;
 			return rebound{
@@ -302,9 +302,9 @@ namespace kangaru {
 			};
 		}
 		
-		template<typename T, stateful_rebindable_wrapping_source Wrapper>
-		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
+		template<typename T, typename Wrapper> requires stateful_rebindable_wrapping_source<std::remove_cvref_t<Wrapper>>
+		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper&& source) noexcept -> auto {
+			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cvref_t<Wrapper>>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source)),
 				decltype(kangaru::ref(source))
 			>;
@@ -388,7 +388,7 @@ namespace kangaru {
 				noop_source,
 				basic_placeholder_construct_except<Type, make_strict_spread_injector_function>
 			>
-		>&,
+		>,
 		Tree
 	>;
 }

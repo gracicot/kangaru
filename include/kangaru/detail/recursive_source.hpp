@@ -15,20 +15,6 @@
 #include "define.hpp"
 
 namespace kangaru {
-	struct make_spread_injector_function {
-		template<typename Source> requires source<std::remove_cvref_t<Source>>
-		constexpr auto operator()(Source&& source) const noexcept {
-			return make_spread_injector(KANGARU5_FWD(source));
-		}
-	};
-	
-	struct make_strict_spread_injector_function {
-		template<typename Source> requires source<std::remove_cvref_t<Source>>
-		constexpr auto operator()(Source&& source) const noexcept {
-			return make_strict_spread_injector(KANGARU5_FWD(source));
-		}
-	};
-	
 	template<typename T>
 	concept construction = movable_object<T> and requires {
 		detail::utility::template_type_identity<T::template construct>{};

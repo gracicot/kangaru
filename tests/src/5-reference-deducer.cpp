@@ -37,7 +37,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			source_by_rvalue_ref
 		);
 		
-		auto injector = kangaru::simple_injector{source};
+		auto injector = kangaru::make_simple_injector(source);
 		
 		injector([](sneezy s) {
 			CHECK(s.how == by_value);
@@ -66,7 +66,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			source_by_rvalue_ref
 		);
 		
-		auto injector = kangaru::simple_injector{source};
+		auto injector = kangaru::make_simple_injector(source);
 		
 		injector([](sneezy& s) {
 			CHECK(s.how == by_lvalue_reference);
@@ -90,7 +90,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			source_by_rvalue_ref
 		);
 		
-		auto injector = kangaru::simple_injector{source};
+		auto injector = kangaru::make_simple_injector(source);
 		
 		injector([](sneezy&& s) {
 			CHECK(s.how == by_rvalue_reference);
@@ -110,7 +110,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 				source_by_rvalue_ref_const
 			);
 			
-			auto injector = kangaru::simple_injector{source};
+			auto injector = kangaru::make_simple_injector(source);
 			
 			injector([](sneezy&& s) {
 				CHECK(s.how == by_rvalue_reference);
@@ -131,7 +131,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			source_by_value
 		);
 		
-		auto injector = kangaru::simple_injector{source};
+		auto injector = kangaru::make_simple_injector(source);
 		
 		injector([](sneezy s) {
 			CHECK(s.how == by_value);
@@ -151,9 +151,9 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 	}
 
 	SECTION("Can convert convertible references") {
-		auto injector_rvalue = kangaru::simple_injector{source_by_rvalue_ref};
-		auto injector_const_rvalue = kangaru::simple_injector{source_by_rvalue_ref_const};
-		auto injector_lvalue = kangaru::simple_injector{source_by_lvalue_ref};
+		auto injector_rvalue = kangaru::make_simple_injector(source_by_rvalue_ref);
+		auto injector_const_rvalue = kangaru::make_simple_injector(source_by_rvalue_ref_const);
+		auto injector_lvalue = kangaru::make_simple_injector(source_by_lvalue_ref);
 		
 		injector_rvalue([](sneezy const& s) {
 			CHECK(s.how == by_rvalue_reference);

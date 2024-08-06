@@ -110,7 +110,7 @@ jobs:
       matrix:
         arch: [x64]
         os: [ubuntu-22.04] 
-        gcc: [11, 12, 13, 14]
+        gcc: [11, 12, 13]
 
     steps:
       - uses: actions/checkout@v4

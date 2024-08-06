@@ -155,25 +155,25 @@ namespace kangaru {
 		explicit constexpr strict_fixed_injector(Source source) noexcept : source{std::move(source)} {}
 		
 		constexpr auto operator()(auto&& function) & -> decltype(auto)
-			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), basic_deducer<Source&>, std::make_index_sequence<N>>
+			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), strict_deducer<Source&>, std::make_index_sequence<N>>
 		{
 			return expand_deducers(std::make_index_sequence<N>{}, KANGARU5_FWD(function), source);
 		}
 		
 		constexpr auto operator()(auto&& function) const& -> decltype(auto)
-			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), basic_deducer<Source const&>, std::make_index_sequence<N>>
+			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), strict_deducer<Source const&>, std::make_index_sequence<N>>
 		{
 			return expand_deducers(std::make_index_sequence<N>{}, KANGARU5_FWD(function), source);
 		}
 		
 		constexpr auto operator()(auto&& function) && -> decltype(auto)
-			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), basic_deducer<Source&&>, std::make_index_sequence<N>>
+			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), strict_deducer<Source&&>, std::make_index_sequence<N>>
 		{
 			return expand_deducers(std::make_index_sequence<N>{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
 		constexpr auto operator()(auto&& function) const&& -> decltype(auto)
-			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), basic_deducer<Source const&&>, std::make_index_sequence<N>>
+			requires detail::injector::invocable_with_strict_deducer_sequence<decltype(function), strict_deducer<Source const&&>, std::make_index_sequence<N>>
 		{
 			return expand_deducers(std::make_index_sequence<N>{}, KANGARU5_FWD(function), std::move(source));
 		}
@@ -181,7 +181,7 @@ namespace kangaru {
 	private:
 		template<std::size_t... s>
 		static constexpr auto expand_deducers(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
-			using Deducer = basic_deducer<decltype(source)>;
+			using Deducer = strict_deducer<decltype(source)>;
 			return kangaru::invoke_with_strict_deducers(KANGARU5_FWD(function), (void(s), Deducer{KANGARU5_FWD(source)})...);
 		}
 		

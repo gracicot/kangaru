@@ -36,7 +36,7 @@ namespace kangaru {
 		}
 		
 		void* ptr;
-		dynamic_deleter* deleter;
+		dynamic_deleter KANGARU5_UNSAFE* deleter;
 	};
 	
 	template<typename T>
@@ -65,11 +65,27 @@ namespace kangaru {
 		struct basic_heap_storage_base {
 			template<typename ObjectType>
 			static constexpr auto destroyer() {
-				return [](void* ptr, void* allocator) KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
+				return [](void* ptr, void* allocator) KANGARU5_UNSAFE KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
 					auto const object_ptr = static_cast<ObjectType*>(ptr);
 					std::destroy_at(object_ptr);
 					static_cast<Allocator*>(allocator)->template deallocate_object<ObjectType>(object_ptr);
 				};
+			}
+			
+			template<std::copy_constructible F> KANGARU5_UNSAFE
+			constexpr auto construct(Allocator& allocator, F function) -> std::invoke_result_t<F>* {
+				using object_type = std::invoke_result_t<F>;
+				
+				auto const ptr = allocator.template allocate_object<object_type>();
+				
+				auto provide_as_function_source = function_source{function};
+				
+				std::construct_at(
+					ptr,
+					strict_deducer<decltype(provide_as_function_source)&>{provide_as_function_source}
+				);
+				
+				return ptr;
 			}
 		};
 	} // namespace detail::heap_storage
@@ -100,30 +116,26 @@ namespace kangaru {
 		}
 		
 		KANGARU5_CONSTEXPR_VOIDSTAR ~basic_heap_storage() {
-			for (auto it = container.rbegin(); it < container.rend(); ++it) {
-				it->deleter(it->ptr, &allocator);
+			KANGARU5_UNSAFE_BLOCK {
+				for (auto it = container.rbegin(); it < container.rend(); ++it) {
+					it->deleter(it->ptr, &allocator);
+				}
 			}
 		}
 		
 		template<std::copy_constructible F>
 		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
-			using object_type = std::invoke_result_t<F>;
-			
-			auto const ptr = allocator.template allocate_object<object_type>();
-			
-			auto provide_as_function_source = function_source{function};
-			
-			std::construct_at(
-				ptr,
-				strict_deducer<decltype(provide_as_function_source)&>{provide_as_function_source}
-			);
-			
-			container.push_back(runtime_dynamic_storage{
-				ptr,
-				basic_heap_storage::template destroyer<object_type>(),
-			});
-			
-			return ptr;
+			KANGARU5_UNSAFE_BLOCK {
+				auto const ptr = basic_heap_storage::construct(allocator, std::move(function));
+				
+				using object_type = std::invoke_result_t<F>;
+				container.push_back(runtime_dynamic_storage{
+					ptr,
+					basic_heap_storage::template destroyer<object_type>(),
+				});
+				
+				return ptr;
+			}
 		}
 		
 	private:
@@ -136,11 +148,16 @@ namespace kangaru {
 	using default_heap_storage = basic_heap_storage<std::vector<runtime_dynamic_storage>, default_allocator>;
 	
 	template<typename T>
-	concept heap_storage =
+	concept non_ref_heap_storage =
 		    std::move_constructible<T>
 		and requires(T storage, int(*function)()) {
 			{ storage.emplace_from(function) } -> std::same_as<int*>;
 		};
+	
+	template<typename T>
+	concept heap_storage = non_ref_heap_storage<T> or requires {
+		requires non_ref_heap_storage<source_reference_wrapped_type<T>>;
+	};
 	
 	static_assert(heap_storage_container<std::vector<runtime_dynamic_storage>>);
 	
@@ -160,13 +177,13 @@ namespace kangaru {
 		
 		template<std::copy_constructible F>
 		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
-			return storage.emplace_from(function);
+			return kangaru::maybe_unwrap(storage).emplace_from(function);
 		}
 		
 	private:
 		template<object T> requires source_of<source_type, T>
 		friend constexpr auto provide(provide_tag<T*>, forwarded<with_heap_storage> auto&& source) -> T* {
-			return source.storage.emplace_from(
+			return kangaru::maybe_unwrap(source.storage).emplace_from(
 				[&source] {
 					return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
 				}
@@ -185,42 +202,7 @@ namespace kangaru {
 	
 	static_assert(heap_storage<with_heap_storage<noop_source>>);
 	static_assert(heap_storage<with_heap_storage<noop_source, with_heap_storage<noop_source>>>);
-	
-	template<source Source, heap_storage InnerStorage = default_heap_storage>
-	struct with_heap_storage_reference_wrapper {
-		using source_type = source_reference_wrapper_for_t<Source>;
-		
-		explicit constexpr with_heap_storage_reference_wrapper(with_heap_storage<Source, InnerStorage>& source) noexcept :
-			source{ref(source.source)}, storage{std::addressof(source)} {}
-		
-		template<std::copy_constructible F>
-		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
-			return storage->emplace_from(function);
-		}
-		
-		[[nodiscard]]
-		constexpr auto unwrap() const noexcept -> with_heap_storage<Source, InnerStorage>& {
-			return *storage;
-		}
-		
-		source_type source;
-		
-	private:
-		template<object T> requires source_of<with_heap_storage<Source, InnerStorage>, T*>
-		friend constexpr auto provide(provide_tag<T*> tag, forwarded<with_heap_storage_reference_wrapper> auto&& source) -> T* {
-			return provide(tag, *source.storage);
-		}
-		
-		with_heap_storage<Source, InnerStorage>* storage;
-	};
-	
-	template<source Source, heap_storage Storage>
-	struct source_reference_wrapper_for<with_heap_storage<Source, Storage>> {
-		using type = with_heap_storage_reference_wrapper<Source, Storage>;
-	};
-	
-	static_assert(heap_storage<with_heap_storage_reference_wrapper<with_heap_storage<noop_source>>>);
-	static_assert(heap_storage<with_heap_storage<noop_source, with_heap_storage_reference_wrapper<with_heap_storage<noop_source>>>>);
+	static_assert(heap_storage<with_heap_storage<noop_source, source_reference_wrapper<with_heap_storage<noop_source>>>>);
 } // namespace kangaru
 
 #include "undef.hpp"

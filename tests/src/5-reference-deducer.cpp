@@ -11,7 +11,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		by_lvalue_const_reference,
 		by_rvalue_const_reference
 	};
-
+	
 	struct sneezy {
 		how_t how;
 	};

@@ -8,6 +8,7 @@
 #include "ctti.hpp"
 #include "concepts.hpp"
 #include "allocator.hpp"
+#include "source_types.hpp"
 
 #include <cstddef>
 #include <type_traits>
@@ -21,7 +22,7 @@
 
 namespace kangaru {
 	template<typename T>
-	concept cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
+	concept non_ref_cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
 		{ map.begin() } -> std::forward_iterator;
 		{ map.end() } -> std::forward_iterator;
 		{ std::as_const(map).begin() } -> std::forward_iterator;
@@ -41,6 +42,11 @@ namespace kangaru {
 		typename T::mapped_type;
 		typename T::iterator;
 		typename T::const_iterator;
+	};
+	
+	template<typename T>
+	concept cache_map = non_ref_cache_map<T> or requires {
+		requires non_ref_cache_map<source_reference_wrapped_type<T>>;
 	};
 	
 	static_assert(cache_map<std::unordered_map<std::size_t, void*>>);

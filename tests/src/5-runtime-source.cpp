@@ -1,6 +1,7 @@
 #include "kangaru/detail/deducer.hpp"
 #include "kangaru/detail/recursive_source.hpp"
 #include "kangaru/detail/source.hpp"
+#include "kangaru/detail/source_from_tag.hpp"
 #include "kangaru/detail/source_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
@@ -59,6 +60,17 @@ struct service_b {
 	service_a& a;
 
 	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
+};
+
+struct service_aggregate {
+	service_a& sa;
+	service_b& sb;
+};
+
+struct service_c {
+	service_aggregate services;
+	
+	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
 };
 
 TEST_CASE("Runtime source will cache sources results", "[deducer]") {
@@ -124,10 +136,10 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 				)
 			)
 		};
-
+		
 		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_ref&>, source).ref == 0);
 	}
-
+	
 	SECTION("Support the service idiom and cache and construction") {
 		auto source = kangaru::with_recursion{
 			kangaru::with_source_from_tag{
@@ -147,5 +159,37 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
 		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
+	}
+	
+	SECTION("Support the service idiom and cache and construction, with recursive construction on top") {
+		auto source = kangaru::with_recursion{
+			kangaru::make_source_with_exhaustive_construction(
+				kangaru::with_recursion{
+					kangaru::with_source_from_tag{
+						kangaru::with_cache{
+							kangaru::with_heap_storage{
+								kangaru::make_source_with_exhaustive_construction(
+									increment_source{.n = 3} // just a source of int
+								)
+							}
+						}
+					}
+				}
+			)
+		};
+		
+		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 3);
+		
+		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
+		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		CHECK(std::addressof(ra) == std::addressof(rb.a));
+
+		auto c = kangaru::provide(kangaru::provide_tag_v<service_aggregate>, source);
+		CHECK(std::addressof(ra) == std::addressof(c.sa));
+		CHECK(std::addressof(rb) == std::addressof(c.sb));
+
+		service_c& rc = kangaru::provide(kangaru::provide_tag_v<service_c&>, source);
+		CHECK(std::addressof(ra) == std::addressof(rc.services.sa));
+		CHECK(std::addressof(rb) == std::addressof(rc.services.sb));
 	}
 }

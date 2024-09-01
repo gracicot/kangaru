@@ -27,6 +27,11 @@ namespace kangaru {
 		
 		Source source;
 	};
+	
+	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	inline constexpr auto make_source_with_source_from_tag(Source&& source) {
+		return with_source_from_tag<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
 }
 
 #include "undef.hpp"

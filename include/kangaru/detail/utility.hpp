@@ -68,7 +68,9 @@ namespace kangaru::detail::utility {
 	template<template<typename...> typename Template>
 	struct template_type_identity {
 		template<typename... Args>
-		using ttype = Template<Args...>;
+		struct ttype {
+			using type = Template<Args...>;
+		};
 	};
 }
 

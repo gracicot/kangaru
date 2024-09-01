@@ -1,13 +1,13 @@
 #ifndef KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 #define KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 
-#include "kangaru/detail/source.hpp"
 #include "utility.hpp"
-#include "source_types.hpp"
 #include "constructor.hpp"
 #include "injector.hpp"
 #include "tag.hpp"
-#include "noreturn.hpp"
+#include "source.hpp"
+#include "source_reference_wrapper.hpp"
+#include "source_types.hpp"
 
 #include <type_traits>
 #include <cstdlib>
@@ -119,7 +119,7 @@ namespace kangaru {
 		};
 		
 		template<unqualified_object T, typename Source>
-			requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>)
+			requires (source<std::remove_reference_t<Source>> and callable<std::invoke_result_t<MakeInjector const&, Source&&>, construct<T>>)
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -208,14 +208,34 @@ namespace kangaru {
 		
 		template<template<typename> typename Branch, kangaru::source Source>
 		struct rebind_wrapper<Branch<Source>> {
-			template<kangaru::source NewSource>
-			using ttype = Branch<NewSource>;
+			template<kangaru::source NewSource> requires requires { typename Branch<NewSource>; }
+			struct ttype {
+				using type = Branch<NewSource>;
+			};
 		};
 		
 		template<template<typename, typename> typename Branch, kangaru::source Source, typename State>
 		struct rebind_wrapper<Branch<Source, State>> {
-			template<kangaru::source NewSource, typename NewState = State>
-			using ttype = Branch<NewSource, NewState>;
+			template<kangaru::source NewSource, typename NewState = State> requires requires { typename Branch<NewSource, NewState>; }
+			struct ttype {
+				using type = Branch<NewSource, NewState>;
+			};
+		};
+		
+		template<template<typename> typename Branch, kangaru::source Source>
+		struct rebind_wrapper<Branch<Source> const> {
+			template<kangaru::source NewSource> requires requires { typename Branch<NewSource>; }
+			struct ttype {
+				using type = Branch<NewSource>;
+			};
+		};
+		
+		template<template<typename, typename> typename Branch, kangaru::source Source, typename State>
+		struct rebind_wrapper<Branch<Source, State> const> {
+			template<kangaru::source NewSource, typename NewState = State> requires requires { typename Branch<NewSource, NewState>; }
+			struct ttype {
+				using type = Branch<NewSource, NewState>;
+			};
 		};
 	}
 	
@@ -225,13 +245,13 @@ namespace kangaru {
 		and not reference_wrapper<Source>
 		and wrapping_source<Source>
 		and requires(Source source) {
-			typename std::type_identity<
+			typename std::type_identity_t<
 				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
 					std::decay_t<decltype(source.source)>
-				>
-			>::type;
+				>::type
+			>;
 			requires std::constructible_from<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>,
+				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>::type,
 				std::decay_t<decltype(source.source)>
 			>;
 		};
@@ -242,19 +262,19 @@ namespace kangaru {
 		and not reference_wrapper<Source>
 		and rebindable_wrapping_source<Source>
 		and requires(Source source) {
-			typename std::type_identity<
+			typename std::type_identity_t<
 				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
-						std::decay_t<decltype(source.source)>,
-						decltype(ref(source))
-					>
-			>::type;
+					std::decay_t<decltype(source.source)>,
+					decltype(kangaru::ref(source))
+				>::type
+			>;
 			requires std::constructible_from<
 				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
 					std::decay_t<decltype(source.source)>,
-					decltype(ref(source))
-				>,
+					decltype(kangaru::ref(source))
+				>::type,
 				std::decay_t<decltype(source.source)>,
-				decltype(ref(source))
+				decltype(kangaru::ref(source))
 			>;
 		};
 	
@@ -265,7 +285,7 @@ namespace kangaru {
 		Source source;
 		
 	private:
-		template<typename T, kangaru::source Leaf> requires (not rebindable_wrapping_source<std::remove_cv_t<Leaf>> and not reference_wrapper<std::remove_cv_t<Leaf>>)
+		template<typename T, kangaru::source Leaf>
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Leaf&) noexcept -> auto {
 			if constexpr (source_of<Source, T> and reference_wrapper<Source>) {
 				return self.source;
@@ -278,29 +298,29 @@ namespace kangaru {
 			}
 		}
 		
-		template<typename T, typename Wrapper> requires rebindable_wrapping_source<std::remove_cv_t<Wrapper>>
+		template<typename T, rebindable_wrapping_source Wrapper>
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cv_t<Wrapper>>::template ttype<
+			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source))
-			>;
+			>::type;
 			return rebound{
 				rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source)
 			};
 		}
 		
-		template<typename T, typename Wrapper> requires stateful_rebindable_wrapping_source<std::remove_cv_t<Wrapper>>
+		template<typename T, stateful_rebindable_wrapping_source Wrapper>
 		constexpr static auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper& source) noexcept -> auto {
-			using rebound = typename detail::recursive_source::rebind_wrapper<std::remove_cv_t<Wrapper>>::template ttype<
+			using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
 				decltype(rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source)),
 				decltype(kangaru::ref(source))
-			>;
+			>::type;
 			return rebound{
 				rebind_source_tree_for<T>(KANGARU5_FWD(self), source.source),
 				kangaru::ref(source),
 			};
 		}
 		
-		template<typename T, kangaru::source Wrapper> requires reference_wrapper<Wrapper>
+		template<typename T, reference_wrapper Wrapper>
 		constexpr auto rebind_source_tree_for(forwarded<with_recursion> auto&& self, Wrapper wrapper) -> auto {
 			return rebind_source_tree_for<T>(KANGARU5_FWD(self), wrapper.unwrap());
 		}
@@ -320,15 +340,24 @@ namespace kangaru {
 		}
 	};
 	
-	template<source Source, construction Construct>
+	template<typename Source> requires (source<std::remove_cvref_t<Source>>)
+	inline constexpr auto make_source_with_recursion(Source&& source) {
+		return with_recursion<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	template<source Source, construction Construction>
 	struct with_construction {
+	private:
+		using construction_type = maybe_wrapped_t<Construction>;
+		
+	public:
 		explicit constexpr with_construction(Source source) noexcept
-			requires std::default_initializable<Construct> :
+			requires std::default_initializable<Construction> :
 			source{std::move(source)} {}
 		
-		constexpr with_construction(Source source, Construct construct) noexcept :
+		constexpr with_construction(Source source, Construction construction) noexcept :
 			source{std::move(source)},
-			construct{std::move(construct)} {}
+			construction{std::move(construction)} {}
 		
 		template<typename T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
@@ -336,31 +365,40 @@ namespace kangaru {
 		}
 		
 		template<typename T, forwarded<with_construction> Self>
-			requires (callable_template1<Construct const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
+			requires (callable_template1<construction_type const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return source.construct.template operator()<T>(KANGARU5_FWD(source).source);
+			return std::as_const(source.construction).template operator()<T>(kangaru::fwd_ref(KANGARU5_FWD(source).source));
 		}
 		
 		Source source;
 		
 	private:
-		Construct construct;
+		Construction construction;
 	};
 	
-	template<typename Source, typename Construct> requires (source<std::remove_cvref_t<Source>> and movable_object<std::remove_cvref_t<Construct>>)
+	template<typename Source, typename Construct> requires (source<std::remove_cvref_t<Source>> and construction<std::remove_cvref_t<Construct>>)
 	inline constexpr auto make_source_with_construction(Source&& source, Construct&& construct) {
 		return with_construction<std::remove_cvref_t<Source>, std::remove_cvref_t<Construct>>{KANGARU5_FWD(source), KANGARU5_FWD(construct)};
 	}
+	
+	template<source Source>
+	using with_non_empty_construction = with_construction<Source, non_empty_construction>;
 	
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
 	inline constexpr auto make_source_with_non_empty_construction(Source&& source) {
 		return with_construction<std::remove_cvref_t<Source>, non_empty_construction>{KANGARU5_FWD(source), non_empty_construction{}};
 	}
 	
+	template<source Source>
+	using with_exhaustive_construction = with_construction<Source, exhaustive_construction>;
+	
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
 	inline constexpr auto make_source_with_exhaustive_construction(Source&& source) {
 		return with_construction<std::remove_cvref_t<Source>, exhaustive_construction>{KANGARU5_FWD(source), exhaustive_construction{}};
 	}
+	
+	template<source Source>
+	using with_unsafe_exhaustive_construction = with_construction<Source, unsafe_exhaustive_construction>;
 	
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
 	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {

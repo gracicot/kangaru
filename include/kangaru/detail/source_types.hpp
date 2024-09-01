@@ -6,6 +6,7 @@
 #include "concepts.hpp"
 #include "utility.hpp"
 #include "constructor.hpp"
+#include "source_reference_wrapper.hpp"
 
 #include <tuple>
 #include <concepts>
@@ -253,44 +254,6 @@ namespace kangaru {
 		return with_filter_passthrough<std::remove_cvref_t<Source>, T>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source>
-	struct source_reference_wrapper {
-		constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
-		
-		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, source_reference_wrapper const& source) -> T
-		requires source_of<Source&, T> {
-			return provide(provide_tag_v<T>, *source.source);
-		}
-		
-		[[nodiscard]]
-		constexpr auto unwrap() const noexcept -> Source& {
-			return *source;
-		}
-		
-	private:
-		Source* source;
-	};
-	
-	template<source Source>
-	struct source_const_reference_wrapper {
-		constexpr source_const_reference_wrapper(Source const& source) noexcept : source{std::addressof(source)} {}
-		constexpr source_const_reference_wrapper(source_reference_wrapper<Source> const& source) noexcept : source{source.unwrap()} {}
-		
-		template<typename T> requires source_of<Source const&, T>
-		friend constexpr auto provide(provide_tag<T>, source_const_reference_wrapper const& source) -> T {
-			return provide(provide_tag_v<T>, *source.source);
-		}
-		
-		[[nodiscard]]
-		constexpr auto unwrap() const noexcept -> Source const& {
-			return *source;
-		}
-		
-	private:
-		Source const* source;
-	};
-	
 	template<source Source, typename Type>
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
@@ -328,42 +291,6 @@ namespace kangaru {
 	}
 	
 	template<source Source>
-	struct source_reference_wrapper_for {
-		using type = source_reference_wrapper<Source>;
-	};
-	
-	template<source Source>
-	struct source_reference_wrapper_for<Source const> {
-		using type = source_const_reference_wrapper<Source>;
-	};
-	
-	template<source Source>
-	using source_reference_wrapper_for_t = typename source_reference_wrapper_for<Source>::type;
-	
-	template<typename T>
-	concept reference_wrapper = source<T> and requires(T ref) {
-		{ ref.unwrap() } -> reference;
-	};
-	
-	template<typename Wrapper, typename T>
-	concept reference_wrapper_for = requires(Wrapper const& ref) {
-		{ ref.unwrap() } -> std::same_as<T&>;
-	};
-	
-	template<reference_wrapper Wrapper>
-	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
-	
-	template<typename Source> requires source<std::remove_const_t<Source>>
-	inline constexpr auto ref(Source& source) -> source_reference_wrapper_for_t<Source> {
-		static_assert(reference_wrapper_for<source_reference_wrapper_for_t<Source>, Source>);
-		return source_reference_wrapper_for_t<Source>{source};
-	}
-	
-	inline constexpr auto tie(source auto&... sources) {
-		return kangaru::concat(kangaru::ref(sources)...);
-	}
-	
-	template<source Source>
 	struct with_reference_passthrough {
 		explicit constexpr with_reference_passthrough(Source source) noexcept : source{std::move(source)} {}
 		
@@ -376,7 +303,7 @@ namespace kangaru {
 		}
 		
 		template<reference T, forwarded<with_reference_passthrough> Self>
-			requires source_of<detail::utility::forward_like_t<Self, decltype(std::declval<Source>().source)>, T>
+			requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
 			return provide(tag, KANGARU5_FWD(source).source.source);
 		}
@@ -413,7 +340,7 @@ namespace kangaru {
 	struct basic_wrapping_source {
 		template<typename T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, std::forward<Self>(source).source);
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
 		}
 		
 		Source source;
@@ -422,6 +349,10 @@ namespace kangaru {
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
 	constexpr auto wrap_source(Source&& source) {
 		return basic_wrapping_source<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	inline constexpr auto tie(source auto&... sources) {
+		return kangaru::concat(kangaru::ref(sources)...);
 	}
 }
 

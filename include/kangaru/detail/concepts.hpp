@@ -39,7 +39,7 @@ namespace kangaru {
 	
 	template<typename T, typename... Args>
 	concept brace_constructible = requires(Args&&... args) {
-		::new T{KANGARU5_FWD(args)...};
+		T{KANGARU5_FWD(args)...};
 	};
 	
 	template<typename T, typename... Args>

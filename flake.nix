@@ -21,10 +21,12 @@
           pkgs = nixpkgsFor.${system};
           vcpkg = pkgs.vcpkg;
           frameworks = pkgs.darwin.apple_sdk_11_0.frameworks;
-          mkShell = pkgs.mkShell.override {stdenv = pkgs.llvmPackages_19.stdenv;};
+          mkShell = pkgs.mkShell.override {stdenv = pkgs.llvmPackages_18.libcxxStdenv; };
+          #mkShell = pkgs.mkShell.override {stdenv = pkgs.gcc13Stdenv; };
         in {
           default = mkShell {
             nativeBuildInputs = with pkgs; [
+              llvmPackages_19.llvm
               llvmPackages_19.clang-tools
               llvmPackages_19.lldb
             ];

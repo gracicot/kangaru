@@ -68,6 +68,7 @@ struct service_aggregate {
 };
 
 struct service_c {
+	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
 	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;

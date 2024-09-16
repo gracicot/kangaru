@@ -8,26 +8,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64]
         os: [macos-13]
         xcode: [14.3, 15.2]
         include:
           - xcode: 13
             os: macos-12
-            arch: x64
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v27
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: nicknovitski/nix-develop@v1
         with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          arguments: ".#ci-nocc"
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
           xcode-version: ${{ matrix.xcode }}
 
-      - run: nix develop .#ci-nocc --command bash -c "cmake --preset ci-macos && cmake --build --preset ci-macos && ctest --preset ci-macos"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux
@@ -35,53 +42,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [11, 12, 13, 14, 15, 16, 17, 18, 19]
+        clang: [13, 14, 15, 16, 17, 18, 19]
 
     steps:
       - uses: actions/checkout@v4
 
-      - uses: cachix/install-nix-action@v27
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: nicknovitski/nix-develop@v1
         with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          arguments: ".#ci-clang${{ matrix.clang }}"
 
-      - run: nix develop .#ci-clang${{ matrix.clang }} --command bash -c "cmake --preset ci-linux && cmake --build --preset ci-linux && ctest --preset ci-linux"
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   linux-gcc:
     name: GCC ${{ matrix.gcc }} Linux
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64]
-        os: [ubuntu-22.04] 
-        gcc: [11, 12, 13]
+        gcc: [11, 12, 13, 14]
 
     steps:
       - uses: actions/checkout@v4
 
-      # Minimum GCC version required for vcpkg
-      - uses: egor-tensin/setup-gcc@v1
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      - uses: nicknovitski/nix-develop@v1
         with:
-          version: 9
-          platform: ${{ matrix.arch }}
-
-      - name: get-cmake
-        uses: lukka/get-cmake@v3.26.0
-
-      - name: Run vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-
-      - uses: egor-tensin/setup-gcc@v1
-        with:
-          version: ${{ matrix.gcc }}
-          platform: ${{ matrix.arch }}
+          arguments: ".#ci-gcc${{ matrix.gcc }}"
 
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
@@ -108,7 +103,7 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.26.0
+        uses: lukka/get-cmake@v3.29.0
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
@@ -116,7 +111,7 @@ jobs:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           useVcpkgToolchainFile: true
-          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
+          vcpkgGitCommitId: '1de2026f28ead93ff1773e6e680387643e914ea1'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

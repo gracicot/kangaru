@@ -48,7 +48,7 @@ jobs:
     name: Clang ${{ matrix.clang }} Linux
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         clang: [11, 12, 13, 14, 15, 16, 17, 18, 19]
 

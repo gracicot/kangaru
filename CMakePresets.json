@@ -37,10 +37,7 @@
         "KANGARU_BUILD_EXAMPLES": "ON",
         "KANGARU_REVERSE_DESTRUCTION": "ON",
         "KANGARU_NO_EXCEPTION": "OFF",
-        "KANGARU_BENCHMARK": "OFF",
-        "KANGARU_TEST": "ON",
-        "CMAKE_CXX_FLAGS": "-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field",
-        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-g -O2 -fsanitize=address,undefined"
+        "KANGARU_TEST": "ON"
       }
     },
     {
@@ -54,11 +51,39 @@
         "KANGARU_NO_EXCEPTION": "OFF",
         "KANGARU_TEST": "ON",
         "CMAKE_COLOR_DIAGNOSTICS": "ON",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "platform-linux",
+      "hidden": true,
+      "cacheVariables": {
         "CMAKE_CXX_FLAGS": "-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field",
         "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fsanitize=address,undefined",
         "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-g -O2 -fsanitize=address,undefined",
         "CMAKE_CXX_FLAGS_RELEASE": "-O3 -flto"
+      }
+    },
+    {
+      "name": "platform-macos",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fsanitize=address,undefined",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-g -O2 -fsanitize=address,undefined",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -flto"
+      }
+    },
+    {
+      "name": "platform-windows",
+      "hidden": true,
+      "architecture": "x64",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS": "/sdl /guard:cf /utf-8 /diagnostics:caret /w14165 /w44242 /w44254 /w44263 /w34265 /w34287 /w44296 /w44365 /w44388 /w44464 /w14545 /w14546 /w14547 /w14549 /w14555 /w34619 /w34640 /w24826 /w14905 /w14906 /w14928 /w45038 /W4 /permissive- /volatile:iso /Zc:inline /Zc:preprocessor /Zc:enumTypes /Zc:lambda /Zc:__cplusplus /Zc:externConstexpr /Zc:throwingNew /EHsc",
+        "CMAKE_EXE_LINKER_FLAGS": "/machine:x64 /guard:cf",
+        "CMAKE_CXX_FLAGS_DEBUG": "/DEBUG /ZI /fsanitize=address",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "/DEBUG /ZI /O2 /fsanitize=address",
+        "CMAKE_CXX_FLAGS_RELEASE": "/O2 /GL"
       }
     },
     {
@@ -68,9 +93,33 @@
       "inherits": ["generator-multi", "vcpkg", "dev"]
     },
     {
+      "name": "dev-macos",
+      "displayName": "macOS development",
+      "binaryDir": "${sourceDir}/build/dev-linux",
+      "inherits": ["generator-multi", "vcpkg", "dev"]
+    },
+    {
       "name": "ci-linux",
       "displayName": "Linux Continuous Integration",
       "binaryDir": "${sourceDir}/build/ci-linux",
+      "inherits": ["generator-single", "vcpkg", "dev"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "ci-macos",
+      "displayName": "macOS Continuous Integration",
+      "binaryDir": "${sourceDir}/build/ci-macos",
+      "inherits": ["generator-single", "vcpkg", "dev"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "ci-windows",
+      "displayName": "macOS Continuous Integration",
+      "binaryDir": "${sourceDir}/build/ci-windows",
       "inherits": ["generator-single", "vcpkg", "dev"],
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "RelWithDebInfo"
@@ -105,6 +154,20 @@
       "description": "The build configuration for CI",
       "configuration": "RelWithDebInfo",
       "configurePreset": "ci-linux"
+    },
+    {
+      "name": "ci-macos",
+      "displayName": "CI",
+      "description": "The build configuration for CI",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-macos"
+    },
+    {
+      "name": "ci-windows",
+      "displayName": "CI",
+      "description": "The build configuration for CI",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-windows"
     }
   ],
   "testPresets": [
@@ -137,6 +200,18 @@
       "inherits": "default-test",
       "configuration": "RelWithDebInfo",
       "configurePreset": "ci-linux"
+    },
+    {
+      "name": "ci-macos",
+      "inherits": "default-test",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-macos"
+    },
+    {
+      "name": "ci-windows",
+      "inherits": "default-test",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-windows"
     }
   ]
 }

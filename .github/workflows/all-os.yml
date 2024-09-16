@@ -19,30 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: get-cmake
-        uses: lukka/get-cmake@v3.26.0
-
-      - name: Run vcpkg
-        uses: lukka/run-vcpkg@v11
+      - uses: cachix/install-nix-action@v27
         with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: maxim-lobanov/setup-xcode@v1.5.1
         with:
           xcode-version: ${{ matrix.xcode }}
 
-      - name: 'Run CMake'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci'
-          buildPreset: 'ci'
-          testPreset: 'ci'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+      - run: nix develop .#ci-nocc --command bash -c "cmake --preset ci-macos && cmake --build --preset ci-macos && ctest --preset ci-macos"
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux
@@ -101,9 +86,9 @@ jobs:
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ci'
-          buildPreset: 'ci'
-          testPreset: 'ci'
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
           configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   windows-msvc:
@@ -139,8 +124,8 @@ jobs:
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ci'
-          buildPreset: 'ci'
-          testPreset: 'ci'
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
           configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 

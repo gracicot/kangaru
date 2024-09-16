@@ -3,11 +3,7 @@ find_package(fmt REQUIRED)
 
 add_library(kangaru_test_common INTERFACE)
 
-target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain kangaru-internal-warnings fmt::fmt)
-
-target_compile_options(kangaru_test_common INTERFACE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Wno-missing-field-initializers>
-)
+target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain fmt::fmt)
 
 function(add_kgr_error_test testname error_message)
 	add_executable(error_${testname}_test src/error.cpp)
@@ -77,20 +73,14 @@ target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KAN
 target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
 target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
 
-if(KANGARU_TEST_CXX14)
-	add_kgr_test(generic_lambdas)
-	set_property(TARGET generic_lambdas_test PROPERTY CXX_STANDARD 14)
-	target_compile_features(generic_lambdas_test PRIVATE cxx_std_14)
-endif()
+add_kgr_test(generic_lambdas)
+set_property(TARGET generic_lambdas_test PROPERTY CXX_STANDARD 14)
+target_compile_features(generic_lambdas_test PRIVATE cxx_std_14)
 
-if(KANGARU_TEST_CXX14 AND KANGARU_HASH_TYPE_ID)
-	add_kgr_test(type_id_cxx14)
-	set_property(TARGET type_id_cxx14_test PROPERTY CXX_STANDARD 14)
-	target_compile_features(type_id_cxx14_test PRIVATE cxx_std_14)
-endif()
+add_kgr_test(type_id_cxx14)
+set_property(TARGET type_id_cxx14_test PROPERTY CXX_STANDARD 14)
+target_compile_features(type_id_cxx14_test PRIVATE cxx_std_14)
 
-if(KANGARU_TEST_CXX17)
-	add_kgr_test(noexcept_invoke)
-	set_property(TARGET noexcept_invoke_test PROPERTY CXX_STANDARD 17)
-	target_compile_features(noexcept_invoke_test PRIVATE cxx_std_17)
-endif()
+add_kgr_test(noexcept_invoke)
+set_property(TARGET noexcept_invoke_test PROPERTY CXX_STANDARD 17)
+target_compile_features(noexcept_invoke_test PRIVATE cxx_std_17)

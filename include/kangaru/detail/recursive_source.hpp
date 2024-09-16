@@ -322,8 +322,6 @@ namespace kangaru {
 			>;
 		};
 	
-	
-	
 	template<typename Source>
 	concept stateful_rebindable_wrapping_source =
 		    rebindable_wrapping_source<Source>

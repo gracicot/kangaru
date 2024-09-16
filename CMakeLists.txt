@@ -1,23 +1,12 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.29)
 
-set(KANGARU_VERSION_MAJOR "4")
-set(KANGARU_VERSION_MINOR "3")
-set(KANGARU_VERSION_PATCH "1")
-
-set(KANGARU_VERSION "${KANGARU_VERSION_MAJOR}.${KANGARU_VERSION_MINOR}.${KANGARU_VERSION_PATCH}")
-
-project(kangaru VERSION ${KANGARU_VERSION} LANGUAGES CXX)
+project(kangaru VERSION 5.0.0 LANGUAGES CXX)
 
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
-option(KANGARU_INSTALL "Generate kangaru installation target" true)
-option(KANGARU_EXPORT "Export kangaru source tree as package" true)
-option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" false)
-option(KANGARU_HASH_TYPE_ID "Generate the type IDs using the hashed type names" false)
+option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" ON)
+option(KANGARU_HASH_TYPE_ID "Generate the type IDs using the hashed type names" ON)
 option(KANGARU_NO_EXCEPTION "Disable exceptions by replacing throws by asserts" false)
-option(KANGARU_BENCHMARK "Build benchmark binaries" false)
-option(KANGARU_TEST "Build test binaries" false)
-option(KANGARU_TEST_CXX14 "Build C++14 test binaries" false)
-option(KANGARU_TEST_CXX17 "Build C++17 test binaries" false)
+option(KANGARU_TEST "Build test binaries" ON)
 
 set(KGR_KANGARU_NOEXCEPTION ${KANGARU_NO_EXCEPTION})
 set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
@@ -40,21 +29,13 @@ if(KANGARU_TEST_CXX14 OR KANGARU_TEST_CXX17 OR KANGARU_TEST)
 	set(KANGARU_ENABLE_TESTS true)
 endif()
 
-set(KANGARU_INSTALL_INCLUDE_DIR "include")
 
 add_library(kangaru INTERFACE)
 add_library(kangaru::kangaru ALIAS kangaru)
 
-add_library(kangaru-internal-warnings INTERFACE)
-target_compile_options(kangaru-internal-warnings INTERFACE
-	$<$<OR:$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field>
-	$<$<CXX_COMPILER_ID:GNU>:-Werror -Wall -Wextra>
-	$<$<CXX_COMPILER_ID:MSVC>:/W3>
-)
-
 target_compile_features(kangaru INTERFACE cxx_std_20)
 target_include_directories(kangaru INTERFACE
-	$<INSTALL_INTERFACE:${KANGARU_INSTALL_INCLUDE_DIR}>
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/include>
 )
@@ -68,61 +49,51 @@ if(KANGARU_ENABLE_TESTS)
 	add_subdirectory(tests)
 endif()
 
-if(KANGARU_BENCHMARK)
-	add_subdirectory(benchmark)
-endif()
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
 
-if(KANGARU_EXPORT)
-	export(PACKAGE kangaru)
-endif()
+set(KANGARU_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/kangaru")
+mark_as_advanced(KANGARU_INSTALL_CMAKEDIR)
 
-if(KANGARU_INSTALL)
-	set(KANGARU_CONFIG_PATH "lib/cmake/kangaru")
-	
-	include(CMakePackageConfigHelpers)
-	
-	write_basic_package_version_file(
-		"${CMAKE_CURRENT_BINARY_DIR}/kangaruConfigVersion.cmake"
-		VERSION ${KANGARU_VERSION}
-		COMPATIBILITY SameMajorVersion
-	)
-	
-	# build tree package config
-	configure_file(
-		cmake/config/kangaruBuildConfig.cmake.in
-		${CMAKE_CURRENT_BINARY_DIR}/kangaruConfig.cmake
-		@ONLY
-	)
-	
-	# install tree package config
-	configure_package_config_file(
-		cmake/config/kangaruConfig.cmake.in
-		${KANGARU_CONFIG_PATH}/kangaruConfig.cmake
-		INSTALL_DESTINATION ${KANGARU_CONFIG_PATH}
-		NO_CHECK_REQUIRED_COMPONENTS_MACRO
-	)
-	
-	install(
-		DIRECTORY include/kangaru ${CMAKE_CURRENT_BINARY_DIR}/generated/include/kangaru
-		DESTINATION ${KANGARU_INSTALL_INCLUDE_DIR} FILES_MATCHING PATTERN "*.hpp"
-	)
-	
-	install(
-		FILES
-			"${CMAKE_CURRENT_BINARY_DIR}/${KANGARU_CONFIG_PATH}/kangaruConfig.cmake"
-			"${CMAKE_CURRENT_BINARY_DIR}/kangaruConfigVersion.cmake"
-		DESTINATION ${KANGARU_CONFIG_PATH}
-	)
-	
-	install(TARGETS kangaru EXPORT kangaruTargets)
-	
-	export(
-		EXPORT kangaruTargets
-		FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaruTargets.cmake"
-	)
-	
-	install(
-		EXPORT kangaruTargets FILE kangaruTargets.cmake
-		DESTINATION ${KANGARU_CONFIG_PATH}
-	)
-endif()
+write_basic_package_version_file(
+	"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
+	COMPATIBILITY SameMajorVersion
+	ARCH_INDEPENDENT
+)
+
+# build tree package config
+configure_file(
+	cmake/config/kangaru-config.cmake.in
+	kangaru-config.cmake
+	@ONLY
+)
+
+install(
+	DIRECTORY include/kangaru ${CMAKE_CURRENT_BINARY_DIR}/generated/include/kangaru
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.hpp"
+)
+
+install(
+	FILES
+		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config.cmake"
+		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
+	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
+)
+
+install(TARGETS kangaru EXPORT kangaru-targets)
+
+install(
+	EXPORT kangaru-targets
+	NAMESPACE kangaru::
+	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
+)
+
+export(
+	EXPORT kangaru-targets
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaru-targets.cmake"
+)
+
+install(
+	EXPORT kangaru-targets FILE kangaru-targets.cmake
+	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
+)

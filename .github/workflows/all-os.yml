@@ -46,61 +46,20 @@ jobs:
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        arch: [x64]
-        os: [ubuntu-20.04]
-        clang: [11, 12, 13, 14]
-        include:
-          - clang: 15
-            os: ubuntu-22.04
-            arch: x64
-          - clang: 16
-            os: ubuntu-22.04
-            arch: x64
-          - clang: 17
-            os: ubuntu-22.04
-            arch: x64
-          - clang: 18
-            os: ubuntu-22.04
-            arch: x64
+        clang: [11, 12, 13, 14, 15, 16, 17, 18, 19]
 
     steps:
       - uses: actions/checkout@v4
 
-      # Minimum GCC version required for vcpkg
-      - uses: egor-tensin/setup-gcc@v1
+      - uses: cachix/install-nix-action@v27
         with:
-          version: 9
-          platform: ${{ matrix.arch }}
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: get-cmake
-        uses: lukka/get-cmake@v3.26.0
-
-      - name: Run vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
-
-      - uses: egor-tensin/setup-clang@v1
-        with:
-          version: ${{ matrix.clang }}
-          platform: ${{ matrix.arch }}
-
-      - name: 'Run CMake'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci'
-          buildPreset: 'ci'
-          testPreset: 'ci'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+      - run: nix develop .#ci-clang${{ matrix.clang }} --command bash -c "cmake --preset ci-linux && cmake --build --preset ci-linux && ctest --preset ci-linux"
 
   linux-gcc:
     name: GCC ${{ matrix.gcc }} Linux

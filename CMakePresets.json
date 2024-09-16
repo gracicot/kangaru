@@ -1,140 +1,142 @@
 {
-	"version": 4,
-	"cmakeMinimumRequired": {
-	  "major": 3,
-	  "minor": 23,
-	  "patch": 0
-	},
-	"configurePresets": [
-		{
-			"name": "generator",
-			"generator": "Ninja Multi-Config",
-			"binaryDir": "${sourceDir}/build",
-			"hidden": true
-		},
-		{
-			"name": "ci",
-			"displayName": "CI",
-			"inherits": "generator",
-			"cacheVariables": {
-				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-				"CMAKE_MAKE_PROGRAM": "ninja",
-				"KANGARU_BUILD_EXAMPLES": "ON",
-				"KANGARU_INSTALL": "OFF",
-				"KANGARU_EXPORT": "OFF",
-				"KANGARU_REVERSE_DESTRUCTION": "ON",
-				"KANGARU_NO_EXCEPTION": "OFF",
-				"KANGARU_BENCHMARK": "OFF",
-				"KANGARU_TEST": "ON"
-			}
-		},
-		{
-			"name": "dev",
-			"displayName": "Development",
-			"inherits": "generator",
-			"cacheVariables": {
-				"CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-				"CMAKE_MAKE_PROGRAM": "ninja",
-				"KANGARU_BUILD_EXAMPLES": "ON",
-				"KANGARU_INSTALL": "ON",
-				"KANGARU_EXPORT": "ON",
-				"KANGARU_REVERSE_DESTRUCTION": "ON",
-				"KANGARU_HASH_TYPE_ID": "ON",
-				"KANGARU_NO_EXCEPTION": "OFF",
-				"KANGARU_BENCHMARK": "OFF",
-				"KANGARU_TEST": "ON",
-				"KANGARU_TEST_CXX14": "ON",
-				"KANGARU_TEST_CXX17": "ON",
-				"CMAKE_COLOR_DIAGNOSTICS": "ON",
-				"CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-				"CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fsanitize=address,undefined"
-			}
-		},
-		{
-			"name": "export",
-			"displayName": "Export",
-			"inherits": "generator",
-			"cacheVariables": {
-				"KANGARU_BUILD_EXAMPLES": "OFF",
-				"KANGARU_INSTALL": "ON",
-				"KANGARU_EXPORT": "ON",
-				"KANGARU_REVERSE_DESTRUCTION": "ON",
-				"KANGARU_HASH_TYPE_ID": "ON",
-				"KANGARU_NO_EXCEPTION": "OFF",
-				"KANGARU_BENCHMARK": "OFF",
-				"KANGARU_TEST": "OFF",
-				"KANGARU_TEST_CXX14": "OFF",
-				"KANGARU_TEST_CXX17": "OFF"
-			}
-		}
-	],
-	"buildPresets": [
-		{
-			"name": "debug",
-			"displayName": "Debug",
-			"description": "Compiles with debug informations",
-			"configuration": "Debug",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "relwithdebinfo",
-			"displayName": "RelWithDebInfo",
-			"description": "Compiles with optimisations and debug informations",
-			"configuration": "RelWithDebInfo",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "release",
-			"displayName": "Release",
-			"description": "Compiles with optimisation enabled",
-			"configuration": "Release",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "export",
-			"displayName": "Export",
-			"description": "Simply installs kangaru",
-			"configuration": "Release",
-			"configurePreset": "export"
-		},
-		{
-			"name": "ci",
-			"displayName": "CI",
-			"description": "The build configuration for CI",
-			"configuration": "RelWithDebInfo",
-			"configurePreset": "ci"
-		}
-	],
-	"testPresets": [
-		{
-			"name": "default-test",
-			"hidden": true,
-			"output": {"outputOnFailure": true},
-			"execution": {"noTestsAction": "error"}
-		},
-		{
-			"name": "debug",
-			"inherits": "default-test",
-			"configuration": "Debug",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "relwithdebinfo",
-			"inherits": "default-test",
-			"configuration": "RelWithDebInfo",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "release",
-			"inherits": "default-test",
-			"configuration": "Release",
-			"configurePreset": "dev"
-		},
-		{
-			"name": "ci",
-			"inherits": "default-test",
-			"configuration": "RelWithDebInfo",
-			"configurePreset": "ci"
-		}
-	]
+  "version": 4,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 23,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "generator-multi",
+      "generator": "Ninja Multi-Config",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "ninja"
+      }
+    },
+    {
+      "name": "generator-single",
+      "generator": "Ninja",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM": "ninja"
+      }
+    },
+    {
+      "name": "vcpkg",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI",
+      "hidden": true,
+      "cacheVariables": {
+        "KANGARU_BUILD_EXAMPLES": "ON",
+        "KANGARU_REVERSE_DESTRUCTION": "ON",
+        "KANGARU_NO_EXCEPTION": "OFF",
+        "KANGARU_BENCHMARK": "OFF",
+        "KANGARU_TEST": "ON",
+        "CMAKE_CXX_FLAGS": "-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-g -O2 -fsanitize=address,undefined"
+      }
+    },
+    {
+      "name": "dev",
+      "displayName": "Development",
+      "hidden": true,
+      "cacheVariables": {
+        "KANGARU_BUILD_EXAMPLES": "ON",
+        "KANGARU_REVERSE_DESTRUCTION": "ON",
+        "KANGARU_HASH_TYPE_ID": "ON",
+        "KANGARU_NO_EXCEPTION": "OFF",
+        "KANGARU_TEST": "ON",
+        "CMAKE_COLOR_DIAGNOSTICS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_FLAGS": "-Werror -Wall -Wextra -Wno-error=unused-parameter -Wno-error=unused-variable -Wno-error=unused-private-field",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 -fsanitize=address,undefined",
+        "CMAKE_CXX_FLAGS_RELWITHDEBINFO": "-g -O2 -fsanitize=address,undefined",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -flto"
+      }
+    },
+    {
+      "name": "dev-linux",
+      "displayName": "Linux development",
+      "binaryDir": "${sourceDir}/build/dev-linux",
+      "inherits": ["generator-multi", "vcpkg", "dev"]
+    },
+    {
+      "name": "ci-linux",
+      "displayName": "Linux Continuous Integration",
+      "binaryDir": "${sourceDir}/build/ci-linux",
+      "inherits": ["generator-single", "vcpkg", "dev"],
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev-linux-debug",
+      "displayName": "Debug",
+      "description": "Compiles with debug informations",
+      "configuration": "Debug",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "dev-linux-relwithdebinfo",
+      "displayName": "RelWithDebInfo",
+      "description": "Compiles with optimisations and debug informations",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "dev-linux-release",
+      "displayName": "Release",
+      "description": "Compiles with optimisation enabled",
+      "configuration": "Release",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "ci-linux",
+      "displayName": "CI",
+      "description": "The build configuration for CI",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-linux"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default-test",
+      "hidden": true,
+      "output": {"outputOnFailure": true},
+      "execution": {"noTestsAction": "error"}
+    },
+    {
+      "name": "dev-linux-debug",
+      "inherits": "default-test",
+      "configuration": "Debug",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "dev-linux-relwithdebinfo",
+      "inherits": "default-test",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "dev-linux-release",
+      "inherits": "default-test",
+      "configuration": "Release",
+      "configurePreset": "dev-linux"
+    },
+    {
+      "name": "ci-linux",
+      "inherits": "default-test",
+      "configuration": "RelWithDebInfo",
+      "configurePreset": "ci-linux"
+    }
+  ]
 }

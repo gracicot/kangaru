@@ -5,7 +5,7 @@ target_compile_options(kangaru-example INTERFACE
 	$<$<CXX_COMPILER_ID:GNU>:-Wno-missing-field-initializers -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-comment>
 )
 
-target_link_libraries(kangaru-example INTERFACE kangaru kangaru-internal-warnings)
+target_link_libraries(kangaru-example INTERFACE kangaru::kangaru)
 
 add_subdirectory(abstract_factory)
 add_subdirectory(cars)

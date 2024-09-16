@@ -25,7 +25,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
+          vcpkgGitCommitId: '1de2026f28ead93ff1773e6e680387643e914ea1'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

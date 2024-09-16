@@ -36,7 +36,7 @@ jobs:
           configurepreset: 'ci-macos'
           buildpreset: 'ci-macos'
           testpreset: 'ci-macos'
-          configurepresetcmdstring: '[`--preset`, `$[env.configure_preset_name]`]'
+          configurepresetcmdstring: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux

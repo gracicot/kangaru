@@ -17,24 +17,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - uses: nicknovitski/nix-develop@v1
+      - name: get-cmake
+        uses: lukka/get-cmake@v3.29.6
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
         with:
-          arguments: ".#ci-nocc"
+          # Location of the vcpkg as submodule of the repository.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '3508985146f1b1d248c67ead13f8f54be5b4f5da'
+          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
+          # compute its hash and append this to the computed cache's key.
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
 
-      - uses: maxim-lobanov/setup-xcode@v1.5.1
-        with:
-          xcode-version: ${{ matrix.xcode }}
-
-
-      - name: 'Run CMake'
+      - name: 'run cmake'
         uses: lukka/run-cmake@v10
         with:
-          configurePreset: 'ci-linux'
-          buildPreset: 'ci-linux'
-          testPreset: 'ci-linux'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurepreset: 'ci-macos'
+          buildpreset: 'ci-macos'
+          testpreset: 'ci-macos'
+          configurepresetcmdstring: '[`--preset`, `$[env.configure_preset_name]`]'
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux
@@ -103,7 +105,7 @@ jobs:
           arch: ${{ matrix.arch }}
 
       - name: get-cmake
-        uses: lukka/get-cmake@v3.29.0
+        uses: lukka/get-cmake@v3.29.6
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11

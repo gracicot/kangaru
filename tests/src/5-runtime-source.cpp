@@ -193,4 +193,39 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		CHECK(std::addressof(ra) == std::addressof(rc.services.sa));
 		CHECK(std::addressof(rb) == std::addressof(rc.services.sb));
 	}
+
+	SECTION("Properly forward value category of the source") {
+		struct forward_sensitive_source {
+			auto provide() & -> int {
+				return 1;
+			}
+
+			auto provide() const& -> int {
+				return 2;
+			}
+
+			auto provide() && -> int {
+				return 3;
+			}
+
+			auto provide() const&& -> int {
+				return 4;
+			}
+		};
+
+		struct needs_int {
+			int value;
+		};
+
+		auto source = kangaru::with_recursion{
+			kangaru::make_source_with_non_empty_construction(
+				forward_sensitive_source{}
+			)
+		};
+
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, source).value == 1);
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::as_const(source)).value == 2);
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::move(source)).value == 3);
+		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::move(std::as_const(source))).value == 4);
+	}
 }

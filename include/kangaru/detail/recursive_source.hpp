@@ -343,7 +343,7 @@ namespace kangaru {
 		};
 	
 	namespace detail::recursive_source {
-		template<typename Source, typename T, kangaru::source Leaf>
+		template<typename Source, typename T, kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)
 		constexpr auto rebind_source_tree_for(auto&& self, Leaf&) noexcept {
 			if constexpr (source_of<std::remove_reference_t<Source>, T> and reference_wrapper<std::remove_cvref_t<Source>>) {
 				return self.source;
@@ -356,7 +356,7 @@ namespace kangaru {
 			}
 		}
 		
-		template<typename Source, typename T, rebindable_wrapping_source Wrapper>
+		template<typename Source, typename T, rebindable_wrapping_source Wrapper> requires (not reference_wrapper<Wrapper>)
 		constexpr auto rebind_source_tree_for(auto&& self, Wrapper& source) noexcept {
 			if constexpr (stateful_rebindable_wrapping_source<Wrapper>) {
 				using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<

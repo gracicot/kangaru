@@ -387,7 +387,11 @@ namespace kangaru {
 	struct with_recursion {
 	private:
 		template<forwarded<with_recursion> Self, typename T>
-		using rebound_source_t = decltype(detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(std::declval<Self>(), std::declval<Self&>().source));
+		using rebound_source_t = decltype(
+			detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(
+				std::declval<Self>(), std::declval<Self&>().source
+			)
+		);
 		
 	public:
 		explicit constexpr with_recursion(Source source) noexcept : source{std::move(source)} {}
@@ -396,7 +400,13 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
-			return provide(tag, detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(KANGARU5_FWD(source), source.source));
+			return provide(
+				tag,
+				detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(
+					KANGARU5_FWD(source),
+					source.source
+				)
+			);
 		}
 		
 		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>

@@ -13,13 +13,32 @@
 
 namespace kangaru {
 	struct kangaru_deducer_tag {};
+	struct kangaru_strict_deducer_tag {};
 	
 	template<typename Deducer>
-	concept deducer =
-		    object<Deducer>
+	concept deducer_weak = object<Deducer>;
+	
+	template<typename Deducer>
+	concept deducer_strict =
+		    deducer_weak<Deducer>
+		and requires {
+			requires std::same_as<typename Deducer::is_deducer, kangaru_strict_deducer_tag>;
+		};
+	
+	template<typename Deducer>
+	concept deducer_non_strict =
+		    deducer_weak<Deducer>
 		and requires {
 			requires std::same_as<typename Deducer::is_deducer, kangaru_deducer_tag>;
 		};
+	
+	template<typename Deducer>
+	concept deducer =
+		    deducer_weak<Deducer>
+		and (
+			   deducer_non_strict<Deducer>
+			or deducer_strict<Deducer>
+		);
 	
 	template<typename Deducer, typename T>
 	concept deducer_for = deducer<Deducer> and requires(Deducer deducer) {
@@ -199,7 +218,7 @@ namespace kangaru {
 	
 	template<source_ref Source>
 	struct strict_deducer {
-		using is_deducer = kangaru_deducer_tag;
+		using is_deducer = kangaru_strict_deducer_tag;
 		
 		explicit constexpr strict_deducer(forwarded<std::remove_cvref_t<Source>> auto const&& source)
 		noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
@@ -239,7 +258,7 @@ namespace kangaru {
 	
 	template<typename Exclude, deducer Deducer>
 	struct exclude_deducer {
-		using is_deducer = kangaru_deducer_tag;
+		using is_deducer = typename Deducer::is_deducer;
 		
 		explicit constexpr exclude_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
@@ -315,7 +334,7 @@ namespace kangaru {
 	
 	template<typename Exclude, deducer Deducer>
 	struct exclude_special_constructors_deducer {
-		using is_deducer = kangaru_deducer_tag;
+		using is_deducer = typename Deducer::is_deducer;
 		
 		explicit constexpr exclude_special_constructors_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
@@ -421,7 +440,7 @@ namespace kangaru {
 	
 	template<typename Deducer, reference_kind kind>
 	struct filtered_value_category_deducer {
-		using is_deducer = kangaru_deducer_tag;
+		using is_deducer = typename Deducer::is_deducer;
 		
 		explicit constexpr filtered_value_category_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
@@ -664,69 +683,47 @@ namespace kangaru {
 			exclude_references_deducer<Deducer>
 		>;
 		
-		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
-			requires callable<F, prvalue_filtered_deducer_for<F, Deducers, S, sizeof...(S)>...>
-		inline constexpr auto invoke_with_deducers_prvalue_filter(
-			F&& function,
-			std::index_sequence<S...>,
-			Deducers... deduce
-		) -> decltype(auto) {
-			return KANGARU5_FWD(function)(prvalue_filtered_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
-		}
+		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
+		using filtered_deducer_for = detail::type_traits::conditional_t<
+			deducer_strict<Deducer>,
+			filtered_value_category_deducer_for<F, Deducer, nth, arity>,
+			prvalue_filtered_deducer_for<F, Deducer, nth, arity>
+		>;
 		
 		template<typename F, kangaru::deducer... Deducers, std::size_t... S>
-			requires callable<F, filtered_value_category_deducer_for<F, Deducers, S, sizeof...(S)>...>
-		inline constexpr auto invoke_with_deducers_strict_reference(
+			requires callable<F, filtered_deducer_for<F, Deducers, S, sizeof...(S)>...>
+		inline constexpr auto invoke_with_deducers_impl(
 			F&& function,
 			std::index_sequence<S...>,
 			Deducers... deduce
 		) -> decltype(auto) {
-			return KANGARU5_FWD(function)(filtered_value_category_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
+			return KANGARU5_FWD(function)(filtered_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
 		}
 		
 		template<std::size_t... S>
 		inline constexpr auto invoke_with_deducer_sequence(
 			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
 		) -> decltype(
-			invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
+			invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
 		) {
-			return invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
-		}
-		
-		template<std::size_t... S>
-		inline constexpr auto invoke_with_strict_deducer_sequence(
-			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
-		) -> decltype(
-			invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
-		) {
-			return invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
+			return invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
 		}
 	}
 	
 	template<deducer... Deducers>
 	inline constexpr auto invoke_with_deducers(
 		callable<Deducers...> auto&& function, Deducers... deduce
-	) -> decltype(auto) {
-		return detail::deducer::invoke_with_deducers_prvalue_filter(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
-	}
-	
-	template<deducer... Deducers>
-	inline constexpr auto invoke_with_strict_deducers(auto&& function, Deducers... deduce) -> decltype(
-		detail::deducer::invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)
+	) -> decltype(
+		detail::deducer::invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)
 	) {
-		return detail::deducer::invoke_with_deducers_strict_reference(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
+		return detail::deducer::invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 	}
 	
 	template<typename F, typename... Deducers>
 	concept callable_with_deducers =
 		    (... and deducer<Deducers>)
-		and callable<F, Deducers...>;
-	
-	template<typename F, typename... Deducers>
-	concept callable_with_strict_deducers =
-		    (... and deducer<Deducers>)
 		and requires(F&& f, Deducers... deduce) {
-			invoke_with_strict_deducers(KANGARU5_FWD(f), deduce...);
+			invoke_with_deducers(KANGARU5_FWD(f), deduce...);
 		};
 } // namespace kangaru
 

@@ -1,8 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
-#include <iostream>
-
 TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 	enum how_t {
 		by_value,
@@ -84,7 +82,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			CHECK(s.how == by_rvalue_reference);
 		});
 	}
-
+	
 	SECTION("Will fallback to rvalue ref if no const lvalue is available") {
 		auto source = kangaru::tie(
 			source_by_rvalue_ref
@@ -103,7 +101,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		injector([](sneezy const&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
-
+		
 		SECTION("But prefers const") {
 			auto source = kangaru::tie(
 				source_by_rvalue_ref,
@@ -125,11 +123,9 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			});
 		}
 	}
-
+	
 	SECTION("Can copy simple values") {
-		auto source = kangaru::tie(
-			source_by_value
-		);
+		auto source = source_by_value;
 		
 		auto injector = kangaru::make_simple_injector(source);
 		
@@ -149,7 +145,7 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			CHECK(s.how == by_value);
 		});
 	}
-
+	
 	SECTION("Can convert convertible references") {
 		auto injector_rvalue = kangaru::make_simple_injector(source_by_rvalue_ref);
 		auto injector_const_rvalue = kangaru::make_simple_injector(source_by_rvalue_ref_const);
@@ -291,7 +287,7 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		using constructor_1110_t = decltype(constructor_1110);
 		auto constructor_1111 = restricted_constructor<type_1111>();
 		using constructor_1111_t = decltype(constructor_1111);
-
+		
 		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>()));
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>()));
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>()));
@@ -308,7 +304,7 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>()));
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>()));
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>()));
-
+		
 		CHECK((
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()
 		) == kangaru::reference_kind::none);
@@ -372,32 +368,59 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		CHECK((
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
 		) == kangaru::reference_kind::all_reference_kind);
-
+		
 		CHECK(kangaru::construction_tree_needs<type_0000, injected>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected&>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected&&>);
 		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&&>);
 		
+		CHECK(not kangaru::construction_tree_needs<type_0000, int>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, int&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, int const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, int&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0000, int const&&>);
+		
+		CHECK(not kangaru::construction_tree_needs<type_0001, injected>);
 		CHECK(kangaru::construction_tree_needs<type_0001, injected&>);
 		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&>);
 		CHECK(not kangaru::construction_tree_needs<type_0001, injected&&>);
 		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&&>);
 		
+		CHECK(not kangaru::construction_tree_needs<type_0001, int>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, int&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, int const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, int&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0001, int const&&>);
+		
+		CHECK(not kangaru::construction_tree_needs<type_0010, injected>);
 		CHECK(not kangaru::construction_tree_needs<type_0010, injected&>);
 		CHECK(kangaru::construction_tree_needs<type_0010, injected const&>);
 		CHECK(not kangaru::construction_tree_needs<type_0010, injected&&>);
 		CHECK(not kangaru::construction_tree_needs<type_0010, injected const&&>);
+		
+		CHECK(not kangaru::construction_tree_needs<type_0010, int>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, int&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, int const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, int&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0010, int const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
 		//static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
 		
+		CHECK(not kangaru::construction_tree_needs<type_0100, injected>);
 		CHECK(not kangaru::construction_tree_needs<type_0100, injected&>);
 		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&>);
 		CHECK(kangaru::construction_tree_needs<type_0100, injected&&>);
 		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&&>);
+		
+		CHECK(not kangaru::construction_tree_needs<type_0100, int>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, int&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, int const&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, int&&>);
+		CHECK(not kangaru::construction_tree_needs<type_0100, int const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
@@ -414,10 +437,17 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		//static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
 		////static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
 		
+		CHECK(not kangaru::construction_tree_needs<type_1000, injected>);
 		CHECK(not kangaru::construction_tree_needs<type_1000, injected&>);
 		CHECK(not kangaru::construction_tree_needs<type_1000, injected const&>);
 		CHECK(not kangaru::construction_tree_needs<type_1000, injected&&>);
 		CHECK(kangaru::construction_tree_needs<type_1000, injected const&&>);
+		
+		CHECK(not kangaru::construction_tree_needs<type_1000, int>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, int&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, int const&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, int&&>);
+		CHECK(not kangaru::construction_tree_needs<type_1000, int const&&>);
 		
 		//static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
 		////static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);

@@ -11,7 +11,7 @@
 
 namespace kangaru::detail::ctti {
 	template<typename T>
-	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto raw_typed_signature() -> std::string_view {
+	inline KANGARU5_CONSTEVAL auto raw_typed_signature() -> std::string_view {
 		return KANGARU5_FUNCTION_SIGNATURE;
 	}
 	
@@ -24,7 +24,7 @@ namespace kangaru::detail::ctti {
 	
 	// TODO: Get stable type name on all compilers
 	template<typename T>
-	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_name_prefix_length() -> std::size_t {
+	inline KANGARU5_CONSTEVAL auto type_name_prefix_length() -> std::size_t {
 		using namespace std::literals;
 		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(signature_prefix_length);
 		
@@ -40,7 +40,7 @@ namespace kangaru::detail::ctti {
 	}
 	
 	template<typename T>
-	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_name() -> std::string_view {
+	inline KANGARU5_CONSTEVAL auto type_name() -> std::string_view {
 		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(type_name_prefix_length<T>());
 		return sig_prefix_trimmed.substr(
 			0,
@@ -53,7 +53,7 @@ namespace kangaru::detail::ctti {
 	struct type_id_for_result : std::integral_constant<std::size_t, detail::murmur::murmur64a(type_name<T>())> {};
 	
 	template<typename T>
-	inline KANGARU5_CONSTEVAL_IF_POSSIBLE auto type_id_for() -> type_id_for_result<T> {
+	inline KANGARU5_CONSTEVAL auto type_id_for() -> type_id_for_result<T> {
 		return type_id_for_result<T>{};
 	}
 }

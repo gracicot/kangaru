@@ -541,7 +541,7 @@ namespace kangaru {
 	
 	namespace detail::deducer {
 		template<typename T, typename F, std::size_t... before, std::size_t... after>
-		inline constexpr auto callable_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
+		inline KANGARU5_CONSTEVAL auto callable_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
 			return callable<
 				F,
 				detail::utility::expand<placeholder_deducer, before>...,
@@ -551,12 +551,12 @@ namespace kangaru {
 		}
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		inline constexpr auto callable_with_nth_parameter_being() -> bool {
+		inline KANGARU5_CONSTEVAL auto callable_with_nth_parameter_being() -> bool {
 			return callable_with_nth_parameter_being_expand<T, F>(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{});
 		}
 		
 		template<typename F, std::size_t nth, std::size_t max>
-		inline constexpr auto is_nth_parameter_prvalue() -> bool {
+		inline KANGARU5_CONSTEVAL auto is_nth_parameter_prvalue() -> bool {
 			return (
 				    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>()
 				and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>()
@@ -564,7 +564,7 @@ namespace kangaru {
 		}
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		inline constexpr auto reference_kind_for_nth_parameter() -> reference_kind {
+		inline KANGARU5_CONSTEVAL auto reference_kind_for_nth_parameter() -> reference_kind {
 			if constexpr (is_nth_parameter_prvalue<F, nth, max>()) {
 				return reference_kind::none;
 			} else {

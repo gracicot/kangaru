@@ -130,7 +130,7 @@ namespace kangaru {
 	};
 	
 	struct placeholder_deducer {
-		using is_deducer = kangaru_deducer_tag;
+		using is_deducer = kangaru_strict_deducer_tag;
 		
 		template<deducible T>
 		operator T ();
@@ -591,11 +591,11 @@ namespace kangaru {
 				// - If we don't match, we exclude matching with mutable rvalue for clang
 				constexpr auto callable_with_rvalue_const_ref = callable_with_lvalue_const_ref
 					? not callable_with_nth_parameter_being<
-							filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>,
-							F,
-							nth,
-							max
-						>()
+						filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>,
+						F,
+						nth,
+						max
+					>()
 					: (
 						callable_with_nth_parameter_being<
 							filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
@@ -623,41 +623,41 @@ namespace kangaru {
 				// Otherwise, we can just match with lvalue references.
 				constexpr auto callable_with_lvalue_ref = callable_with_lvalue_const_ref
 					? not callable_with_nth_parameter_being<
-							filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>,
-							F,
-							nth,
-							max
-						>()
+						filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>,
+						F,
+						nth,
+						max
+					>()
 					: callable_with_nth_parameter_being<
-							filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
-							F,
-							nth,
-							max
-						>();
+						filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
+						F,
+						nth,
+						max
+					>();
 				
 				// Here we finally check for value references. They can match rvalue references, rvalue cosnt references, and
 				// lvalue const references. We need to check for those two if we matched them before in order to do the check
 				// With the little dance of checking for ambiguous calls
 				constexpr auto callable_with_rvalue_ref = callable_with_rvalue_const_ref
 					? not callable_with_nth_parameter_being<
-							filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+						filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+						F,
+						nth,
+						max
+					>()
+					: callable_with_lvalue_const_ref
+						? not callable_with_nth_parameter_being<
+							filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>,
 							F,
 							nth,
 							max
 						>()
-					: callable_with_lvalue_const_ref
-						? not callable_with_nth_parameter_being<
-								filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>,
-								F,
-								nth,
-								max
-							>()
 						: callable_with_nth_parameter_being<
-								filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
-								F,
-								nth,
-								max
-							>();
+							filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+							F,
+							nth,
+							max
+						>();
 				
 				// We build the bitmask enum to express what overloads of different reference kind exists
 				return (

@@ -135,9 +135,9 @@ namespace kangaru {
 	
 	template<typename Type, movable_object MakeInjector>
 	struct basic_placeholder_construct_except {
-		KANGARU5_CONSTEVAL basic_placeholder_construct_except() requires std::default_initializable<MakeInjector> = default;
+		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct_except() requires std::default_initializable<MakeInjector> = default;
 		
-		explicit KANGARU5_CONSTEVAL basic_placeholder_construct_except(MakeInjector make_injector) noexcept :
+		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct_except(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<typename T>
@@ -170,9 +170,9 @@ namespace kangaru {
 	
 	template<movable_object MakeInjector>
 	struct basic_placeholder_construct {
-		KANGARU5_CONSTEVAL basic_placeholder_construct() requires std::default_initializable<MakeInjector> = default;
+		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct() requires std::default_initializable<MakeInjector> = default;
 		
-		explicit KANGARU5_CONSTEVAL basic_placeholder_construct(MakeInjector make_injector) noexcept :
+		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<typename T>

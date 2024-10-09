@@ -160,9 +160,9 @@ namespace kangaru {
 		cache_type cache = {};
 	};
 	
-	template<typename Source, typename Cache = std::unordered_map<std::size_t, void*>>
+	template<typename Source, typename Cache = std::unordered_map<std::size_t, std::any>>
 		requires(source<std::remove_cvref_t<Source>> and cache_map<std::remove_cvref_t<Cache>>)
-	constexpr auto make_source_with_cache(Source&& source, Cache&& cache = std::unordered_map<std::size_t, void*>{}) {
+	constexpr auto make_source_with_cache(Source&& source, Cache&& cache = std::unordered_map<std::size_t, std::any>{}) {
 		return with_cache<std::remove_cvref_t<Source>, std::remove_cvref_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	

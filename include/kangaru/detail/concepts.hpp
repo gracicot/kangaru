@@ -55,6 +55,11 @@ namespace kangaru {
 	
 	template<typename T>
 	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
+	
+	template<typename From, typename To>
+	concept explicitly_castable_to = requires(From&& from) {
+		static_cast<To>(KANGARU5_FWD(from));
+	};
 }
 
 #include "undef.hpp"

@@ -8,6 +8,7 @@
 #include "source.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_types.hpp"
+#include "source_helper.hpp"
 
 #include <type_traits>
 #include <cstdlib>
@@ -271,125 +272,31 @@ namespace kangaru {
 	struct with_recursion;
 
 	namespace detail::recursive_source {
-		template<wrapping_source>
-		struct rebind_wrapper {};
-		
-		template<template<typename> typename Branch, kangaru::source Source>
-		struct rebind_wrapper<Branch<Source>> {
-			template<kangaru::source NewSource> requires requires { typename Branch<NewSource>; }
-			struct ttype {
-				using type = Branch<NewSource>;
-			};
-		};
-		
-		template<template<typename, typename> typename Branch, kangaru::source Source, typename State>
-		struct rebind_wrapper<Branch<Source, State>> {
-			template<kangaru::source NewSource, typename NewState = State> requires requires { typename Branch<NewSource, NewState>; }
-			struct ttype {
-				using type = Branch<NewSource, NewState>;
-			};
-		};
-		
-		template<template<typename> typename Branch, kangaru::source Source>
-		struct rebind_wrapper<Branch<Source> const> {
-			template<kangaru::source NewSource> requires requires { typename Branch<NewSource>; }
-			struct ttype {
-				using type = Branch<NewSource>;
-			};
-		};
-		
-		template<template<typename, typename> typename Branch, kangaru::source Source, typename State>
-		struct rebind_wrapper<Branch<Source, State> const> {
-			template<kangaru::source NewSource, typename NewState = State> requires requires { typename Branch<NewSource, NewState>; }
-			struct ttype {
-				using type = Branch<NewSource, NewState>;
-			};
-		};
-	}
-	
-	template<typename Source>
-	concept rebindable_wrapping_source =
-		    wrapping_source<Source>
-		and requires(Source source) {
-			typename std::type_identity_t<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
-					std::decay_t<decltype(source.source)>
-				>::type
-			>;
-			requires std::constructible_from<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<std::decay_t<decltype(source.source)>>::type,
-				std::decay_t<decltype(source.source)>
-			>;
-		};
-	
-	template<typename Source>
-	concept stateful_rebindable_wrapping_source =
-		    rebindable_wrapping_source<Source>
-		and requires(Source source) {
-			typename std::type_identity_t<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
-					std::decay_t<decltype(source.source)>,
-					decltype(kangaru::ref(source))
-				>::type
-			>;
-			requires std::constructible_from<
-				typename detail::recursive_source::rebind_wrapper<Source>::template ttype<
-					std::decay_t<decltype(source.source)>,
-					decltype(kangaru::ref(source))
-				>::type,
-				std::decay_t<decltype(source.source)>,
-				decltype(kangaru::ref(source))
-			>;
-		};
-	
-	namespace detail::recursive_source {
-		template<typename Source, typename T, kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)
-		constexpr auto rebind_source_tree_for(auto&& self, Leaf&) noexcept {
-			if constexpr (source_of<std::remove_reference_t<Source>, T> and reference_wrapper<std::remove_cvref_t<Source>>) {
-				return self.source;
-			} else if constexpr (source_of<std::remove_reference_t<Source>, T>) {
-				return kangaru::ref(self.source);
-			} else if constexpr (reference_wrapper<std::remove_cvref_t<Source>>) {
-				return make_source_with_filter_passthrough<T>(self);
-			} else {
-				return make_source_with_filter_passthrough<T>(with_recursion<source_reference_wrapper<std::remove_reference_t<Source>>>{kangaru::ref(self.source)});
-			}
-		}
-		
-		template<typename Source, typename T, rebindable_wrapping_source Wrapper> requires (not reference_wrapper<Wrapper>)
-		constexpr auto rebind_source_tree_for(auto&& self, Wrapper& source) noexcept {
-			if constexpr (stateful_rebindable_wrapping_source<Wrapper>) {
-				using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
-					decltype(rebind_source_tree_for<Source, T>(KANGARU5_FWD(self), source.source)),
-					decltype(kangaru::ref(source))
-				>::type;
-				return rebound{
-					rebind_source_tree_for<Source, T>(KANGARU5_FWD(self), source.source),
-					kangaru::ref(source),
-				};
-			} else {
-				using rebound = typename detail::recursive_source::rebind_wrapper<Wrapper>::template ttype<
-					decltype(rebind_source_tree_for<Source, T>(KANGARU5_FWD(self), source.source))
-				>::type;
-				return rebound{
-					rebind_source_tree_for<Source, T>(KANGARU5_FWD(self), source.source)
-				};
-			}
-		}
-		
-		template<typename Source, typename T, reference_wrapper Wrapper>
-		constexpr auto rebind_source_tree_for(auto&& self, Wrapper wrapper) {
-			return rebind_source_tree_for<Source, T>(KANGARU5_FWD(self), wrapper.unwrap());
-		}
+
 	}
 	
 	template<source Source>
 	struct with_recursion {
 	private:
+		template<typename T>
+		static constexpr auto rebound_leaf_for(auto&& self) requires wrapping_source<std::remove_reference_t<decltype(self)>> {
+			using S = forwarded_wrapped_source_t<decltype(self)>;
+			if constexpr (source_of<std::remove_reference_t<S>, T> and reference_wrapper<std::remove_cvref_t<S>>) {
+				return self.source;
+			} else if constexpr (source_of<std::remove_reference_t<S>, T>) {
+				return kangaru::ref(self.source);
+			} else if constexpr (reference_wrapper<std::remove_cvref_t<S>>) {
+				return make_source_with_filter_passthrough<T>(self);
+			} else {
+				return make_source_with_filter_passthrough<T>(with_recursion<source_reference_wrapper<std::remove_reference_t<S>>>{kangaru::ref(self.source)});
+			}
+		}
+		
 		template<forwarded<with_recursion> Self, typename T>
 		using rebound_source_t = decltype(
-			detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(
-				std::declval<Self>(), std::declval<Self&>().source
+			detail::source_helper::rebind_source_tree(
+				rebound_leaf_for<T>(std::declval<Self>()),
+				std::declval<Self&>().source
 			)
 		);
 		
@@ -402,8 +309,8 @@ namespace kangaru {
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
 			return provide(
 				tag,
-				detail::recursive_source::rebind_source_tree_for<detail::utility::forward_like_t<Self, Source>, T>(
-					KANGARU5_FWD(source),
+				detail::source_helper::rebind_source_tree(
+					rebound_leaf_for<T>(KANGARU5_FWD(source)),
 					source.source
 				)
 			);

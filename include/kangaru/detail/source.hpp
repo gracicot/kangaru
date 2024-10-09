@@ -22,6 +22,9 @@ namespace kangaru {
 	template<typename T>
 	concept source_ref = std::is_reference_v<T> and source<std::remove_cvref_t<T>>;
 	
+	template<typename T>
+	concept forwarded_source = source<std::remove_reference_t<T>>;
+	
 	namespace detail::source {
 		auto provide(provide_tag<struct poison>, auto&&) = delete;
 		
@@ -79,7 +82,7 @@ namespace kangaru {
 		or detail::source::adl_nonmember_source_of<Source, T>;
 	
 	template<typename Source>
-	concept weak_wrapping_source = source<Source> and requires(Source source) {
+	concept weak_wrapping_source = source<std::remove_reference_t<Source>> and requires(Source source) {
 		{ source.source };
 	};
 	
@@ -89,15 +92,20 @@ namespace kangaru {
 	template<typename Source>
 	concept wrapping_source =
 		    weak_wrapping_source<Source>
-		and source<std::remove_reference_t<wrapped_source_t<Source>>>;
+		and source<wrapped_source_t<Source>>;
 	
 	struct noop_source {};
 	static_assert(source<noop_source>);
 	
+	template<wrapping_source Source>
+	using forwarded_wrapped_source_t = detail::utility::forward_like_t<Source, wrapped_source_t<Source>>;
+	
 	template<typename Source, typename T>
 	concept wrapping_source_of =
 		    wrapping_source<std::remove_reference_t<Source>>
-		and source_of<detail::utility::forward_like_t<Source, wrapped_source_t<Source>>, T>;
+		and source_of<forwarded_wrapped_source_t<Source>, T>;
+	
+	
 } // namespace kangaru
 
 #include "undef.hpp"

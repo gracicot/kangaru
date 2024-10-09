@@ -10,13 +10,24 @@
 #include <type_traits>
 #include <concepts>
 #include <utility>
+#include <any>
 
 #include "define.hpp"
 
 namespace kangaru {
+	namespace detail::cache {
+		template<typename To>
+		auto any_cast(struct poison) -> To requires false;
+		
+		template<typename From, typename To>
+		concept adl_castable_to = requires (From&& from) {
+			{ any_cast<To>(KANGARU5_FWD(from)) } -> std::same_as<To>;
+		};
+	}
+	
 	template<
 		source Source,
-		cache_map Cache = std::unordered_map<std::size_t, void*>
+		cache_map Cache = std::unordered_map<std::size_t, std::any>
 	>
 	struct with_cache {
 		using source_type = Source;
@@ -116,12 +127,21 @@ namespace kangaru {
 		}
 		
 		constexpr auto swap(with_cache& other) noexcept -> void {
-			using std::swap;
-			swap(source, other.source);
-			swap(cache, other.cache);
+			std::ranges::swap(source, other.source);
+			std::ranges::swap(cache, other.cache);
 		}
 		
 	private:
+		template<typename To>
+		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {
+			return any_cast<To>(KANGARU5_FWD(any));
+		}
+		
+		template<typename To>
+		static constexpr auto cast(explicitly_castable_to<To> auto&& any) -> To {
+			return static_cast<To>(KANGARU5_FWD(any));
+		}
+		
 		template<object T, forwarded<with_cache> Self>
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
@@ -131,9 +151,9 @@ namespace kangaru {
 			if (it == kangaru::maybe_unwrap(source.cache).end()) {
 				auto object = provide(tag, KANGARU5_FWD(source).source);
 				auto const [it, _] = kangaru::maybe_unwrap(source.cache).insert(std::pair{id, std::move(object)});
-				return static_cast<T>(it->second);
+				return cast<T>(it->second);
 			} else {
-				return static_cast<T>(it->second);
+				return cast<T>(it->second);
 			}
 		}
 		

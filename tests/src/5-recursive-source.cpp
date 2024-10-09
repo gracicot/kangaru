@@ -88,7 +88,8 @@ TEST_CASE("Recursive source", "[recursive]") {
 							increment_source{},
 							kangaru::non_empty_construction{}
 						)
-					)
+					),
+					std::unordered_map<std::size_t, void*>{}
 				)
 			)
 		};
@@ -105,7 +106,8 @@ TEST_CASE("Recursive source", "[recursive]") {
 							increment_source{.n = 3}, // just a source of int
 							kangaru::exhaustive_construction{}
 						)
-					)
+					),
+					std::unordered_map<std::size_t, void*>{}
 				)
 			}
 		};
@@ -127,7 +129,8 @@ TEST_CASE("Recursive source", "[recursive]") {
 								kangaru::make_source_with_exhaustive_construction(
 									increment_source{.n = 3} // just a source of int
 								)
-							)
+							),
+							std::unordered_map<std::size_t, void*>{}
 						)
 					)
 				)

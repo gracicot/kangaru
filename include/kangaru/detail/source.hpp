@@ -94,8 +94,8 @@ namespace kangaru {
 		    weak_wrapping_source<Source>
 		and source<wrapped_source_t<Source>>;
 	
-	struct noop_source {};
-	static_assert(source<noop_source>);
+	struct none_source {};
+	static_assert(source<none_source>);
 	
 	template<wrapping_source Source>
 	using forwarded_wrapped_source_t = detail::utility::forward_like_t<Source, wrapped_source_t<Source>>;

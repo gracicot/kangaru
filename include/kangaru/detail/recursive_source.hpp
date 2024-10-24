@@ -223,7 +223,10 @@ namespace kangaru {
 		}
 		
 		template<typename T, forwarded<with_construction> Self>
-			requires (callable_template1<construction_type const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
+			requires (
+				    callable_template1<construction_type const&, T, wrapped_source_t<Self>>
+				and not wrapping_source_of<Self, T>
+			)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
 			if constexpr (reference_wrapper<Source>) {
 				return std::as_const(source.construction).template operator()<T>(KANGARU5_FWD(source).source);
@@ -266,13 +269,6 @@ namespace kangaru {
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
 	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {
 		return with_construction<std::remove_cvref_t<Source>, unsafe_exhaustive_construction>{KANGARU5_FWD(source), unsafe_exhaustive_construction{}};
-	}
-	
-	template<source Source>
-	struct with_recursion;
-
-	namespace detail::recursive_source {
-
 	}
 	
 	template<source Source>
@@ -331,7 +327,7 @@ namespace kangaru {
 	concept construction_tree_needs = not source_of<
 		with_recursion<
 			with_construction<
-				noop_source,
+				none_source,
 				basic_placeholder_construct_except<Type, make_strict_spread_injector_function>
 			>
 		>,

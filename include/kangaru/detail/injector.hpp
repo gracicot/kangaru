@@ -2,7 +2,6 @@
 #define KANGARU5_DETAIL_INJECTOR_HPP
 
 #include "source.hpp"
-#include "source_types.hpp"
 #include "deducer.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"

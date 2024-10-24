@@ -16,7 +16,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	template<source... Sources>
+	template<source... Sources> requires (sizeof...(Sources) > 0)
 	struct composed_source {
 		explicit constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
@@ -36,7 +36,7 @@ namespace kangaru {
 		std::tuple<Sources...> sources;
 	};
 	
-	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_cvref_t<decltype(sources)>>) {
+	inline constexpr auto concat(auto&&... sources) requires(... and source<std::remove_reference_t<decltype(sources)>>) {
 		return composed_source{KANGARU5_FWD(sources)...};
 	}
 	
@@ -232,6 +232,30 @@ namespace kangaru {
 		T object;
 	};
 	
+	template<source Source, source Alternative>
+	struct with_alternative {
+		constexpr with_alternative(Source source, Alternative alternative) noexcept : source{std::move(source)}, alternative{std::move(alternative)} {}
+		
+		Source source;
+		
+		template<typename T, forwarded<with_alternative> Self> requires (source_of<detail::utility::forward_like_t<Self, Alternative&&>, T> and not wrapping_source_of<Self, T>)
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).alternative);
+		}
+		
+		template<typename T, forwarded<with_alternative> Self> requires wrapping_source_of<Self, T>
+		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+		}
+		
+	private:
+		Alternative alternative;
+	};
+	
+	inline constexpr auto make_source_with_alternative(auto&& wrapped, auto&& concat) requires(source<std::remove_reference_t<decltype(wrapped)>> and source<std::remove_reference_t<decltype(concat)>>) {
+		return with_alternative<std::remove_cvref_t<decltype(wrapped)>, std::remove_cvref_t<decltype(concat)>>{KANGARU5_FWD(wrapped), KANGARU5_FWD(concat)};
+	}
+	
 	template<wrapping_source Source, typename Filtered>
 	struct with_filter_passthrough {
 		explicit constexpr with_filter_passthrough(Source source) noexcept : source{std::move(source)} {}
@@ -347,7 +371,7 @@ namespace kangaru {
 	};
 	
 	template<typename Source> requires source<std::remove_cvref_t<Source>>
-	constexpr auto wrap_source(Source&& source) {
+	inline constexpr auto wrap_source(Source&& source) {
 		return basic_wrapping_source<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 	}
 	

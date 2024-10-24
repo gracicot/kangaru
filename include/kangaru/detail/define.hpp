@@ -21,6 +21,7 @@
 
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 #define KANGARU5_CONSTRUCTOR_T(...) decltype(::kangaru::constructor<__VA_ARGS__>())
+#define KANGARU5_NO_ADL(...) (__VA_ARGS__)
 
 #if KANGARU5_IS_CLANG() == 1
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]

@@ -200,9 +200,9 @@ namespace kangaru {
 		};
 	}
 	
-	static_assert(heap_storage<with_heap_storage<noop_source>>);
-	static_assert(heap_storage<with_heap_storage<noop_source, with_heap_storage<noop_source>>>);
-	static_assert(heap_storage<with_heap_storage<noop_source, source_reference_wrapper<with_heap_storage<noop_source>>>>);
+	static_assert(heap_storage<with_heap_storage<none_source>>);
+	static_assert(heap_storage<with_heap_storage<none_source, with_heap_storage<none_source>>>);
+	static_assert(heap_storage<with_heap_storage<none_source, source_reference_wrapper<with_heap_storage<none_source>>>>);
 } // namespace kangaru
 
 #include "undef.hpp"

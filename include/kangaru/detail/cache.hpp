@@ -40,10 +40,10 @@ namespace kangaru {
 		explicit constexpr with_cache(source_type source) noexcept
 		requires (
 			std::default_initializable<cache_type>
-		) : source{std::move(source)} {}
+		) : source{std::move(source)}, cache{} {}
 		
-		constexpr with_cache(source_type source, cache_type cache) noexcept
-			: source{std::move(source)}, cache{std::move(cache)} {}
+		constexpr with_cache(source_type source, cache_type cache) noexcept :
+			source{std::move(source)}, cache{std::move(cache)} {}
 		
 		using key_type = typename unwrapped_cache_type::key_type;
 		using value_type = typename unwrapped_cache_type::value_type;
@@ -157,18 +157,23 @@ namespace kangaru {
 			}
 		}
 		
-		cache_type cache = {};
+		cache_type cache;
 	};
 	
-	template<typename Source, typename Cache = std::unordered_map<std::size_t, std::any>>
+	template<typename Source, typename Cache>
 		requires(source<std::remove_cvref_t<Source>> and cache_map<std::remove_cvref_t<Cache>>)
-	constexpr auto make_source_with_cache(Source&& source, Cache&& cache = std::unordered_map<std::size_t, std::any>{}) {
+	constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
 		return with_cache<std::remove_cvref_t<Source>, std::remove_cvref_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	static_assert(cache_map<with_cache<noop_source>>);
-	static_assert(cache_map<source_reference_wrapper<with_cache<with_cache<noop_source>>>>);
-	static_assert(cache_map<with_cache<noop_source, source_reference_wrapper<with_cache<noop_source>>>>);
+	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	constexpr auto make_source_with_cache(Source&& source) {
+		return with_cache<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	static_assert(cache_map<with_cache<none_source>>);
+	static_assert(cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
+	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
 }
 
 #include "undef.hpp"

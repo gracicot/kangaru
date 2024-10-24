@@ -78,8 +78,18 @@ namespace kangaru {
 	}
 	
 	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	inline constexpr auto ref(source_reference_wrapper<Source> source) -> source_reference_wrapper<Source> {
+		return source;
+	}
+	
+	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto fwd_ref(Source&& source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
+	}
+	
+	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	inline constexpr auto fwd_ref(source_forwarding_reference_wrapper<Source> source) -> source_forwarding_reference_wrapper<Source&&> {
+		return source;
 	}
 } // namespace kangaru
 

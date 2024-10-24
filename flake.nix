@@ -58,9 +58,8 @@
       devShells = forAllSystems (system:
         let
           pkgs = nixpkgsFor.${system};
-          #mkShell = pkgs.mkShell.override {stdenv = pkgs.gcc13Stdenv; };
         in {
-          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.libcxxStdenv; };
+          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
           ci-clang13 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_13.libcxxStdenv; };
           ci-clang14 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_14.libcxxStdenv; };
           ci-clang15 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_15.libcxxStdenv; };

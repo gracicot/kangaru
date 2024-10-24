@@ -66,22 +66,19 @@ namespace kangaru {
 		template<typename Self>
 		using rebound_source_tree_t = decltype(std::declval<Self>().rebound_source_tree());
 		
-		template<typename T>
-		static constexpr auto do_provide(auto&& source) -> T {
-			return kangaru::provide(
-				provide_tag_v<T>, KANGARU5_FWD(source).rebound_source_tree()
-			);
-		}
-		
 	public:
 		template<typename T> 
 		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
-			return do_provide<T>(*this);
+			return kangaru::provide(
+				provide_tag_v<T>, rebound_source_tree()
+			);
 		}
 		
 		template<typename T>
 		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<dynamic_container&&>, T> {
-			return do_provide<T>(std::move(*this));
+			return kangaru::provide(
+				provide_tag_v<T>, std::move(*this).rebound_source_tree()
+			);
 		}
 	};
 }

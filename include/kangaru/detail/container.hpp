@@ -12,13 +12,25 @@
 #include "define.hpp"
 
 namespace kangaru {
-	template<source Source>
-	struct dynamic_container {
-		constexpr dynamic_container() noexcept requires std::default_initializable<Source> : source{make_container_source(Source{})} {}
-		explicit constexpr dynamic_container(Source source) noexcept : source{make_container_source(std::move(source))} {}
+	namespace detail::container {
+		template<typename Self, typename Source>
+		inline constexpr auto rebound_source_tree(Self&& self, Source&& source) {
+			return with_recursion{
+				make_source_with_exhaustive_construction(
+					with_alternative{
+						with_recursion{
+							with_source_from_tag{
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
+							}
+						},
+						external_reference_source{self}
+					}
+				)
+			};
+		}
 		
-	private:
-		static constexpr auto make_container_source(Source&& source) noexcept {
+		template<typename Source>
+		inline constexpr auto make_container_source(Source&& source) noexcept {
 			return kangaru::make_source_with_cache(
 				kangaru::make_source_with_heap_storage(
 					kangaru::make_source_with_exhaustive_construction(
@@ -29,55 +41,48 @@ namespace kangaru {
 			);
 		}
 		
-		using container_source_t = decltype(make_container_source(std::declval<Source>()));
+		
+	} // namespace detail::container
+	
+	template<source Source>
+	struct dynamic_container {
+		constexpr dynamic_container() noexcept requires std::default_initializable<Source> :
+			source{detail::container::make_container_source(Source{})} {}
+		
+		explicit constexpr dynamic_container(Source source) noexcept :
+			source{detail::container::make_container_source(std::move(source))} {}
+		
+	private:
+		using container_source_t = with_cache<
+			with_heap_storage<
+				with_exhaustive_construction<Source>
+			>,
+			std::unordered_map<std::size_t, void*>
+		>;
 		
 		container_source_t source;
 		
-		constexpr auto rebound_source_tree() & {
-			return with_recursion{
-				kangaru::make_source_with_exhaustive_construction(
-					with_alternative{
-						with_recursion{
-							with_source_from_tag{
-								KANGARU5_NO_ADL(fwd_ref)(source)
-							}
-						},
-						external_reference_source<dynamic_container>{*this}
-					}
-				)
-			};
-		}
-		
-		constexpr auto rebound_source_tree() && {
-			return with_recursion{
-				kangaru::make_source_with_exhaustive_construction(
-					with_alternative{
-						with_recursion{
-							with_source_from_tag{
-								KANGARU5_NO_ADL(fwd_ref)(std::move(source))
-							}
-						},
-						external_reference_source<dynamic_container>{*this}
-					}
-				)
-			};
-		}
-		
 		template<typename Self>
-		using rebound_source_tree_t = decltype(std::declval<Self>().rebound_source_tree());
+		using rebound_source_tree_t = decltype(
+			detail::container::rebound_source_tree(std::declval<Self>(), std::declval<Self>().source)
+		);
 		
 	public:
+		auto test() {
+			return detail::container::rebound_source_tree(*this, source);
+		}
+		
 		template<typename T> 
 		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
 			return kangaru::provide(
-				provide_tag_v<T>, rebound_source_tree()
+				provide_tag_v<T>, detail::container::rebound_source_tree(*this, source)
 			);
 		}
 		
 		template<typename T>
 		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<dynamic_container&&>, T> {
 			return kangaru::provide(
-				provide_tag_v<T>, std::move(*this).rebound_source_tree()
+				provide_tag_v<T>, detail::container::rebound_source_tree(std::move(*this), std::move(source))
 			);
 		}
 	};

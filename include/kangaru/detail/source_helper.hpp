@@ -5,6 +5,7 @@
 #include "source_reference_wrapper.hpp"
 
 #include "define.hpp"
+#include <type_traits>
 
 namespace kangaru {
 	namespace detail::source_helper {
@@ -110,7 +111,9 @@ namespace kangaru {
 		
 		template<reference_wrapper Wrapper>
 		constexpr auto rebind_source_tree(forwarded_source auto&& new_leaf, Wrapper wrapper) noexcept {
-			return KANGARU5_NO_ADL(rebind_source_tree)(KANGARU5_FWD(new_leaf), wrapper.unwrap());
+			// TODO: Do we need to use forwarding refs for wrappers?
+			auto&& unwrapped = wrapper.unwrap();
+			return KANGARU5_NO_ADL(rebind_source_tree)(KANGARU5_FWD(new_leaf), unwrapped);
 		}
 		
 		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)

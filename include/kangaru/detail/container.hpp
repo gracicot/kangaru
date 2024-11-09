@@ -28,29 +28,24 @@ namespace kangaru {
 				)
 			};
 		}
-		
-		template<typename Source>
-		inline constexpr auto make_container_source(Source&& source) noexcept {
-			return kangaru::make_source_with_cache(
-				kangaru::make_source_with_heap_storage(
-					kangaru::make_source_with_exhaustive_construction(
-						std::move(source)
-					)
-				),
-				std::unordered_map<std::size_t, void*>{}
-			);
-		}
-		
-		
 	} // namespace detail::container
 	
 	template<source Source>
 	struct dynamic_container {
-		constexpr dynamic_container() noexcept requires std::default_initializable<Source> :
-			source{detail::container::make_container_source(Source{})} {}
-		
 		explicit constexpr dynamic_container(Source source) noexcept :
-			source{detail::container::make_container_source(std::move(source))} {}
+			source{
+				make_source_with_cache(
+					make_source_with_heap_storage(
+						make_source_with_exhaustive_construction(
+							std::move(source)
+						)
+					),
+					std::unordered_map<std::size_t, void*>{}
+				)
+			} {}
+		
+		constexpr dynamic_container() noexcept requires std::default_initializable<Source> :
+			dynamic_container{Source{}} {}
 		
 	private:
 		using container_source_t = with_cache<
@@ -68,10 +63,6 @@ namespace kangaru {
 		);
 		
 	public:
-		auto test() {
-			return detail::container::rebound_source_tree(*this, source);
-		}
-		
 		template<typename T> 
 		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
 			return kangaru::provide(

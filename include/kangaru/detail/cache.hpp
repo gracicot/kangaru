@@ -144,7 +144,7 @@ namespace kangaru {
 		
 		template<object T, forwarded<with_cache> Self>
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, T>
-		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
+		friend constexpr auto provide(Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
 			auto const it = kangaru::maybe_unwrap(source.cache).find(id);
 			
@@ -160,15 +160,14 @@ namespace kangaru {
 		cache_type cache;
 	};
 	
-	template<typename Source, typename Cache>
-		requires(source<std::remove_cvref_t<Source>> and cache_map<std::remove_cvref_t<Cache>>)
+	template<forwarded_source Source, forwarded_cache_map Cache>
 	constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
-		return with_cache<std::remove_cvref_t<Source>, std::remove_cvref_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
+		return with_cache<std::decay_t<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	template<forwarded_source Source>
 	constexpr auto make_source_with_cache(Source&& source) {
-		return with_cache<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+		return with_cache<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	static_assert(cache_map<with_cache<none_source>>);

@@ -49,6 +49,10 @@ namespace kangaru {
 		requires non_ref_cache_map<source_reference_wrapped_type<T>>;
 	};
 	
+	template<typename T>
+	concept forwarded_cache_map = cache_map<std::remove_cvref_t<T>>;
+	
+	
 	static_assert(cache_map<std::unordered_map<std::size_t, void*>>);
 	
 	template<cache_map Map>

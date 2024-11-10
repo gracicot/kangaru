@@ -159,6 +159,9 @@ namespace kangaru {
 		requires non_ref_heap_storage<source_reference_wrapped_type<T>>;
 	};
 	
+	template<typename T>
+	concept forwarded_heap_storage = heap_storage<std::remove_cvref_t<T>>;
+	
 	static_assert(heap_storage_container<std::vector<runtime_dynamic_storage>>);
 	
 	template<source Source, heap_storage Storage = default_heap_storage>
@@ -181,11 +184,11 @@ namespace kangaru {
 		}
 		
 	private:
-		template<object T> requires source_of<source_type, T>
-		friend constexpr auto provide(provide_tag<T*>, forwarded<with_heap_storage> auto&& source) -> T* {
+		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
+		friend constexpr auto provide(forwarded<with_heap_storage> auto&& source) -> T {
 			return kangaru::maybe_unwrap(source.storage).emplace_from(
 				[&source] {
-					return provide<T>(KANGARU5_FWD(source).source);
+					return provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);
 				}
 			);
 		}
@@ -193,11 +196,16 @@ namespace kangaru {
 		Storage storage = {};
 	};
 	
-	template<typename Source, typename Storage = default_heap_storage> requires(source<std::remove_cvref_t<Source>> and heap_storage<std::remove_cvref_t<Storage>>)
-	constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage = default_heap_storage{}) {
-		return with_heap_storage<std::remove_cvref_t<Source>, std::remove_cvref_t<Storage>>{
+	template<forwarded_source Source, forwarded_heap_storage Storage>
+	constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage) {
+		return with_heap_storage<std::decay_t<Source>, std::decay_t<Storage>>{
 			KANGARU5_FWD(source), KANGARU5_FWD(storage)
 		};
+	}
+	
+	template<forwarded_source Source>
+	constexpr auto make_source_with_heap_storage(Source&& source) {
+		return with_heap_storage<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	static_assert(heap_storage<with_heap_storage<none_source>>);

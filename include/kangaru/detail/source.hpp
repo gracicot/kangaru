@@ -21,22 +21,24 @@ namespace kangaru {
 	template<typename T>
 	concept forwarded_source = source<std::remove_reference_t<T>>;
 	
-	template<injectable>
-	struct provide_tag {};
-	
-	template<injectable T>
-	inline constexpr auto provide_tag_v = provide_tag<T>{};
-	
 	namespace detail::source {
-		template<typename>
+		template<typename = void>
 		auto provide(auto&&) requires false = delete;
 		
 		template<typename Source, typename T>
 		concept adl_nonmember_source_of =
 			    kangaru::source<std::remove_cvref_t<Source>>
 			and kangaru::injectable<T>
-			and requires(provide_tag<T> tag, Source&& source) {
-				{ provide(tag, KANGARU5_FWD(source)) } -> std::same_as<T>;
+			and requires(Source&& source) {
+				{ provide(KANGARU5_FWD(source)) } -> std::same_as<T>;
+			};
+		
+		template<typename Source, typename T>
+		concept adl_nonmember_template_source_of =
+			    kangaru::source<std::remove_cvref_t<Source>>
+			and kangaru::injectable<T>
+			and requires(Source&& source) {
+				{ provide<T>(KANGARU5_FWD(source)) } -> std::same_as<T>;
 			};
 		
 		template<typename Source, typename T>
@@ -57,9 +59,14 @@ namespace kangaru {
 		
 		template<kangaru::injectable T>
 		struct provide_function {
+			template<typename Source> requires adl_nonmember_template_source_of<Source, T>
+			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
+				return provide<T>(KANGARU5_FWD(source));
+			}
+			
 			template<typename Source> requires adl_nonmember_source_of<Source, T>
 			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
-				return provide(provide_tag_v<T>, KANGARU5_FWD(source));
+				return provide(KANGARU5_FWD(source));
 			}
 			
 			template<typename Source> requires member_template_source_of<Source, T>
@@ -87,12 +94,15 @@ namespace kangaru {
 	concept source_of =
 		   detail::source::member_source_of<Source, T>
 		or detail::source::member_template_source_of<Source, T>
-		or detail::source::adl_nonmember_source_of<Source, T>;
+		or detail::source::adl_nonmember_source_of<Source, T>
+		or detail::source::adl_nonmember_template_source_of<Source, T>;
 	
 	template<typename Source>
-	concept weak_wrapping_source = source<std::remove_reference_t<Source>> and requires(Source source) {
-		{ source.source };
-	};
+	concept weak_wrapping_source =
+		    source<std::remove_reference_t<Source>>
+		and requires(Source source) {
+			{ source.source };
+		};
 	
 	template<typename Source> requires weak_wrapping_source<std::remove_reference_t<Source>>
 	using wrapped_source_t = std::remove_reference_t<decltype(std::declval<Source&&>().source)>;

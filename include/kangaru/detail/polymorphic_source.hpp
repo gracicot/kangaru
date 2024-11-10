@@ -11,7 +11,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename T>
+	template<injectable T>
 	struct polymorphic_source {
 		explicit constexpr polymorphic_source(source_of<T> auto& source) noexcept requires (not std::is_const_v<decltype(source)>) :
 			source{std::addressof(source)},
@@ -55,8 +55,8 @@ namespace kangaru {
 			source{source},
 			provide_function{provide_function} {}
 		
-		friend KANGARU5_CONSTEXPR_VOIDSTAR auto provide(provide_tag<T>, polymorphic_source const& source) -> T {
-			return source.provide_function(source.source);
+		KANGARU5_CONSTEXPR_VOIDSTAR auto provide() const& -> T {
+			return provide_function(source);
 		}
 		
 	private:
@@ -84,8 +84,8 @@ namespace kangaru {
 		/**
 		 * @details Not constexpr since it needs to construct a function_container<T> in the storage byte array.
 		 */
-		template<typename T, source_of<T> S> requires (not std::is_const_v<S>)
-		unsafe_type_erased_source_reference(provide_tag<T>, S& source) noexcept : source{std::addressof(source)} {
+		template<injectable T, source_of<T> S> requires (not std::is_const_v<S>)
+		unsafe_type_erased_source_reference(S& source) noexcept : source{std::addressof(source)} {
 			static_assert(
 				sizeof(dummy_function_container) == sizeof(function_container<T>),
 				"function container has a different size for type T"
@@ -104,7 +104,7 @@ namespace kangaru {
 		 * 
 		 * @details Not constexpr since it needs cast the storage byte array to a function_container<T>
 		 */
-		template<typename T> KANGARU5_UNSAFE
+		template<injectable T> KANGARU5_UNSAFE
 		explicit operator polymorphic_source<T> () const noexcept {
 			auto const [provide_function] = *static_cast<function_container<T> const*>(
 				static_cast<void const*>(function_container_type_erased)
@@ -114,7 +114,7 @@ namespace kangaru {
 		}
 		
 	private:
-		template<typename T>
+		template<injectable T>
 		struct function_container {
 			using provide_t = auto(*)(void*) -> T;
 			provide_t provide_function;

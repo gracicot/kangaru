@@ -19,8 +19,8 @@ namespace kangaru {
 		explicit constexpr with_source_from_tag(Source source) noexcept :
 			source{std::move(source)} {}
 		
-		template<typename T, forwarded<with_source_from_tag> Self> requires (source_of<wrapped_source_t<Self>, cache_using_source_t<T>*>)
-		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
+		template<injectable T, forwarded<with_source_from_tag> Self> requires (source_of<wrapped_source_t<Self>, cache_using_source_t<T>*>)
+		friend constexpr auto provide(Self&& source) -> T {
 			// TODO: Is there a way to do this without adding pointer or reference, 
 			decltype(auto) source_for_t = provide<cache_using_source_t<T>*>(KANGARU5_FWD(source).source);
 			return provide<T>(*KANGARU5_FWD(source_for_t));
@@ -29,9 +29,9 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	template<forwarded_source Source>
 	inline constexpr auto make_source_with_source_from_tag(Source&& source) {
-		return with_source_from_tag<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+		return with_source_from_tag<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 }
 

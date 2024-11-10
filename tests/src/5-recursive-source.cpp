@@ -40,14 +40,28 @@ struct needs_int_ref {
 	int& ref;
 };
 
+template<kangaru::object>
+inline constexpr bool is_unique_ptr_v = false;
+
+template<typename T>
+inline constexpr bool is_unique_ptr_v<std::unique_ptr<T>> = true;
+
+template<typename T>
+concept unique_pointer = kangaru::object<T> and is_unique_ptr_v<T>;
+
 template<kangaru::source Source>
 struct with_add_pointer {
 	constexpr explicit with_add_pointer(Source source) noexcept : source{std::move(source)} {}
 	
 	Source source;
 	
-	template<typename T, kangaru::forwarded<with_add_pointer> Self> requires kangaru::wrapping_source_of<Self, T>
-	friend constexpr auto provide(kangaru::provide_tag<std::unique_ptr<T>>, Self&& source) -> std::unique_ptr<T> {
+	template<
+		typename Ptr,
+		kangaru::forwarded<with_add_pointer> Self,
+		typename T = typename std::pointer_traits<Ptr>::element_type
+	>
+		requires kangaru::wrapping_source_of<Self, T>
+	friend constexpr auto provide(Self&& source) -> std::unique_ptr<T> {
 		return std::make_unique<T>(kangaru::provide<T>(std::forward<Self>(source).source));
 	}
 };

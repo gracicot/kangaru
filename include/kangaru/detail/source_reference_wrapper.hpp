@@ -9,14 +9,14 @@
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename Source> requires source<std::remove_const_t<Source>>
+	template<object Source> requires source<std::remove_const_t<Source>>
 	struct source_reference_wrapper {
 		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
-		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, source_reference_wrapper const& source) -> T
+		template<injectable T>
+		constexpr auto provide() const& -> T
 		requires source_of<Source&, T> {
-			return provide<T>(*source.source);
+			return kangaru::provide<T>(*source);
 		}
 		
 		[[nodiscard]]
@@ -28,14 +28,14 @@ namespace kangaru {
 		Source* source;
 	};
 	
-	template<reference Source> requires source<std::remove_cvref_t<Source>>
+	template<source_ref Source>
 	struct source_forwarding_reference_wrapper {
 		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
 		
-		template<typename T>
-		friend constexpr auto provide(provide_tag<T>, source_forwarding_reference_wrapper const& source) -> T
+		template<injectable T>
+		constexpr auto provide() const& -> T
 		requires source_of<Source, T> {
-			return provide<T>(detail::utility::forward_like<Source>(*source.source));
+			return kangaru::provide<T>(detail::utility::forward_like<Source>(*source));
 		}
 		
 		[[nodiscard]]
@@ -47,7 +47,7 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	template<typename Source> requires source<std::remove_cvref_t<Source>>
+	template<forwarded_source Source>
 	source_forwarding_reference_wrapper(Source&&) -> source_forwarding_reference_wrapper<Source&&>;
 	
 	template<typename T>
@@ -72,22 +72,22 @@ namespace kangaru {
 	template<typename MaybeWrapper>
 	using maybe_wrapped_t = std::remove_reference_t<decltype(kangaru::maybe_unwrap(std::declval<MaybeWrapper>()))>;
 	
-	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper<Source> {
 		return source_reference_wrapper<Source>{source};
 	}
 	
-	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<source Source> requires (not reference_wrapper<Source>)
 	inline constexpr auto ref(source_reference_wrapper<Source> source) -> source_reference_wrapper<Source> {
 		return source;
 	}
 	
-	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto fwd_ref(Source&& source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
 	}
 	
-	template<typename Source> requires (source<std::remove_cvref_t<Source>> and not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto fwd_ref(source_forwarding_reference_wrapper<Source> source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source;
 	}

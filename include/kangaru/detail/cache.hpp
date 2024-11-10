@@ -149,7 +149,7 @@ namespace kangaru {
 			auto const it = kangaru::maybe_unwrap(source.cache).find(id);
 			
 			if (it == kangaru::maybe_unwrap(source.cache).end()) {
-				auto object = provide(tag, KANGARU5_FWD(source).source);
+				auto object = provide<T>(KANGARU5_FWD(source).source);
 				auto const [it, _] = kangaru::maybe_unwrap(source.cache).insert(std::pair{id, std::move(object)});
 				return cast<T>(it->second);
 			} else {

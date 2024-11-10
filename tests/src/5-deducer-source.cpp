@@ -22,14 +22,14 @@ struct grumpy_source {
 
 
 TEST_CASE("Sources can provide", "[source]") {
-	CHECK((std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, sleepy_source{}))>));
+	CHECK((std::same_as<sleepy, decltype(kangaru::provide<sleepy>(sleepy_source{}))>));
 	
 	CHECK((kangaru::source_of<sleepy_source, sleepy>));
 	
 	SECTION("Object source") {
 		auto grumpy_source = kangaru::object_source{grumpy{.token = 9}};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy>, grumpy_source).token == 9);
+		CHECK(kangaru::provide<grumpy>(grumpy_source).token == 9);
 	}
 	
 	SECTION("External reference source") {
@@ -38,7 +38,7 @@ TEST_CASE("Sources can provide", "[source]") {
 		
 		g.token = 8;
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&>, grumpy_source).token == 8);
+		CHECK(kangaru::provide<grumpy&>(grumpy_source).token == 8);
 	}
 	
 	SECTION("External rvalue source") {
@@ -48,29 +48,29 @@ TEST_CASE("Sources can provide", "[source]") {
 		g.token = 8;
 		
 		// provide returns the rvalue that can be moved from
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, grumpy_source).token == 8);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, std::move(grumpy_source)).token == 8);
+		CHECK(kangaru::provide<grumpy&&>(grumpy_source).token == 8);
+		CHECK(kangaru::provide<grumpy&&>(std::move(grumpy_source)).token == 8);
 		
 		// provide returns the rvalue that can be moved from
-		CHECK(std::same_as<grumpy&&, decltype(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, grumpy_source))>);
-		CHECK(std::same_as<grumpy&&, decltype(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, std::move(grumpy_source)))>);
+		CHECK(std::same_as<grumpy&&, decltype(kangaru::provide<grumpy&&>(grumpy_source))>);
+		CHECK(std::same_as<grumpy&&, decltype(kangaru::provide<grumpy&&>(std::move(grumpy_source)))>);
 	}
 	
 	SECTION("Reference source") {
 		auto grumpy_source = kangaru::reference_source{grumpy{.token = 9}};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&>, grumpy_source).token == 9);
-		kangaru::provide(kangaru::provide_tag_v<grumpy&>, grumpy_source).token = 2;
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&>, grumpy_source).token == 2);
+		CHECK(kangaru::provide<grumpy&>(grumpy_source).token == 9);
+		kangaru::provide<grumpy&>(grumpy_source).token = 2;
+		CHECK(kangaru::provide<grumpy&>(grumpy_source).token == 2);
 	}
 	
 	SECTION("Rvalue source") {
 		auto grumpy_source = kangaru::rvalue_source{grumpy{.token = 9}};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, grumpy_source).token == 9);
-		grumpy&& g = kangaru::provide(kangaru::provide_tag_v<grumpy&&>, grumpy_source);
+		CHECK(kangaru::provide<grumpy&&>(grumpy_source).token == 9);
+		grumpy&& g = kangaru::provide<grumpy&&>(grumpy_source);
 		g.token = 2;
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&&>, grumpy_source).token == 2);
+		CHECK(kangaru::provide<grumpy&&>(grumpy_source).token == 2);
 	}
 	
 	SECTION("Compose source composes together") {
@@ -78,22 +78,22 @@ TEST_CASE("Sources can provide", "[source]") {
 		auto source2 = kangaru::reference_source{grumpy{.token = 1}};
 		auto source = kangaru::tie(source1, source2);
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy&>, source).token == 1);
-		CHECK(std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, source))>);
+		CHECK(kangaru::provide<grumpy&>(source).token == 1);
+		CHECK(std::same_as<sleepy, decltype(kangaru::provide<sleepy>(source))>);
 	}
 	
 	SECTION("Tuple source") {
 		auto source = kangaru::tuple_source(std::tuple{sleepy{}, grumpy{.token = 4}});
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<grumpy>, source).token == 4);
-		CHECK(std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, source))>);
+		CHECK(kangaru::provide<grumpy>(source).token == 4);
+		CHECK(std::same_as<sleepy, decltype(kangaru::provide<sleepy>(source))>);
 	}
 	
 	SECTION("Source reference wrapper") {
 		auto source = sleepy_source{};
 		auto source_ref = kangaru::ref(source);
 		CHECK(std::addressof(source) == std::addressof(source_ref.unwrap()));
-		CHECK(std::same_as<sleepy, decltype(kangaru::provide(kangaru::provide_tag_v<sleepy>, source_ref))>);
+		CHECK(std::same_as<sleepy, decltype(kangaru::provide<sleepy>(source_ref))>);
 	}
 }
 

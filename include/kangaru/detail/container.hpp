@@ -48,14 +48,12 @@ namespace kangaru {
 			dynamic_container{Source{}} {}
 		
 	private:
-		using container_source_t = with_cache<
+		with_cache<
 			with_heap_storage<
 				with_exhaustive_construction<Source>
 			>,
 			std::unordered_map<std::size_t, void*>
-		>;
-		
-		container_source_t source;
+		> source;
 		
 		template<typename Self>
 		using rebound_source_tree_t = decltype(
@@ -63,17 +61,17 @@ namespace kangaru {
 		);
 		
 	public:
-		template<typename T> 
+		template<injectable T>
 		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
-			return kangaru::provide(
-				provide_tag_v<T>, detail::container::rebound_source_tree(*this, source)
+			return kangaru::provide<T>(
+				detail::container::rebound_source_tree(*this, source)
 			);
 		}
 		
-		template<typename T>
+		template<injectable T>
 		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<dynamic_container&&>, T> {
-			return kangaru::provide(
-				provide_tag_v<T>, detail::container::rebound_source_tree(std::move(*this), std::move(source))
+			return kangaru::provide<T>(
+				detail::container::rebound_source_tree(std::move(*this), std::move(source))
 			);
 		}
 	};

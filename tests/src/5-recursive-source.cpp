@@ -48,7 +48,7 @@ struct with_add_pointer {
 	
 	template<typename T, kangaru::forwarded<with_add_pointer> Self> requires kangaru::wrapping_source_of<Self, T>
 	friend constexpr auto provide(kangaru::provide_tag<std::unique_ptr<T>>, Self&& source) -> std::unique_ptr<T> {
-		return std::make_unique<T>(kangaru::provide(kangaru::provide_tag_v<T>, std::forward<Self>(source).source));
+		return std::make_unique<T>(kangaru::provide<T>(std::forward<Self>(source).source));
 	}
 };
 
@@ -61,11 +61,11 @@ TEST_CASE("Recursive source", "[recursive]") {
 		};
 		
 		static_assert(kangaru::source_of<decltype((source)), std::unique_ptr<int>>);
-		CHECK(*kangaru::provide(kangaru::provide_tag_v<std::unique_ptr<int>>, source) == 9);
-		CHECK(**kangaru::provide(kangaru::provide_tag_v<std::unique_ptr<std::unique_ptr<int>>>, source) == 10);
-		CHECK(***kangaru::provide(kangaru::provide_tag_v<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>, source) == 11);
-		CHECK(****kangaru::provide(kangaru::provide_tag_v<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>>, source) == 12);
-		CHECK(*****kangaru::provide(kangaru::provide_tag_v<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>>>, source) == 13);
+		CHECK(*kangaru::provide<std::unique_ptr<int>>(source) == 9);
+		CHECK(**kangaru::provide<std::unique_ptr<std::unique_ptr<int>>>(source) == 10);
+		CHECK(***kangaru::provide<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>(source) == 11);
+		CHECK(****kangaru::provide<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>>(source) == 12);
+		CHECK(*****kangaru::provide<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<std::unique_ptr<int>>>>>>(source) == 13);
 	}
 	
 	SECTION("Recursion with heap and cache") {
@@ -76,7 +76,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_cache(kangaru::make_source_with_heap_storage(increment_source{}))
 		};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<int*>, basic_recursion_test));
+		CHECK(kangaru::provide<int*>(basic_recursion_test));
 	}
 	
 	SECTION("Recursion with heap and cache and construction") {
@@ -94,7 +94,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 			)
 		};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int_ref&>, source).ref == 0);
+		CHECK(kangaru::provide<needs_int_ref&>(source).ref == 0);
 	}
 	
 	SECTION("Support the service idiom and cache and construction") {
@@ -112,10 +112,10 @@ TEST_CASE("Recursive source", "[recursive]") {
 			}
 		};
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 3);
+		CHECK(kangaru::provide<service_a&>(source).a == 3);
 		
-		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
-		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		service_a& ra = kangaru::provide<service_a&>(source);
+		service_b& rb = kangaru::provide<service_b&>(source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
 	}
 	
@@ -137,17 +137,17 @@ TEST_CASE("Recursive source", "[recursive]") {
 			)
 		);
 
-		CHECK(kangaru::provide(kangaru::provide_tag_v<service_a&>, source).a == 3);
+		CHECK(kangaru::provide<service_a&>(source).a == 3);
 
-		service_a& ra = kangaru::provide(kangaru::provide_tag_v<service_a&>, source);
-		service_b& rb = kangaru::provide(kangaru::provide_tag_v<service_b&>, source);
+		service_a& ra = kangaru::provide<service_a&>(source);
+		service_b& rb = kangaru::provide<service_b&>(source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
 
-		auto c = kangaru::provide(kangaru::provide_tag_v<service_aggregate>, source);
+		auto c = kangaru::provide<service_aggregate>(source);
 		CHECK(std::addressof(ra) == std::addressof(c.sa));
 		CHECK(std::addressof(rb) == std::addressof(c.sb));
 
-		service_c& rc = kangaru::provide(kangaru::provide_tag_v<service_c&>, source);
+		service_c& rc = kangaru::provide<service_c&>(source);
 		CHECK(std::addressof(ra) == std::addressof(rc.services.sa));
 		CHECK(std::addressof(rb) == std::addressof(rc.services.sb));
 	}
@@ -181,9 +181,9 @@ TEST_CASE("Recursive source", "[recursive]") {
 			)
 		};
 
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, source).value == 1);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::as_const(source)).value == 2);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::move(source)).value == 3);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<needs_int>, std::move(std::as_const(source))).value == 4);
+		CHECK(kangaru::provide<needs_int>(source).value == 1);
+		CHECK(kangaru::provide<needs_int>(std::as_const(source)).value == 2);
+		CHECK(kangaru::provide<needs_int>(std::move(source)).value == 3);
+		CHECK(kangaru::provide<needs_int>(std::move(std::as_const(source))).value == 4);
 	}
 }

@@ -219,7 +219,7 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<typename T, forwarded<with_construction> Self>
@@ -303,8 +303,7 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
-			return provide(
-				tag,
+			return provide<T>(
 				detail::source_helper::rebind_source_tree(
 					rebound_leaf_for<T>(KANGARU5_FWD(source)),
 					source.source
@@ -314,7 +313,7 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 	};
 	

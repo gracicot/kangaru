@@ -33,10 +33,10 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	SECTION("Will cache the result of sources") {
 		auto runtime_source = kangaru::with_cache<kangaru::with_heap_storage<decltype(kangaru::ref(source))>>{kangaru::with_heap_storage{kangaru::ref(source)}};
 		
-		CHECK(*kangaru::provide(kangaru::provide_tag_v<int*>, runtime_source) == 0);
-		CHECK(*kangaru::provide(kangaru::provide_tag_v<int*>, runtime_source) == 0);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<int>, source) == 1);
-		CHECK(*kangaru::provide(kangaru::provide_tag_v<int*>, runtime_source) == 0);
+		CHECK(*kangaru::provide<int*>(runtime_source) == 0);
+		CHECK(*kangaru::provide<int*>(runtime_source) == 0);
+		CHECK(kangaru::provide<int>(source) == 1);
+		CHECK(*kangaru::provide<int*>(runtime_source) == 0);
 	}
 	
 	SECTION("Can polymorphically store cached types") {
@@ -49,8 +49,8 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
 		);
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<Derived*>, runtime_source)->get() == 3);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 3);
+		CHECK(kangaru::provide<Derived*>(runtime_source)->get() == 3);
+		CHECK(kangaru::provide<Base*>(runtime_source)->get() == 3);
 	}
 	
 	SECTION("Already cached type has priority") {
@@ -63,8 +63,8 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
 		);
 		
-		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 0);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<Derived*>, runtime_source)->get() == 3);
-		CHECK(kangaru::provide(kangaru::provide_tag_v<Base*>, runtime_source)->get() == 0);
+		CHECK(kangaru::provide<Base*>(runtime_source)->get() == 0);
+		CHECK(kangaru::provide<Derived*>(runtime_source)->get() == 3);
+		CHECK(kangaru::provide<Base*>(runtime_source)->get() == 0);
 	}
 }

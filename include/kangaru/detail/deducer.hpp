@@ -8,6 +8,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <cstdint>
 
 #include "define.hpp"
 
@@ -162,15 +163,15 @@ namespace kangaru {
 		template<deducible_prvalue<Source> T>
 		constexpr operator T() {
 			if constexpr (source_of<Source, T>) {
-				return provide(provide_tag_v<T>, static_cast<Source&&>(*source));
+				return provide<T>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&&>) {
-				return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+				return provide<T&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T const&&>) {
-				return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
+				return provide<T const&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T const&>) {
-				return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
+				return provide<T const&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
-				return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
+				return provide<T&>(static_cast<Source&&>(*source));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
@@ -178,19 +179,19 @@ namespace kangaru {
 		
 		template<deducible_lvalue<Source> T>
 		constexpr operator T&() const {
-			return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
+			return provide<T&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_lvalue_const<Source> T>
 		constexpr operator T const&() const {
 			if constexpr (source_of<Source, T const&>) {
-				return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
+				return provide<T const&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
-				return std::as_const(provide(provide_tag_v<T&>, static_cast<Source&&>(*source)));
+				return std::as_const(provide<T&>(static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T const&&>) {
-				return static_cast<T const&>(provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source)));
+				return static_cast<T const&>(provide<T const&&>(static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T&&>) {
-				return static_cast<T const&>(provide(provide_tag_v<T&&>, static_cast<Source&&>(*source)));
+				return static_cast<T const&>(provide<T&&>(static_cast<Source&&>(*source)));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
@@ -198,15 +199,15 @@ namespace kangaru {
 		
 		template<deducible_rvalue<Source> T>
 		constexpr operator T&&() const {
-			return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+			return provide<T&&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
 			if constexpr (source_of<Source, T const&&>) {
-				return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
+				return provide<T const&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&&>) {
-				return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+				return provide<T&&>(static_cast<Source&&>(*source));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
@@ -229,27 +230,27 @@ namespace kangaru {
 		
 		template<deducible_strict_prvalue<Source> T>
 		constexpr operator T() {
-			return provide(provide_tag_v<T>, static_cast<Source&&>(*source));
+			return provide<T>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_lvalue<Source> T>
 		constexpr operator T&() const {
-			return provide(provide_tag_v<T&>, static_cast<Source&&>(*source));
+			return provide<T&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_lvalue_const<Source> T>
 		constexpr operator T const&() const {
-			return provide(provide_tag_v<T const&>, static_cast<Source&&>(*source));
+			return provide<T const&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_rvalue<Source> T>
 		constexpr operator T&&() const {
-			return provide(provide_tag_v<T&&>, static_cast<Source&&>(*source));
+			return provide<T&&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
-			return provide(provide_tag_v<T const&&>, static_cast<Source&&>(*source));
+			return provide<T const&&>(static_cast<Source&&>(*source));
 		}
 		
 	private:

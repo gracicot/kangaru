@@ -63,7 +63,7 @@ namespace kangaru {
 		template<source Source>
 		static constexpr auto provide_function_for() -> std::invocable<void*> auto {
 			return [](void* s) KANGARU5_CONSTEXPR_VOIDSTAR -> T {
-				return provide(provide_tag_v<T>, *static_cast<Source*>(s));
+				return provide<T>(*static_cast<Source*>(s));
 			};
 		}
 		
@@ -94,7 +94,7 @@ namespace kangaru {
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
 				[](void* source) -> T {
-					return provide(provide_tag_v<T>, *static_cast<S*>(source));
+					return provide<T>(*static_cast<S*>(source));
 				}
 			);
 		}

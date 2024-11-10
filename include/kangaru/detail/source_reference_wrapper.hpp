@@ -16,7 +16,7 @@ namespace kangaru {
 		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, source_reference_wrapper const& source) -> T
 		requires source_of<Source&, T> {
-			return provide(provide_tag_v<T>, *source.source);
+			return provide<T>(*source.source);
 		}
 		
 		[[nodiscard]]
@@ -35,7 +35,7 @@ namespace kangaru {
 		template<typename T>
 		friend constexpr auto provide(provide_tag<T>, source_forwarding_reference_wrapper const& source) -> T
 		requires source_of<Source, T> {
-			return provide(provide_tag_v<T>, detail::utility::forward_like<Source>(*source.source));
+			return provide<T>(detail::utility::forward_like<Source>(*source.source));
 		}
 		
 		[[nodiscard]]

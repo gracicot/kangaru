@@ -24,7 +24,7 @@ namespace kangaru {
 		friend constexpr auto provide(provide_tag<T>, forwarded<composed_source> auto&& source) -> T
 		requires (((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) == 1) {
 			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
-			return provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
+			return provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
 	private:
@@ -48,7 +48,7 @@ namespace kangaru {
 		friend constexpr auto provide(provide_tag<T>, forwarded<select_first_source> auto&& source) -> T
 		requires ((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> or ...)) {
 			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
-			return provide(provide_tag_v<T>, std::get<index>(KANGARU5_FWD(source).sources));
+			return provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
 	private:
@@ -240,12 +240,12 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_alternative> Self> requires (source_of<detail::utility::forward_like_t<Self, Alternative&&>, T> and not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).alternative);
+			return provide<T>(KANGARU5_FWD(source).alternative);
 		}
 		
 		template<typename T, forwarded<with_alternative> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 	private:
@@ -262,12 +262,12 @@ namespace kangaru {
 		
 		template<different_from<Filtered> T, forwarded<with_filter_passthrough> Self> requires source_of<wrapped_source_t<Self>, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
 		friend constexpr auto provide(provide_tag<Filtered> tag, Self&& source) -> Filtered {
-			return provide(tag, KANGARU5_FWD(source).source.source);
+			return provide<Filtered>(KANGARU5_FWD(source).source.source);
 		}
 		
 		Source source;
@@ -285,7 +285,7 @@ namespace kangaru {
 	private:
 		template<different_from<Type> T>
 		friend constexpr auto provide(provide_tag<T>, forwarded<filter_source> auto const& source) -> T {
-			return provide(provide_tag_v<T>, source.source);
+			return provide<T>(source.source);
 		}
 		
 		Source source;
@@ -298,7 +298,7 @@ namespace kangaru {
 	private:
 		template<typename T> requires(requires { requires Filter{}.template operator()<T>(); })
 		friend constexpr auto provide(provide_tag<T>, forwarded<filter_if_source> auto const& source) -> T {
-			return provide(provide_tag_v<T>, source.source);
+			return provide<T>(source.source);
 		}
 		
 		Source source;
@@ -323,13 +323,13 @@ namespace kangaru {
 		template<object T, forwarded<with_reference_passthrough> Self>
 			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<reference T, forwarded<with_reference_passthrough> Self>
 			requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(provide_tag<T> tag, Self&& source) -> T {
-			return provide(tag, KANGARU5_FWD(source).source.source);
+			return provide<T>(KANGARU5_FWD(source).source.source);
 		}
 	};
 	
@@ -346,12 +346,12 @@ namespace kangaru {
 		
 		template<typename T> requires source_of<Source, T*>
 		friend constexpr auto provide(provide_tag<T&>, forwarded<with_dereference> auto&& source) -> T& {
-			return *provide(provide_tag_v<T*>, KANGARU5_FWD(source).source);
+			return *provide<T*>(KANGARU5_FWD(source).source);
 		}
 		
 		template<typename T> requires (not std::is_pointer_v<T> and source_of<Source, T>)
 		friend constexpr auto provide(provide_tag<T>, forwarded<with_dereference> auto&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 	};
 	
@@ -364,7 +364,7 @@ namespace kangaru {
 	struct basic_wrapping_source {
 		template<typename T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
 		friend constexpr auto provide(provide_tag<T>, Self&& source) -> T {
-			return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+			return provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		Source source;

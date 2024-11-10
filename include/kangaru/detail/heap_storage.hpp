@@ -185,7 +185,7 @@ namespace kangaru {
 		friend constexpr auto provide(provide_tag<T*>, forwarded<with_heap_storage> auto&& source) -> T* {
 			return kangaru::maybe_unwrap(source.storage).emplace_from(
 				[&source] {
-					return provide(provide_tag_v<T>, KANGARU5_FWD(source).source);
+					return provide<T>(KANGARU5_FWD(source).source);
 				}
 			);
 		}

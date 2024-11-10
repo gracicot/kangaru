@@ -5,32 +5,36 @@
 #include "utility.hpp"
 
 #include <concepts>
-#include <cstdint>
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename>
-	struct provide_tag {};
-	
 	template<typename T>
-	inline constexpr auto provide_tag_v = provide_tag<T>{}; 
+	concept injectable = object<T> or reference<T>;
 	
 	template<typename T>
 	concept source = object<T> and std::move_constructible<T> and std::is_class_v<T>;
 	
 	template<typename T>
-	concept source_ref = std::is_reference_v<T> and source<std::remove_cvref_t<T>>;
+	concept source_ref = reference<T> and source<std::remove_cvref_t<T>>;
 	
 	template<typename T>
 	concept forwarded_source = source<std::remove_reference_t<T>>;
 	
+	template<injectable>
+	struct provide_tag {};
+	
+	template<injectable T>
+	inline constexpr auto provide_tag_v = provide_tag<T>{};
+	
 	namespace detail::source {
-		auto provide(provide_tag<struct poison>, auto&&) = delete;
+		template<typename>
+		auto provide(auto&&) requires false = delete;
 		
 		template<typename Source, typename T>
 		concept adl_nonmember_source_of =
 			    kangaru::source<std::remove_cvref_t<Source>>
+			and kangaru::injectable<T>
 			and requires(provide_tag<T> tag, Source&& source) {
 				{ provide(tag, KANGARU5_FWD(source)) } -> std::same_as<T>;
 			};
@@ -38,6 +42,7 @@ namespace kangaru {
 		template<typename Source, typename T>
 		concept member_template_source_of =
 			    kangaru::source<std::remove_cvref_t<Source>>
+			and kangaru::injectable<T>
 			and requires(Source&& source) {
 				{ KANGARU5_FWD(source).template provide<T>() } -> std::same_as<T>;
 			};
@@ -45,29 +50,32 @@ namespace kangaru {
 		template<typename Source, typename T>
 		concept member_source_of =
 			    kangaru::source<std::remove_cvref_t<Source>>
+			and kangaru::injectable<T>
 			and requires(Source&& source) {
 				{ KANGARU5_FWD(source).provide() } -> std::same_as<T>;
 			};
 		
+		template<kangaru::injectable T>
 		struct provide_function {
-			template<typename T, typename Source> requires adl_nonmember_source_of<Source, T>
-			KANGARU5_INLINE constexpr auto operator()(provide_tag<T> tag, Source&& source) const -> T {
-				return provide(tag, KANGARU5_FWD(source));
+			template<typename Source> requires adl_nonmember_source_of<Source, T>
+			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
+				return provide(provide_tag_v<T>, KANGARU5_FWD(source));
 			}
 			
-			template<typename T, typename Source> requires member_template_source_of<Source, T>
-			KANGARU5_INLINE constexpr auto operator()(provide_tag<T>, Source&& source) const -> T {
+			template<typename Source> requires member_template_source_of<Source, T>
+			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
 				return KANGARU5_FWD(source).template provide<T>();
 			}
 			
-			template<typename T, typename Source> requires member_source_of<Source, T>
-			KANGARU5_INLINE constexpr auto operator()(provide_tag<T>, Source&& source) const -> T {
+			template<typename Source> requires member_source_of<Source, T>
+			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
 				return KANGARU5_FWD(source).provide();
 			}
 		};
 		
 		namespace niebloid {
-			inline constexpr auto provide = detail::source::provide_function{};
+			template<kangaru::injectable T>
+			inline constexpr auto provide = detail::source::provide_function<T>{};
 		}
 	}
 	

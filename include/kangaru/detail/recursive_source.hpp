@@ -39,7 +39,7 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return constructor<T>()(kangaru::exclude_special_constructors_for<T>(deduce1), kangaru::exclude_deduction<T>(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
 			}
 		};
 		
@@ -73,11 +73,11 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return constructor<T>()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
 			}
 			
 			constexpr auto operator()() const -> T requires constructor_callable<T> {
-				return constructor<T>()();
+				return KANGARU5_NO_ADL(constructor<T>)()();
 			}
 		};
 		
@@ -111,11 +111,11 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return constructor<T>()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
 			}
 			
 			constexpr auto operator()() const -> T requires (constructor_callable<T> and is_empty_injection_constructible_v<T>) {
-				return constructor<T>()();
+				return KANGARU5_NO_ADL(constructor<T>)()();
 			}
 		};
 		
@@ -219,7 +219,7 @@ namespace kangaru {
 		
 		template<injectable T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(Self&& source) -> T {
-			return provide<T>(KANGARU5_FWD(source).source);
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<injectable T, forwarded<with_construction> Self>
@@ -280,11 +280,11 @@ namespace kangaru {
 			if constexpr (source_of<std::remove_reference_t<S>, T> and reference_wrapper<std::remove_cvref_t<S>>) {
 				return self.source;
 			} else if constexpr (source_of<std::remove_reference_t<S>, T>) {
-				return kangaru::ref(self.source);
+				return KANGARU5_NO_ADL(ref)(self.source);
 			} else if constexpr (reference_wrapper<std::remove_cvref_t<S>>) {
-				return make_source_with_filter_passthrough<T>(self);
+				return KANGARU5_NO_ADL(make_source_with_filter_passthrough<T>)(self);
 			} else {
-				return make_source_with_filter_passthrough<T>(with_recursion<source_reference_wrapper<std::remove_reference_t<S>>>{kangaru::ref(self.source)});
+				return KANGARU5_NO_ADL(make_source_with_filter_passthrough<T>)(with_recursion<source_reference_wrapper<std::remove_reference_t<S>>>{kangaru::ref(self.source)});
 			}
 		}
 		
@@ -303,7 +303,7 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		friend constexpr auto provide(Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
-			return provide<T>(
+			return kangaru::provide<T>(
 				detail::source_helper::rebind_source_tree(
 					rebound_leaf_for<T>(KANGARU5_FWD(source)),
 					source.source
@@ -313,7 +313,7 @@ namespace kangaru {
 		
 		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		friend constexpr auto provide(Self&& source) -> T {
-			return provide<T>(KANGARU5_FWD(source).source);
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 	};
 	

@@ -288,22 +288,22 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 		auto constructor_1111 = restricted_constructor<type_1111>();
 		using constructor_1111_t = decltype(constructor_1111);
 		
-		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0011_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0100_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0101_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0110_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0111_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1000_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1001_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1010_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1011_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1100_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>()));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>()));
+		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0011_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0100_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0101_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0110_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0111_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1000_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1001_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1010_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1011_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1100_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>));
+		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>));
 		
 		CHECK((
 			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()

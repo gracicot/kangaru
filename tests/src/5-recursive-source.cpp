@@ -49,6 +49,16 @@ inline constexpr bool is_unique_ptr_v<std::unique_ptr<T>> = true;
 template<typename T>
 concept unique_pointer = kangaru::object<T> and is_unique_ptr_v<T>;
 
+template<typename T>
+struct remove_unique_ptr {
+	using type = T;
+};
+
+template<typename T>
+struct remove_unique_ptr<std::unique_ptr<T>> {
+	using type = T;
+};
+
 template<kangaru::source Source>
 struct with_add_pointer {
 	constexpr explicit with_add_pointer(Source source) noexcept : source{std::move(source)} {}
@@ -58,7 +68,7 @@ struct with_add_pointer {
 	template<
 		typename Ptr,
 		kangaru::forwarded<with_add_pointer> Self,
-		typename T = typename std::pointer_traits<Ptr>::element_type
+		typename T = typename remove_unique_ptr<Ptr>::type
 	>
 		requires kangaru::wrapping_source_of<Self, T>
 	friend constexpr auto provide(Self&& source) -> std::unique_ptr<T> {

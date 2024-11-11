@@ -163,15 +163,15 @@ namespace kangaru {
 		template<deducible_prvalue<Source> T>
 		constexpr operator T() {
 			if constexpr (source_of<Source, T>) {
-				return provide<T>(static_cast<Source&&>(*source));
+				return kangaru::provide<T>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&&>) {
-				return provide<T&&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T const&&>) {
-				return provide<T const&&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T const&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T const&>) {
-				return provide<T const&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T const&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
-				return provide<T&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T&>(static_cast<Source&&>(*source));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
@@ -179,13 +179,13 @@ namespace kangaru {
 		
 		template<deducible_lvalue<Source> T>
 		constexpr operator T&() const {
-			return provide<T&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_lvalue_const<Source> T>
 		constexpr operator T const&() const {
 			if constexpr (source_of<Source, T const&>) {
-				return provide<T const&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T const&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
 				return std::as_const(provide<T&>(static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T const&&>) {
@@ -199,15 +199,15 @@ namespace kangaru {
 		
 		template<deducible_rvalue<Source> T>
 		constexpr operator T&&() const {
-			return provide<T&&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T&&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
 			if constexpr (source_of<Source, T const&&>) {
-				return provide<T const&&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T const&&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&&>) {
-				return provide<T&&>(static_cast<Source&&>(*source));
+				return kangaru::provide<T&&>(static_cast<Source&&>(*source));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}
@@ -230,27 +230,27 @@ namespace kangaru {
 		
 		template<deducible_strict_prvalue<Source> T>
 		constexpr operator T() {
-			return provide<T>(static_cast<Source&&>(*source));
+			return kangaru::provide<T>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_lvalue<Source> T>
 		constexpr operator T&() const {
-			return provide<T&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_lvalue_const<Source> T>
 		constexpr operator T const&() const {
-			return provide<T const&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T const&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_rvalue<Source> T>
 		constexpr operator T&&() const {
-			return provide<T&&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T&&>(static_cast<Source&&>(*source));
 		}
 		
 		template<deducible_strict_rvalue_const<Source> T>
 		constexpr operator T const&&() const {
-			return provide<T const&&>(static_cast<Source&&>(*source));
+			return kangaru::provide<T const&&>(static_cast<Source&&>(*source));
 		}
 		
 	private:
@@ -552,23 +552,23 @@ namespace kangaru {
 		}
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		inline KANGARU5_CONSTEVAL auto callable_with_nth_parameter_being() -> bool {
-			return callable_with_nth_parameter_being_expand<T, F>(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{});
-		}
+		inline constexpr auto callable_with_nth_parameter_being = bool{
+			callable_with_nth_parameter_being_expand<T, F>(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{})
+		};
 		
 		template<typename F, std::size_t nth, std::size_t max>
-		inline KANGARU5_CONSTEVAL auto is_nth_parameter_prvalue() -> bool {
-			return (
-				    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>()
-				and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>()
-			);
-		}
+		inline constexpr auto is_nth_parameter_prvalue = bool{
+			    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
+			and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>
+		};
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
 		inline KANGARU5_CONSTEVAL auto reference_kind_for_nth_parameter() -> reference_kind {
-			if constexpr (is_nth_parameter_prvalue<F, nth, max>()) {
+			if constexpr (is_nth_parameter_prvalue<F, nth, max>) {
 				return reference_kind::none;
 			} else {
+				// Welcome to insanity
+				
 				// Only one kind of parameter will accept a lvalue const reference, and it's a lvalue const reference.
 				// If the function is callable with a lvalue const reference, then it means there's an overload that accepts it.
 				constexpr auto callable_with_lvalue_const_ref = callable_with_nth_parameter_being<
@@ -576,7 +576,7 @@ namespace kangaru {
 					F,
 					nth,
 					max
-				>();
+				>;
 				
 				// Now we have something harder to match. Sending a rvalue constant reference would indeed match a rvalue
 				// constant reference parameter, but would also match a lvalue constant reference. This means that if we
@@ -596,25 +596,25 @@ namespace kangaru {
 						F,
 						nth,
 						max
-					>()
+					>
 					: (
 						callable_with_nth_parameter_being<
 							filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
 							F,
 							nth,
 							max
-						>() or (
+						> or (
 							callable_with_nth_parameter_being<
 								filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
 								F,
 								nth,
 								max
-							>() and not callable_with_nth_parameter_being<
+							> and not callable_with_nth_parameter_being<
 								filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
 								F,
 								nth,
 								max
-							>()
+							>
 						)
 					);
 				
@@ -628,13 +628,13 @@ namespace kangaru {
 						F,
 						nth,
 						max
-					>()
+					>
 					: callable_with_nth_parameter_being<
 						filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
 						F,
 						nth,
 						max
-					>();
+					>;
 				
 				// Here we finally check for value references. They can match rvalue references, rvalue cosnt references, and
 				// lvalue const references. We need to check for those two if we matched them before in order to do the check
@@ -645,20 +645,20 @@ namespace kangaru {
 						F,
 						nth,
 						max
-					>()
+					>
 					: callable_with_lvalue_const_ref
 						? not callable_with_nth_parameter_being<
 							filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>,
 							F,
 							nth,
 							max
-						>()
+						>
 						: callable_with_nth_parameter_being<
 							filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
 							F,
 							nth,
 							max
-						>();
+						>;
 				
 				// We build the bitmask enum to express what overloads of different reference kind exists
 				return (
@@ -678,8 +678,8 @@ namespace kangaru {
 		
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
 		using prvalue_filtered_deducer_for = detail::type_traits::conditional_t<
-			    not is_nth_parameter_prvalue<F, nth, arity>()
-			and callable_with_nth_parameter_being<exclude_prvalue_deducer<Deducer>, F, nth, arity>(),
+			    not is_nth_parameter_prvalue<F, nth, arity>
+			and callable_with_nth_parameter_being<exclude_prvalue_deducer<Deducer>, F, nth, arity>,
 			exclude_prvalue_deducer<Deducer>,
 			exclude_references_deducer<Deducer>
 		>;

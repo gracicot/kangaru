@@ -70,7 +70,7 @@ namespace kangaru {
 	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
 	
 	template<typename MaybeWrapper>
-	using maybe_wrapped_t = std::remove_reference_t<decltype(kangaru::maybe_unwrap(std::declval<MaybeWrapper>()))>;
+	using maybe_wrapped_t = std::remove_reference_t<decltype(KANGARU5_NO_ADL(maybe_unwrap)(std::declval<MaybeWrapper>()))>;
 	
 	template<source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper<Source> {

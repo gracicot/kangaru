@@ -180,15 +180,15 @@ namespace kangaru {
 		
 		template<std::copy_constructible F>
 		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
-			return kangaru::maybe_unwrap(storage).emplace_from(function);
+			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(function);
 		}
 		
 	private:
 		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
 		friend constexpr auto provide(forwarded<with_heap_storage> auto&& source) -> T {
-			return kangaru::maybe_unwrap(source.storage).emplace_from(
+			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).emplace_from(
 				[&source] {
-					return provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);
+					return kangaru::provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);
 				}
 			);
 		}

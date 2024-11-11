@@ -32,7 +32,7 @@ namespace kangaru {
 	struct with_cache {
 		using source_type = Source;
 		using cache_type = Cache;
-
+	
 	private:
 		using unwrapped_cache_type = maybe_wrapped_t<cache_type>;
 	
@@ -54,76 +54,76 @@ namespace kangaru {
 		source_type source;
 		
 		constexpr auto insert(auto&& value) requires requires(unwrapped_cache_type c) { c.insert(KANGARU5_FWD(value)); } {
-			return kangaru::maybe_unwrap(cache).insert(KANGARU5_FWD(value));
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(KANGARU5_FWD(value));
 		}
 		
 		template<typename It>
 		constexpr auto insert(It begin, It end) requires requires(unwrapped_cache_type c) { c.insert(begin, end); } {
-			return kangaru::maybe_unwrap(cache).insert(begin, end);
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(begin, end);
 		}
 		
 		[[nodiscard]]
 		constexpr auto find(auto const& key) requires requires(unwrapped_cache_type c) { c.find(key); } {
-			return kangaru::maybe_unwrap(cache).find(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).find(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto find(auto const& key) const requires requires(unwrapped_cache_type const c) { c.find(key); } {
-			return kangaru::maybe_unwrap(cache).find(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).find(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto contains(auto const& key) const requires requires(unwrapped_cache_type c) { c.contains(key); } {
-			return kangaru::maybe_unwrap(cache).contains(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).contains(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto begin() -> typename unwrapped_cache_type::iterator {
-			return kangaru::maybe_unwrap(cache).begin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).begin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto end() -> typename unwrapped_cache_type::iterator {
-			return kangaru::maybe_unwrap(cache).end();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).end();
 		}
 		
 		[[nodiscard]]
 		constexpr auto begin() const {
-			return kangaru::maybe_unwrap(cache).begin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).begin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto end() const {
-			return kangaru::maybe_unwrap(cache).end();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).end();
 		}
 		
 		[[nodiscard]]
 		constexpr auto cbegin() const -> typename unwrapped_cache_type::const_iterator {
-			return kangaru::maybe_unwrap(cache).cbegin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).cbegin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto cend() const -> typename unwrapped_cache_type::const_iterator {
-			return kangaru::maybe_unwrap(cache).cend();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).cend();
 		}
 		
 		[[nodiscard]]
 		constexpr auto empty() const -> bool {
-			return kangaru::maybe_unwrap(cache).empty();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).empty();
 		}
 		
 		constexpr auto clear() -> void {
-			return kangaru::maybe_unwrap(cache).clear();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).clear();
 		}
 		
 		[[nodiscard]]
 		constexpr auto size() const {
-			return kangaru::maybe_unwrap(cache).size();
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).size();
 		}
 		
 		[[nodiscard]]
 		constexpr auto erase(auto const& key) requires requires(unwrapped_cache_type c) { c.erase(key); } {
-			return kangaru::maybe_unwrap(cache).erase(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).erase(key);
 		}
 		
 		constexpr auto swap(with_cache& other) noexcept -> void {
@@ -146,11 +146,11 @@ namespace kangaru {
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, T>
 		friend constexpr auto provide(Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
-			auto const it = kangaru::maybe_unwrap(source.cache).find(id);
+			auto const it = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).find(id);
 			
-			if (it == kangaru::maybe_unwrap(source.cache).end()) {
-				auto object = provide<T>(KANGARU5_FWD(source).source);
-				auto const [it, _] = kangaru::maybe_unwrap(source.cache).insert(std::pair{id, std::move(object)});
+			if (it == KANGARU5_NO_ADL(maybe_unwrap)(source.cache).end()) {
+				auto object = kangaru::provide<T>(KANGARU5_FWD(source).source);
+				auto const [it, _] = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).insert(std::pair{id, std::move(object)});
 				return cast<T>(it->second);
 			} else {
 				return cast<T>(it->second);

@@ -95,7 +95,7 @@ namespace kangaru {
 	concept rebindable_wrapping_source =
 		   stateless_rebindable_wrapping_source<Source>
 		or stateful_rebindable_wrapping_source<Source>;
-
+	
 	namespace detail::source_helper {
 		// Forward declaration because otherwise the top overloads cannot find the bottom ones.
 		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)

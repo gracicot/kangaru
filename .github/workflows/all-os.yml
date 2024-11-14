@@ -10,9 +10,6 @@ jobs:
       matrix:
         os: [macos-13]
         xcode: [14.3, 15.2]
-        include:
-          - xcode: 13
-            os: macos-12
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +41,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [13, 14, 15, 16, 17, 18, 19]
+        clang: [16, 17, 18, 19]
 
     steps:
       - uses: actions/checkout@v4

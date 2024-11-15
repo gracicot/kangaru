@@ -10,7 +10,10 @@
 			"name": "generator",
 			"generator": "Ninja Multi-Config",
 			"binaryDir": "${sourceDir}/build",
-			"hidden": true
+			"hidden": true,
+			"cacheVariables": {
+				"CMAKE_MAKE_PROGRAM": "ninja"
+			}
 		},
 		{
 			"name": "ci",

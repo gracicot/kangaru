@@ -250,6 +250,14 @@ namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
+		template<forwarded<with_alternative> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_alternative<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Alternative>>> {
+			return with_alternative<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Alternative>>>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(ref)(original.alternative)
+			};
+		}
+		
 	private:
 		Alternative alternative;
 	};

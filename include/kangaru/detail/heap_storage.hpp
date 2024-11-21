@@ -183,6 +183,14 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(function);
 		}
 		
+		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_heap_storage<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Storage>>> {
+			return with_heap_storage<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Storage>>>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(ref)(original.storage)
+			};
+		}
+		
 	private:
 		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
 		friend constexpr auto provide(forwarded<with_heap_storage> auto&& source) -> T {

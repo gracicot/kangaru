@@ -131,6 +131,14 @@ namespace kangaru {
 			std::ranges::swap(cache, other.cache);
 		}
 		
+		template<forwarded<with_cache> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>> {
+			return with_cache<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(ref)(original.cache)
+			};
+		}
+		
 	private:
 		template<typename To>
 		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {

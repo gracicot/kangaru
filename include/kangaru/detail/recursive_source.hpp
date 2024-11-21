@@ -235,6 +235,11 @@ namespace kangaru {
 			}
 		}
 		
+		template<forwarded<with_construction> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_construction<std::decay_t<NewSource>, Construction> {
+			return with_construction<std::decay_t<NewSource>, Construction>{KANGARU5_FWD(new_source), original.construction};
+		}
+		
 		Source source;
 		
 	private:

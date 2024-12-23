@@ -8,8 +8,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-13]
-        xcode: [14.3, 15.2]
+        os: [macos-15]
+        xcode: [16.2]
 
     steps:
       - uses: actions/checkout@v4

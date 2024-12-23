@@ -30,6 +30,9 @@ namespace kangaru {
 		Source source;
 	};
 	
+	template<source Source>
+	with_source_from_tag(Source) -> with_source_from_tag<Source>;
+	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_source_from_tag(Source&& source) {
 		return with_source_from_tag<std::decay_t<Source>>{KANGARU5_FWD(source)};

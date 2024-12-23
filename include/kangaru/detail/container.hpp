@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_CONTAINER_HPP
 #define KANGARU5_DETAIL_CONTAINER_HPP
 
+#include "cache_types.hpp"
 #include "recursive_source.hpp"
 #include "cache.hpp"
 #include "heap_storage.hpp"
@@ -11,6 +12,7 @@
 
 #include "define.hpp"
 
+
 namespace kangaru {
 	namespace detail::container {
 		template<typename Self, typename Source>
@@ -19,9 +21,9 @@ namespace kangaru {
 				make_source_with_exhaustive_construction(
 					with_alternative{
 						with_recursion{
-							with_source_from_tag{
+							kangaru::make_source_with_cache_using<injectable_reference_source>(
 								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
-							}
+							)
 						},
 						external_reference_source{self}
 					}
@@ -30,7 +32,7 @@ namespace kangaru {
 		}
 	} // namespace detail::container
 	
-	template<source Source>
+	template<source Source, cache_map Cache = std::unordered_map<std::size_t, void*>, heap_storage Storage = default_heap_storage>
 	struct dynamic_container {
 		explicit constexpr dynamic_container(Source source) noexcept :
 			source{
@@ -50,9 +52,10 @@ namespace kangaru {
 	private:
 		with_cache<
 			with_heap_storage<
-				with_exhaustive_construction<Source>
+				with_exhaustive_construction<Source>,
+				Storage
 			>,
-			std::unordered_map<std::size_t, void*>
+			Cache
 		> source;
 		
 		template<typename Self>

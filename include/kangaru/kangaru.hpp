@@ -8,6 +8,7 @@
 #include "detail/source_types.hpp"
 #include "detail/recursive_source.hpp"
 #include "detail/source_from_tag.hpp"
+#include "detail/polymorphic_source.hpp"
 #include "detail/heap_storage.hpp"
 #include "detail/cache.hpp"
 #include "detail/cache_types.hpp"

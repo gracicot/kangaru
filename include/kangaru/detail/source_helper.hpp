@@ -59,7 +59,7 @@ namespace kangaru {
 	namespace detail::source_helper {
 		// TODO: Design an interface where rebinding might branch off in composed sources
 		// and allow rebinding with a transformed leaf instead of ignoring it.
-
+		
 		// Forward declaration because otherwise the top overloads cannot find the bottom ones.
 		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)
 		constexpr auto rebind_source_tree(forwarded_source auto&& new_leaf, Leaf&) noexcept;

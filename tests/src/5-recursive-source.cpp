@@ -1,3 +1,4 @@
+#include "kangaru/detail/source_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
@@ -14,13 +15,13 @@ struct increment_source {
 struct service_a {
 	explicit service_a(int a) : a{a} {}
 	int a = 0;
-	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
+	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
 };
 
 struct service_b {
 	service_a& a;
 	
-	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
+	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
 };
 
 struct service_aggregate {
@@ -32,7 +33,7 @@ struct service_c {
 	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
-	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::cache_using_source_type<kangaru::injectable_reference_source>;
+	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
 };
 
 struct needs_int_ref {
@@ -143,6 +144,28 @@ TEST_CASE("Recursive source", "[recursive]") {
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
 	}
 	
+	SECTION("Support the service idiom and cache and construction alternative") {
+		auto source = kangaru::with_recursion{
+			kangaru::make_source_with_cache_using<kangaru::injectable_reference_source>(
+				kangaru::make_source_with_cache(
+					kangaru::make_source_with_heap_storage(
+						kangaru::make_source_with_construction(
+							increment_source{.n = 3}, // just a source of int
+							kangaru::exhaustive_construction{}
+						)
+					),
+					std::unordered_map<std::size_t, void*>{}
+				)
+			)
+		};
+		
+		CHECK(kangaru::provide<service_a&>(source).a == 3);
+		 
+		service_a& ra = kangaru::provide<service_a&>(source);
+		service_b& rb = kangaru::provide<service_b&>(source);
+		CHECK(std::addressof(ra) == std::addressof(rb.a));
+	}
+	
 	SECTION("Support the service idiom and cache and construction, with recursive construction on top") {
 		auto source = kangaru::make_source_with_recursion(
 			kangaru::make_source_with_exhaustive_construction(
@@ -160,54 +183,63 @@ TEST_CASE("Recursive source", "[recursive]") {
 				)
 			)
 		);
-
+		
 		CHECK(kangaru::provide<service_a&>(source).a == 3);
-
+		
 		service_a& ra = kangaru::provide<service_a&>(source);
 		service_b& rb = kangaru::provide<service_b&>(source);
 		CHECK(std::addressof(ra) == std::addressof(rb.a));
-
+		
 		auto c = kangaru::provide<service_aggregate>(source);
 		CHECK(std::addressof(ra) == std::addressof(c.sa));
 		CHECK(std::addressof(rb) == std::addressof(c.sb));
-
+		
 		service_c& rc = kangaru::provide<service_c&>(source);
 		CHECK(std::addressof(ra) == std::addressof(rc.services.sa));
 		CHECK(std::addressof(rb) == std::addressof(rc.services.sb));
 	}
-
+	
 	SECTION("Properly forward value category of the source") {
 		struct forward_sensitive_source {
 			auto provide() & -> int {
 				return 1;
 			}
-
+			
 			auto provide() const& -> int {
 				return 2;
 			}
-
+			
 			auto provide() && -> int {
 				return 3;
 			}
-
+			
 			auto provide() const&& -> int {
 				return 4;
 			}
 		};
-
+		
 		struct needs_int {
 			int value;
 		};
-
+		
+		struct needs_needs_int {
+			needs_int i;
+		};
+		
 		auto source = kangaru::with_recursion{
 			kangaru::make_source_with_non_empty_construction(
 				forward_sensitive_source{}
 			)
 		};
-
+		
 		CHECK(kangaru::provide<needs_int>(source).value == 1);
 		CHECK(kangaru::provide<needs_int>(std::as_const(source)).value == 2);
 		CHECK(kangaru::provide<needs_int>(std::move(source)).value == 3);
 		CHECK(kangaru::provide<needs_int>(std::move(std::as_const(source))).value == 4);
+		
+		CHECK(kangaru::provide<needs_needs_int>(source).i.value == 1);
+		CHECK(kangaru::provide<needs_needs_int>(std::as_const(source)).i.value == 2);
+		CHECK(kangaru::provide<needs_needs_int>(std::move(source)).i.value == 3);
+		CHECK(kangaru::provide<needs_needs_int>(std::move(std::as_const(source))).i.value == 4);
 	}
 }

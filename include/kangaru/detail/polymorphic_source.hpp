@@ -1,8 +1,8 @@
 #ifndef KANGARU5_DETAIL_POLYMORPHIC_SOURCE_HPP
 #define KANGARU5_DETAIL_POLYMORPHIC_SOURCE_HPP
 
+#include "source_reference_wrapper.hpp"
 #include "source.hpp"
-#include "source_types.hpp"
 #include "utility.hpp"
 
 #include <memory>
@@ -17,25 +17,14 @@ namespace kangaru {
 			source{std::addressof(source)},
 			provide_function{provide_function_for<std::remove_cvref_t<decltype(source)>>()} {}
 		
-		template<source_of<T> Source>
-		explicit constexpr polymorphic_source(source_reference_wrapper<Source>& source) noexcept requires (not std::is_const_v<Source>) :
-			source{std::addressof(source.unwrap())},
-			provide_function{provide_function_for<Source>()} {}
-		
-		template<source_of<T> Source>
-		explicit constexpr polymorphic_source(source_reference_wrapper<Source> const& source) noexcept requires (not std::is_const_v<Source>) :
-			source{std::addressof(source.unwrap())},
-			provide_function{provide_function_for<Source>()} {}
-		
-		template<source_of<T> Source>
-		explicit constexpr polymorphic_source(source_reference_wrapper<Source>&& source) noexcept requires (not std::is_const_v<Source>) :
-			source{std::addressof(source.unwrap())},
-			provide_function{provide_function_for<Source>()} {}
-		
-		template<source_of<T> Source>
-		explicit constexpr polymorphic_source(source_reference_wrapper<Source> const&& source) noexcept requires (not std::is_const_v<Source>) :
-			source{std::addressof(source.unwrap())},
-			provide_function{provide_function_for<Source>()} {}
+		explicit constexpr polymorphic_source(reference_wrapper auto&& source) noexcept
+			requires (
+				    source_of<decltype(source), T>
+				and not std::is_rvalue_reference_v<decltype(source.unwrap())>
+				and not std::is_const_v<source_reference_wrapped_type<decltype(source)>>
+			) :
+				source{std::addressof(source.unwrap())},
+				provide_function{provide_function_for<source_reference_wrapped_type<decltype(source)>>()} {}
 		
 		/**
 		 * @brief Unsafe constructor that allows construction from a type erased source and a function pointer to call
@@ -72,20 +61,14 @@ namespace kangaru {
 	};
 	
 	/**
-	 * @brief An unsafe type erased source which completely hides the source type and provide type.
-	 * 
-	 * @details The reason why this function is unsafe is to let users of this type store type information in a way
-	 * that makes sense for their use cases. For example, one could store the type information as a key in a map and
-	 * associate it with the right type erased value.
-	 * 
-	 * @warning Unsafe
+	 * @brief A type erased source which completely hides the source type and provide type.
 	 */
-	struct unsafe_type_erased_source_reference {
+	struct type_erased_source_reference {
 		/**
 		 * @details Not constexpr since it needs to construct a function_container<T> in the storage byte array.
 		 */
 		template<injectable T, source_of<T> S> requires (not std::is_const_v<S>)
-		unsafe_type_erased_source_reference(S& source) noexcept : source{std::addressof(source)} {
+		explicit type_erased_source_reference(S& source) noexcept : source{std::addressof(source)} {
 			static_assert(
 				sizeof(dummy_function_container) == sizeof(function_container<T>),
 				"function container has a different size for type T"
@@ -102,7 +85,9 @@ namespace kangaru {
 		/**
 		 * @warning Unsafe
 		 * 
-		 * @details Not constexpr since it needs cast the storage byte array to a function_container<T>
+		 * @details The reason why this function is unsafe is to let users of this type store type information in a way
+		 * that makes sense for their use cases. For example, one could store the type information as a key in a map and
+		 * associate it with the right type erased value.
 		 */
 		template<injectable T> KANGARU5_UNSAFE
 		explicit operator polymorphic_source<T> () const noexcept {

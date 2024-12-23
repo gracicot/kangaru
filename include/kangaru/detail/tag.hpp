@@ -54,12 +54,19 @@ namespace kangaru {
 	
 	template<typename T>
 	concept provides_tags = weak_tag<tags_of_t<T>>;
-	 
+	
 	template<typename T>
 	concept tag_empty_injection_constructible =
 		    provides_tags<T>
 		and requires {
 			requires std::same_as<typename tags_of_t<T>::allow_empty_injection, std::true_type>;
+		};
+	 
+	template<typename T>
+	concept tag_allow_caching =
+		    provides_tags<T>
+		and requires {
+			requires std::same_as<typename tags_of_t<T>::allow_runtime_caching, std::true_type>;
 		};
 	
 	template<typename T>
@@ -97,7 +104,7 @@ namespace kangaru {
 	};
 	
 	template<typename T>
-	inline constexpr auto is_cachable_v = tag_empty_injection_constructible<T>;
+	inline constexpr auto is_cachable_v = tag_allow_caching<T>;
 	
 	template<typename... Ts> requires (sizeof...(Ts) > 0)
 	struct overrides {

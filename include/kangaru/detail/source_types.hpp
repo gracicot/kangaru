@@ -7,6 +7,7 @@
 #include "utility.hpp"
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
+#include "tag.hpp"
 
 #include <tuple>
 #include <concepts>
@@ -149,6 +150,8 @@ namespace kangaru {
 			return source.object;
 		}
 		
+		friend auto tag(kangaru::tag_for<injectable_reference_source>) -> kangaru::empty_injectable;
+		
 	private:
 		T object;
 	};
@@ -279,6 +282,13 @@ namespace kangaru {
 		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
 		friend constexpr auto provide(Self&& source) -> Filtered {
 			return kangaru::provide<Filtered>(KANGARU5_FWD(source).source.source);
+		}
+		
+		template<forwarded<with_filter_passthrough> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_filter_passthrough<std::decay_t<NewSource>, Filtered> {
+			return with_filter_passthrough<std::decay_t<NewSource>, Filtered>{
+				KANGARU5_FWD(new_source),
+			};
 		}
 		
 		Source source;

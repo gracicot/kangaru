@@ -44,10 +44,19 @@ namespace kangaru {
 		static constexpr auto is_wrapped(auto&&) -> std::false_type;
 		
 		template<typename T>
-		static auto is_wrapped(SourceFor<T>) -> std::true_type;
+		static auto is_wrapped(SourceFor<T>&&) -> std::true_type;
+		
+		template<typename T>
+		static constexpr auto is_wrapped_v = decltype(is_wrapped(std::declval<T>()))::value;
 		
 	public:
-		template<injectable T, forwarded<with_cache_using> Self> requires (not decltype(is_wrapped(std::declval<T>()))::value and wrapping_source_of<Self, SourceFor<std::remove_reference_t<T>>*> and is_cachable_v<T> and std::is_lvalue_reference_v<T>)
+		template<injectable T, forwarded<with_cache_using> Self>
+			requires (
+				    std::is_lvalue_reference_v<T>
+				and is_cachable_v<T>
+				and not is_wrapped_v<T>
+				and wrapping_source_of<Self, SourceFor<std::remove_reference_t<T>>*>
+			)
 		friend constexpr auto provide(Self&& source) -> T {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<std::remove_reference_t<T>>*>(KANGARU5_FWD(source).source);
 			return kangaru::provide<T>(*KANGARU5_FWD(source_for_t));

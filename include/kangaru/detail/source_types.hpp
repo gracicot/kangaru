@@ -243,7 +243,7 @@ namespace kangaru {
 		
 		Source source;
 		
-		template<injectable T, forwarded<with_alternative> Self> requires (source_of<detail::utility::forward_like_t<Self, Alternative&&>, T> and not wrapping_source_of<Self, T>)
+		template<injectable T, forwarded<with_alternative> Self> requires (not wrapping_source_of<Self, T> and source_of<detail::utility::forward_like_t<Self, Alternative&&>, T>)
 		friend constexpr auto provide(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).alternative);
 		}

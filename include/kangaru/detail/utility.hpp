@@ -72,6 +72,12 @@ namespace kangaru::detail::utility {
 			using type = Template<Args...>;
 		};
 	};
+	
+	template<template<typename...> typename, typename>
+	inline constexpr auto is_specialisation_of_v = false;
+	
+	template<template<typename...> typename Primary, typename... Args>
+	inline constexpr auto is_specialisation_of_v<Primary, Primary<Args...>> = true;
 }
 
 #include "undef.hpp"

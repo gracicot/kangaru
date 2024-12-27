@@ -14,24 +14,6 @@
 
 
 namespace kangaru {
-	namespace detail::container {
-		template<typename Self, typename Source>
-		inline constexpr auto rebound_source_tree(Self&& self, Source&& source) {
-			return with_recursion{
-				make_source_with_exhaustive_construction(
-					with_alternative{
-						with_recursion{
-							kangaru::make_source_with_cache_using<injectable_reference_source>(
-								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
-							)
-						},
-						external_reference_source{self}
-					}
-				)
-			};
-		}
-	} // namespace detail::container
-	
 	template<source Source, cache_map Cache = std::unordered_map<std::size_t, void*>, heap_storage Storage = default_heap_storage>
 	struct dynamic_container {
 		explicit constexpr dynamic_container(Source source) noexcept :
@@ -58,23 +40,39 @@ namespace kangaru {
 			Cache
 		> source;
 		
+		template<typename Self, typename S>
+		static constexpr auto rebound_source_tree(Self&& self, S&& source) {
+			return with_recursion{
+				make_source_with_exhaustive_construction(
+					with_alternative{
+						with_recursion{
+							make_source_with_cache_using<injectable_reference_source>(
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
+							)
+						},
+						external_reference_source{self}
+					}
+				)
+			};
+		}
+		
 		template<typename Self>
 		using rebound_source_tree_t = decltype(
-			detail::container::rebound_source_tree(std::declval<Self>(), std::declval<Self>().source)
+			rebound_source_tree(std::declval<Self>(), std::declval<Self>().source)
 		);
 		
 	public:
 		template<injectable T>
 		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
 			return kangaru::provide<T>(
-				detail::container::rebound_source_tree(*this, source)
+				rebound_source_tree(*this, source)
 			);
 		}
 		
 		template<injectable T>
 		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<dynamic_container&&>, T> {
 			return kangaru::provide<T>(
-				detail::container::rebound_source_tree(std::move(*this), std::move(source))
+				rebound_source_tree(std::move(*this), std::move(source))
 			);
 		}
 	};

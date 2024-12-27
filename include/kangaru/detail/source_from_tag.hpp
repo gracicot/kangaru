@@ -40,21 +40,10 @@ namespace kangaru {
 	
 	template<source Source, template<typename> typename SourceFor>
 	struct with_cache_using {
-	private:
-		static constexpr auto is_wrapped(auto&&) -> std::false_type;
-		
-		template<typename T>
-		static auto is_wrapped(SourceFor<T>&&) -> std::true_type;
-		
-		template<typename T>
-		static constexpr auto is_wrapped_v = decltype(is_wrapped(std::declval<T>()))::value;
-		
-	public:
 		template<injectable T, forwarded<with_cache_using> Self>
 			requires (
-				    std::is_lvalue_reference_v<T>
-				and is_cachable_v<T>
-				and not is_wrapped_v<T>
+				    is_cachable_v<T>
+				and not detail::utility::is_specialisation_of_v<SourceFor, T>
 				and wrapping_source_of<Self, SourceFor<std::remove_reference_t<T>>*>
 			)
 		friend constexpr auto provide(Self&& source) -> T {

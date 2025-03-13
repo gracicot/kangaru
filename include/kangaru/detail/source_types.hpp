@@ -150,11 +150,13 @@ namespace kangaru {
 			return source.object;
 		}
 		
-		friend auto tag(kangaru::tag_for<injectable_reference_source>) -> kangaru::empty_injectable;
-		
 	private:
 		T object;
 	};
+	
+	// TODO: Check if this is at the right place
+	template<unqualified_object T>
+	constexpr auto is_empty_injection_constructible_v<injectable_reference_source<T>> = true;
 	
 	template<unqualified_object T>
 	struct injectable_rvalue_source {
@@ -379,6 +381,55 @@ namespace kangaru {
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_dereference(Source&& source) {
 		return with_dereference<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	// TODO: Create singular source to deduce the from?
+	template<source Source, injectable From> requires source_of<Source, From>
+	struct with_cast_from {
+		Source source;
+		
+		template<forwarded<with_cast_from> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cast_from<std::decay_t<NewSource>, From> {
+			return with_cast_from<std::decay_t<NewSource>, From>{
+				KANGARU5_FWD(new_source),
+				original.cast,
+			};
+		}
+		
+		template<injectable T, forwarded<with_cast_from> Self> requires(wrapping_source_of<Self, T>)
+		friend constexpr auto provide(Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<different_from<From> T, forwarded<with_cast_from> Self> requires(injectable<T> and not wrapping_source_of<Self, T> and safe_convertible_to<From, T>)
+		friend constexpr auto provide(Self&& source) -> T {
+			decltype(auto) result = kangaru::provide<From>(KANGARU5_FWD(source).source);
+			return static_cast<T>(result);
+		}
+	};
+	
+	template<injectable From, forwarded_source Source>
+	constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
+		return with_cast_from<std::decay_t<Source>, From>{};
+	}
+	
+	// TODO: Is it at the right place?
+	template<source Source, injectable From> requires source_of<Source, From>
+	struct overrides_types_in_cache<with_cast_from<Source, From>> : overrides_types_in_cache<Source> {};
+	
+	template<source Source>
+	struct with_source_wrapping {
+		Source source;
+		
+		template<wrapping_source T, forwarded<with_source_wrapping> Self> requires wrapping_source_of<Self, wrapped_source_t<T>>
+		friend constexpr auto provide(Self&& source) -> T {
+			return T{kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source)};
+		}
+	};
+	
+	template<forwarded_source Source>
+	inline constexpr auto make_source_with_source_wrapping(Source&& source) {
+		return with_source_wrapping<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	template<source Source>

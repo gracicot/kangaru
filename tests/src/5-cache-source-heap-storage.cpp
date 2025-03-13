@@ -17,7 +17,7 @@ struct Derived final : Base {
 		return id;
 	}
 	
-	friend auto tag(kangaru::tag_for<Derived>) -> kangaru::overrides<Base>;
+	friend auto tag(kangaru::tag_for<Derived*>) -> kangaru::overrides<Base*>;
 };
 
 struct increment_source {

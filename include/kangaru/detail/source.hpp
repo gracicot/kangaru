@@ -10,7 +10,7 @@
 
 namespace kangaru {
 	template<typename T>
-	concept injectable = object<T> or reference<T>;
+	concept injectable = unqualified_object<T> or reference<T>;
 	
 	template<typename T>
 	concept source = object<T> and std::move_constructible<T> and std::is_class_v<T>;

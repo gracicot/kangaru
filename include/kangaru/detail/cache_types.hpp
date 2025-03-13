@@ -108,21 +108,14 @@ namespace kangaru {
 			return map.insert(std::move(value));
 		}
 		
-		constexpr auto insert(allows_construction_of<value_type> auto&& value) -> std::pair<iterator, bool> {
-			if constexpr (requires{ { detail::utility::decay_copy(std::get<1>(value)) } -> kangaru::pointer; }) {
-				insert_overrides(std::get<1>(value));
-			}
-			return map.insert(KANGARU5_FWD(value));
-		}
-		
-		template<different_from<void> T>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, T*> const& value) -> std::pair<iterator, bool> {
+		template<different_from<void> T, allows_construction_of<T> U>
+		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U> const& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
 			return map.insert(value);
 		}
 		
-		template<different_from<void> T>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, T*>&& value) -> std::pair<iterator, bool> {
+		template<different_from<void> T, allows_construction_of<T> U>
+		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U>&& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
 			return map.insert(value);
 		}
@@ -135,41 +128,21 @@ namespace kangaru {
 			return map.insert(hint, std::move(value));
 		}
 		
-		constexpr auto insert(const_iterator hint, allows_construction_of<value_type> auto&& value) -> std::pair<iterator, bool> {
-			if constexpr (requires{ { detail::utility::decay_copy(std::get<1>(value)) } -> kangaru::pointer; }) {
-				insert_overrides(std::get<1>(value));
-			}
-			
-			return map.insert(hint, KANGARU5_FWD(value));
-		}
-		
 		template<std::input_iterator Iterator> requires requires(Iterator it) { { *it } -> std::convertible_to<const_reference>; }
 		constexpr auto insert(Iterator begin, Iterator end) -> void {
 			map.insert(begin, end);
 		}
 		
-		template<different_from<void> T>
-		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& k, assign_into<value_type> auto&& obj) {
-			insert_or_assign_overrides(static_cast<T*>(std::get<1>(KANGARU5_FWD(obj))));
-			map.insert_or_assign(k, KANGARU5_FWD(obj));
+		template<different_from<void> T, std::convertible_to<T> U> requires assign_into<U, mapped_type>
+		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& k, U&& obj) {
+			insert_or_assign_overrides(std::get<1>(obj));
+			map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
-		template<different_from<void> T>
-		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T>&& k, assign_into<value_type> auto&& obj) {
-			insert_or_assign_overrides(static_cast<T*>(std::get<1>(KANGARU5_FWD(obj))));
-			map.insert_or_assign(std::move(k), KANGARU5_FWD(obj));
-		}
-		
-		template<different_from<void> T>
-		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T> const& k, assign_into<value_type> auto&& obj) {
-			insert_or_assign_overrides(static_cast<T*>(std::get<1>(KANGARU5_FWD(obj))));
-			map.insert_or_assign(hint, k, KANGARU5_FWD(obj));
-		}
-		
-		template<different_from<void> T>
-		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T>&& k, assign_into<value_type> auto&& obj) {
-			insert_or_assign_overrides(static_cast<T*>(std::get<1>(KANGARU5_FWD(obj))));
-			map.insert_or_assign(hint, std::move(k), KANGARU5_FWD(obj));
+		template<different_from<void> T, std::convertible_to<T> U> requires assign_into<U, mapped_type>
+		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T> const& k, U&& obj) {
+			insert_or_assign_overrides(std::get<1>(obj));
+			map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		constexpr auto erase(iterator pos) -> iterator {
@@ -180,7 +153,7 @@ namespace kangaru {
 			return map.erase(pos);
 		}
 		
-		template<typename T>
+		template<different_from<void> T>
 		constexpr auto erase(detail::ctti::type_id_for_result<T> id) -> size_type {
 			auto const overrides = remove_overrides<T>();
 			return overrides + map.erase(id);
@@ -241,29 +214,29 @@ namespace kangaru {
 		
 	private:
 		template<different_from<void> T>
-		constexpr auto insert_overrides(T* ptr) -> void {
+		constexpr auto insert_overrides(T& value) -> void {
 			using overrides = overrides_types_in_cache_t<T>;
-			std::apply([this, ptr](auto... s) {
+			std::apply([this, &value](auto... s) {
 				[[maybe_unused]]
-				auto const for_each = [this](auto i, T* ptr) {
+				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override*>();
-					map.insert(std::pair{id, static_cast<override*>(ptr)});
+					constexpr auto id = detail::ctti::type_id_for<override>();
+					map.insert(std::pair{id, static_cast<override>(value)});
 				};
-				(for_each(s, ptr), ...);
+				(for_each(s, value), ...);
 			}, detail::utility::sequence_tuple_for_tuple<overrides>{});
 		}
 		
 		template<different_from<void> T>
-		constexpr auto insert_or_assign_overrides(T* ptr) -> void {
+		constexpr auto insert_or_assign_overrides(T& value) -> void {
 			using overrides = overrides_types_in_cache_t<T>;
-			std::apply([this, ptr](auto... s) {
-				auto const for_each = [this](auto i, T* ptr) {
+			std::apply([this, &value](auto... s) {
+				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override*>();
-					map.insert_or_assign(std::pair{id, static_cast<override*>(ptr)});
+					constexpr auto id = detail::ctti::type_id_for<override>();
+					map.insert_or_assign(std::pair{id, static_cast<override>(value)});
 				};
-				(for_each(s, ptr), ...);
+				(for_each(s, value), ...);
 			}, detail::utility::sequence_tuple_for_tuple<overrides>{});
 		}
 		
@@ -274,7 +247,7 @@ namespace kangaru {
 			std::apply([this, &n](auto... s) {
 				auto const for_each = [this, &n](auto i) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override*>();
+					constexpr auto id = detail::ctti::type_id_for<override>();
 					n += map.erase(id);
 				};
 				(for_each(s), ...);

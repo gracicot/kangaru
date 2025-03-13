@@ -27,9 +27,10 @@ namespace kangaru {
 	
 	template<
 		source Source,
-		cache_map Cache = std::unordered_map<std::size_t, std::any>
+		cache_map Cache = std::unordered_map<std::size_t, std::any>,
+		template<source> typename CacheFrom = detail::utility::type_identity
 	>
-	struct with_cache {
+	struct with_cache_asymmetric {
 		using source_type = Source;
 		using cache_type = Cache;
 	
@@ -37,12 +38,12 @@ namespace kangaru {
 		using unwrapped_cache_type = maybe_wrapped_t<cache_type>;
 	
 	public:
-		explicit constexpr with_cache(source_type source) noexcept
+		explicit constexpr with_cache_asymmetric(source_type source) noexcept
 		requires (
 			std::default_initializable<cache_type>
 		) : source{std::move(source)}, cache{} {}
 		
-		constexpr with_cache(source_type source, cache_type cache) noexcept :
+		constexpr with_cache_asymmetric(source_type source, cache_type cache) noexcept :
 			source{std::move(source)}, cache{std::move(cache)} {}
 		
 		using key_type = typename unwrapped_cache_type::key_type;
@@ -126,14 +127,14 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).erase(key);
 		}
 		
-		constexpr auto swap(with_cache& other) noexcept -> void {
+		constexpr auto swap(with_cache_asymmetric& other) noexcept -> void {
 			std::ranges::swap(source, other.source);
 			std::ranges::swap(cache, other.cache);
 		}
 		
-		template<forwarded<with_cache> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>> {
-			return with_cache<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>>{
+		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache_asymmetric<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>, CacheFrom> {
+			return with_cache_asymmetric<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>, CacheFrom>{
 				KANGARU5_FWD(new_source),
 				KANGARU5_NO_ADL(ref)(original.cache)
 			};
@@ -150,15 +151,17 @@ namespace kangaru {
 			return static_cast<To>(KANGARU5_FWD(any));
 		}
 		
-		template<object T, forwarded<with_cache> Self>
-			requires source_of<detail::utility::forward_like_t<Self, source_type>, T>
+		template<object T, forwarded<with_cache_asymmetric> Self>
+			requires source_of<detail::utility::forward_like_t<Self, source_type>, CacheFrom<T>>
 		friend constexpr auto provide(Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
 			auto const it = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).find(id);
 			
 			if (it == KANGARU5_NO_ADL(maybe_unwrap)(source.cache).end()) {
-				auto object = kangaru::provide<T>(KANGARU5_FWD(source).source);
-				auto const [it, _] = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).insert(std::pair{id, std::move(object)});
+				decltype(auto) object = kangaru::provide<CacheFrom<T>>(KANGARU5_FWD(source).source);
+				auto const [it, _] = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).insert(
+					std::pair<std::remove_const_t<decltype(id)>, decltype(object)>{id, KANGARU5_FWD(object)}
+				);
 				return cast<T>(it->second);
 			} else {
 				return cast<T>(it->second);
@@ -166,6 +169,51 @@ namespace kangaru {
 		}
 		
 		cache_type cache;
+	};
+	
+	template<template<source> typename CacheFrom, forwarded_source Source, forwarded_cache_map Cache>
+	constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
+		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
+	}
+	
+	template<template<source> typename CacheFrom, forwarded_source Source>
+	constexpr auto make_source_with_cache_asymmetric(Source&& source) {
+		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
+	}
+	
+	template<
+		source Source,
+		cache_map Cache = std::unordered_map<std::size_t, std::any>
+	>
+	struct with_cache : with_cache_asymmetric<Source, Cache> {
+	private:
+		using parent_t = with_cache_asymmetric<Source, Cache>;
+		
+		template<source S, cache_map C>
+		friend struct with_cache;
+		
+		explicit constexpr with_cache(parent_t&& parent) noexcept : with_cache_asymmetric<Source, Cache>{std::move(parent)} {}
+		explicit constexpr with_cache(parent_t const& parent) : with_cache_asymmetric<Source, Cache>{parent} {}
+		
+	public:
+		explicit constexpr with_cache(Source source) noexcept
+		requires (
+			std::default_initializable<Cache>
+		) : parent_t{std::move(source)} {}
+		
+		constexpr with_cache(Source source, Cache cache) noexcept :
+			parent_t{std::move(source), std::move(cache)} {}
+		
+		template<forwarded<with_cache> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Cache>>> {
+			return with_cache<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Cache>>>{parent_t::rebind(static_cast<detail::utility::forward_like_t<Original, parent_t>&&>(original), KANGARU5_FWD(new_source))};
+		}
+		
+		template<object T, forwarded<with_cache> Self>
+			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
+		friend constexpr auto provide(Self&& source) -> T {
+			return kangaru::provide<T>(static_cast<detail::utility::forward_like_t<Self, parent_t>&&>(source));
+		}
 	};
 	
 	template<forwarded_source Source, forwarded_cache_map Cache>
@@ -181,6 +229,45 @@ namespace kangaru {
 	static_assert(cache_map<with_cache<none_source>>);
 	static_assert(cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
+	
+	template<template<unqualified_object> typename SourceType>
+	struct cached_pointer_to_source {
+		template<injectable T>
+		using source = SourceType<std::remove_cvref_t<T>>*;
+	};
+	
+	template<source Source, template<typename> typename SourceFor>
+	struct with_cache_using_source {
+		template<injectable T, forwarded<with_cache_using_source> Self>
+			requires (
+				    is_cachable_v<T>
+				and not detail::utility::is_specialisation_of_v<SourceFor, T>
+				and wrapping_source_of<Self, SourceFor<T>>
+			)
+		friend constexpr auto provide(Self&& source) -> T {
+			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
+			// TODO: Can we avoid this pointer thing?
+			if constexpr (std::is_pointer_v<decltype(source_for_t)>) {
+				return kangaru::provide<T>(*KANGARU5_FWD(source_for_t));
+			} else {
+				return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
+			}
+		}
+		
+		template<forwarded<with_cache_using_source> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache_using_source<std::decay_t<NewSource>, SourceFor> {
+			return with_cache_using_source<std::decay_t<NewSource>, SourceFor>{
+				KANGARU5_FWD(new_source),
+			};
+		}
+		
+		Source source;
+	};
+	
+	template<template<typename> typename SourceFor>
+	inline constexpr auto make_source_with_cache_using_source(forwarded_source auto&& source) {
+		return with_cache_using_source<std::decay_t<decltype(source)>, SourceFor>{KANGARU5_FWD(source)};
+	}
 }
 
 #include "undef.hpp"

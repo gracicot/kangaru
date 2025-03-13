@@ -32,7 +32,7 @@ namespace kangaru::detail::utility {
 	}
 	
 	template<typename T> requires std::is_function_v<T>
-	using function_pointer_t = std::add_pointer_t<T>;
+	using function_pointer_t = T*;
 	
 	template<typename T, typename U>
 	using forward_like_t = decltype(forward_like<T>(std::declval<U&>()));
@@ -78,6 +78,17 @@ namespace kangaru::detail::utility {
 	
 	template<template<typename...> typename Primary, typename... Args>
 	inline constexpr auto is_specialisation_of_v<Primary, Primary<Args...>> = true;
+	
+	template<typename, template<typename> typename>
+	struct rebind_template {};
+	
+	template<typename T, template<typename> typename From, template<typename> typename To>
+	struct rebind_template<From<T>, To> {
+		using type = To<T>;
+	};
+	
+	template<typename T>
+	using type_identity = T;
 }
 
 #include "undef.hpp"

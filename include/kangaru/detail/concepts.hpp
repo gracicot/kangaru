@@ -60,6 +60,11 @@ namespace kangaru {
 	concept explicitly_castable_to = requires(From&& from) {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
+	
+	template<typename From, typename To>
+	concept safe_convertible_to =
+		    std::convertible_to<From, To>
+		and (reference<From> or unqualified_object<To>);
 }
 
 #include "undef.hpp"

@@ -5,7 +5,6 @@
 #include "recursive_source.hpp"
 #include "cache.hpp"
 #include "heap_storage.hpp"
-#include "source_from_tag.hpp"
 
 #include <unordered_map>
 #include <concepts>
@@ -14,6 +13,9 @@
 
 
 namespace kangaru {
+	template<injectable T>
+	using cached_pointer_to_injectable_reference_source = typename cached_pointer_to_source<injectable_reference_source>::template source<T>;
+	
 	template<source Source, cache_map Cache = std::unordered_map<std::size_t, void*>, heap_storage Storage = default_heap_storage>
 	struct dynamic_container {
 		explicit constexpr dynamic_container(Source source) noexcept :
@@ -24,7 +26,7 @@ namespace kangaru {
 							std::move(source)
 						)
 					),
-					std::unordered_map<std::size_t, void*>{}
+					Cache{}
 				)
 			} {}
 		
@@ -46,7 +48,7 @@ namespace kangaru {
 				make_source_with_exhaustive_construction(
 					with_alternative{
 						with_recursion{
-							make_source_with_cache_using<injectable_reference_source>(
+							make_source_with_cache_using_source<cached_pointer_to_injectable_reference_source>(
 								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 							)
 						},

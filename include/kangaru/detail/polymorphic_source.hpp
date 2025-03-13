@@ -4,6 +4,7 @@
 #include "source_reference_wrapper.hpp"
 #include "source.hpp"
 #include "utility.hpp"
+#include "tag.hpp"
 
 #include <memory>
 #include <type_traits>
@@ -11,20 +12,30 @@
 #include "define.hpp"
 
 namespace kangaru {
+	struct type_erased_source_reference;
+	
+	// TODO: Review constructors/conversions
 	template<injectable T>
 	struct polymorphic_source {
-		explicit constexpr polymorphic_source(source_of<T> auto& source) noexcept requires (not std::is_const_v<decltype(source)>) :
-			source{std::addressof(source)},
-			provide_function{provide_function_for<std::remove_cvref_t<decltype(source)>>()} {}
+		template<not_self<polymorphic_source> Source> requires source_of<Source, T>
+		explicit constexpr polymorphic_source(Source& source) noexcept :
+			// This const_cast is safe. The only way this pointer can be used is
+			// through the 'provide_function' function pointer. This function in turn
+			// adds back the const
+			source{std::addressof(const_cast<std::remove_cvref_t<Source>&>(source))},
+			provide_function{provide_function_for<std::remove_reference_t<decltype(source)>>()} {}
 		
-		explicit constexpr polymorphic_source(reference_wrapper auto&& source) noexcept
+		template<not_self<polymorphic_source> Source> requires reference_wrapper<Source>
+		explicit constexpr polymorphic_source(Source&& source) noexcept
 			requires (
-				    source_of<decltype(source), T>
+				    source_of<Source, T>
 				and not std::is_rvalue_reference_v<decltype(source.unwrap())>
-				and not std::is_const_v<source_reference_wrapped_type<decltype(source)>>
 			) :
-				source{std::addressof(source.unwrap())},
-				provide_function{provide_function_for<source_reference_wrapped_type<decltype(source)>>()} {}
+				// This const_cast is safe. The only way this pointer can be used is
+				// through the 'provide_function' function pointer. This function in turn
+				// adds back the const
+				source{const_cast<std::remove_cvref_t<decltype(source.unwrap())>&>(std::addressof(source.unwrap()))},
+				provide_function{provide_function_for<source_reference_wrapped_type<Source>>()} {}
 		
 		/**
 		 * @brief Unsafe constructor that allows construction from a type erased source and a function pointer to call
@@ -48,6 +59,8 @@ namespace kangaru {
 			return provide_function(source);
 		}
 		
+		explicit constexpr operator type_erased_source_reference() const noexcept;
+		
 	private:
 		template<source Source>
 		static constexpr auto provide_function_for() -> std::invocable<void*> auto {
@@ -65,10 +78,19 @@ namespace kangaru {
 	 */
 	struct type_erased_source_reference {
 		/**
-		 * @details Not constexpr since it needs to construct a function_container<T> in the storage byte array.
+		 * Constructs a type erased source reference from an existing function pointer and void pointer.
+		 *
+		 * This function is unsafe because there's no way to verify if the provide function is callable using the provided source
+		 *
+		 * @warning Unsafe
 		 */
-		template<injectable T, source_of<T> S> requires (not std::is_const_v<S>)
-		explicit type_erased_source_reference(S& source) noexcept : source{std::addressof(source)} {
+		template<injectable T> KANGARU5_UNSAFE
+		constexpr type_erased_source_reference(
+			void* source,
+			detail::utility::function_pointer_t<auto(void*) -> T> provide_function
+		) noexcept :
+			source{source}
+		{
 			static_assert(
 				sizeof(dummy_function_container) == sizeof(function_container<T>),
 				"function container has a different size for type T"
@@ -76,9 +98,7 @@ namespace kangaru {
 			
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
-				[](void* source) -> T {
-					return kangaru::provide<T>(*static_cast<S*>(source));
-				}
+				provide_function
 			);
 		}
 		
@@ -111,6 +131,49 @@ namespace kangaru {
 		alignas(alignof(dummy_function_container))
 		std::byte function_container_type_erased[sizeof(dummy_function_container)];
 	};
+	
+	template<injectable T>
+	constexpr polymorphic_source<T>::operator type_erased_source_reference() const noexcept {
+		KANGARU5_UNSAFE_BLOCK {
+			return type_erased_source_reference{source, provide_function};
+		}
+	}
+	
+	template<source Source, injectable Primary>
+	struct with_polymorphic_cast {
+		Source source;
+		
+		template<injectable T, forwarded<with_polymorphic_cast> Self> requires(wrapping_source_of<Self, T>)
+		friend constexpr auto provide(Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<forwarded<with_polymorphic_cast> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_polymorphic_cast<std::decay_t<NewSource>, Primary> {
+			return with_polymorphic_cast<std::decay_t<NewSource>, Primary>{
+				KANGARU5_FWD(new_source),
+				original.cast,
+			};
+		}
+		
+		explicit constexpr operator type_erased_source_reference() noexcept {
+			return type_erased_source_reference{polymorphic_source<Primary>{source}};
+		}
+		
+		template<injectable T> requires source_of<Source&, T>
+		explicit constexpr operator polymorphic_source<T>() & {
+			return polymorphic_source<T>{source};
+		}
+		
+		template<injectable T> requires source_of<Source const&, T>
+		explicit constexpr operator polymorphic_source<T>() const& {
+			return polymorphic_source<T>{source};
+		}
+	};
+	
+	// TODO: Check if this is at the right place
+	template<source Source, injectable Primary>
+	struct overrides_types_in_cache<with_polymorphic_cast<Source, Primary>> : overrides_types_in_cache<Source> {};
 }
 
 #include "undef.hpp"

@@ -41,15 +41,6 @@ struct needs_int_ref {
 	int& ref;
 };
 
-template<kangaru::object>
-inline constexpr bool is_unique_ptr_v = false;
-
-template<typename T>
-inline constexpr bool is_unique_ptr_v<std::unique_ptr<T>> = true;
-
-template<typename T>
-concept unique_pointer = kangaru::object<T> and is_unique_ptr_v<T>;
-
 template<typename T>
 struct remove_unique_ptr {
 	using type = T;
@@ -122,31 +113,9 @@ TEST_CASE("Recursive source", "[recursive]") {
 		CHECK(kangaru::provide<needs_int_ref&>(source).ref == 0);
 	}
 	
-	SECTION("Support the service idiom and cache and construction") {
-		auto source = kangaru::with_recursion{
-			kangaru::with_source_from_tag{
-				kangaru::make_source_with_cache(
-					kangaru::make_source_with_heap_storage(
-						kangaru::make_source_with_construction(
-							increment_source{.n = 3}, // just a source of int
-							kangaru::exhaustive_construction{}
-						)
-					),
-					std::unordered_map<std::size_t, void*>{}
-				)
-			}
-		};
-		
-		CHECK(kangaru::provide<service_a&>(source).a == 3);
-		
-		service_a& ra = kangaru::provide<service_a&>(source);
-		service_b& rb = kangaru::provide<service_b&>(source);
-		CHECK(std::addressof(ra) == std::addressof(rb.a));
-	}
-	
 	SECTION("Support the service idiom and cache and construction alternative") {
 		auto source = kangaru::with_recursion{
-			kangaru::make_source_with_cache_using<kangaru::injectable_reference_source>(
+			kangaru::make_source_with_cache_using_source<kangaru::cached_pointer_to_injectable_reference_source>(
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(
 						kangaru::make_source_with_construction(
@@ -170,7 +139,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 		auto source = kangaru::make_source_with_recursion(
 			kangaru::make_source_with_exhaustive_construction(
 				kangaru::make_source_with_recursion(
-					kangaru::make_source_with_source_from_tag(
+					kangaru::make_source_with_cache_using_source<kangaru::cached_pointer_to_injectable_reference_source>(
 						kangaru::make_source_with_cache(
 							kangaru::make_source_with_heap_storage(
 								kangaru::make_source_with_exhaustive_construction(

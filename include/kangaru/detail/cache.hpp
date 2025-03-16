@@ -28,7 +28,7 @@ namespace kangaru {
 	template<
 		source Source,
 		cache_map Cache = std::unordered_map<std::size_t, std::any>,
-		template<source> typename CacheFrom = detail::utility::type_identity
+		template<typename> typename CacheFrom = detail::utility::type_identity
 	>
 	struct with_cache_asymmetric {
 		using source_type = Source;

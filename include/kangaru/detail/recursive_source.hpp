@@ -7,7 +7,6 @@
 #include "tag.hpp"
 #include "source.hpp"
 #include "source_reference_wrapper.hpp"
-#include "source_types.hpp"
 #include "source_helper.hpp"
 
 #include <type_traits>
@@ -276,27 +275,29 @@ namespace kangaru {
 		return with_construction<std::decay_t<Source>, unsafe_exhaustive_construction>{KANGARU5_FWD(source), unsafe_exhaustive_construction{}};
 	}
 	
+	namespace detail::recursive_source {
+		// We need sfinae here!
+		// This is because concepts don't allow a concept to depend on itself to exist and will hard error
+		// We want the concept to simply yeild false in the case it would depend on itself as a soft error
+		// C++ allows that in the context of sfinae, since referring to the type being instantiated
+		// will simply be treated as an incomplete type, and an incomplete type don't have a member ::value
+		// By wrapping source_of in a type, we allow that type to be incomplete!
+		template<kangaru::source Source, kangaru::injectable T>
+		struct source_of_sfinae_wrapper : std::bool_constant<source_of<Source, T>> {};
+	}
+	
 	template<source Source>
 	struct with_recursion {
 	private:
-		template<typename T>
-		static constexpr auto rebound_leaf_for(auto&& self) requires wrapping_source<std::remove_reference_t<decltype(self)>> {
-			using S = forwarded_wrapped_source_t<decltype(self)>;
-			if constexpr (source_of<std::remove_reference_t<S>, T> and reference_wrapper<std::remove_cvref_t<S>>) {
-				return self.source;
-			} else if constexpr (source_of<std::remove_reference_t<S>, T>) {
-				return KANGARU5_NO_ADL(ref)(self.source);
-			} else if constexpr (reference_wrapper<std::remove_cvref_t<S>>) {
-				return KANGARU5_NO_ADL(make_source_with_filter_passthrough<T>)(self);
-			} else {
-				return KANGARU5_NO_ADL(make_source_with_filter_passthrough<T>)(with_recursion<source_reference_wrapper<std::remove_reference_t<S>>>{kangaru::ref(self.source)});
-			}
+		static constexpr auto rebound_self(auto&& self) requires wrapping_source<std::remove_reference_t<decltype(self)>> {
+			auto const source_ref = KANGARU5_NO_ADL(ref)(KANGARU5_NO_ADL(maybe_unwrap)(self.source));
+			return with_recursion<decltype(source_ref)>{source_ref};
 		}
 		
-		template<forwarded<with_recursion> Self, typename T>
+		template<forwarded<with_recursion> Self>
 		using rebound_source_t = decltype(
 			detail::source_helper::rebind_source_tree(
-				rebound_leaf_for<T>(std::declval<Self>()),
+				rebound_self(std::declval<Self&>()),
 				std::declval<Self&>().source
 			)
 		);
@@ -307,10 +308,12 @@ namespace kangaru {
 		Source source;
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
-		friend constexpr auto provide(Self&& source) -> T requires source_of<rebound_source_t<Self, T>, T> {
+		friend constexpr auto provide(Self&& source) -> T requires(
+			detail::recursive_source::source_of_sfinae_wrapper<rebound_source_t<Self>, T>::value
+		) {
 			return kangaru::provide<T>(
 				detail::source_helper::rebind_source_tree(
-					rebound_leaf_for<T>(KANGARU5_FWD(source)),
+					rebound_self(source),
 					source.source
 				)
 			);

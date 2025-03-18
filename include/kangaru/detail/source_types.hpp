@@ -22,7 +22,7 @@ namespace kangaru {
 		explicit constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
 		template<injectable T>
-		friend constexpr auto provide(forwarded<composed_source> auto&& source) -> T
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<composed_source> auto&& source) -> T
 		requires (
 			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) == 1
 		) {
@@ -48,7 +48,7 @@ namespace kangaru {
 		explicit constexpr select_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
 		
 		template<injectable T>
-		friend constexpr auto provide(forwarded<select_first_source> auto&& source) -> T
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<select_first_source> auto&& source) -> T
 		requires ((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> or ...)) {
 			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
 			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
@@ -74,7 +74,7 @@ namespace kangaru {
 		explicit constexpr tuple_source(std::tuple<Ts...> objects) noexcept : objects{std::move(objects)} {}
 		
 		template<injectable T> requires (... or std::same_as<T, Ts>)
-		friend constexpr auto provide(forwarded<tuple_source> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<tuple_source> auto&& source) -> T {
 			return std::get<T>(KANGARU5_FWD(source).objects);
 		}
 		
@@ -85,14 +85,13 @@ namespace kangaru {
 	template<std::invocable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<std::invoke_result_t<F>>)
 	struct function_source {
 		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
-	
-	private:
-		using T = decltype(std::declval<F>()());
 		
-		friend constexpr auto provide(forwarded<function_source> auto&& source) -> T {
+		template<forwarded<function_source> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> std::invoke_result_t<detail::utility::forward_like_t<Self, F>> {
 			return KANGARU5_FWD(source).function();
 		}
 		
+	private:
 		F function;
 	};
 	
@@ -100,7 +99,7 @@ namespace kangaru {
 	struct object_source {
 		explicit constexpr object_source(T object) noexcept : object{std::move(object)} {}
 		
-		friend constexpr auto provide(forwarded<object_source> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
 		}
 		
@@ -121,7 +120,7 @@ namespace kangaru {
 		
 		injectable_object_source() requires std::default_initializable<T> : object{} {}
 		
-		friend constexpr auto provide(forwarded<injectable_object_source> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<injectable_object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
 		}
 		
@@ -142,12 +141,12 @@ namespace kangaru {
 		
 		injectable_reference_source() requires std::default_initializable<T> : object{} {}
 		
-		friend constexpr auto provide(injectable_reference_source& source) -> T& {
-			return source.object;
+		constexpr auto provide() & -> T& {
+			return object;
 		}
 		
-		friend constexpr auto provide(injectable_reference_source&& source) -> T& {
-			return source.object;
+		constexpr auto provide() && -> T& {
+			return object;
 		}
 		
 	private:
@@ -171,12 +170,12 @@ namespace kangaru {
 		
 		injectable_rvalue_source() requires std::default_initializable<T> : object{} {}
 		
-		friend constexpr auto provide(injectable_rvalue_source& source) -> T&& {
-			return std::move(source).object;
+		constexpr auto provide() & -> T&& {
+			return std::move(object);
 		}
 		
-		friend constexpr auto provide(injectable_rvalue_source&& source) -> T&& {
-			return std::move(source).object;
+		constexpr auto provide() && -> T&& {
+			return std::move(object);
 		}
 		
 	private:
@@ -187,12 +186,12 @@ namespace kangaru {
 	struct rvalue_source {
 		explicit constexpr rvalue_source(T object) noexcept : object{std::move(object)} {}
 		
-		friend constexpr auto provide(rvalue_source& source) -> T&& {
-			return std::move(source.object);
+		constexpr auto provide() & -> T&& {
+			return std::move(object);
 		}
 		
-		friend constexpr auto provide(rvalue_source&& source) -> T&& {
-			return std::move(source.object);
+		constexpr auto provide() && -> T&& {
+			return std::move(object);
 		}
 		
 	private:
@@ -203,8 +202,8 @@ namespace kangaru {
 	struct external_rvalue_source {
 		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(external_rvalue_source const& source) -> T&& {
-			return std::move(*source.reference);
+		constexpr auto provide() const& -> T&& {
+			return std::move(*reference);
 		}
 		
 	private:
@@ -215,8 +214,8 @@ namespace kangaru {
 	struct external_reference_source {
 		explicit constexpr external_reference_source(T& reference) noexcept : reference{std::addressof(reference)} {}
 		
-		friend constexpr auto provide(external_reference_source const& source) -> T& {
-			return *source.reference;
+		constexpr auto provide() const& -> T& {
+			return *reference;
 		}
 		
 	private:
@@ -246,12 +245,12 @@ namespace kangaru {
 		Source source;
 		
 		template<injectable T, forwarded<with_alternative> Self> requires (not wrapping_source_of<Self, T> and source_of<detail::utility::forward_like_t<Self, Alternative&&>, T>)
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).alternative);
 		}
 		
 		template<injectable T, forwarded<with_alternative> Self> requires wrapping_source_of<Self, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
@@ -277,12 +276,12 @@ namespace kangaru {
 		explicit constexpr with_filter_passthrough(Source source) noexcept : source{std::move(source)} {}
 		
 		template<different_from<Filtered> T, forwarded<with_filter_passthrough> Self> requires source_of<wrapped_source_t<Self>, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
-		friend constexpr auto provide(Self&& source) -> Filtered {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> Filtered {
 			return kangaru::provide<Filtered>(KANGARU5_FWD(source).source.source);
 		}
 		
@@ -307,7 +306,7 @@ namespace kangaru {
 		
 	private:
 		template<different_from<Type> T> requires injectable<T>
-		friend constexpr auto provide(forwarded<filter_source> auto const& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<filter_source> auto const& source) -> T {
 			return kangaru::provide<T>(source.source);
 		}
 		
@@ -320,7 +319,7 @@ namespace kangaru {
 		
 	private:
 		template<injectable T> requires(Filter{}.template operator()<T>())
-		friend constexpr auto provide(forwarded<filter_if_source> auto const& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<filter_if_source> auto const& source) -> T {
 			return kangaru::provide<T>(source.source);
 		}
 		
@@ -345,13 +344,13 @@ namespace kangaru {
 		
 		template<object T, forwarded<with_reference_passthrough> Self>
 			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<reference T, forwarded<with_reference_passthrough> Self>
 			requires wrapping_source_of<Self, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source.source);
 		}
 	};
@@ -368,12 +367,12 @@ namespace kangaru {
 		Source source;
 		
 		template<reference T> requires source_of<Source, std::remove_reference_t<T>*>
-		friend constexpr auto provide(forwarded<with_dereference> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<with_dereference> auto&& source) -> T {
 			return *kangaru::provide<std::remove_reference_t<T>*>(KANGARU5_FWD(source).source);
 		}
 		
 		template<object T> requires (not std::is_pointer_v<T> and source_of<Source, T>)
-		friend constexpr auto provide(forwarded<with_dereference> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<with_dereference> auto&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 	};
@@ -397,12 +396,12 @@ namespace kangaru {
 		}
 		
 		template<injectable T, forwarded<with_cast_from> Self> requires(wrapping_source_of<Self, T>)
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<different_from<From> T, forwarded<with_cast_from> Self> requires(injectable<T> and not wrapping_source_of<Self, T> and safe_convertible_to<From, T>)
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			decltype(auto) result = kangaru::provide<From>(KANGARU5_FWD(source).source);
 			return static_cast<T>(result);
 		}
@@ -422,7 +421,7 @@ namespace kangaru {
 		Source source;
 		
 		template<wrapping_source T, forwarded<with_source_wrapping> Self> requires wrapping_source_of<Self, wrapped_source_t<T>>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return T{kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source)};
 		}
 	};
@@ -435,7 +434,7 @@ namespace kangaru {
 	template<source Source>
 	struct basic_wrapping_source {
 		template<injectable T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		

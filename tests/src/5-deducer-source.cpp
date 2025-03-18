@@ -7,13 +7,13 @@ struct grumpy {
 };
 
 struct sleepy_source {
-	friend auto provide(sleepy_source const&) -> sleepy {
+	friend constexpr auto provide(sleepy_source const&) -> sleepy {
 		return sleepy{};
 	}
 };
 
 struct grumpy_source {
-	friend auto provide(grumpy_source& source) -> grumpy {
+	friend constexpr auto provide(grumpy_source& source) -> grumpy {
 		return grumpy{.token = source.token++};
 	}
 	

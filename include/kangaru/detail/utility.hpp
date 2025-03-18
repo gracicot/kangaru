@@ -35,7 +35,7 @@ namespace kangaru::detail::utility {
 	using function_pointer_t = T*;
 	
 	template<typename T, typename U>
-	using forward_like_t = decltype(forward_like<T>(std::declval<U&>()));
+	using forward_like_t = decltype(::kangaru::detail::utility::forward_like<T>(std::declval<U&>()));
 	
 	template<typename T, std::size_t>
 	using expand = T;
@@ -78,14 +78,6 @@ namespace kangaru::detail::utility {
 	
 	template<template<typename...> typename Primary, typename... Args>
 	inline constexpr auto is_specialisation_of_v<Primary, Primary<Args...>> = true;
-	
-	template<typename, template<typename> typename>
-	struct rebind_template {};
-	
-	template<typename T, template<typename> typename From, template<typename> typename To>
-	struct rebind_template<From<T>, To> {
-		using type = To<T>;
-	};
 	
 	template<typename T>
 	using type_identity = T;

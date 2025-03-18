@@ -217,7 +217,7 @@ namespace kangaru {
 			construction{std::move(construction)} {}
 		
 		template<injectable T, forwarded<with_construction> Self> requires wrapping_source_of<Self, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
@@ -226,7 +226,7 @@ namespace kangaru {
 				    callable_template1<construction_type const&, T, wrapped_source_t<Self>>
 				and not wrapping_source_of<Self, T>
 			)
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			if constexpr (reference_wrapper<Source>) {
 				return std::as_const(source.construction).template operator()<T>(KANGARU5_FWD(source).source);
 			} else {
@@ -308,7 +308,7 @@ namespace kangaru {
 		Source source;
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
-		friend constexpr auto provide(Self&& source) -> T requires(
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T requires(
 			detail::recursive_source::source_of_sfinae_wrapper<rebound_source_t<Self>, T>::value
 		) {
 			return kangaru::provide<T>(
@@ -320,7 +320,7 @@ namespace kangaru {
 		}
 		
 		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 	};

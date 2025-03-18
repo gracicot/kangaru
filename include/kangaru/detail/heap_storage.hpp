@@ -191,9 +191,8 @@ namespace kangaru {
 			};
 		}
 		
-	private:
 		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
-		friend constexpr auto provide(forwarded<with_heap_storage> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<with_heap_storage> auto&& source) -> T {
 			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).emplace_from(
 				[&source] {
 					return kangaru::provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);
@@ -201,6 +200,7 @@ namespace kangaru {
 			);
 		}
 		
+	private:
 		Storage storage = {};
 	};
 	

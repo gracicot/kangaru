@@ -140,20 +140,9 @@ namespace kangaru {
 			};
 		}
 		
-	private:
-		template<typename To>
-		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {
-			return any_cast<To>(KANGARU5_FWD(any));
-		}
-		
-		template<typename To>
-		static constexpr auto cast(explicitly_castable_to<To> auto&& any) -> To {
-			return static_cast<To>(KANGARU5_FWD(any));
-		}
-		
 		template<object T, forwarded<with_cache_asymmetric> Self>
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, CacheFrom<T>>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
 			auto const it = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).find(id);
 			
@@ -166,6 +155,17 @@ namespace kangaru {
 			} else {
 				return cast<T>(it->second);
 			}
+		}
+		
+	private:
+		template<typename To>
+		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {
+			return any_cast<To>(KANGARU5_FWD(any));
+		}
+		
+		template<typename To>
+		static constexpr auto cast(explicitly_castable_to<To> auto&& any) -> To {
+			return static_cast<To>(KANGARU5_FWD(any));
 		}
 		
 		cache_type cache;
@@ -211,7 +211,7 @@ namespace kangaru {
 		
 		template<object T, forwarded<with_cache> Self>
 			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(static_cast<detail::utility::forward_like_t<Self, parent_t>&&>(source));
 		}
 	};
@@ -244,7 +244,7 @@ namespace kangaru {
 				and not detail::utility::is_specialisation_of_v<SourceFor, T>
 				and wrapping_source_of<Self, SourceFor<T>>
 			)
-		friend constexpr auto provide(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
 			// TODO: Can we avoid this pointer thing?
 			if constexpr (std::is_pointer_v<decltype(source_for_t)>) {

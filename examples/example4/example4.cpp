@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 4: Managing Containers
+ * This example reflects snippets of code found in the documentation section 4: Managing Containers
  * It explains how to branch containers and operate between them.
  */
 
@@ -58,7 +58,7 @@ int main()
 			std::cout << "container1 and container2 has the same SingleService2? ";
 			std::cout << std::boolalpha << are_same2 << '\n';
 			
-			// At that point, both containers have thier own SingleService2 instance.
+			// At that point, both containers have their own SingleService2 instance.
 			// Only container2 has SingleService3
 			// container1 is owner of SingleService1, and container2 observes it.
 			

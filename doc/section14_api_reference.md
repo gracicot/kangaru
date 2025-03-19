@@ -16,7 +16,7 @@ This function construct and save in place a service definition with the provided
 
 The service is only constructed if it is not found.
 
-It is usually used to instanciate supplied services.
+It is usually used to instantiate supplied services.
 
 It returns if the service has been constructed.
 
@@ -133,7 +133,7 @@ auto fork(const container& other, Predicate predicate = {}) const -> kgr::contai
 
 This function return `true` if the container contains the service `T`. Returns `false` otherwise.
 
-`T` nust be a single service.
+`T` must be a single service.
 
 ```c++
 template<typename T> requires BasicService<T>
@@ -156,7 +156,7 @@ kgr::container container;
 kgr::invoker invoker = container.service<kgr::invoker_service>();
 
 invoker([](Single1& single1, Service2 service2, int i) {
-    // stuff with single1 serivce2 and i
+    // stuff with single1 service2 and i
     // The variable `i` is equal to 1 since we send 1 as the additional parameter.
     // Single1 and Service2 are expected to be correctly mapped services.
 }, 1);
@@ -172,7 +172,7 @@ kgr::invoker invoker = container.service<kgr::invoker_service>();
 
 invoker(kgr::map<my_own_map>{}, [](Single1& single1, Service3 service3) {
     // service3 is only mapped in map `my_own_map` and
-    // would not be invokable without the map parameter.
+    // would not be invocable without the map parameter.
 });
 ```
 
@@ -196,7 +196,7 @@ Returns a pointer to the underlying service. Construct the service if uninitiali
 
 ## `kgr::generator<S>`
 
-A type that contruct the non-single service `S` with given parameters.
+A type that construct the non-single service `S` with given parameters.
 
 #### `operator()`
 

@@ -81,7 +81,7 @@ Note that if you're using C++14 and later, you can use return type deduction `au
 
 ## Additional parameters
 
-You may have a service that requires a parameters to be sent fwom the call site.
+You may have a service that requires a parameters to be sent from the call site.
 The `construct` function can take as many additional parameters as you want.
 In fact, the forwarded parameters sent to `container.service<T>(...)` are directly sent to the construct function.
 
@@ -124,7 +124,7 @@ That class is simply a tag that tell the container that our definition is single
 Secondly, we also need to adapt the `forward` function by returning a reference or a copy
 in order to not invalidate the contained service, since the definition may be reused.
 
-So let's make our sevice a single:
+So let's make our service a single:
 
 ```c++
 struct FileManagerService : kgr::single {

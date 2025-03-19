@@ -8,7 +8,7 @@ Welcome to our documentation!
 Kangaru is an inversion of control container for C++11 and later. We support features like operation between containers,
 injection via function parameter, automatic call of member function on instance creation and much more!
 
-Our goal is to create a container capable of automatic, recusive dependency injection that do most diagnostics at compile time,
+Our goal is to create a container capable of automatic, recursive dependency injection that do most diagnostics at compile time,
 while keeping the simplest interface possible, and all that without being intrusive into user/library code.
 
 Kangaru is a header only library because of it's extensive use of templates.
@@ -28,7 +28,7 @@ To make kangaru available on your machine, you must clone the repository and cre
     $ git clone https://github.com/gracicot/kangaru.git && cd kangaru
     $ mkdir build && cd build
 
-Then use cmake to generate the makefile and export the package informations:
+Then use cmake to generate the makefile and export the package information:
 
     $ cmake ..
 
@@ -43,12 +43,12 @@ Then, you can simply include the library:
 
 Take note that you will need to add the library to your include paths.
 
-All declarations are made in the namespace `kgr`. Additionnaly, the namespace `kgr` contains the namespace `detail`, which itself contains implementation details.
+All declarations are made in the namespace `kgr`. Additionally, the namespace `kgr` contains the namespace `detail`, which itself contains implementation details.
 Note that the `detail` namespace is not considered as a part of the API and its content might be subject to changes.
 
 ### Services, Definitions, Oh My!
 
-In this documentation, many classes will be refered as services or service definitions.
+In this documentation, many classes will be referred as services or service definitions.
 
 _Services_ are classes that are either injected by the container or have other classes as dependencies.
 
@@ -72,9 +72,9 @@ Note that [some features](section07_autocall.md) of this library may be easier t
 
 In between minor versions, we make our best to remain source compatible and not break any code using kangaru. Our continuous integration tests is our primary mean to guarantee this statement. If a breaking change is introduced in a non-breaking release, please submit an issue and we'll discuss how we can solve this.
 
-Note that we don't recommend forward declaring types from the `kgr` namespace, as we reserve the right to change a type to an alias in minor vesions. Since forward declaring an alias is not a thing in C++, this may create some incompatibility. Some details in the build system might also change between minor version, but we will not break documented usage of the kangaru cmake package or it's generation. 
+Note that we don't recommend forward declaring types from the `kgr` namespace, as we reserve the right to change a type to an alias in minor versions. Since forward declaring an alias is not a thing in C++, this may create some incompatibility. Some details in the build system might also change between minor version, but we will not break documented usage of the kangaru cmake package or it's generation. 
 
-In between major versions, we still try our best to make the transition to future version as smooth as possible. To do this, we provide a migration guide to help developpers and we make our best to not break basic usage of the library.
+In between major versions, we still try our best to make the transition to future version as smooth as possible. To do this, we provide a migration guide to help developers and we make our best to not break basic usage of the library.
 
 Breaking versions might bump compiler requirements and might also bump language version requirement. Note that when this happen, we are willing to offer support for older versions if there's a demand for it.
 

@@ -7,7 +7,7 @@ and as soon as something goes wrong with user defined types, you'll get a huge m
 With kangaru we decided to emulate concepts to provide better error messages the users of our library.
 
 Most of kangaru function are guarded by a constraints. It will recursively detect errors in constructors, dependencies, definitions, and others.
-For GCC 7 and older, we used a small trick with templated constructors and default values that allows us to call a static assertation when a deleted function is invoked.
+For GCC 7 and older, we used a small trick with templated constructors and default values that allows us to call a static assertion when a deleted function is invoked.
 
 ## Explicit debugging
 
@@ -37,6 +37,6 @@ This is the compiler output (Clang):
 As you can see, the compiler is effectively stating that the service is not constructible given passed arguments.
 
 If `kgr::debug::service<T>(Args...)` Detects no error, it will output `"No known error detected."` as a static assert.
-If you have found a case whene it does not compile and yet no error is detected, just let me know and report a bug in our issue tracker.
+If you have found a case when it does not compile and yet no error is detected, just let me know and report a bug in our issue tracker.
 
 [Next chapter: Generic Services](section12_generic.md)

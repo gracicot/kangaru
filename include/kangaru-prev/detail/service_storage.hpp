@@ -86,7 +86,7 @@ public:
 	
 private:
 	void* _service;
-	aligned_storage_t<sizeof(function_pointer), alignof(function_pointer)> forward_function;
+	alignas(alignof(function_pointer)) unsigned char forward_function[sizeof(function_pointer)];
 };
 
 /*

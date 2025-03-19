@@ -2,7 +2,7 @@
 #include <iostream>
 
 /**
- * This example refect snippets of code found in the documentation section 3: Polymorphic Services
+ * This example reflects snippets of code found in the documentation section 3: Polymorphic Services
  * It explains how to override services and use them polymorphically.
  */
 

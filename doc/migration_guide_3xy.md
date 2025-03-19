@@ -192,8 +192,8 @@ Note that this change is not needed when using the `kangaru/compatibility.hpp` h
 ## Instance
 
 The Instance functionality has been removed. Now, or has been replaced by `kgr::container::emplace` and `kgr::container::replace`.
-Thier functionaly is much more clearly defined and prevent misusing the container.
+Their functionality is much more clearly defined and is more difficult to accidentally misuse the container.
 
-In `v4.0.0`, you can no longer call the constructor directly, but you can send parameters to the single services construct function using `emplace` or `replace`.
+In `v4.0.0`, you can no longer call the constructor directly but you can send parameters to the single services construct function using `emplace` or `replace`.
 
-If there's something that cannot be possibly done with only `emplace` or `replace`, please open an issue and we'll discuss a solution for your case.
+If there's something that cannot be possibly done with only `emplace` or `replace` please open an issue and we'll discuss a solution for your case.

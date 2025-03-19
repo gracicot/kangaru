@@ -343,7 +343,7 @@ protected:
 		return *static_cast<type const*>(static_cast<void const*>(&_data));
 	}
 	
-	aligned_storage_t<sizeof(type), alignof(type)> _data;
+	alignas(alignof(type)) unsigned char _data[sizeof(type)];
 };
 
 } // namespace detail

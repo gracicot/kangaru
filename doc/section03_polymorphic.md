@@ -11,7 +11,7 @@ In this section, we will see how to override a single service to make the contai
 When querying for a service, the container will check in his collection of definitions.
 After that, it simply ask the definition to extract the service from it to return it to the caller.
 
-For a service that can be overriden, the container will do the same process, but the function that extract the data from the definition polymorphically using function pointers.
+For a service that can be overridden, the container will do the same process, but the function that extract the data from the definition polymorphically using function pointers.
 That way, when we save a derived service into the container, it will also save itself as a base. So when searching for the base, it will find derived instance.
 
 ## A Hierarchy of Cameras
@@ -37,10 +37,10 @@ struct OrthogonalCamera : Camera {
     }
 };
 ```
-Now, we need to reflect that in kangaru service definitions. By default, the container won't assume you need polymorphic behaviour.
+Now, we need to reflect that in kangaru service definitions. By default, the container won't assume you need polymorphic behavior.
 The container will simply get the service you asked for and get the data inside. This allows the container to optimize querying services.
 
-To make the container aware of the polymorphic setting, you must tag the definition as polymorphic, as well as marking derived as overriders:
+To make the container aware of the polymorphic setting, you must tag the definition as polymorphic, as well as marking derived as overrides:
 
 ```c++
 struct CameraService : kgr::single_service<Camera>, kgr::polymorphic {};
@@ -54,7 +54,7 @@ With these tags on, the container knows to treat the camera as polymorphic, and 
 ## Using Services Polymorphically
 
 Services can be used polymorphically when instances are involved.
-The mechanism is this: when the instance of an overrider is created, it will register itself as it's parent service.
+The mechanism is this: when the instance of an override is created, it will register itself as it's parent service.
 
 Here's one example of polymorphic usage and the container:
 
@@ -122,7 +122,7 @@ Any attempt to override that service will result in a compile time error.
 
 ## Abstract Service
 
-If you want to make a service definition for an abstract type, or simply make a service only instanciable using derived services, you may inherit from `kgr::abstract_service`.
+If you want to make a service definition for an abstract type, or simply make a service only instantiable using derived services, you may inherit from `kgr::abstract_service`.
 
 Let's say we don't want a default camera anymore, and instead want `Camera` to be an interface:
 

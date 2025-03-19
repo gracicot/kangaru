@@ -414,7 +414,7 @@ private:
 		enable_if<detail::is_single<T>> = 0,
 		enable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0>
 	auto make_contained_service(detail::meta_list<Overrides...>, Args&&... args) -> detail::single_insertion_result_t<T> {
-		return source().emplace<T, Overrides...>(detail::in_place, std::forward<Args>(args)...);
+		return source().emplace<T, Overrides...>(std::false_type{}, detail::in_place, std::forward<Args>(args)...);
 	}
 	
 	/*
@@ -439,10 +439,8 @@ private:
 		disable_if<detail::is_someway_constructible<T, in_place_t, Args...>> = 0,
 		enable_if<detail::is_emplaceable<T, Args...>> = 0>
 	auto make_contained_service(detail::meta_list<Overrides...>, Args&&... args) -> detail::single_insertion_result_t<T> {
-		auto storage = source().emplace<T, Overrides...>();
+		auto storage = source().emplace<T, Overrides...>(std::true_type{}, std::forward<Args>(args)...);
 		auto& service = static_unwrap_single<T>(storage);
-		
-		service.emplace(std::forward<Args>(args)...);
 		
 		return storage;
 	}

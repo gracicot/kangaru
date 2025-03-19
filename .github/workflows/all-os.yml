@@ -36,12 +36,18 @@ jobs:
           configurepresetcmdstring: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
 
   linux-clang:
-    name: Clang ${{ matrix.clang }} Linux
+    name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         clang: [16, 17, 18, 19]
+        cxx: [20, 23]
+        exclude:
+          - clang: 16
+            cxx23: 23
+          - clang: 17
+            cxx23: 23
 
     steps:
       - uses: actions/checkout@v4
@@ -58,15 +64,19 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
 
   linux-gcc:
-    name: GCC ${{ matrix.gcc }} Linux
+    name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         gcc: [11, 12, 13, 14]
+        cxx: [20, 23]
+        exclude:
+          - gcc: 11
+            cxx23: 23
 
     steps:
       - uses: actions/checkout@v4
@@ -87,16 +97,17 @@ jobs:
 
   windows-msvc:
     runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows
+    name: MSVC ${{ matrix.msvc-version }} Windows C++${{ matrix.cxx }}
     strategy:
       fail-fast: false
       matrix:
         os: [windows-2022]
         arch: [x64]
-    
+        cxx: [20, 23]
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: egor-tensin/vs-shell@v2
         with:
           arch: ${{ matrix.arch }}
@@ -121,5 +132,5 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
 

@@ -45,9 +45,9 @@ jobs:
         cxx: [20, 23]
         exclude:
           - clang: 16
-            cxx23: 23
+            cxx: 23
           - clang: 17
-            cxx23: 23
+            cxx: 23
 
     steps:
       - uses: actions/checkout@v4

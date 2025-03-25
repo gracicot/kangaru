@@ -123,7 +123,35 @@ namespace kangaru {
 		    wrapping_source<std::remove_reference_t<Source>>
 		and source_of<forwarded_wrapped_source_t<Source>, T>;
 	
-	
+	template<injectable T, source Source>
+		requires (
+			   source_of<Source&, T>
+			or source_of<Source const&, T>
+			or source_of<Source&&, T>
+			or source_of<Source const&&, T>
+		)
+	struct provide_using {
+		explicit constexpr provide_using(Source source) noexcept : source{std::move(source)} {}
+		
+		constexpr auto operator()() & -> T {
+			return kangaru::provide<T>(source);
+		}
+		
+		constexpr auto operator()() const& -> T {
+			return kangaru::provide<T>(source);
+		}
+		
+		constexpr auto operator()() && -> T {
+			return kangaru::provide<T>(std::move(source));
+		}
+		
+		constexpr auto operator()() const&& -> T {
+			return kangaru::provide<T>(std::move(source));
+		}
+		
+	private:
+		Source source;
+	};
 } // namespace kangaru
 
 #include "undef.hpp"

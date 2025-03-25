@@ -13,5 +13,6 @@
 #include "detail/cache.hpp"
 #include "detail/cache_types.hpp"
 #include "detail/constructor.hpp"
+#include "detail/optional.hpp"
 
 #endif // KANGARU5_KANGARU_HPP

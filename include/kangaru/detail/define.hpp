@@ -23,7 +23,6 @@
 #endif
 
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
-#define KANGARU5_CONSTRUCTOR_T(...) decltype(::kangaru::constructor<__VA_ARGS__>())
 #define KANGARU5_NO_ADL(...) (__VA_ARGS__)
 
 #if KANGARU5_IS_CLANG() == 1
@@ -51,22 +50,7 @@
 #endif
 
 #if KANGARU5_IS_CLANG() == 1
-	#if __clang_major__ < 14
-		#define KANGARU5_CONSTEVAL_SUPPORTED() 0
-	#else
-		#define KANGARU5_CONSTEVAL_SUPPORTED() 1
-	#endif
-#else
-	#define KANGARU5_CONSTEVAL_SUPPORTED() 1
-#endif
-
-#if KANGARU5_CONSTEVAL_SUPPORTED() == 1 && KANGARU5_IS_MSVC() == 1
-	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 0
-#else
-	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() KANGARU5_CONSTEVAL_SUPPORTED()
-#endif
-
-#if KANGARU5_IS_CLANG() == 1
+	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 1
 	#if __clang_major__ >= 17
 		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 1
 	#else
@@ -78,6 +62,7 @@
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 0
 	#endif
 #elif KANGARU5_IS_GNU() == 1
+	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 1
 	#if __GNUC__ >= 14
 		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 1
 	#else
@@ -90,6 +75,7 @@
 	#endif
 #elif KANGARU5_IS_MSVC() == 1
 	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 0
+	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 0
 	#if _MSC_VER >= 1943
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 1
 	#else
@@ -109,12 +95,6 @@
 	#define KANGARU5_CONSTEVAL_PLACEHOLDER consteval
 #else
 	#define KANGARU5_CONSTEVAL_PLACEHOLDER constexpr
-#endif
-
-#if KANGARU5_CONSTEVAL_SUPPORTED() == 1
-	#define KANGARU5_CONSTEVAL consteval
-#else
-	#define KANGARU5_CONSTEVAL constexpr
 #endif
 
 #define KANGARU5_UNSAFE /* left undefined */

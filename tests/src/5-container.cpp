@@ -1,4 +1,3 @@
-#include "kangaru/detail/tag.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
@@ -28,7 +27,7 @@ struct service_c {
 };
 
 TEST_CASE("Container act a bit like kangaru 4", "[container]") {
-	auto container = kangaru::dynamic_container{kangaru::none_source{}};
+	auto container = kangaru::container{kangaru::none_source{}};
 
 	auto& a = container.provide<service_a&>();
 	auto& b = container.provide<service_b&>();
@@ -53,7 +52,7 @@ struct service_aa : service_a {
 };
 
 TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {
-	auto container = kangaru::polymorphic_dynamic_container{kangaru::none_source{}};
+	auto container = kangaru::polymorphic_container{kangaru::none_source{}};
 
 	auto& aa = container.provide<service_aa&>();
 	aa.i = 9;

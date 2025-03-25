@@ -542,7 +542,7 @@ namespace kangaru {
 	
 	namespace detail::deducer {
 		template<typename T, typename F, std::size_t... before, std::size_t... after>
-		inline KANGARU5_CONSTEVAL auto callable_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
+		inline consteval auto callable_with_nth_parameter_being_expand(std::index_sequence<before...>, std::index_sequence<after...>) -> bool {
 			return callable<
 				F,
 				detail::utility::expand<placeholder_deducer, before>...,
@@ -563,7 +563,7 @@ namespace kangaru {
 		};
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		inline KANGARU5_CONSTEVAL auto reference_kind_for_nth_parameter() -> reference_kind {
+		inline consteval auto reference_kind_for_nth_parameter() -> reference_kind {
 			if constexpr (is_nth_parameter_prvalue<F, nth, max>) {
 				return reference_kind::none;
 			} else {

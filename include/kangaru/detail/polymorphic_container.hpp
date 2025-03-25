@@ -29,8 +29,8 @@ namespace kangaru {
 	}
 	
 	template<source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
-	struct polymorphic_dynamic_container {
-		explicit constexpr polymorphic_dynamic_container(Source source) noexcept :
+	struct polymorphic_container {
+		explicit constexpr polymorphic_container(Source source) noexcept :
 			source{
 				make_source_with_cache_asymmetric<detail::polymorphic_container::polymorphic_to_concrete_t>(
 					make_source_with_dereference(
@@ -48,8 +48,8 @@ namespace kangaru {
 				)
 			} {}
 		
-		constexpr polymorphic_dynamic_container() noexcept requires std::default_initializable<Source> :
-			polymorphic_dynamic_container{Source{}} {}
+		constexpr polymorphic_container() noexcept requires std::default_initializable<Source> :
+			polymorphic_container{Source{}} {}
 		
 	private:
 		with_cache_asymmetric<
@@ -90,14 +90,14 @@ namespace kangaru {
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<polymorphic_dynamic_container&>, T> {
+		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<polymorphic_container&>, T> {
 			return kangaru::provide<T>(
 				rebound_source_tree(*this, source)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<polymorphic_dynamic_container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<polymorphic_container&&>, T> {
 			return kangaru::provide<T>(
 				rebound_source_tree(std::move(*this), std::move(source))
 			);

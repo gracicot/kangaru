@@ -17,8 +17,8 @@ namespace kangaru {
 	using cached_pointer_to_injectable_reference_source = typename cached_pointer_to_source<injectable_reference_source>::template source<T>;
 	
 	template<source Source, cache_map Cache = std::unordered_map<std::size_t, void*>, heap_storage Storage = default_heap_storage>
-	struct dynamic_container {
-		explicit constexpr dynamic_container(Source source) noexcept :
+	struct container {
+		explicit constexpr container(Source source) noexcept :
 			source{
 				make_source_with_cache(
 					make_source_with_heap_storage(
@@ -30,8 +30,8 @@ namespace kangaru {
 				)
 			} {}
 		
-		constexpr dynamic_container() noexcept requires std::default_initializable<Source> :
-			dynamic_container{Source{}} {}
+		constexpr container() noexcept requires std::default_initializable<Source> :
+			container{Source{}} {}
 		
 	private:
 		with_cache<
@@ -65,14 +65,14 @@ namespace kangaru {
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<dynamic_container&>, T> {
+		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<container&>, T> {
 			return kangaru::provide<T>(
 				rebound_source_tree(*this, source)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<dynamic_container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<container&&>, T> {
 			return kangaru::provide<T>(
 				rebound_source_tree(std::move(*this), std::move(source))
 			);

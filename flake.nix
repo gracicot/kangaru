@@ -21,9 +21,9 @@
           mkShell = pkgs.mkShell.override { inherit stdenv; };
         in mkShell {
             nativeBuildInputs = with pkgs; [
-              llvmPackages_19.llvm
-              llvmPackages_19.clang-tools
-              llvmPackages_19.lldb
+              llvmPackages_20.llvm
+              llvmPackages_20.clang-tools
+              llvmPackages_20.lldb
             ];
             buildInputs = with pkgs; [
               cmake
@@ -59,7 +59,7 @@
         let
           pkgs = nixpkgsFor.${system};
         in {
-          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
+          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };
           ci-clang13 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_13.libcxxStdenv; };
           ci-clang14 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_14.libcxxStdenv; };
           ci-clang15 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_15.libcxxStdenv; };
@@ -67,6 +67,7 @@
           ci-clang17 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_17.stdenv; };
           ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; };
           ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
+          ci-clang20 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };
           ci-gcc11 = makeShell { inherit pkgs; stdenv = pkgs.gcc11Stdenv; };
           ci-gcc12 = makeShell { inherit pkgs; stdenv = pkgs.gcc12Stdenv; };
           ci-gcc13 = makeShell { inherit pkgs; stdenv = pkgs.gcc13Stdenv; };

@@ -35,7 +35,7 @@ namespace kangaru {
 	struct optional<T> {
 		constexpr optional() = default;
 		
-		constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional::empty{}} {}
+		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional::empty{}} {}
 		
 		constexpr optional(optional const& other)
 			requires(not std::is_trivially_copy_constructible_v<T>) : engaged{other.engaged}
@@ -395,7 +395,7 @@ namespace kangaru {
 				and std::convertible_to<U*, T*>
 				and not detail::utility::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
-		constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
+		explicit(false) constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
 		
 		template<object U>
 			requires(
@@ -403,12 +403,12 @@ namespace kangaru {
 				and std::convertible_to<U*, T*>
 				and not detail::utility::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
-		constexpr optional(U&& ref) noexcept : pointer{std::addressof(ref)} {}
+		explicit(false) constexpr optional(U&& ref) noexcept : pointer{std::addressof(ref)} {}
 		
 		template<reference U> requires std::convertible_to<U*, T*>
 		constexpr optional(optional<U> const& opt) noexcept : pointer{opt ? std::addressof(*opt) : nullptr} {}
 		
-		constexpr optional(nullopt_t) noexcept : pointer{nullptr} {}
+		explicit(false) constexpr optional(nullopt_t) noexcept : pointer{nullptr} {}
 		
 		constexpr auto operator=(T ref) noexcept -> optional& {
 			pointer = std::addressof(ref);

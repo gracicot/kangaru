@@ -187,11 +187,11 @@ namespace kangaru {
 			if constexpr (source_of<Source, T const&>) {
 				return kangaru::provide<T const&>(static_cast<Source&&>(*source));
 			} else if constexpr (source_of<Source, T&>) {
-				return std::as_const(provide<T&>(static_cast<Source&&>(*source)));
+				return std::as_const(kangaru::provide<T&>(static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T const&&>) {
-				return static_cast<T const&>(provide<T const&&>(static_cast<Source&&>(*source)));
+				return static_cast<T const&>(kangaru::provide<T const&&>(static_cast<Source&&>(*source)));
 			} else if constexpr (source_of<Source, T&&>) {
-				return static_cast<T const&>(provide<T&&>(static_cast<Source&&>(*source)));
+				return static_cast<T const&>(kangaru::provide<T&&>(static_cast<Source&&>(*source)));
 			} else {
 				static_assert(not std::same_as<T, T>, "exhaustive");
 			}

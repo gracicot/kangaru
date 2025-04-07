@@ -8,6 +8,7 @@
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
 #include "tag.hpp"
+#include "source_helper.hpp"
 
 #include <tuple>
 #include <concepts>
@@ -254,11 +255,11 @@ namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<with_alternative> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_alternative<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Alternative>>> {
-			return with_alternative<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Alternative>>>{
-				KANGARU5_FWD(new_source),
-				KANGARU5_NO_ADL(ref)(original.alternative)
+		template<forwarded<with_alternative> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_alternative<rebind_wrapped_source_result_t<Original, NewLeaf>, source_fwd_ref_t<detail::utility::forward_like_t<Original, Alternative>>> {
+			return with_alternative<rebind_wrapped_source_result_t<Original, NewLeaf>, source_fwd_ref_t<detail::utility::forward_like_t<Original, Alternative>>>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative))
 			};
 		}
 		
@@ -266,9 +267,9 @@ namespace kangaru {
 		Alternative alternative;
 	};
 	
-	template<forwarded_source Wrapped, forwarded_source Concat>
-	inline constexpr auto make_source_with_alternative(Wrapped&& wrapped, Concat&& concat) {
-		return with_alternative<std::decay_t<Wrapped>, std::decay_t<Concat>>{KANGARU5_FWD(wrapped), KANGARU5_FWD(concat)};
+	template<forwarded_source Wrapped, forwarded_source Alternative>
+	inline constexpr auto make_source_with_alternative(Wrapped&& wrapped, Alternative&& alternative) {
+		return with_alternative<std::decay_t<Wrapped>, std::decay_t<Alternative>>{KANGARU5_FWD(wrapped), KANGARU5_FWD(alternative)};
 	}
 	
 	template<wrapping_source Source, injectable Filtered>
@@ -283,13 +284,6 @@ namespace kangaru {
 		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> Filtered {
 			return kangaru::provide<Filtered>(KANGARU5_FWD(source).source.source);
-		}
-		
-		template<forwarded<with_filter_passthrough> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_filter_passthrough<std::decay_t<NewSource>, Filtered> {
-			return with_filter_passthrough<std::decay_t<NewSource>, Filtered>{
-				KANGARU5_FWD(new_source),
-			};
 		}
 		
 		Source source;
@@ -386,14 +380,6 @@ namespace kangaru {
 	template<source Source, injectable From> requires source_of<Source, From>
 	struct with_cast_from {
 		Source source;
-		
-		template<forwarded<with_cast_from> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cast_from<std::decay_t<NewSource>, From> {
-			return with_cast_from<std::decay_t<NewSource>, From>{
-				KANGARU5_FWD(new_source),
-				original.cast,
-			};
-		}
 		
 		template<injectable T, forwarded<with_cast_from> Self> requires(wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {

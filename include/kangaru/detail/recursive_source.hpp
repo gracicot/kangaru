@@ -6,6 +6,7 @@
 #include "injector.hpp"
 #include "tag.hpp"
 #include "source.hpp"
+#include "source_types.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_helper.hpp"
 
@@ -230,13 +231,16 @@ namespace kangaru {
 			if constexpr (reference_wrapper<Source>) {
 				return std::as_const(source.construction).template operator()<T>(KANGARU5_FWD(source).source);
 			} else {
-				return std::as_const(source.construction).template operator()<T>(kangaru::fwd_ref(KANGARU5_FWD(source).source));
+				return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 			}
 		}
 		
-		template<forwarded<with_construction> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_construction<std::decay_t<NewSource>, Construction> {
-			return with_construction<std::decay_t<NewSource>, Construction>{KANGARU5_FWD(new_source), original.construction};
+		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction<rebind_wrapped_source_result_t<Original, NewLeaf>, Construction> {
+			return with_construction<rebind_wrapped_source_result_t<Original, NewLeaf>, Construction>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+				original.construction
+			};
 		}
 		
 		Source source;
@@ -284,37 +288,53 @@ namespace kangaru {
 		// By wrapping source_of in a type, we allow that type to be incomplete!
 		template<kangaru::source Source, kangaru::injectable T>
 		struct source_of_sfinae_wrapper : std::bool_constant<source_of<Source, T>> {};
+		
+		template<kangaru::source Alternative>
+		struct leaf_as_alternative {
+			Alternative alternative;
+			
+			constexpr auto operator()(forwarded_source auto&& leaf) const noexcept {
+				return KANGARU5_NO_ADL(make_source_with_alternative)(
+					KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(leaf)),
+					alternative
+				);
+			}
+		};
 	}
 	
-	template<source Source>
+	template<rebindable_source Source>
 	struct with_recursion {
-	private:
-		static constexpr auto rebound_self(auto&& self) requires wrapping_source<std::remove_reference_t<decltype(self)>> {
-			auto const source_ref = KANGARU5_NO_ADL(ref)(KANGARU5_NO_ADL(maybe_unwrap)(self.source));
-			return with_recursion<decltype(source_ref)>{source_ref};
-		}
-		
-		template<forwarded<with_recursion> Self>
-		using rebound_source_t = decltype(
-			detail::source_helper::rebind_source_tree(
-				rebound_self(std::declval<Self&>()),
-				std::declval<Self&>().source
-			)
-		);
-		
-	public:
-		explicit constexpr with_recursion(Source source) noexcept : source{std::move(source)} {}
-		
 		Source source;
 		
 		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T requires(
-			detail::recursive_source::source_of_sfinae_wrapper<rebound_source_t<Self>, T>::value
+			// We uses the sfinae wrapper for source_of
+			// This forces the compiler to have a third state:
+			//   requires(true) --> goes in
+			//   requires(false) --> tries another function
+			//   requires(<substitution-error>) --> tries another function
+			//
+			// The first time the compiler encounter provide, it check source_of
+			// Then during the evaluation of source_of, it will encounter provide again
+			// But instead of evaluating source_of, it will see source_of as an incomplete type
+			// Thus skipping that function and try the next one and detect that one is callable
+			// The evaluation of source_of will then yeild true, but
+			// also yield false if it would result in infinite recursion
+			// Yes, this requires expression will yield different result depending on the metastate of the compiler!
+			detail::recursive_source::source_of_sfinae_wrapper<
+				rebind_wrapped_source_result_t<
+					Self&,
+					detail::recursive_source::leaf_as_alternative<with_recursion<source_ref_t<wrapped_source_t<Self>>>>
+				>,
+				T
+			>::value
 		) {
 			return kangaru::provide<T>(
-				detail::source_helper::rebind_source_tree(
-					rebound_self(source),
-					source.source
+				kangaru::rebind(
+					source,
+					detail::recursive_source::leaf_as_alternative<with_recursion<source_ref_t<wrapped_source_t<Self>>>>{
+						KANGARU5_NO_ADL(ref)(source.source)
+					}
 				)
 			);
 		}

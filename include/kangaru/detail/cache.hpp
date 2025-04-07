@@ -6,6 +6,7 @@
 #include "ctti.hpp"
 #include "concepts.hpp"
 #include "cache_types.hpp"
+#include "source_helper.hpp"
 
 #include <type_traits>
 #include <concepts>
@@ -132,10 +133,10 @@ namespace kangaru {
 			std::ranges::swap(cache, other.cache);
 		}
 		
-		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache_asymmetric<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>, CacheFrom> {
-			return with_cache_asymmetric<std::decay_t<NewSource>, source_reference_wrapper<unwrapped_cache_type>, CacheFrom>{
-				KANGARU5_FWD(new_source),
+		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<rebind_wrapped_source_result_t<Original, NewLeaf>, source_ref_t<Cache>, CacheFrom> {
+			return with_cache_asymmetric<rebind_wrapped_source_result_t<Original, NewLeaf>, source_ref_t<Cache>, CacheFrom>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.cache)
 			};
 		}
@@ -204,9 +205,13 @@ namespace kangaru {
 		constexpr with_cache(Source source, Cache cache) noexcept :
 			parent_t{std::move(source), std::move(cache)} {}
 		
-		template<forwarded<with_cache> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Cache>>> {
-			return with_cache<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Cache>>>{parent_t::rebind(static_cast<detail::utility::forward_like_t<Original, parent_t>&&>(original), KANGARU5_FWD(new_source))};
+		template<forwarded<with_cache> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
+			-> with_cache<rebind_wrapped_source_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, source_ref_t<Cache>>
+		{
+			return with_cache<rebind_wrapped_source_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, source_ref_t<Cache>>{
+				parent_t::rebind(static_cast<detail::utility::forward_like_t<Original, parent_t>&&>(original), KANGARU5_FWD(new_leaf))
+			};
 		}
 		
 		template<object T, forwarded<with_cache> Self>
@@ -252,13 +257,6 @@ namespace kangaru {
 			} else {
 				return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
 			}
-		}
-		
-		template<forwarded<with_cache_using_source> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_cache_using_source<std::decay_t<NewSource>, SourceFor> {
-			return with_cache_using_source<std::decay_t<NewSource>, SourceFor>{
-				KANGARU5_FWD(new_source),
-			};
 		}
 		
 		Source source;

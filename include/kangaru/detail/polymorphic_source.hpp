@@ -148,14 +148,6 @@ namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<with_polymorphic_cast> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_polymorphic_cast<std::decay_t<NewSource>, Primary> {
-			return with_polymorphic_cast<std::decay_t<NewSource>, Primary>{
-				KANGARU5_FWD(new_source),
-				original.cast,
-			};
-		}
-		
 		explicit constexpr operator type_erased_source_reference() noexcept {
 			return type_erased_source_reference{polymorphic_source<Primary>{source}};
 		}
@@ -171,9 +163,21 @@ namespace kangaru {
 		}
 	};
 	
+	namespace detail::polymorphic_source {
+		template<typename>
+		struct override_polymorphic {};
+		
+		template<typename... Types>
+		struct override_polymorphic<std::tuple<Types&...>> {
+			 using type = std::tuple<kangaru::polymorphic_source<Types&>...>;
+		};
+	}
+	
 	// TODO: Check if this is at the right place
 	template<source Source, injectable Primary>
-	struct overrides_types_in_cache<with_polymorphic_cast<Source, Primary>> : overrides_types_in_cache<Source> {};
+	struct overrides_types_in_cache<with_polymorphic_cast<Source, Primary>> :
+		detail::polymorphic_source::override_polymorphic<overrides_types_in_cache_t<Primary>> {
+	};
 }
 
 #include "undef.hpp"

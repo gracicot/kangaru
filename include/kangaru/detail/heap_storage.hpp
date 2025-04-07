@@ -4,6 +4,7 @@
 #include "source_types.hpp"
 #include "source.hpp"
 #include "allocator.hpp"
+#include "source_helper.hpp"
 
 #include <concepts>
 #include <vector>
@@ -184,9 +185,9 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_source) -> with_heap_storage<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Storage>>> {
-			return with_heap_storage<std::decay_t<NewSource>, source_reference_wrapper<maybe_wrapped_t<Storage>>>{
-				KANGARU5_FWD(new_source),
+		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<rebind_wrapped_source_result_t<Original, NewSource>, source_ref_t<Storage>> {
+			return with_heap_storage<rebind_wrapped_source_result_t<Original, NewSource>, source_ref_t<Storage>>{
+				kangaru::rebind(KANGARU5_FWD(original).source, new_leaf),
 				KANGARU5_NO_ADL(ref)(original.storage)
 			};
 		}

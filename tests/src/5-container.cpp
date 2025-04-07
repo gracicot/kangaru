@@ -28,7 +28,7 @@ struct service_c {
 
 TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 	auto container = kangaru::container{kangaru::none_source{}};
-
+	
 	auto& a = container.provide<service_a&>();
 	auto& b = container.provide<service_b&>();
 	CHECK(std::addressof(a) == std::addressof(b.a));
@@ -47,27 +47,26 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 
 struct service_aa : service_a {
 	// TODO: Better syntax for tags
-	friend auto tag(kangaru::tag_for<kangaru::injectable_reference_source<service_aa>>) -> kangaru::tags<kangaru::overrides<kangaru::polymorphic_source<service_a&>>>;
-	friend auto tag(kangaru::tag_for<service_aa&>) -> kangaru::tags<kangaru::cached>;
+	friend auto tag(kangaru::tag_for<service_aa&>) -> kangaru::tags<kangaru::cached, kangaru::overrides<service_a&>>;
 };
 
 TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {
 	auto container = kangaru::polymorphic_container{kangaru::none_source{}};
-
+	
 	auto& aa = container.provide<service_aa&>();
 	aa.i = 9;
-
+	
 	auto& a = container.provide<service_a&>();
 	CHECK(a.i == 9);
 	auto& b = container.provide<service_b&>();
 	CHECK(std::addressof(a) == std::addressof(b.a));
-
+	
 	auto& c = container.provide<service_c&>();
-
+	
 	CHECK(std::addressof(c.services.sa) == std::addressof(a));
-
+	
 	auto injector = kangaru::make_spread_injector(kangaru::ref(container));
-
+	
 	injector([](service_a& a, service_c& c) {
 		CHECK(std::addressof(c.services.sa) == std::addressof(a));
 		CHECK(std::addressof(c.services.sb.a) == std::addressof(a));

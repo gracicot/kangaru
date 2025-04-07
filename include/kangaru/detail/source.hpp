@@ -105,12 +105,15 @@ namespace kangaru {
 		};
 	
 	template<typename Source> requires weak_wrapping_source<std::remove_reference_t<Source>>
-	using wrapped_source_t = std::remove_reference_t<decltype(std::declval<Source&&>().source)>;
+	using wrapped_source_t = std::remove_reference_t<decltype((std::declval<Source&&>().source))>;
 	
 	template<typename Source>
 	concept wrapping_source =
 		    weak_wrapping_source<Source>
 		and source<wrapped_source_t<Source>>;
+	
+	template<typename Source>
+	concept forwarded_wrapping_source = wrapping_source<std::remove_reference_t<Source>>;
 	
 	struct none_source {};
 	static_assert(source<none_source>);

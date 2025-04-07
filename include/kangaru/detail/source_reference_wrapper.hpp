@@ -33,14 +33,25 @@ namespace kangaru {
 		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
 		
 		template<injectable T>
-		constexpr auto provide() const& -> T
+		constexpr auto provide() const&& -> T
 		requires source_of<Source, T> {
 			return kangaru::provide<T>(detail::utility::forward_like<Source>(*source));
 		}
 		
+		template<injectable T>
+		constexpr auto provide() const& -> T
+		requires source_of<Source, T> {
+			return kangaru::provide<T>(*source);
+		}
+		
 		[[nodiscard]]
-		constexpr auto unwrap() const& noexcept -> Source {
+		constexpr auto unwrap() const&& noexcept -> Source {
 			return detail::utility::forward_like<Source>(*source);
+		}
+		
+		[[nodiscard]]
+		constexpr auto unwrap() const& noexcept -> Source& {
+			return *source;
 		}
 		
 	private:
@@ -72,6 +83,9 @@ namespace kangaru {
 	template<typename MaybeWrapper>
 	using maybe_wrapped_t = std::remove_reference_t<decltype(KANGARU5_NO_ADL(maybe_unwrap)(std::declval<MaybeWrapper>()))>;
 	
+	template<typename MaybeWrapper>
+	using forwarded_maybe_wrapped_t = decltype(KANGARU5_NO_ADL(maybe_unwrap)(std::declval<MaybeWrapper>()));
+	
 	template<source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper<Source> {
 		return source_reference_wrapper<Source>{source};
@@ -82,7 +96,7 @@ namespace kangaru {
 		return source;
 	}
 	
-	template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<forwarded_source Source> requires (not forwarded_reference_wrapper<Source>)
 	inline constexpr auto fwd_ref(Source&& source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
 	}
@@ -91,6 +105,12 @@ namespace kangaru {
 	inline constexpr auto fwd_ref(source_forwarding_reference_wrapper<Source> source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source;
 	}
+	
+	template<source Source>
+	using source_ref_t = decltype(KANGARU5_NO_ADL(ref)(std::declval<Source&>()));
+	
+	template<source_ref Source>
+	using source_fwd_ref_t = decltype(KANGARU5_NO_ADL(fwd_ref)(std::declval<Source>()));
 } // namespace kangaru
 
 #include "undef.hpp"

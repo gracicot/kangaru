@@ -20,7 +20,7 @@ namespace kangaru {
 		struct polymorphic_to_concrete {};
 		
 		template<injectable T>
-		struct polymorphic_to_concrete<polymorphic_source<T&>> {
+		struct polymorphic_to_concrete<kangaru::polymorphic_source<T&>> {
 			using type = with_polymorphic_cast<with_cast_from<injectable_reference_source<T>, T&>, T&>&;
 		};
 		
@@ -28,10 +28,10 @@ namespace kangaru {
 		using polymorphic_to_concrete_t = typename polymorphic_to_concrete<T>::type;
 	}
 	
-	template<source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
+	template<rebindable_source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
 	struct polymorphic_container {
 		explicit constexpr polymorphic_container(Source source) noexcept :
-			source{
+			state{
 				make_source_with_cache_asymmetric<detail::polymorphic_container::polymorphic_to_concrete_t>(
 					make_source_with_dereference(
 						make_source_with_heap_storage(
@@ -65,10 +65,10 @@ namespace kangaru {
 			>,
 			Cache,
 			detail::polymorphic_container::polymorphic_to_concrete_t
-		> source;
+		> state;
 		
 		template<typename Self, typename S>
-		static constexpr auto rebound_source_tree(Self&& self, S&& source) {
+		static constexpr auto container_source(Self&& self, S&& source) {
 			return with_recursion{
 				make_source_with_exhaustive_construction(
 					with_alternative{
@@ -84,22 +84,22 @@ namespace kangaru {
 		}
 		
 		template<typename Self>
-		using rebound_source_tree_t = decltype(
-			rebound_source_tree(std::declval<Self>(), std::declval<Self>().source)
+		using container_source_tree_t = decltype(
+			container_source(std::declval<Self>(), std::declval<Self>().state)
 		);
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<polymorphic_container&>, T> {
+		constexpr auto provide() & -> T requires source_of<container_source_tree_t<polymorphic_container&>, T> {
 			return kangaru::provide<T>(
-				rebound_source_tree(*this, source)
+				container_source(*this, state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<polymorphic_container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<container_source_tree_t<polymorphic_container&&>, T> {
 			return kangaru::provide<T>(
-				rebound_source_tree(std::move(*this), std::move(source))
+				container_source(std::move(*this), std::move(state))
 			);
 		}
 	};

@@ -14,12 +14,17 @@
 
 namespace kangaru {
 	template<injectable T>
-	using cached_pointer_to_injectable_reference_source = typename cached_pointer_to_source<injectable_reference_source>::template source<T>;
+	using cached_pointer_to_injectable_reference_source =
+		typename cached_pointer_to_source<injectable_reference_source>::template source<T>;
 	
-	template<source Source, cache_map Cache = std::unordered_map<std::size_t, void*>, heap_storage Storage = default_heap_storage>
+	template<
+		rebindable_source Source,
+		cache_map Cache = std::unordered_map<std::size_t, void*>,
+		heap_storage Storage = default_heap_storage
+	>
 	struct container {
 		explicit constexpr container(Source source) noexcept :
-			source{
+			state{
 				make_source_with_cache(
 					make_source_with_heap_storage(
 						make_source_with_exhaustive_construction(
@@ -40,10 +45,10 @@ namespace kangaru {
 				Storage
 			>,
 			Cache
-		> source;
+		> state;
 		
 		template<typename Self, typename S>
-		static constexpr auto rebound_source_tree(Self&& self, S&& source) {
+		static constexpr auto container_source(Self&& self, S&& source) {
 			return with_recursion{
 				make_source_with_exhaustive_construction(
 					with_alternative{
@@ -59,22 +64,22 @@ namespace kangaru {
 		}
 		
 		template<typename Self>
-		using rebound_source_tree_t = decltype(
-			rebound_source_tree(std::declval<Self>(), std::declval<Self>().source)
+		using container_source_t = decltype(
+			container_source(std::declval<Self>(), std::declval<Self>().state)
 		);
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<rebound_source_tree_t<container&>, T> {
+		constexpr auto provide() & -> T requires source_of<container_source_t<container&>, T> {
 			return kangaru::provide<T>(
-				rebound_source_tree(*this, source)
+				container_source(*this, state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<rebound_source_tree_t<container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<container_source_t<container&&>, T> {
 			return kangaru::provide<T>(
-				rebound_source_tree(std::move(*this), std::move(source))
+				container_source(std::move(*this), std::move(state))
 			);
 		}
 	};

@@ -81,6 +81,9 @@ namespace kangaru::detail::utility {
 	
 	template<typename T>
 	using type_identity = T;
+	
+	template<typename TType, typename... Ts>
+	using ttype_t = typename TType::template ttype<Ts...>::type;
 }
 
 #include "undef.hpp"

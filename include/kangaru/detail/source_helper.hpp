@@ -3,6 +3,7 @@
 
 #include "source.hpp"
 #include "source_reference_wrapper.hpp"
+#include "utility.hpp"
 
 #include <type_traits>
 #include <concepts>
@@ -51,9 +52,10 @@ namespace kangaru {
 	concept transparent_rebindable_wrapping_source =
 		    wrapping_source<Source>
 		and requires(Source source) {
-			typename detail::source_helper::rebind_wrapper<std::remove_cv_t<Source>>::template ttype<
+			// Here we need to used ttype_t instead of directly using ::ttype<...>::type because GCC 12 has issues with it.
+			typename detail::utility::ttype_t<detail::source_helper::rebind_wrapper<std::remove_cv_t<Source>>,
 				std::decay_t<decltype(source.source)>
-			>::type;
+			>;
 		};
 	
 	template<typename Source>

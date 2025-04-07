@@ -345,6 +345,10 @@ namespace kangaru {
 		}
 	};
 	
+	// This deduction guide is required for clang 16 to work
+	template<rebindable_source Source>
+	with_recursion(Source const& source) -> with_recursion<Source>;
+	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_recursion(Source&& source) {
 		return with_recursion<std::decay_t<Source>>{KANGARU5_FWD(source)};

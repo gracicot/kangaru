@@ -8,7 +8,7 @@
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
 #include "tag.hpp"
-#include "source_helper.hpp"
+#include "source_rebind.hpp"
 
 #include <tuple>
 #include <concepts>
@@ -256,8 +256,8 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_alternative> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_alternative<rebind_wrapped_source_result_t<Original, NewLeaf>, source_fwd_ref_t<detail::utility::forward_like_t<Original, Alternative>>> {
-			return with_alternative<rebind_wrapped_source_result_t<Original, NewLeaf>, source_fwd_ref_t<detail::utility::forward_like_t<Original, Alternative>>>{
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::utility::forward_like_t<Original, Alternative>>> {
+			return with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::utility::forward_like_t<Original, Alternative>>>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative))
 			};

@@ -1,5 +1,5 @@
-#ifndef KANGARU5_DETAIL_SOURCE_HELPER_HPP
-#define KANGARU5_DETAIL_SOURCE_HELPER_HPP
+#ifndef KANGARU5_DETAIL_SOURCE_REBIND_HPP
+#define KANGARU5_DETAIL_SOURCE_REBIND_HPP
 
 #include "source.hpp"
 #include "source_reference_wrapper.hpp"
@@ -11,7 +11,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	namespace detail::source_helper {
+	namespace detail::source_rebind {
 		template<wrapping_source>
 		struct rebind_wrapper {};
 		
@@ -46,14 +46,15 @@ namespace kangaru {
 				using type = Branch<NewSource, Param>;
 			};
 		};
-	} // namespace detail::source_helper
+	} // namespace detail::source_rebind
 	
 	template<typename Source>
 	concept transparent_rebindable_wrapping_source =
 		    wrapping_source<Source>
 		and requires(Source source) {
 			// Here we need to used ttype_t instead of directly using ::ttype<...>::type because GCC 12 has issues with it.
-			typename detail::utility::ttype_t<detail::source_helper::rebind_wrapper<std::remove_cv_t<Source>>,
+			typename detail::utility::ttype_t<
+				detail::source_rebind::rebind_wrapper<std::remove_cv_t<Source>>,
 				std::decay_t<decltype(source.source)>
 			>;
 		};
@@ -70,16 +71,17 @@ namespace kangaru {
 		   transparent_rebindable_wrapping_source<Source>
 		or stateful_rebindable_wrapping_source<Source>;
 	
-	namespace detail::source_helper {
+	namespace detail::source_rebind {
 		struct rebind_function {
 			template<forwarded_source Wrapper> requires (rebindable_wrapping_source<std::remove_reference_t<Wrapper>> and not forwarded_reference_wrapper<Wrapper>)
-			constexpr auto operator()(Wrapper&& source, forwarded_source auto&& new_leaf) const noexcept {
+			constexpr auto operator()(Wrapper&& source, forwarded_object auto&& new_leaf) const noexcept {
 				if constexpr (stateful_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
 					return std::decay_t<Wrapper>::rebind(source, new_leaf);
 				} else if constexpr (transparent_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
-					using rebound = typename detail::source_helper::rebind_wrapper<std::remove_cvref_t<Wrapper>>::template ttype<
+					using rebound = typename detail::utility::ttype_t<
+						detail::source_rebind::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
 						decltype(operator()(source.source, KANGARU5_FWD(new_leaf)))
-					>::type;
+					>;
 					return rebound{
 						operator()(source.source, KANGARU5_FWD(new_leaf))
 					};
@@ -89,9 +91,7 @@ namespace kangaru {
 			}
 			
 			template<forwarded_reference_wrapper Wrapper>
-			constexpr auto operator()(Wrapper&& wrapper, forwarded_source auto&& new_leaf) const noexcept {
-				// TODO: Do we need to use forwarding refs for wrappers?
-				// TODO: Do we need to unwrap references at all? Does it even make sense?
+			constexpr auto operator()(Wrapper&& wrapper, forwarded_object auto&& new_leaf) const noexcept {
 				decltype(auto) unwrapped = KANGARU5_FWD(wrapper).unwrap();
 				return operator()(KANGARU5_FWD(unwrapped), KANGARU5_FWD(new_leaf));
 			}
@@ -101,7 +101,7 @@ namespace kangaru {
 				and not rebindable_wrapping_source<std::remove_reference_t<Leaf>>
 				and not forwarded_wrapping_source<Leaf>
 			)
-			constexpr auto operator()(Leaf&& leaf, forwarded_source auto&& new_leaf) const noexcept {
+			constexpr auto operator()(Leaf&& leaf, forwarded_object auto&& new_leaf) const noexcept {
 				// We do not forward new_leaf here, since it may be called multiple times
 				return new_leaf(KANGARU5_FWD(leaf));
 			}
@@ -120,24 +120,24 @@ namespace kangaru {
 		inline constexpr auto is_rebindable_v<Leaf> = true;
 		
 		namespace niebloid {
-			inline constexpr auto rebind = detail::source_helper::rebind_function{};
+			inline constexpr auto rebind = detail::source_rebind::rebind_function{};
 		}
-	} // namespace detail::source_helper
+	} // namespace detail::source_rebind
 	
 	inline namespace niebloid {
-		using namespace detail::source_helper::niebloid;
+		using namespace detail::source_rebind::niebloid;
 	}
 	
 	template<typename Source>
-	concept rebindable_source = source<Source> and detail::source_helper::is_rebindable_v<Source>;
+	concept rebindable_source = source<Source> and detail::source_rebind::is_rebindable_v<Source>;
 	
 	template<source Source, forwarded_source Leaf>
 	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
 	
 	template<forwarded_wrapping_source Source, forwarded_source Leaf>
-	using rebind_wrapped_source_result_t = decltype(kangaru::rebind(std::declval<forwarded_wrapped_source_t<Source>>(), std::declval<Leaf>()));
+	using wrapped_source_rebind_result_t = decltype(kangaru::rebind(std::declval<forwarded_wrapped_source_t<Source>>(), std::declval<Leaf>()));
 } // namespace kangaru
 
 #include "undef.hpp"
 
-#endif
+#endif // KANGARU5_DETAIL_SOURCE_REBIND_HPP

@@ -8,7 +8,7 @@
 #include "source.hpp"
 #include "source_types.hpp"
 #include "source_reference_wrapper.hpp"
-#include "source_helper.hpp"
+#include "source_rebind.hpp"
 
 #include <type_traits>
 #include <cstdlib>
@@ -206,7 +206,7 @@ namespace kangaru {
 	template<source Source, construction Construction>
 	struct with_construction {
 	private:
-		using construction_type = maybe_wrapped_t<Construction>;
+		using construction_type = std::remove_reference_t<maybe_unwrap_result_t<Construction>>;
 		
 	public:
 		explicit constexpr with_construction(Source source) noexcept
@@ -236,8 +236,8 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction<rebind_wrapped_source_result_t<Original, NewLeaf>, Construction> {
-			return with_construction<rebind_wrapped_source_result_t<Original, NewLeaf>, Construction>{
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction<wrapped_source_rebind_result_t<Original, NewLeaf>, Construction> {
+			return with_construction<wrapped_source_rebind_result_t<Original, NewLeaf>, Construction>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				original.construction
 			};
@@ -322,9 +322,9 @@ namespace kangaru {
 			// also yield false if it would result in infinite recursion
 			// Yes, this requires expression will yield different result depending on the metastate of the compiler!
 			detail::recursive_source::source_of_sfinae_wrapper<
-				rebind_wrapped_source_result_t<
+				wrapped_source_rebind_result_t<
 					Self&,
-					detail::recursive_source::leaf_as_alternative<with_recursion<source_ref_t<wrapped_source_t<Self>>>>
+					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>
 				>,
 				T
 			>::value
@@ -332,7 +332,7 @@ namespace kangaru {
 			return kangaru::provide<T>(
 				kangaru::rebind(
 					source,
-					detail::recursive_source::leaf_as_alternative<with_recursion<source_ref_t<wrapped_source_t<Self>>>>{
+					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>{
 						KANGARU5_NO_ADL(ref)(source.source)
 					}
 				)

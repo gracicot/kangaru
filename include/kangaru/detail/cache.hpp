@@ -6,7 +6,7 @@
 #include "ctti.hpp"
 #include "concepts.hpp"
 #include "cache_types.hpp"
-#include "source_helper.hpp"
+#include "source_rebind.hpp"
 
 #include <type_traits>
 #include <concepts>
@@ -36,7 +36,7 @@ namespace kangaru {
 		using cache_type = Cache;
 	
 	private:
-		using unwrapped_cache_type = maybe_wrapped_t<cache_type>;
+		using unwrapped_cache_type = std::remove_reference_t<maybe_unwrap_result_t<cache_type>>;
 	
 	public:
 		explicit constexpr with_cache_asymmetric(source_type source) noexcept
@@ -134,8 +134,8 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<rebind_wrapped_source_result_t<Original, NewLeaf>, source_ref_t<Cache>, CacheFrom> {
-			return with_cache_asymmetric<rebind_wrapped_source_result_t<Original, NewLeaf>, source_ref_t<Cache>, CacheFrom>{
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Cache>, CacheFrom> {
+			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Cache>, CacheFrom>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.cache)
 			};
@@ -207,9 +207,9 @@ namespace kangaru {
 		
 		template<forwarded<with_cache> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_cache<rebind_wrapped_source_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, source_ref_t<Cache>>
+			-> with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<Cache>>
 		{
-			return with_cache<rebind_wrapped_source_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, source_ref_t<Cache>>{
+			return with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<Cache>>{
 				parent_t::rebind(static_cast<detail::utility::forward_like_t<Original, parent_t>&&>(original), KANGARU5_FWD(new_leaf))
 			};
 		}
@@ -236,9 +236,11 @@ namespace kangaru {
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
 	
 	template<template<unqualified_object> typename SourceType>
-	struct cached_pointer_to_source {
+	struct cached_reference_to_source {
 		template<injectable T>
-		using source = SourceType<std::remove_cvref_t<T>>*;
+		struct ttype {
+			using type = SourceType<std::remove_cvref_t<T>>&;
+		};
 	};
 	
 	template<source Source, template<typename> typename SourceFor>
@@ -251,12 +253,7 @@ namespace kangaru {
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
-			// TODO: Can we avoid this pointer thing?
-			if constexpr (std::is_pointer_v<decltype(source_for_t)>) {
-				return kangaru::provide<T>(*KANGARU5_FWD(source_for_t));
-			} else {
-				return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
-			}
+			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
 		}
 		
 		Source source;

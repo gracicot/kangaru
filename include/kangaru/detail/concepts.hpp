@@ -17,6 +17,9 @@ namespace kangaru {
 	concept object = std::is_object_v<T>;
 	
 	template<typename T>
+	concept forwarded_object = object<std::remove_reference_t<T>>;
+	
+	template<typename T>
 	concept unqualified_object = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
 	
 	template<typename T>

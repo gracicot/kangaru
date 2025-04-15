@@ -250,7 +250,7 @@ struct type_1111 {
 
 template<typename T>
 auto restricted_constructor() {
-	return kangaru::non_empty_construction::construct<T>{};
+	return kangaru::non_empty_constructor::construct<T>{};
 }
 
 TEST_CASE("Strict deducer strictly deduce", "[deducer]") {

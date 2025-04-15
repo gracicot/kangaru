@@ -108,16 +108,18 @@ namespace kangaru {
 			return map.insert(std::move(value));
 		}
 		
-		template<different_from<void> T, allows_construction_of<T> U>
+		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U> const& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			return map.insert(value);
+			// TODO: Should we cast to std::pair<key_type, T> first?
+			return map.insert(static_cast<value_type>(value));
 		}
 		
-		template<different_from<void> T, allows_construction_of<T> U>
+		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U>&& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			return map.insert(value);
+			// TODO: Should we cast to std::pair<key_type, T> first?
+			return map.insert(static_cast<value_type>(value));
 		}
 		
 		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {
@@ -133,15 +135,15 @@ namespace kangaru {
 			map.insert(begin, end);
 		}
 		
-		template<different_from<void> T, std::convertible_to<T> U> requires assign_into<U, mapped_type>
+		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& k, U&& obj) {
-			insert_or_assign_overrides(std::get<1>(obj));
+			insert_or_assign_overrides(obj);
 			map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
-		template<different_from<void> T, std::convertible_to<T> U> requires assign_into<U, mapped_type>
+		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T> const& k, U&& obj) {
-			insert_or_assign_overrides(std::get<1>(obj));
+			insert_or_assign_overrides(obj);
 			map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
@@ -153,7 +155,7 @@ namespace kangaru {
 			return map.erase(pos);
 		}
 		
-		template<different_from<void> T>
+		template<injectable T>
 		constexpr auto erase(detail::ctti::type_id_for_result<T> id) -> size_type {
 			auto const overrides = remove_overrides<T>();
 			return overrides + map.erase(id);

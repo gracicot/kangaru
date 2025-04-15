@@ -173,12 +173,12 @@ namespace kangaru {
 	};
 	
 	template<template<source> typename CacheFrom, forwarded_source Source, forwarded_cache_map Cache>
-	constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
+	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
 	template<template<source> typename CacheFrom, forwarded_source Source>
-	constexpr auto make_source_with_cache_asymmetric(Source&& source) {
+	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	

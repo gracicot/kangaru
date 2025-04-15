@@ -9,6 +9,7 @@
 #include <utility>
 #include <type_traits>
 #include <cstdint>
+#include <memory>
 
 #include "define.hpp"
 

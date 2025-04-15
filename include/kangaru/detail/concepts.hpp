@@ -40,6 +40,13 @@ namespace kangaru {
 		KANGARU5_FWD(f)(KANGARU5_FWD(args)...);
 	};
 	
+	template<typename F, typename R, typename... Args>
+	concept callable_returns =
+		    callable<F, Args...>
+		and requires(F&& f, Args&&... args) {
+			{ KANGARU5_FWD(f)(KANGARU5_FWD(args)...) } -> std::same_as<R>;
+		};
+	
 	template<typename T, typename... Args>
 	concept brace_constructible = requires(Args&&... args) {
 		T{KANGARU5_FWD(args)...};
@@ -49,20 +56,27 @@ namespace kangaru {
 	concept constructor_callable = std::constructible_from<T, Args...> or brace_constructible<T, Args...>;
 	
 	template<typename F, typename T, typename... Args>
-	concept callable_template1 = requires(F&& f, Args&&... args) {
+	concept callable_template_1t = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);
 	};
 	
+	template<typename F, typename R, typename T, typename...Args>
+	concept callable_template_1t_returns =
+		    callable_template_1t<F, T, Args...>
+		and requires(F&& f, Args&&... args) {
+			{ KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...) } -> std::same_as<R>;
+		};
+	
 	template<typename T, typename U>
 	concept allows_construction_of = std::constructible_from<U, T>;
-	
-	template<typename T>
-	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
 	template<typename From, typename To>
 	concept explicitly_castable_to = requires(From&& from) {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
+	
+	template<typename T>
+	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
 	template<typename From, typename To>
 	concept safe_convertible_to =

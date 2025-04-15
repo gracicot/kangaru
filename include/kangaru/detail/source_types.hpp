@@ -31,6 +31,12 @@ namespace kangaru {
 			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
+		template<injectable T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<composed_source> auto&& source) -> T
+		requires ("Ambiguous source resolution: One or more source can provide type T",
+			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) > 1
+		) = delete;
+		
 	private:
 		template<typename T, typename Self, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
@@ -41,7 +47,7 @@ namespace kangaru {
 	};
 	
 	inline constexpr auto concat(forwarded_source auto&&... sources) {
-		return composed_source{KANGARU5_FWD(sources)...};
+		return composed_source<std::decay_t<decltype(sources)>...>{KANGARU5_FWD(sources)...};
 	}
 	
 	template<source... Sources>
@@ -290,7 +296,7 @@ namespace kangaru {
 	};
 	
 	template<injectable T, forwarded_source Source>
-	constexpr auto make_source_with_filter_passthrough(Source&& source) {
+	inline constexpr auto make_source_with_filter_passthrough(Source&& source) {
 		return with_filter_passthrough<std::decay_t<Source>, T>{KANGARU5_FWD(source)};
 	}
 	
@@ -394,7 +400,7 @@ namespace kangaru {
 	};
 	
 	template<injectable From, forwarded_source Source>
-	constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
+	inline constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
 		return with_cast_from<std::decay_t<Source>, From>{};
 	}
 	

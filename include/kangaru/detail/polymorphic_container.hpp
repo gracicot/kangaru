@@ -32,18 +32,18 @@ namespace kangaru {
 	struct polymorphic_container {
 		explicit constexpr polymorphic_container(Source source) noexcept :
 			state{
-				make_source_with_cache_asymmetric<detail::polymorphic_container::polymorphic_to_concrete_t>(
-					make_source_with_dereference(
-						make_source_with_heap_storage(
-							make_source_with_source_wrapping(
-								make_source_with_source_wrapping(
-									make_source_with_exhaustive_construction(
+				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<detail::polymorphic_container::polymorphic_to_concrete_t>)(
+					with_dereference{
+						with_heap_storage{
+							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
+								with_source_wrapping{
+									KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 										std::move(source)
 									)
-								)
+								}
 							)
-						)
-					),
+						}
+					},
 					Cache{}
 				)
 			} {}
@@ -70,14 +70,17 @@ namespace kangaru {
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
 			return with_recursion{
-				make_source_with_exhaustive_construction(
+				KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 					with_alternative{
 						with_recursion{
-							make_source_with_cache_using_source<polymorphic_source>(
+							KANGARU5_NO_ADL(make_source_with_cache_using_source<polymorphic_source>)(
 								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 							)
 						},
-						external_reference_source{self}
+						KANGARU5_NO_ADL(concat)(
+							external_reference_source{self},
+							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
+						)
 					}
 				)
 			};

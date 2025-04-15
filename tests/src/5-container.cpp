@@ -72,3 +72,37 @@ TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[cont
 		CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
 	});
 }
+
+struct int_source {
+	auto provide() const& -> int {
+		return 3;
+	}
+	
+	auto provide() && -> int {
+		return 4;
+	}
+};
+
+TEST_CASE("Container can have a base source", "[container]") {
+	auto container = kangaru::polymorphic_container{int_source{}};
+	
+	SECTION("lvalues") {
+		auto& a = container.provide<service_a&>();
+		CHECK(a.i == 3);
+	}
+	
+	SECTION("rvalues") {
+		auto& a = std::move(container).provide<service_a&>();
+		CHECK(a.i == 4);
+	}
+	
+	SECTION("lvalues deep") {
+		auto& c = container.provide<service_c&>();
+		CHECK(c.services.sa.i == 3);
+	}
+	
+	SECTION("rvalues deep") {
+		auto& c = std::move(container).provide<service_c&>();
+		CHECK(c.services.sa.i == 4);
+	}
+}

@@ -31,49 +31,38 @@
 	#define KANGARU5_RVALUE_AMBIGUOUS() 0
 	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() 1
 	#define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
-#endif
-
-#if KANGARU5_IS_GNU() == 1
+	
+	// Helper macros to detect compiler features
+	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 1
+	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() (__cpp_constexpr >= 202306L)
+	#ifdef __cpp_explicit_this_parameter
+		#define KANGARU5_DEDUCING_THIS_SUPPORTED() (__cpp_explicit_this_parameter >= 202110L)
+	#else
+		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 0
+	#endif
+#elif KANGARU5_IS_GNU() == 1
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 	#define KANGARU5_INLINE [[gnu::always_inline]]
 	#define KANGARU5_RVALUE_AMBIGUOUS() 1
 	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() 0
 	#define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
-#endif
-
-#if KANGARU5_IS_MSVC() == 1
-	#define KANGARU5_FUNCTION_SIGNATURE __FUNCSIG__
-	#define KANGARU5_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
-	#define KANGARU5_INLINE [[msvc::forceinline]]
-	#define KANGARU5_RVALUE_AMBIGUOUS() 0
-	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() 1
-#endif
-
-#if KANGARU5_IS_CLANG() == 1
+	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() (__cpp_constexpr >= 202306L)
+	
+	// Helper macros to detect compiler features
 	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 1
-	#if __clang_major__ >= 17
-		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 1
-	#else
-		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 0
-	#endif
-	#if __clang_major__ >= 18
-		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 1
-	#else
-		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 0
-	#endif
-#elif KANGARU5_IS_GNU() == 1
-	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 1
-	#if __GNUC__ >= 14
-		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 1
-	#else
-		#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 0
-	#endif
-	#if __GNUC__ >= 14
-		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 1
+	#if defined(__cpp_explicit_this_parameter)
+		#define KANGARU5_DEDUCING_THIS_SUPPORTED() (__cpp_explicit_this_parameter >= 202110L)
 	#else
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 0
 	#endif
 #elif KANGARU5_IS_MSVC() == 1
+	#define KANGARU5_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
+	#define KANGARU5_INLINE [[msvc::forceinline]]
+	#define KANGARU5_RVALUE_AMBIGUOUS() 0
+	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() 1
+	#define KANGARU5_FUNCTION_SIGNATURE __FUNCSIG__
+	
+	// Helper macros to detect compiler features
 	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 0
 	#define KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED() 0
 	#if _MSC_VER >= 1943
@@ -81,10 +70,8 @@
 	#else
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() 0
 	#endif
-#elif __cpp_constexpr >= 202306L // C++26 constexpr
-	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 1
 #else
-	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() 0
+	#error "Unrecognized compiler"
 #endif
 
 #undef KANGARU5_IS_MSVC
@@ -106,16 +93,15 @@
 	#define KANGARU5_CONSTEXPR_VOIDSTAR
 #endif
 
-#if __cpp_explicit_this_parameter >= 202110L
+#if KANGARU5_DEDUCING_THIS_SUPPORTED() == 1
 	#define KANGARU5_PROVIDE_FUNCTION_DECL(...) auto provide(this __VA_ARGS__)
 #else
 	#define KANGARU5_PROVIDE_FUNCTION_DECL(...) friend auto provide(__VA_ARGS__)
 #endif
 
-#undef KANGARU5_DEDUCING_THIS_SUPPORTED
 #undef KANGARU5_CONSTEVAL_PLACEHOLDER_SUPPORTED
-#undef KANGARU5_CONSTEVAL_SUPPORTED
 #undef KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED
+#undef KANGARU5_DEDUCING_THIS_SUPPORTED
 
 #else
 	#error "A previous header seem to have leaked macros"

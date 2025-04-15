@@ -100,9 +100,9 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_dereference(
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(
-						kangaru::make_source_with_construction(
+						kangaru::make_source_with_function_call(
 							increment_source{},
-							kangaru::non_empty_construction{}
+							kangaru::non_empty_constructor{}
 						)
 					),
 					std::unordered_map<std::size_t, void*>{}
@@ -119,9 +119,9 @@ TEST_CASE("Recursive source", "[recursive]") {
 				kangaru::make_source_with_dereference(
 					kangaru::make_source_with_cache(
 						kangaru::make_source_with_heap_storage(
-							kangaru::make_source_with_construction(
+							kangaru::make_source_with_function_call(
 								increment_source{.n = 3}, // just a source of int
-								kangaru::exhaustive_construction{}
+								kangaru::exhaustive_constructor{}
 							)
 						),
 						std::unordered_map<std::size_t, void*>{}
@@ -214,5 +214,40 @@ TEST_CASE("Recursive source", "[recursive]") {
 		CHECK(kangaru::provide<needs_needs_int>(std::as_const(source)).i.value == 2);
 		CHECK(kangaru::provide<needs_needs_int>(std::move(source)).i.value == 3);
 		CHECK(kangaru::provide<needs_needs_int>(std::move(std::as_const(source))).i.value == 4);
+	}
+	
+	SECTION("Can use lambdas instead of constructors") {
+		struct type1 { int id; };
+		struct type2 { int id; };
+		struct aggregate { type1 t1; type2& t2; };
+		struct type3 { aggregate agg; };
+		
+		auto source = kangaru::with_recursion{
+			kangaru::with_function_call{
+				kangaru::concat(
+					kangaru::object_source{type1{.id = 2}},
+					kangaru::reference_source{type2{.id = 3}}
+				),
+				kangaru::overload{
+					kangaru::function{
+						[](type1 t1, type2& t2) {
+							return aggregate{.t1 = t1, .t2 = t2};
+						},
+						kangaru::make_spread_injector_function{},
+					},
+					kangaru::function{
+						[](aggregate agg) {
+							return type3{.agg = agg};
+						},
+						kangaru::make_spread_injector_function{},
+					},
+				},
+			},
+		};
+		
+		auto t3 = kangaru::provide<type3>(source);
+		
+		CHECK(t3.agg.t1.id == 2);
+		CHECK(t3.agg.t2.id == 3);
 	}
 }

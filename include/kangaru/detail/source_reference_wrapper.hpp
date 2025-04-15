@@ -5,6 +5,7 @@
 #include "concepts.hpp"
 
 #include <type_traits>
+#include <memory>
 
 #include "define.hpp"
 
@@ -33,30 +34,20 @@ namespace kangaru {
 		Source* source;
 	};
 	
+	// TODO: It seems unsafe to expose rvalues through an lvalue. Is there a way to fix usage?
 	template<source_ref Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	struct source_forwarding_reference_wrapper {
 		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
 		
-		template<injectable T>
-		constexpr auto provide() const&& -> T
-		requires source_of<Source, T> {
+		template<injectable T> requires source_of<Source, T>
+		constexpr auto provide() const& -> T {
 			return kangaru::provide<T>(detail::utility::forward_like<Source>(*source));
 		}
 		
-		template<injectable T>
-		constexpr auto provide() const& -> T
-		requires source_of<Source, T> {
-			return kangaru::provide<T>(*source);
-		}
-		
 		[[nodiscard]]
-		constexpr auto unwrap() const&& noexcept -> Source {
+		constexpr auto unwrap() const& noexcept -> Source {
+			// return *source;
 			return detail::utility::forward_like<Source>(*source);
-		}
-		
-		[[nodiscard]]
-		constexpr auto unwrap() const& noexcept -> Source& {
-			return *source;
 		}
 		
 	private:

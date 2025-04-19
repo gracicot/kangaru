@@ -1,7 +1,6 @@
 #ifndef KANGARU5_DETAIL_POLYMORPHIC_CONTAINER_HPP
 #define KANGARU5_DETAIL_POLYMORPHIC_CONTAINER_HPP
 
-#include "kangaru/detail/utility.hpp"
 #include "source_types.hpp"
 #include "cache_types.hpp"
 #include "recursive_source.hpp"

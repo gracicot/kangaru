@@ -199,16 +199,18 @@ namespace kangaru {
 			source{std::move(source)},
 			construction{std::move(construction)} {}
 		
-		template<injectable T, forwarded<with_function_call> Self> requires wrapping_source_of<Self, T>
+		// TODO: Should we really prefer construction as opposed to passthrough?
+		template<injectable T, forwarded<with_function_call> Self>
+			requires (
+				    not callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>
+				and wrapping_source_of<Self, T>
+			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<injectable T, forwarded<with_function_call> Self>
-			requires (
-				    callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>
-				and not wrapping_source_of<Self, T>
-			)
+			requires (callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
@@ -231,31 +233,31 @@ namespace kangaru {
 	struct overload {
 		explicit(sizeof...(Functions) < 2) overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
 		
-		template<unqualified_object T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) & -> T {
 			constexpr auto index = index_of<T, overload&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<unqualified_object T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) const& -> T {
 			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<unqualified_object T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) && -> T {
 			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<unqualified_object T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) const&& -> T {
 			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<unqualified_object T, forwarded_source Source> requires (
+		template<injectable T, forwarded_source Source> requires (
 			"Ambiguous resolution, multiple callable functions can return type T",
 			((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) > 1
 		)
@@ -273,7 +275,7 @@ namespace kangaru {
 	template<movable_object Function, movable_object MakeInjector>
 	struct function {
 	private:
-		template<unqualified_object T>
+		template<injectable T>
 		struct call {
 			Function const& func;
 			constexpr auto operator()(deducer auto... deduce) const -> T
@@ -293,7 +295,7 @@ namespace kangaru {
 			func{std::move(func)},
 			make_injector{std::move(make_injector)} {}
 		
-		template<unqualified_object T, forwarded_source Source>
+		template<injectable T, forwarded_source Source>
 			requires callable_returns<std::invoke_result_t<MakeInjector const&, Source>, T, call<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(call<T>{func});
@@ -364,7 +366,7 @@ namespace kangaru {
 	struct with_recursion {
 		Source source;
 		
-		template<typename T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
+		template<injectable T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T requires(
 			// We uses the sfinae wrapper for source_of
 			// This forces the compiler to have a third state:
@@ -393,11 +395,11 @@ namespace kangaru {
 					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>{
 						KANGARU5_NO_ADL(ref)(source.source)
 					}
-				)
+				).source
 			);
 		}
 		
-		template<typename T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
+		template<injectable T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}

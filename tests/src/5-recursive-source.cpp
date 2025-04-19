@@ -1,3 +1,4 @@
+#include "kangaru/detail/recursive_source.hpp"
 #include "kangaru/detail/source_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
@@ -100,9 +101,8 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_dereference(
 				kangaru::make_source_with_cache(
 					kangaru::make_source_with_heap_storage(
-						kangaru::make_source_with_function_call(
-							increment_source{},
-							kangaru::non_empty_constructor{}
+						kangaru::make_source_with_non_empty_construction(
+							increment_source{}
 						)
 					),
 					std::unordered_map<std::size_t, void*>{}
@@ -119,9 +119,8 @@ TEST_CASE("Recursive source", "[recursive]") {
 				kangaru::make_source_with_dereference(
 					kangaru::make_source_with_cache(
 						kangaru::make_source_with_heap_storage(
-							kangaru::make_source_with_function_call(
-								increment_source{.n = 3}, // just a source of int
-								kangaru::exhaustive_constructor{}
+							kangaru::make_source_with_exhaustive_construction(
+								increment_source{.n = 3} // just a source of int
 							)
 						),
 						std::unordered_map<std::size_t, void*>{}
@@ -249,5 +248,44 @@ TEST_CASE("Recursive source", "[recursive]") {
 		
 		CHECK(t3.agg.t1.id == 2);
 		CHECK(t3.agg.t2.id == 3);
+	}
+	
+	SECTION("Can use lambdas to return references") {
+		struct type1 { int id; };
+		struct type2 { int id; };
+		struct aggregate { type1 t1; type2& t2; };
+		struct type3 { aggregate agg; };
+		
+		auto obj = type2{.id = 8};
+		auto source = kangaru::with_recursion{
+			kangaru::with_function_call{
+				kangaru::object_source{type1{.id = 2}},
+				kangaru::overload{
+					kangaru::function{
+						[](type1 t1, type2& t2) {
+							return aggregate{.t1 = t1, .t2 = t2};
+						},
+						kangaru::make_spread_injector_function{},
+					},
+					kangaru::function{
+						[](aggregate agg) {
+							return type3{.agg = agg};
+						},
+						kangaru::make_spread_injector_function{},
+					},
+					kangaru::function{
+						[&obj]() -> type2& {
+							return obj;
+						},
+						kangaru::make_spread_injector_function{},
+					},
+				},
+			},
+		};
+		
+		auto t3 = kangaru::provide<type3>(source);
+		
+		CHECK(t3.agg.t1.id == 2);
+		CHECK(t3.agg.t2.id == 8);
 	}
 }

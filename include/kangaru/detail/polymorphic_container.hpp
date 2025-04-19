@@ -35,11 +35,11 @@ namespace kangaru {
 					with_dereference{
 						with_heap_storage{
 							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
-								with_source_wrapping{
+								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 										std::move(source)
 									)
-								}
+								)
 							)
 						}
 					},

@@ -9,7 +9,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-15]
-        xcode: [15.4, 16.0, 16.1, 16.2, 16.3]
+        xcode: [16.0, 16.1, 16.2, 16.3]
+        cxx: [20, 23]
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +38,7 @@ jobs:
           configurepreset: 'ci-macos'
           buildpreset: 'ci-macos'
           testpreset: 'ci-macos'
-          configurepresetcmdstring: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurepresetcmdstring: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}

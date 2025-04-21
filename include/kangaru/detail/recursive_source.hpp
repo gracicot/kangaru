@@ -399,6 +399,7 @@ namespace kangaru {
 			);
 		}
 		
+		// TODO: Is there a way to prevent infinite recursion here too by forcing instantiation of source_of recursive?
 		template<injectable T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);

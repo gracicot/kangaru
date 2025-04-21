@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   apple-clang:
-    name: AppleClang XCode ${{ matrix.xcode }} MacOS
+    name: AppleClang XCode ${{ matrix.xcode }} MacOS C++${{ matrix.cxx }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

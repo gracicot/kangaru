@@ -278,28 +278,6 @@ namespace kangaru {
 		return with_alternative<std::decay_t<Wrapped>, std::decay_t<Alternative>>{KANGARU5_FWD(wrapped), KANGARU5_FWD(alternative)};
 	}
 	
-	template<wrapping_source Source, injectable Filtered>
-	struct with_filter_passthrough {
-		explicit constexpr with_filter_passthrough(Source source) noexcept : source{std::move(source)} {}
-		
-		template<different_from<Filtered> T, forwarded<with_filter_passthrough> Self> requires source_of<wrapped_source_t<Self>, T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
-		}
-		
-		template<forwarded<with_filter_passthrough> Self> requires wrapping_source_of<detail::utility::forward_like_t<Self, Source>, Filtered>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> Filtered {
-			return kangaru::provide<Filtered>(KANGARU5_FWD(source).source.source);
-		}
-		
-		Source source;
-	};
-	
-	template<injectable T, forwarded_source Source>
-	inline constexpr auto make_source_with_filter_passthrough(Source&& source) {
-		return with_filter_passthrough<std::decay_t<Source>, T>{KANGARU5_FWD(source)};
-	}
-	
 	template<source Source, injectable Type>
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
@@ -337,27 +315,27 @@ namespace kangaru {
 	}
 	
 	template<source Source>
-	struct with_reference_passthrough {
-		explicit constexpr with_reference_passthrough(Source source) noexcept : source{std::move(source)} {}
+	struct with_passthrough {
+		explicit constexpr with_passthrough(Source source) noexcept : source{std::move(source)} {}
 		
 		Source source;
 		
-		template<object T, forwarded<with_reference_passthrough> Self>
-			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
+		template<injectable T, forwarded<with_passthrough> Self>
+			requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<reference T, forwarded<with_reference_passthrough> Self>
-			requires wrapping_source_of<Self, T>
+		template<injectable T, forwarded<with_passthrough> Self>
+			requires wrapping_source_of<wrapped_source_t<Self>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source.source);
 		}
 	};
 	
 	template<forwarded_source Source>
-	inline constexpr auto make_source_with_reference_passthrough(Source&& source) noexcept {
-		return with_reference_passthrough<std::decay_t<Source>>{KANGARU5_FWD(source)};
+	inline constexpr auto make_source_with_passthrough(Source&& source) noexcept {
+		return with_passthrough<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	template<source Source>

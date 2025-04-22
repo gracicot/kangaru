@@ -53,6 +53,8 @@ jobs:
             cxx: 23
           - clang: 17
             cxx: 23
+          - clang: 17
+            cxx: 26
           - clang: 16
             cxx: 26
 

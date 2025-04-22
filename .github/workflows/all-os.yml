@@ -10,7 +10,7 @@ jobs:
       matrix:
         os: [macos-15]
         xcode: [16.0, 16.1, 16.2, 16.3]
-        cxx: [20, 23]
+        cxx: [20, 23, 26]
 
     steps:
       - uses: actions/checkout@v4
@@ -47,12 +47,14 @@ jobs:
       fail-fast: false
       matrix:
         clang: [16, 17, 18, 19, 20]
-        cxx: [20, 23]
+        cxx: [20, 23, 26]
         exclude:
           - clang: 16
             cxx: 23
           - clang: 17
             cxx: 23
+          - clang: 16
+            cxx: 26
 
     steps:
       - uses: actions/checkout@v4
@@ -78,10 +80,16 @@ jobs:
       fail-fast: false
       matrix:
         gcc: [11, 12, 13, 14]
-        cxx: [20, 23]
+        cxx: [20, 23, 26]
         exclude:
           - gcc: 11
             cxx: 23
+          - gcc: 11
+            cxx: 26
+          - gcc: 12
+            cxx: 26
+          - gcc: 13
+            cxx: 26
 
     steps:
       - uses: actions/checkout@v4

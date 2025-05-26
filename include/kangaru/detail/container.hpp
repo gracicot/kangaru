@@ -50,21 +50,23 @@ namespace kangaru {
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
 			return with_recursion{
-				KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
-					with_alternative{
-						with_recursion{
-							KANGARU5_NO_ADL(make_source_with_cache_using_source<cached_reference_to_injectable_reference_source>)(
-								with_dereference{
-									KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
-								}
+				with_passthrough{
+					KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
+						with_alternative{
+							with_recursion{
+								KANGARU5_NO_ADL(make_source_with_cache_using_source<cached_reference_to_injectable_reference_source>)(
+									with_dereference{
+										KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
+									}
+								)
+							},
+							KANGARU5_NO_ADL(concat)(
+								external_reference_source{self}, 
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 							)
-						},
-						KANGARU5_NO_ADL(concat)(
-							external_reference_source{self}, 
-							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
-						)
-					}
-				)
+						}
+					)
+				}
 			};
 		}
 		

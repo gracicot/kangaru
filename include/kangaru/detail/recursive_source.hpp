@@ -199,16 +199,6 @@ namespace kangaru {
 			source{std::move(source)},
 			construction{std::move(construction)} {}
 		
-		// TODO: Should we really prefer construction as opposed to passthrough?
-		template<injectable T, forwarded<with_function_call> Self>
-			requires (
-				    not callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>
-				and wrapping_source_of<Self, T>
-			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
-		}
-		
 		template<injectable T, forwarded<with_function_call> Self>
 			requires (callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
@@ -309,46 +299,126 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	// TODO: typename
-	template<forwarded_source Source, typename Function>
+	template<forwarded_source Source, movable_object Function>
 	inline constexpr auto make_source_with_function_call(Source&& source, Function&& function) {
 		return with_function_call<std::decay_t<Source>, std::decay_t<Function>>{KANGARU5_FWD(source), KANGARU5_FWD(function)};
 	}
 	
+	template<source Source, source Passthrough, movable_object Constructor>
+	struct with_construction_original_passthrough {
+		explicit constexpr with_construction_original_passthrough(Source source) noexcept
+				requires std::default_initializable<Constructor> :
+			source{std::move(source)},
+			passthrough{},
+			construction{} {}
+		
+		constexpr with_construction_original_passthrough(Source source, Passthrough passthrough) noexcept
+				requires (std::default_initializable<Passthrough> and std::default_initializable<Constructor>) :
+			source{std::move(source)},
+			passthrough{std::move(passthrough)},
+			construction{std::move(construction)} {}
+		
+		constexpr with_construction_original_passthrough(Source source, Passthrough passthrough, Constructor construction) noexcept :
+			source{std::move(source)},
+			passthrough{std::move(passthrough)},
+			construction{std::move(construction)} {}
+		
+		template<injectable T, forwarded<with_construction_original_passthrough> Self>
+			requires (
+				source_of<detail::utility::forward_like_t<Self, Passthrough&&>, T>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).passthrough);
+		}
+		
+		template<unqualified_object T, forwarded<with_construction_original_passthrough> Self>
+			requires (callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>)
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
+		}
+		
+		template<forwarded<with_construction_original_passthrough> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor> {
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+				KANGARU5_NO_ADL(ref)(original.passthrough),
+				KANGARU5_FWD(original).construction
+			};
+		}
+		
+		Source source;
+		
+	private:
+		Passthrough passthrough;
+		Constructor construction;
+	};
+	
+	template<source Source, movable_object Constructor>
+	struct with_construction {
+		explicit constexpr with_construction(Source source) noexcept
+			requires std::default_initializable<Constructor> :
+			source{std::move(source)} {}
+		
+		constexpr with_construction(Source source, Constructor construction) noexcept :
+			source{std::move(source)},
+			construction{std::move(construction)} {}
+		
+		// TODO: Should we really prefer construction as opposed to passthrough?
+		template<injectable T, forwarded<with_construction> Self>
+			requires (
+				    not callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>
+				and wrapping_source_of<Self, T>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<unqualified_object T, forwarded<with_construction> Self>
+			requires (callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>)
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
+		}
+		
+		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor> {
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+				KANGARU5_NO_ADL(ref)(original.source),
+				KANGARU5_FWD(original).construction
+			};
+		}
+		
+		Source source;
+		
+	private:
+		Constructor construction;
+	};
+	
 	template<source Source>
-	using with_non_empty_construction = with_function_call<Source, non_empty_constructor>;
+	using with_non_empty_construction = with_construction<Source, non_empty_constructor>;
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_non_empty_construction(Source&& source) {
-		return with_function_call<std::decay_t<Source>, non_empty_constructor>{KANGARU5_FWD(source), non_empty_constructor{}};
+		return with_construction<std::decay_t<Source>, non_empty_constructor>{KANGARU5_FWD(source), non_empty_constructor{}};
 	}
 	
 	template<source Source>
-	using with_exhaustive_construction = with_function_call<Source, exhaustive_constructor>;
+	using with_exhaustive_construction = with_construction<Source, exhaustive_constructor>;
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_exhaustive_construction(Source&& source) {
-		return with_function_call<std::decay_t<Source>, exhaustive_constructor>{KANGARU5_FWD(source), exhaustive_constructor{}};
+		return with_construction<std::decay_t<Source>, exhaustive_constructor>{KANGARU5_FWD(source), exhaustive_constructor{}};
 	}
 	
 	template<source Source>
-	using with_unsafe_exhaustive_construction = with_function_call<Source, unsafe_exhaustive_constructor>;
+	using with_unsafe_exhaustive_construction = with_construction<Source, unsafe_exhaustive_constructor>;
 	
 	template<forwarded_source Source>
-	inline constexpr auto make_source_with_unsafe_exhaustive_constructor(Source&& source) {
-		return with_function_call<std::decay_t<Source>, unsafe_exhaustive_constructor>{KANGARU5_FWD(source), unsafe_exhaustive_constructor{}};
+	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {
+		return with_construction<std::decay_t<Source>, unsafe_exhaustive_constructor>{KANGARU5_FWD(source), unsafe_exhaustive_constructor{}};
 	}
 	
 	namespace detail::recursive_source {
-		// We need sfinae here!
-		// This is because concepts don't allow a concept to depend on itself to exist and will hard error
-		// We want the concept to simply yeild false in the case it would depend on itself as a soft error
-		// C++ allows that in the context of sfinae, since referring to the type being instantiated
-		// will simply be treated as an incomplete type, and an incomplete type don't have a member ::value
-		// By wrapping source_of in a type, we allow that type to be incomplete!
-		template<kangaru::source Source, kangaru::injectable T>
-		struct source_of_sfinae_wrapper : std::bool_constant<source_of<Source, T>> {};
-		
 		template<kangaru::source Alternative>
 		struct leaf_as_alternative {
 			Alternative alternative;
@@ -368,26 +438,13 @@ namespace kangaru {
 		
 		template<injectable T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T requires(
-			// We uses the sfinae wrapper for source_of
-			// This forces the compiler to have a third state:
-			//   requires(true) --> goes in
-			//   requires(false) --> tries another function
-			//   requires(<substitution-error>) --> tries another function
-			//
-			// The first time the compiler encounter provide, it check source_of
-			// Then during the evaluation of source_of, it will encounter provide again
-			// But instead of evaluating source_of, it will see source_of as an incomplete type
-			// Thus skipping that function and try the next one and detect that one is callable
-			// The evaluation of source_of will then yeild true, but
-			// also yield false if it would result in infinite recursion
-			// Yes, this requires expression will yield different result depending on the metastate of the compiler!
-			detail::recursive_source::source_of_sfinae_wrapper<
+			source_of<
 				wrapped_source_rebind_result_t<
 					Self&,
 					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>
 				>,
 				T
-			>::value
+			>
 		) {
 			return kangaru::provide<T>(
 				kangaru::rebind(

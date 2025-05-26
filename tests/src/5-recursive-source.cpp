@@ -138,17 +138,19 @@ TEST_CASE("Recursive source", "[recursive]") {
 	
 	SECTION("Support the service idiom and cache and construction, with recursive construction on top") {
 		auto source = kangaru::make_source_with_recursion(
-			kangaru::make_source_with_exhaustive_construction(
-				kangaru::make_source_with_recursion(
-					kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_injectable_reference_source>(
-						kangaru::make_source_with_dereference(
-							kangaru::make_source_with_cache(
-								kangaru::make_source_with_heap_storage(
-									kangaru::make_source_with_exhaustive_construction(
-										increment_source{.n = 3} // just a source of int
-									)
-								),
-								std::unordered_map<std::size_t, void*>{}
+			kangaru::make_source_with_passthrough(
+				kangaru::make_source_with_exhaustive_construction(
+					kangaru::make_source_with_recursion(
+						kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_injectable_reference_source>(
+							kangaru::make_source_with_dereference(
+								kangaru::make_source_with_cache(
+									kangaru::make_source_with_heap_storage(
+										kangaru::make_source_with_exhaustive_construction(
+											increment_source{.n = 3} // just a source of int
+										)
+									),
+									std::unordered_map<std::size_t, void*>{}
+								)
 							)
 						)
 					)

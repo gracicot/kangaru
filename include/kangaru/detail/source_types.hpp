@@ -269,7 +269,6 @@ namespace kangaru {
 			};
 		}
 		
-	private:
 		Alternative alternative;
 	};
 	
@@ -327,7 +326,7 @@ namespace kangaru {
 		}
 		
 		template<injectable T, forwarded<with_passthrough> Self>
-			requires wrapping_source_of<wrapped_source_t<Self>, T>
+			requires(not wrapping_source_of<Self, T> and wrapping_source_of<wrapped_source_t<Self>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source.source);
 		}

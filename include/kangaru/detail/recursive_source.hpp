@@ -31,7 +31,10 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(
+					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
+					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
+				);
 			}
 		};
 		
@@ -63,7 +66,10 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(
+					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
+					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
+				);
 			}
 			
 			constexpr auto operator()() const -> T requires constructor_callable<T> {
@@ -99,10 +105,15 @@ namespace kangaru {
 				exclude_special_constructors_deducer<T, decltype(deduce1)>,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+				return KANGARU5_NO_ADL(constructor<T>)()(
+					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
+					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
+				);
 			}
 			
-			constexpr auto operator()() const -> T requires (constructor_callable<T> and is_empty_injection_constructible_v<T>) {
+			constexpr auto operator()() const -> T requires(
+				constructor_callable<T> and is_empty_injection_constructible_v<T>
+			) {
 				return KANGARU5_NO_ADL(constructor<T>)()();
 			}
 		};
@@ -206,7 +217,9 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_function_call> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function> {
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
+			-> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function>
+		{
 			return with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_FWD(original).construction
@@ -223,27 +236,31 @@ namespace kangaru {
 	struct overload {
 		explicit(sizeof...(Functions) < 2) overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
 		
-		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source>
+			requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) & -> T {
 			constexpr auto index = index_of<T, overload&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source>
+			requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) const& -> T {
 			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source>
+			requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) && -> T {
-			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
+			constexpr auto index = index_of<T, overload&&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
-		template<injectable T, forwarded_source Source> requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+		template<injectable T, forwarded_source Source>
+			requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
 		constexpr auto operator()(Source&& source) const&& -> T {
-			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
+			constexpr auto index = index_of<T, overload const&&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
@@ -279,7 +296,8 @@ namespace kangaru {
 		};
 		
 	public:
-		explicit constexpr function(Function func) noexcept requires std::default_initializable<MakeInjector> : func{std::move(func)} {}
+		explicit constexpr function(Function func) noexcept
+			requires std::default_initializable<MakeInjector> : func{std::move(func)} {}
 		
 		constexpr function(Function func, MakeInjector make_injector) noexcept :
 			func{std::move(func)},
@@ -338,7 +356,9 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_construction_original_passthrough> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor> {
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor>
+		{
 			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.passthrough),
@@ -380,7 +400,9 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor> {
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor>
+		{
 			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.source),
@@ -456,7 +478,6 @@ namespace kangaru {
 			);
 		}
 		
-		// TODO: Is there a way to prevent infinite recursion here too by forcing instantiation of source_of recursive?
 		template<injectable T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);

@@ -8,11 +8,58 @@
 
 #include <memory>
 #include <type_traits>
+#include <any>
 
 #include "define.hpp"
 
 namespace kangaru {
 	struct type_erased_source_reference;
+	
+	// TODO: Rewrite without std::any
+	template<injectable T>
+	struct any_copiable_source_of_const {
+		template<not_self<any_copiable_source_of_const> Source> requires source_of<Source const&, T>
+		explicit constexpr any_copiable_source_of_const(Source source) noexcept :
+			actual_source{std::move(source)},
+			call_provide{
+				[](std::any const& source) -> T {
+					// We can safely assume the cast is successful
+					return kangaru::provide<T>(*std::any_cast<Source>(&source));
+				}
+			} {}
+		
+		template<forwarded<any_copiable_source_of_const> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return source.call_provide(source.actual_source);
+		}
+		
+	private:
+		std::any actual_source;
+		auto(*call_provide)(std::any const& actual_source) -> T;
+	};
+	
+	// TODO: Rewrite without std::any
+	template<injectable T>
+	struct any_copiable_source_of {
+		template<not_self<any_copiable_source_of> Source> requires source_of<Source&, T>
+		explicit constexpr any_copiable_source_of(Source source) noexcept :
+			actual_source{std::move(source)},
+			call_provide{
+				[](std::any& source) -> T {
+					// We can safely assume the cast is successful
+					return kangaru::provide<T>(*std::any_cast<Source>(&source));
+				}
+			} {}
+		
+		template<forwarded<any_copiable_source_of> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+			return source.call_provide(source.actual_source);
+		}
+		
+	private:
+		std::any actual_source;
+		auto(*call_provide)(std::any& actual_source) -> T;
+	};
 	
 	// TODO: Review constructors/conversions
 	template<injectable T>

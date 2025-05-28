@@ -105,6 +105,7 @@ namespace kangaru {
 	template<unqualified_object T>
 	struct object_source {
 		explicit constexpr object_source(T object) noexcept : object{std::move(object)} {}
+		constexpr object_source() requires std::default_initializable<T> : object{} {}
 		
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
@@ -192,6 +193,7 @@ namespace kangaru {
 	template<object T>
 	struct rvalue_source {
 		explicit constexpr rvalue_source(T object) noexcept : object{std::move(object)} {}
+		constexpr rvalue_source() requires std::default_initializable<T> : object{} {}
 		
 		constexpr auto provide() & -> T&& {
 			return std::move(object);
@@ -232,6 +234,7 @@ namespace kangaru {
 	template<object T>
 	struct reference_source {
 		explicit constexpr reference_source(T object) noexcept : object{std::move(object)} {}
+		constexpr reference_source() requires std::default_initializable<T> : object{} {}
 		
 		constexpr auto provide() & -> T& {
 			return object;

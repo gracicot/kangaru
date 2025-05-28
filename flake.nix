@@ -72,6 +72,7 @@
           ci-gcc12 = makeShell { inherit pkgs; stdenv = pkgs.gcc12Stdenv; };
           ci-gcc13 = makeShell { inherit pkgs; stdenv = pkgs.gcc13Stdenv; };
           ci-gcc14 = makeShell { inherit pkgs; stdenv = pkgs.gcc14Stdenv; };
+          ci-gcc15 = makeShell { inherit pkgs; stdenv = pkgs.gcc15Stdenv; };
           ci-nocc = makeShell { inherit pkgs; stdenv = pkgs.stdenvNoCC; };
         });
     };

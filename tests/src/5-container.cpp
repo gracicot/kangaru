@@ -1,4 +1,5 @@
 #include "kangaru/detail/source_types.hpp"
+#include "kangaru/detail/tag.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 

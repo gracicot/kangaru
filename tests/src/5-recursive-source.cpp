@@ -16,13 +16,13 @@ struct increment_source {
 struct service_a {
 	explicit service_a(int a) : a{a} {}
 	int a = 0;
-	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
+	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::tags<kangaru::cached>;
 };
 
 struct service_b {
 	service_a& a;
 	
-	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
+	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::tags<kangaru::cached>;
 };
 
 struct service_aggregate {
@@ -34,7 +34,7 @@ struct service_c {
 	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
-	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::tags<kangaru::cache_using_source_type<kangaru::injectable_reference_source>, kangaru::cached>;
+	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::tags<kangaru::cached>;
 };
 
 struct needs_int_ref {
@@ -115,7 +115,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 	
 	SECTION("Support the service idiom and cache and construction alternative") {
 		auto source = kangaru::with_recursion{
-			kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_injectable_reference_source>(
+			kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_reference_source>(
 				kangaru::make_source_with_dereference(
 					kangaru::make_source_with_cache(
 						kangaru::make_source_with_heap_storage(
@@ -141,7 +141,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_passthrough(
 				kangaru::make_source_with_exhaustive_construction(
 					kangaru::make_source_with_recursion(
-						kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_injectable_reference_source>(
+						kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_reference_source>(
 							kangaru::make_source_with_dereference(
 								kangaru::make_source_with_cache(
 									kangaru::make_source_with_heap_storage(

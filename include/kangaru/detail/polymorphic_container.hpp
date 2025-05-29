@@ -20,7 +20,7 @@ namespace kangaru {
 		
 		template<injectable T>
 		struct polymorphic_to_concrete<kangaru::polymorphic_source<T&>> {
-			using type = with_polymorphic_cast<with_cast_from<injectable_reference_source<T>, T&>, T&>&;
+			using type = with_polymorphic_cast<with_cast_from<reference_source<T>, T&>, T&>&;
 		};
 		
 		template<kangaru::source T>

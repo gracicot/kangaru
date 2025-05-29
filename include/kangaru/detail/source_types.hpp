@@ -104,7 +104,18 @@ namespace kangaru {
 	
 	template<unqualified_object T>
 	struct object_source {
-		explicit constexpr object_source(T object) noexcept : object{std::move(object)} {}
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr object_source(From&& object) noexcept : object{KANGARU5_FWD(object)} {}
+		
+		template<deducer Deducer1, deducer... Deducer>
+			requires constructor_callable<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		explicit(sizeof...(Deducer) == 0) constexpr object_source(Deducer1 deduce1, Deducer... deduce) :
+			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
+		
 		constexpr object_source() requires std::default_initializable<T> : object{} {}
 		
 		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<object_source> auto&& source) -> T {
@@ -115,84 +126,26 @@ namespace kangaru {
 		T object;
 	};
 	
-	template<unqualified_object T>
-	struct injectable_object_source {
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) injectable_object_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		injectable_object_source() requires std::default_initializable<T> : object{} {}
-		
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<injectable_object_source> auto&& source) -> T {
-			return KANGARU5_FWD(source).object;
-		}
-		
-	private:
-		T object;
-	};
+	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	object_source(T&&) -> object_source<std::decay_t<T>>;
 	
 	template<unqualified_object T>
-	struct injectable_reference_source {
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) injectable_reference_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		injectable_reference_source() requires std::default_initializable<T> : object{} {}
-		
-		constexpr auto provide() & -> T& {
-			return object;
-		}
-		
-		constexpr auto provide() && -> T& {
-			return object;
-		}
-		
-	private:
-		T object;
-	};
-	
-	// TODO: Check if this is at the right place
-	template<unqualified_object T>
-	constexpr auto is_empty_injection_constructible_v<injectable_reference_source<T>> = true;
-	
-	template<unqualified_object T>
-	struct injectable_rvalue_source {
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) injectable_rvalue_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		injectable_rvalue_source() requires std::default_initializable<T> : object{} {}
-		
-		constexpr auto provide() & -> T&& {
-			return std::move(object);
-		}
-		
-		constexpr auto provide() && -> T&& {
-			return std::move(object);
-		}
-		
-	private:
-		T object;
-	};
+	inline constexpr auto is_empty_injection_constructible_v<object_source<T>> = true;
 	
 	template<object T>
 	struct rvalue_source {
-		explicit constexpr rvalue_source(T object) noexcept : object{std::move(object)} {}
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr rvalue_source(From&& object) noexcept : object{KANGARU5_FWD(object)} {}
+		
+		template<deducer Deducer1, deducer... Deducer>
+			requires constructor_callable<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		explicit(sizeof...(Deducer) == 0) constexpr rvalue_source(Deducer1 deduce1, Deducer... deduce) :
+			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
+		
 		constexpr rvalue_source() requires std::default_initializable<T> : object{} {}
 		
 		constexpr auto provide() & -> T&& {
@@ -206,6 +159,46 @@ namespace kangaru {
 	private:
 		T object;
 	};
+	
+	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	rvalue_source(T&&) -> rvalue_source<std::decay_t<T>>;
+	
+	template<object T>
+	inline constexpr auto is_empty_injection_constructible_v<rvalue_source<T>> = true;
+	
+	template<object T>
+	struct reference_source {
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr reference_source(From&& object) noexcept : object{KANGARU5_FWD(object)} {}
+		
+		template<deducer Deducer1, deducer... Deducer>
+			requires constructor_callable<
+				T,
+				exclude_special_constructors_deducer<T, Deducer1>,
+				Deducer&...
+			>
+		explicit(sizeof...(Deducer) == 0) constexpr reference_source(Deducer1 deduce1, Deducer... deduce) :
+			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
+		
+		constexpr reference_source() requires std::default_initializable<T> : object{} {}
+		
+		constexpr auto provide() & -> T& {
+			return object;
+		}
+		
+		constexpr auto provide() && -> T& {
+			return object;
+		}
+		
+	private:
+		T object;
+	};
+	
+	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	reference_source(T&&) -> reference_source<std::decay_t<T>>;
+	
+	template<object T>
+	inline constexpr auto is_empty_injection_constructible_v<reference_source<T>> = true;
 	
 	template<object T>
 	struct external_rvalue_source {
@@ -229,23 +222,6 @@ namespace kangaru {
 		
 	private:
 		T* reference;
-	};
-	
-	template<object T>
-	struct reference_source {
-		explicit constexpr reference_source(T object) noexcept : object{std::move(object)} {}
-		constexpr reference_source() requires std::default_initializable<T> : object{} {}
-		
-		constexpr auto provide() & -> T& {
-			return object;
-		}
-		
-		constexpr auto provide() && -> T& {
-			return object;
-		}
-		
-	private:
-		T object;
 	};
 	
 	template<source Source, source Alternative>

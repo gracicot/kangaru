@@ -14,8 +14,8 @@
 
 namespace kangaru {
 	template<injectable T>
-	using cached_reference_to_injectable_reference_source =
-		detail::utility::ttype_t<cached_reference_to_source<injectable_reference_source>, T>;
+	using cached_reference_to_reference_source =
+		detail::utility::ttype_t<cached_reference_to_source<reference_source>, T>;
 	
 	template<
 		rebindable_source Source,
@@ -54,7 +54,7 @@ namespace kangaru {
 					KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 						with_alternative{
 							with_recursion{
-								KANGARU5_NO_ADL(make_source_with_cache_using_source<cached_reference_to_injectable_reference_source>)(
+								KANGARU5_NO_ADL(make_source_with_cache_using_source<cached_reference_to_reference_source>)(
 									with_dereference{
 										KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 									}

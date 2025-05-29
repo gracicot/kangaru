@@ -485,7 +485,7 @@ namespace kangaru {
 	};
 	
 	// This deduction guide is required for clang 16 to work
-	template<rebindable_source Source>
+	template<typename Source>
 	with_recursion(Source const& source) -> with_recursion<Source>;
 	
 	template<forwarded_source Source>

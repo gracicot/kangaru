@@ -234,7 +234,7 @@ namespace kangaru {
 	
 	template<movable_object... Functions>
 	struct overload {
-		explicit(sizeof...(Functions) < 2) overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
+		explicit(sizeof...(Functions) == 1) constexpr overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
 		
 		template<injectable T, forwarded_source Source>
 			requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
@@ -268,7 +268,25 @@ namespace kangaru {
 			"Ambiguous resolution, multiple callable functions can return type T",
 			((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) > 1
 		)
+		constexpr auto operator()(Source&& source) & -> T = delete;
+		
+		template<injectable T, forwarded_source Source> requires (
+			"Ambiguous resolution, multiple callable functions can return type T",
+			((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) > 1
+		)
 		constexpr auto operator()(Source&& source) const& -> T = delete;
+		
+		template<injectable T, forwarded_source Source> requires (
+			"Ambiguous resolution, multiple callable functions can return type T",
+			((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) > 1
+		)
+		constexpr auto operator()(Source&& source) && -> T = delete;
+		
+		template<injectable T, forwarded_source Source> requires (
+			"Ambiguous resolution, multiple callable functions can return type T",
+			((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) > 1
+		)
+		constexpr auto operator()(Source&& source) const&& -> T = delete;
 		
 	private:
 		template<typename T, typename Self, typename Source, std::size_t... S>

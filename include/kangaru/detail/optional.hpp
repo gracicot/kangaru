@@ -11,6 +11,8 @@
 #include <compare>
 #include <functional>
 
+#include "define.hpp"
+
 namespace kangaru {
 	struct in_place_t{} constexpr in_place;
 	struct nullopt_t {} constexpr nullopt;
@@ -41,7 +43,7 @@ namespace kangaru {
 			requires(not std::is_trivially_copy_constructible_v<T>) : engaged{other.engaged}
 		{
 			if (engaged) {
-				std::construct_at(storage.object, other.storage.object);
+				std::construct_at(std::addressof(storage.object), other.storage.object);
 			}
 		}
 		
@@ -54,7 +56,7 @@ namespace kangaru {
 				engaged{other.engaged}
 		{
 			if (engaged) {
-				std::construct_at(storage.object, std::move(other.storage.object));
+				std::construct_at(std::addressof(storage.object), std::move(other.storage.object));
 			}
 		}
 		
@@ -180,6 +182,7 @@ namespace kangaru {
 		constexpr auto emplace(Args&&... args) noexcept(std::is_nothrow_constructible_v<T, Args&&...>) -> T& {
 			reset();
 			construct(KANGARU5_FWD(args)...);
+			return storage.object;
 		}
 		
 		template<typename U, typename... Args> requires std::constructible_from<T, std::initializer_list<U>&, Args&&...>
@@ -357,7 +360,7 @@ namespace kangaru {
 		union {
 			detail::optional::empty empty{};
 			T object;
-		} storage;
+		} storage{.empty{}};
 		
 		constexpr auto destroy() -> void {
 			if constexpr (not std::is_trivially_destructible_v<T>) {
@@ -551,5 +554,7 @@ namespace kangaru {
 		object_type* pointer = nullptr;
 	};
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU5_DETAIL_OPTIONAL_HPP

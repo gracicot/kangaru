@@ -225,7 +225,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 		
 		auto source = kangaru::with_recursion{
 			kangaru::with_function_call{
-				kangaru::concat(
+				kangaru::compose(
 					kangaru::object_source{type1{.id = 2}},
 					kangaru::reference_source{type2{.id = 3}}
 				),

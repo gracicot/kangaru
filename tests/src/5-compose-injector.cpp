@@ -57,7 +57,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	}
 	
 	SECTION("Composed simple then spread injector") {
-		auto injector = kangaru::compose(
+		auto injector = kangaru::concat(
 			kangaru::make_simple_injector(sleepy_value),
 			kangaru::make_spread_injector(grumpy_value)
 		);
@@ -84,7 +84,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	}
 	
 	SECTION("Composed spread then simple injector") {
-		auto injector = kangaru::compose(
+		auto injector = kangaru::concat(
 			kangaru::make_spread_injector(grumpy_value),
 			kangaru::make_simple_injector(sleepy_value)
 		);
@@ -107,7 +107,7 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	}
 	
 	SECTION("Composed spread then spread injector") {
-		auto injector = kangaru::compose(
+		auto injector = kangaru::concat(
 			kangaru::make_spread_injector(grumpy_value),
 			kangaru::make_spread_injector(sleepy_value)
 		);

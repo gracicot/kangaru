@@ -134,8 +134,8 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Cache>, CacheFrom> {
-			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Cache>, CacheFrom>{
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Cache>&>, CacheFrom> {
+			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Cache>&>, CacheFrom>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.cache)
 			};
@@ -143,7 +143,7 @@ namespace kangaru {
 		
 		template<object T, forwarded<with_cache_asymmetric> Self>
 			requires source_of<detail::utility::forward_like_t<Self, source_type>, CacheFrom<T>>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
 			auto const it = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).find(id);
 			
@@ -207,16 +207,16 @@ namespace kangaru {
 		
 		template<forwarded<with_cache> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<Cache>>
+			-> with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Cache>&>>
 		{
-			return with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<Cache>>{
+			return with_cache<wrapped_source_rebind_result_t<detail::utility::forward_like_t<Original, parent_t>, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Cache>&>>{
 				parent_t::rebind(static_cast<detail::utility::forward_like_t<Original, parent_t>&&>(original), KANGARU5_FWD(new_leaf))
 			};
 		}
 		
 		template<object T, forwarded<with_cache> Self>
 			requires source_of<detail::utility::forward_like_t<Self, Source>, T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(static_cast<detail::utility::forward_like_t<Self, parent_t>&&>(source));
 		}
 	};
@@ -251,7 +251,7 @@ namespace kangaru {
 				and not detail::utility::is_specialisation_of_v<SourceFor, T>
 				and wrapping_source_of<Self, SourceFor<T>>
 			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
 			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
 		}

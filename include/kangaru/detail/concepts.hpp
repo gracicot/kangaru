@@ -25,6 +25,18 @@ namespace kangaru {
 	template<typename T>
 	concept reference = not object<T> and not unqualified_object<T> and std::is_reference_v<T>;
 	
+	template<typename T>
+	concept lvalue_reference = reference<T> and std::is_lvalue_reference_v<T>;
+	
+	template<typename T>
+	concept rvalue_reference = reference<T> and std::is_rvalue_reference_v<T>;
+	
+	template<typename T>
+	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
+	
+	template<typename T>
+	concept function_object = object<T> and std::move_constructible<T>;
+	
 	template<typename T, typename Self>
 	concept not_self = unqualified_object<T> and different_from<T, std::decay_t<Self>>;
 	
@@ -74,9 +86,6 @@ namespace kangaru {
 	concept explicitly_castable_to = requires(From&& from) {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
-	
-	template<typename T>
-	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
 	template<typename From, typename To>
 	concept safe_convertible_to =

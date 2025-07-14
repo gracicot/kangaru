@@ -29,7 +29,7 @@ namespace kangaru {
 			} {}
 		
 		template<forwarded<any_copiable_source_of_const> Self>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return source.call_provide(source.actual_source);
 		}
 		
@@ -52,7 +52,7 @@ namespace kangaru {
 			} {}
 		
 		template<forwarded<any_copiable_source_of> Self>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return source.call_provide(source.actual_source);
 		}
 		
@@ -191,7 +191,7 @@ namespace kangaru {
 		Source source;
 		
 		template<injectable T, forwarded<with_polymorphic_cast> Self> requires(wrapping_source_of<Self, T>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		

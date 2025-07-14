@@ -19,9 +19,8 @@ namespace kangaru {
 	struct source_reference_wrapper {
 		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
-		template<injectable T>
-		constexpr auto provide() const& -> T
-		requires source_of<Source&, T> {
+		template<injectable T> requires source_of<Source&, T>
+		constexpr auto provide() const& -> T {
 			return kangaru::provide<T>(*source);
 		}
 		
@@ -46,7 +45,6 @@ namespace kangaru {
 		
 		[[nodiscard]]
 		constexpr auto unwrap() const& noexcept -> Source {
-			// return *source;
 			return detail::utility::forward_like<Source>(*source);
 		}
 		
@@ -104,11 +102,39 @@ namespace kangaru {
 		return source_forwarding_reference_wrapper<Source&>{source.unwrap()};
 	}
 	
-	template<source Source>
-	using ref_result_t = decltype(KANGARU5_NO_ADL(ref)(std::declval<Source&>()));
+	template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
+	using ref_result_t = decltype(KANGARU5_NO_ADL(ref)(std::declval<Source>()));
 	
-	template<source_ref Source>
+	template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
 	using fwd_ref_result_t = decltype(KANGARU5_NO_ADL(fwd_ref)(std::declval<Source>()));
+	
+	template<source Source>
+	struct with_source_reference_wrapping {
+		Source source;
+		
+		template<reference_wrapper T, forwarded<with_source_reference_wrapping> Self>
+			requires(
+				    std::same_as<ref_result_t<T&>, T>
+				and wrapping_source_of<Self, decltype(std::declval<T>().unwrap())>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return KANGARU5_NO_ADL(ref)(kangaru::provide<decltype(std::declval<T>().unwrap())>(KANGARU5_FWD(source).source));
+		}
+	};
+	
+	template<source Source>
+	struct with_source_forwarding_reference_wrapping {
+		Source source;
+		
+		template<reference_wrapper T, forwarded<with_source_forwarding_reference_wrapping> Self>
+			requires(
+				    std::same_as<fwd_ref_result_t<T&&>, T>
+				and wrapping_source_of<Self, decltype(std::declval<T>().unwrap())&&>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return KANGARU5_NO_ADL(fwd_ref)(kangaru::provide<decltype(std::declval<T>().unwrap())&&>(KANGARU5_FWD(source).source));
+		}
+	};
 } // namespace kangaru
 
 #include "undef.hpp"

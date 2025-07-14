@@ -1,3 +1,4 @@
+#include "kangaru/detail/utility.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 

@@ -67,7 +67,10 @@ namespace kangaru {
 	} // namespace detail::injector
 	
 	template<typename T>
-	concept injector = object<T> and std::move_constructible<T>;
+	concept injector = function_object<T>;
+	
+	template<typename T>
+	concept forwarded_injector = injector<std::remove_cvref_t<T>>;
 	
 	template<typename F, std::size_t max>
 	concept reflectable_function = requires {
@@ -290,8 +293,8 @@ namespace kangaru {
 	inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
 	
 	template<injector Injector1, injector Injector2>
-	struct composed_injector {
-		explicit constexpr composed_injector(Injector1 injector1, Injector2 injector2) noexcept :
+	struct concatenated_injector {
+		explicit constexpr concatenated_injector(Injector1 injector1, Injector2 injector2) noexcept :
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
 		
 		constexpr static auto call_function(auto&& function, deducer auto... deduce_first) {
@@ -343,20 +346,23 @@ namespace kangaru {
 		Injector2 injector2;
 	};
 	
-	template<typename Injector> requires(injector<std::remove_cvref_t<Injector>>)
-	inline constexpr auto compose(Injector&& injector) -> decltype(KANGARU5_FWD(injector)) {
-		return KANGARU5_FWD(injector);
+	template<forwarded_injector Injector1, forwarded_injector... Injectors>
+	inline constexpr auto concat(Injector1&& first, Injectors&&... rest) {
+		if constexpr (sizeof...(rest) > 1) {
+			return concatenated_injector{KANGARU5_FWD(first), concat(KANGARU5_FWD(rest)...)};
+		} else {
+			return concatenated_injector{KANGARU5_FWD(first), KANGARU5_FWD(rest)...};
+		}
 	}
 	
-	template<typename Injector1, typename Injector2, typename... Injectors>
-		requires(
-			    injector<std::remove_cvref_t<Injector1>>
-			and injector<std::remove_cvref_t<Injector2>>
-			and (... and injector<std::remove_cvref_t<Injectors>>)
-		)
-	inline constexpr auto compose(Injector1&& first, Injector2&& second, Injectors&&... rest) {
-		return composed_injector{KANGARU5_FWD(first), compose(KANGARU5_FWD(second), KANGARU5_FWD(rest)...)};
-	}
+	template<function_object F, template<typename> typename InjectorType>
+	using inject_result_t = detail::type_traits::call_result_t<InjectorType<placeholder_source>, F>;
+	
+	template<typename F, template<typename> typename InjectorType>
+	concept inject_callable =
+		    function_object<F>
+		and injector<InjectorType<placeholder_source>>
+		and callable<InjectorType<placeholder_source>, F>;
 	
 	// TODO: While this implementation is simpler, it makes GCC cry
 	/* auto compose(auto first, auto second) {

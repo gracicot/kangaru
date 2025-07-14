@@ -108,7 +108,7 @@ TEST_CASE("Deducer uses sources to deduce", "[deducer]") {
 	}
 	
 	SECTION("Chooses between const& and &&") {
-		auto source = kangaru::concat(
+		auto source = kangaru::compose(
 			kangaru::reference_source<grumpy const>{grumpy{.token = 1}},
 			kangaru::rvalue_source{grumpy{.token = 2}}
 		);
@@ -123,7 +123,7 @@ TEST_CASE("Deducer uses sources to deduce", "[deducer]") {
 		}
 		
 		SECTION("Prioritize prvalue when possible") {
-			auto source2 = kangaru::concat(kangaru::object_source{grumpy{.token = 3}}, source);
+			auto source2 = kangaru::compose(kangaru::object_source{grumpy{.token = 3}}, source);
 			auto deducer = kangaru::basic_deducer<decltype(source2)&>{source2};
 			
 			CHECK([](grumpy g) { return g; }(deducer).token == 3);
@@ -131,7 +131,7 @@ TEST_CASE("Deducer uses sources to deduce", "[deducer]") {
 	}
 	
 	SECTION("Correctly deduce const& when has a source of any other kind of references") {
-		auto source = kangaru::concat(
+		auto source = kangaru::compose(
 			kangaru::reference_source<grumpy>{grumpy{.token = 1}},
 			kangaru::rvalue_source{grumpy{.token = 2}}
 		);

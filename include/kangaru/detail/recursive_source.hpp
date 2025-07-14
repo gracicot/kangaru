@@ -9,9 +9,11 @@
 #include "source_types.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_rebind.hpp"
+#include "type_traits.hpp"
 
 #include <type_traits>
-#include <cstdlib>
+#include <utility>
+#include <concepts>
 
 #include "define.hpp"
 
@@ -39,7 +41,7 @@ namespace kangaru {
 		};
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -78,7 +80,7 @@ namespace kangaru {
 		};
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -119,7 +121,7 @@ namespace kangaru {
 		};
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<std::invoke_result_t<MakeInjector const&, Source&&>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source&&>, construct<T>>
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(construct<T>{});
 		}
@@ -153,7 +155,7 @@ namespace kangaru {
 		};
 		
 		template<injectable T, forwarded_source Source>
-			requires callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
 		auto operator()(Source&& source) const -> T;
 	
 	private:
@@ -165,10 +167,10 @@ namespace kangaru {
 	using placeholder_constructor_except = basic_placeholder_constructor_except<Type, make_spread_injector_function>;
 	
 	template<movable_object MakeInjector>
-	struct basic_placeholder_construct {
-		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct() requires std::default_initializable<MakeInjector> = default;
+	struct basic_placeholder_constructor {
+		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor() requires std::default_initializable<MakeInjector> = default;
 		
-		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construct(MakeInjector make_injector) noexcept :
+		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T>
@@ -186,7 +188,7 @@ namespace kangaru {
 		};
 		
 		template<injectable T, forwarded_source Source>
-			requires callable<std::invoke_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
 		auto operator()(Source&& source) const -> T;
 	
 	private:
@@ -194,42 +196,52 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	using placeholder_construct = basic_placeholder_construct<make_spread_injector_function>;
+	using placeholder_constructor = basic_placeholder_constructor<make_spread_injector_function>;
 	
-	template<source Source, movable_object Function>
+	template<source Source, movable_object Function, movable_object MakeInjector = make_spread_injector_function>
 	struct with_function_call {
 	private:
 		using construction_type = std::remove_reference_t<maybe_unwrap_result_t<Function>>;
 		
 	public:
 		explicit constexpr with_function_call(Source source) noexcept
-			requires std::default_initializable<Function> :
-			source{std::move(source)} {}
+			requires(std::default_initializable<Function> and std::default_initializable<MakeInjector>) :
+				source{std::move(source)} {}
 		
-		constexpr with_function_call(Source source, Function construction) noexcept :
+		constexpr with_function_call(Source source, Function function) noexcept
+			requires std::default_initializable<MakeInjector> :
+				source{std::move(source)},
+				function{std::move(function)} {}
+		
+		constexpr with_function_call(Source source, Function function, MakeInjector make_injector) noexcept :
 			source{std::move(source)},
-			construction{std::move(construction)} {}
+			function{std::move(function)},
+			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded<with_function_call> Self>
 			requires (callable_template_1t<construction_type const&, T, wrapped_source_t<Self>>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
-			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return std::as_const(source.function).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
 		template<forwarded<with_function_call> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function>
+			-> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function, MakeInjector>
 		{
-			return with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function>{
+			return with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function, MakeInjector>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
-				KANGARU5_FWD(original).construction
+				KANGARU5_FWD(original).function,
+				KANGARU5_FWD(original).make_injector,
 			};
 		}
 		
 		Source source;
 		
 	private:
-		Function construction;
+		Function function;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		MakeInjector make_injector;
 	};
 	
 	template<movable_object... Functions>
@@ -322,7 +334,7 @@ namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable_returns<std::invoke_result_t<MakeInjector const&, Source>, T, call<T>>
+			requires callable_returns<detail::type_traits::call_result_t<MakeInjector const&, Source>, T, call<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(call<T>{func});
 		}
@@ -363,21 +375,21 @@ namespace kangaru {
 			requires (
 				source_of<detail::utility::forward_like_t<Self, Passthrough&&>, T>
 			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).passthrough);
 		}
 		
 		template<unqualified_object T, forwarded<with_construction_original_passthrough> Self>
 			requires (callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
 		template<forwarded<with_construction_original_passthrough> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor>
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Passthrough>&>, Constructor>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Passthrough>, Constructor>{
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Passthrough>&>, Constructor>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.passthrough),
 				KANGARU5_FWD(original).construction
@@ -401,27 +413,26 @@ namespace kangaru {
 			source{std::move(source)},
 			construction{std::move(construction)} {}
 		
-		// TODO: Should we really prefer construction as opposed to passthrough?
 		template<injectable T, forwarded<with_construction> Self>
 			requires (
 				    not callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>
 				and wrapping_source_of<Self, T>
 			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		template<unqualified_object T, forwarded<with_construction> Self>
 			requires (callable_template_1t<Constructor const&, T, wrapped_source_t<Self>>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
 		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor>
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Source>&>, Constructor>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<Source>, Constructor>{
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::utility::forward_like_t<Original, Source>&>, Constructor>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.source),
 				KANGARU5_FWD(original).construction
@@ -477,11 +488,11 @@ namespace kangaru {
 		Source source;
 		
 		template<injectable T, forwarded<with_recursion> Self> requires (not wrapping_source_of<Self, T>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T requires(
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T requires(
 			source_of<
 				wrapped_source_rebind_result_t<
 					Self&,
-					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>
+					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>&>>>
 				>,
 				T
 			>
@@ -489,7 +500,7 @@ namespace kangaru {
 			return kangaru::provide<T>(
 				kangaru::rebind(
 					source,
-					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>>>>{
+					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>&>>>{
 						KANGARU5_NO_ADL(ref)(source.source)
 					}
 				).source
@@ -497,7 +508,7 @@ namespace kangaru {
 		}
 		
 		template<injectable T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(Self&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 	};

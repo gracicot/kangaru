@@ -113,10 +113,10 @@ namespace kangaru {
 		template<kangaru::source Wrapper> requires reference_wrapper<Wrapper>
 		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<source_reference_wrapped_type<Wrapper>>;
 		
-		template<kangaru::source Wrapper> requires (not reference_wrapper<Wrapper> and rebindable_wrapping_source<Wrapper>)
+		template<kangaru::source Wrapper> requires (rebindable_wrapping_source<Wrapper> and not reference_wrapper<Wrapper>)
 		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<wrapped_source_t<Wrapper>>;
 		
-		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf>)
+		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf> and not wrapping_source<Leaf>)
 		inline constexpr auto is_rebindable_v<Leaf> = true;
 		
 		namespace niebloid {
@@ -131,7 +131,7 @@ namespace kangaru {
 	template<typename Source>
 	concept rebindable_source = source<Source> and detail::source_rebind::is_rebindable_v<Source>;
 	
-	template<source Source, forwarded_source Leaf>
+	template<rebindable_source Source, forwarded_source Leaf>
 	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
 	
 	template<forwarded_wrapping_source Source, forwarded_source Leaf>

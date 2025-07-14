@@ -40,7 +40,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	}
 	
 	SECTION("Can polymorphically store cached types") {
-		auto source = kangaru::concat(
+		auto source = kangaru::compose(
 			kangaru::object_source{Derived{3}},
 			kangaru::object_source{Base{}}
 		);
@@ -54,7 +54,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 	}
 	
 	SECTION("Already cached type has priority") {
-		auto source = kangaru::concat(
+		auto source = kangaru::compose(
 			kangaru::object_source{Derived{3}},
 			kangaru::object_source{Base{}}
 		);

@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_HEAP_STORAGE_HPP
 #define KANGARU5_DETAIL_HEAP_STORAGE_HPP
 
+#include "kangaru/detail/type_traits.hpp"
 #include "source_types.hpp"
 #include "source.hpp"
 #include "allocator.hpp"
@@ -21,7 +22,7 @@ namespace kangaru {
 	struct runtime_dynamic_storage {
 		using dynamic_deleter = auto(void* ptr, void* resource) noexcept -> void;
 		
-		constexpr runtime_dynamic_storage(void* ptr, dynamic_deleter* deleter) noexcept : ptr{ptr}, deleter{deleter} {}
+		KANGARU5_UNSAFE constexpr runtime_dynamic_storage(void* ptr, dynamic_deleter* deleter) noexcept : ptr{ptr}, deleter{deleter} {}
 		
 		runtime_dynamic_storage(runtime_dynamic_storage const&) = delete;
 		auto operator=(runtime_dynamic_storage const&) -> runtime_dynamic_storage& = delete;
@@ -74,8 +75,8 @@ namespace kangaru {
 			}
 			
 			template<std::copy_constructible F> KANGARU5_UNSAFE
-			constexpr auto construct(Allocator& allocator, F function) -> std::invoke_result_t<F>* {
-				using object_type = std::invoke_result_t<F>;
+			constexpr auto construct(Allocator& allocator, F function) -> type_traits::call_result_t<F>* {
+				using object_type = type_traits::call_result_t<F>;
 				
 				auto const ptr = allocator.template allocate_object<object_type>();
 				
@@ -125,11 +126,11 @@ namespace kangaru {
 		}
 		
 		template<std::copy_constructible F>
-		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
+		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
 			KANGARU5_UNSAFE_BLOCK {
 				auto const ptr = basic_heap_storage::construct(allocator, std::move(function));
 				
-				using object_type = std::invoke_result_t<F>;
+				using object_type = detail::type_traits::call_result_t<F>;
 				container.push_back(runtime_dynamic_storage{
 					ptr,
 					basic_heap_storage::template destroyer<object_type>(),
@@ -180,20 +181,20 @@ namespace kangaru {
 		source_type source;
 		
 		template<std::copy_constructible F>
-		constexpr auto emplace_from(F function) -> std::invoke_result_t<F>* {
+		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(function);
 		}
 		
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<Storage>> {
-			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<Storage>>{
+		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::utility::forward_like_t<Original, Storage>&>> {
+			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::utility::forward_like_t<Original, Storage>&>>{
 				kangaru::rebind(KANGARU5_FWD(original).source, new_leaf),
 				KANGARU5_NO_ADL(ref)(original.storage)
 			};
 		}
 		
 		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
-		constexpr KANGARU5_PROVIDE_FUNCTION_DECL(forwarded<with_heap_storage> auto&& source) -> T {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_heap_storage> auto&& source) -> T {
 			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).emplace_from(
 				[&source] {
 					return kangaru::provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);

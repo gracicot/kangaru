@@ -26,6 +26,12 @@ namespace kangaru::detail::utility {
 		}
 	}
 	
+	[[noreturn]]
+	extern auto nonconsteval() -> void;
+	
+	template<typename T = void> [[noreturn]]
+	consteval inline auto noreturn() -> T { nonconsteval(); }
+	
 	template<typename T>
 	auto decay_copy(T&& v) -> std::decay_t<T> {
 		return KANGARU5_FWD(v);

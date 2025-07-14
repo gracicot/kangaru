@@ -86,26 +86,58 @@ struct int_source {
 };
 
 TEST_CASE("Container can have a base source", "[container]") {
-	auto container = kangaru::polymorphic_container{int_source{}};
-	
-	SECTION("lvalues") {
-		auto& a = container.provide<service_a&>();
-		CHECK(a.i == 3);
+	SECTION("Normal") {
+		auto container = kangaru::container{int_source{}};
+		
+		auto const i = container.provide<int>();
+		CHECK(i == 3);
+		
+		SECTION("lvalues") {
+			auto& a = container.provide<service_a&>();
+			CHECK(a.i == 3);
+		}
+		
+		SECTION("rvalues") {
+			auto& a = std::move(container).provide<service_a&>();
+			CHECK(a.i == 4);
+		}
+		
+		SECTION("lvalues deep") {
+			auto& c = container.provide<service_c&>();
+			CHECK(c.services.sa.i == 3);
+		}
+		
+		SECTION("rvalues deep") {
+			auto& c = std::move(container).provide<service_c&>();
+			CHECK(c.services.sa.i == 4);
+		}
 	}
 	
-	SECTION("rvalues") {
-		auto& a = std::move(container).provide<service_a&>();
-		CHECK(a.i == 4);
-	}
-	
-	SECTION("lvalues deep") {
-		auto& c = container.provide<service_c&>();
-		CHECK(c.services.sa.i == 3);
-	}
-	
-	SECTION("rvalues deep") {
-		auto& c = std::move(container).provide<service_c&>();
-		CHECK(c.services.sa.i == 4);
+	SECTION("Polymorphic") {
+		auto container = kangaru::polymorphic_container{int_source{}};
+		
+		auto const i = container.provide<int>();
+		CHECK(i == 3);
+		
+		SECTION("lvalues") {
+			auto& a = container.provide<service_a&>();
+			CHECK(a.i == 3);
+		}
+		
+		SECTION("rvalues") {
+			auto& a = std::move(container).provide<service_a&>();
+			CHECK(a.i == 4);
+		}
+		
+		SECTION("lvalues deep") {
+			auto& c = container.provide<service_c&>();
+			CHECK(c.services.sa.i == 3);
+		}
+		
+		SECTION("rvalues deep") {
+			auto& c = std::move(container).provide<service_c&>();
+			CHECK(c.services.sa.i == 4);
+		}
 	}
 }
 

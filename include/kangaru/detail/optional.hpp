@@ -65,11 +65,11 @@ namespace kangaru {
 			requires(std::is_trivially_move_constructible_v<T>) = default;
 		
 		template<injectable U>
-		explicit(std::convertible_to<U&&, T>)
+		explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(optional<U> const& other) : engaged{other.has_value()}, storage{static_cast<T>(*other)} {}
 		
 		template<injectable U>
-		explicit(std::convertible_to<U&&, T>)
+		explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(optional<U>&& other) : engaged{other.has_value()}, storage{.object{static_cast<T>(*std::move(other))}} {}
 		
 		template<typename... Args> requires std::constructible_from<T, Args&&...>
@@ -81,7 +81,7 @@ namespace kangaru {
 		
 		template<typename U>
 			requires detail::optional::optional_forwarded_construction_object<T, U>
-			explicit(std::convertible_to<U&&, T>)
+			explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(U&& value) noexcept(std::is_nothrow_constructible_v<T, U&&>) :
 			engaged{true}, storage{.object{KANGARU5_FWD(value)}} {}
 		

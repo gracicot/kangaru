@@ -727,6 +727,17 @@ namespace kangaru {
 		and requires(F&& f, Deducers... deduce) {
 			invoke_with_deducers(KANGARU5_FWD(f), deduce...);
 		};
+	
+	template<typename F, typename R, typename... Deducers>
+	concept callable_with_deducers_returns =
+		    callable_with_deducers<F, Deducers...>
+		and requires(F&& f, Deducers... deduce) {
+			{ invoke_with_deducers(KANGARU5_FWD(f), deduce...) } -> std::same_as<R>;
+		};
+	
+	template<typename F, deducer... Deducers>
+		requires callable_with_deducers<F, Deducers...>
+	using call_with_deducers_result = decltype(invoke_with_deducers(std::declval<F>(), std::declval<Deducers>()...));
 } // namespace kangaru
 
 #include "undef.hpp"

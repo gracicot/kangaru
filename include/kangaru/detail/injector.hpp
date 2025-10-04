@@ -6,8 +6,10 @@
 #include "concepts.hpp"
 #include "utility.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <utility>
+#endif
 
 #include "define.hpp"
 
@@ -66,18 +68,18 @@ namespace kangaru {
 		using spread_sequence_t = typename injectable_sequence<detail::utility::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
 	} // namespace detail::injector
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept injector = function_object<T>;
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept forwarded_injector = injector<std::remove_cvref_t<T>>;
 	
-	template<typename F, std::size_t max>
+	KANGARU5_EXPORT template<typename F, std::size_t max>
 	concept reflectable_function = requires {
 		typename detail::injector::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
 	};
 	
-	template<source Source, template<source_ref> typename Deducer, std::size_t N>
+	KANGARU5_EXPORT template<source Source, template<source_ref> typename Deducer, std::size_t N>
 	struct basic_fixed_injector {
 		explicit constexpr basic_fixed_injector(Source source) noexcept : source{std::move(source)} {}
 		
@@ -115,22 +117,22 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<source Source, std::size_t max>
+	KANGARU5_EXPORT template<source Source, std::size_t max>
 	using fixed_injector = basic_fixed_injector<Source, basic_deducer, max>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using simple_injector = fixed_injector<Source, 1>;
 	
-	struct make_simple_injector_function {
+	KANGARU5_EXPORT struct make_simple_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return simple_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	inline constexpr auto make_simple_injector = make_simple_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_simple_injector = make_simple_injector_function{};
 	
-	template<std::size_t N>
+	KANGARU5_EXPORT template<std::size_t N>
 	struct make_fixed_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
@@ -138,25 +140,25 @@ namespace kangaru {
 		}
 	};
 	
-	template<std::size_t N>
+	KANGARU5_EXPORT template<std::size_t N>
 	inline constexpr auto make_fixed_injector = make_fixed_injector_function<N>{};
 	
-	template<source Source, std::size_t max>
+	KANGARU5_EXPORT template<source Source, std::size_t max>
 	using strict_fixed_injector = basic_fixed_injector<Source, strict_deducer, max>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using strict_simple_injector = strict_fixed_injector<Source, 1>;
 	
-	struct make_strict_simple_injector_function {
+	KANGARU5_EXPORT struct make_strict_simple_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_simple_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	inline constexpr auto make_strict_simple_injector = make_strict_simple_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_strict_simple_injector = make_strict_simple_injector_function{};
 	
-	template<std::size_t N>
+	KANGARU5_EXPORT template<std::size_t N>
 	struct make_strict_fixed_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
@@ -164,11 +166,10 @@ namespace kangaru {
 		}
 	};
 	
-	template<std::size_t N>
+	KANGARU5_EXPORT template<std::size_t N>
 	inline constexpr auto make_strict_fixed_injector = make_strict_fixed_injector_function<N>{};
 	
-	
-	template<source Source, template<source_ref> typename Deducer, std::size_t max>
+	KANGARU5_EXPORT template<source Source, template<source_ref> typename Deducer, std::size_t max>
 	struct basic_spread_injector {
 		explicit constexpr basic_spread_injector(Source source) noexcept : source{std::move(source)} {}
 		
@@ -202,97 +203,97 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using fast_spread_injector = basic_spread_injector<Source, basic_deducer, 4>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using spread_injector = basic_spread_injector<Source, basic_deducer, 8>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using slow_spread_injector = basic_spread_injector<Source, basic_deducer, 16>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using optional_injector = basic_spread_injector<Source, basic_deducer, 1>;
 	
-	struct make_fast_spread_injector_function {
+	KANGARU5_EXPORT struct make_fast_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return fast_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_spread_injector_function {
+	KANGARU5_EXPORT struct make_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_slow_spread_injector_function {
+	KANGARU5_EXPORT struct make_slow_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return slow_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_optional_injector_function {
+	KANGARU5_EXPORT struct make_optional_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return optional_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
-	inline constexpr auto make_spread_injector = make_spread_injector_function{};
-	inline constexpr auto make_slow_spread_injector = make_slow_spread_injector_function{};
-	inline constexpr auto make_optional_injector = make_optional_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_spread_injector = make_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_slow_spread_injector = make_slow_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_optional_injector = make_optional_injector_function{};
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using strict_fast_spread_injector = basic_spread_injector<Source, strict_deducer, 4>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using strict_spread_injector = basic_spread_injector<Source, strict_deducer, 8>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using strict_slow_spread_injector = basic_spread_injector<Source, strict_deducer, 16>;
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using strict_optional_injector = basic_spread_injector<Source, strict_deducer, 1>;
 	
-	struct make_strict_fast_spread_injector_function {
+	KANGARU5_EXPORT struct make_strict_fast_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_fast_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_strict_spread_injector_function {
+	KANGARU5_EXPORT struct make_strict_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_strict_slow_spread_injector_function {
+	KANGARU5_EXPORT struct make_strict_slow_spread_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_slow_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	struct make_strict_optional_injector_function {
+	KANGARU5_EXPORT struct make_strict_optional_injector_function {
 		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_optional_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
-	inline constexpr auto make_stict_slow_spread_injector = make_strict_slow_spread_injector_function{};
-	inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
-	inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_stict_slow_spread_injector = make_strict_slow_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
 	
-	template<injector Injector1, injector Injector2>
+	KANGARU5_EXPORT template<injector Injector1, injector Injector2>
 	struct concatenated_injector {
 		explicit constexpr concatenated_injector(Injector1 injector1, Injector2 injector2) noexcept :
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
@@ -346,7 +347,7 @@ namespace kangaru {
 		Injector2 injector2;
 	};
 	
-	template<forwarded_injector Injector1, forwarded_injector... Injectors>
+	KANGARU5_EXPORT template<forwarded_injector Injector1, forwarded_injector... Injectors>
 	inline constexpr auto concat(Injector1&& first, Injectors&&... rest) {
 		if constexpr (sizeof...(rest) > 1) {
 			return concatenated_injector{KANGARU5_FWD(first), concat(KANGARU5_FWD(rest)...)};
@@ -355,10 +356,10 @@ namespace kangaru {
 		}
 	}
 	
-	template<function_object F, template<typename> typename InjectorType>
+	KANGARU5_EXPORT template<function_object F, template<typename> typename InjectorType>
 	using inject_result_t = detail::type_traits::call_result_t<InjectorType<placeholder_source>, F>;
 	
-	template<typename F, template<typename> typename InjectorType>
+	KANGARU5_EXPORT template<typename F, template<typename> typename InjectorType>
 	concept inject_callable =
 		    function_object<F>
 		and injector<InjectorType<placeholder_source>>

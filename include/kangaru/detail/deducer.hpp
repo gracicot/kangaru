@@ -6,35 +6,37 @@
 #include "type_traits.hpp"
 #include "utility.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <utility>
 #include <type_traits>
 #include <cstdint>
 #include <memory>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	struct kangaru_deducer_tag {};
-	struct kangaru_strict_deducer_tag {};
+	KANGARU5_EXPORT struct kangaru_deducer_tag {};
+	KANGARU5_EXPORT struct kangaru_strict_deducer_tag {};
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	concept deducer_weak = object<Deducer>;
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	concept deducer_strict =
 		    deducer_weak<Deducer>
 		and requires {
 			requires std::same_as<typename Deducer::is_deducer, kangaru_strict_deducer_tag>;
 		};
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	concept deducer_non_strict =
 		    deducer_weak<Deducer>
 		and requires {
 			requires std::same_as<typename Deducer::is_deducer, kangaru_deducer_tag>;
 		};
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	concept deducer =
 		    deducer_weak<Deducer>
 		and (
@@ -42,24 +44,24 @@ namespace kangaru {
 			or deducer_strict<Deducer>
 		);
 	
-	template<typename Deducer, typename T>
+	KANGARU5_EXPORT template<typename Deducer, typename T>
 	concept deducer_for = deducer<Deducer> and requires(Deducer deducer) {
 		{ deducer.operator T() } -> std::same_as<T>;
 	};
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept deducible = unqualified_object<T> and not deducer<T>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_lvalue = deducible<T> and source_of<Source, T&>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_rvalue = deducible<T> and source_of<Source, T&&>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_rvalue_const = deducible<T> and (source_of<Source, T const&&> or deducible_rvalue<T, Source>);
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_lvalue_const = deducible<T> and (
 		   source_of<Source, T const&>
 		or deducible_lvalue<T, Source>
@@ -67,7 +69,7 @@ namespace kangaru {
 		or deducible_rvalue<T, Source>
 	);
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_prvalue = deducible<T> and (
 		   source_of<Source, T>
 		or deducible_rvalue<T, Source>
@@ -76,22 +78,22 @@ namespace kangaru {
 		or deducible_lvalue<T, Source>
 	);
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_prvalue = deducible<T> and source_of<Source, T>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_lvalue = deducible<T> and source_of<Source, T&>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_lvalue_const = deducible<T> and source_of<Source, T const&>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_rvalue = deducible<T> and source_of<Source, T&&>;
 	
-	template<typename T, typename Source>
+	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_rvalue_const = deducible<T> and source_of<Source, T const&&>;
 	
-	struct ambiguous_prvalue_deducer {
+	KANGARU5_EXPORT struct ambiguous_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		template<deducible T>
@@ -111,7 +113,7 @@ namespace kangaru {
 		#endif
 	};
 	
-	struct ambiguous_overloaded_reference_deducer {
+	KANGARU5_EXPORT struct ambiguous_overloaded_reference_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
 		template<deducible T>
@@ -131,7 +133,7 @@ namespace kangaru {
 		#endif
 	};
 	
-	struct placeholder_deducer {
+	KANGARU5_EXPORT struct placeholder_deducer {
 		using is_deducer = kangaru_strict_deducer_tag;
 		
 		template<deducible T>
@@ -150,7 +152,7 @@ namespace kangaru {
 		operator T const&& () const;
 	};
 	
-	template<source_ref Source>
+	KANGARU5_EXPORT template<source_ref Source>
 	struct basic_deducer {
 		using is_deducer = kangaru_deducer_tag;
 		
@@ -218,7 +220,7 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	template<source_ref Source>
+	KANGARU5_EXPORT template<source_ref Source>
 	struct strict_deducer {
 		using is_deducer = kangaru_strict_deducer_tag;
 		
@@ -258,7 +260,7 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	template<typename Exclude, deducer Deducer>
+	KANGARU5_EXPORT template<typename Exclude, deducer Deducer>
 	struct exclude_deducer {
 		using is_deducer = typename Deducer::is_deducer;
 		
@@ -329,12 +331,12 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	inline constexpr auto exclude_deduction(deducer auto deducer) {
 		return exclude_deducer<T, decltype(deducer)>{deducer};
 	}
 	
-	template<typename Exclude, deducer Deducer>
+	KANGARU5_EXPORT template<typename Exclude, deducer Deducer>
 	struct exclude_special_constructors_deducer {
 		using is_deducer = typename Deducer::is_deducer;
 		
@@ -405,7 +407,7 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	enum struct reference_kind : std::uint8_t {
+	KANGARU5_EXPORT enum struct reference_kind : std::uint8_t {
 		none = 0,
 		lvalue_reference = 0b0001u,
 		lvalue_const_reference = 0b0010u,
@@ -424,23 +426,23 @@ namespace kangaru {
 		all_reference_kind = 0b1111u
 	};
 	
-	inline constexpr auto operator|(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
+	KANGARU5_EXPORT inline constexpr auto operator|(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
 		return static_cast<reference_kind>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
 	}
 	
-	inline constexpr auto operator&(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
+	KANGARU5_EXPORT inline constexpr auto operator&(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
 		return static_cast<reference_kind>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs));
 	}
 	
-	inline constexpr auto operator^(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
+	KANGARU5_EXPORT inline constexpr auto operator^(reference_kind lhs, reference_kind rhs) noexcept -> reference_kind {
 		return static_cast<reference_kind>(static_cast<std::uint8_t>(lhs) ^ static_cast<std::uint8_t>(rhs));
 	}
 	
-	inline constexpr auto operator~(reference_kind q) noexcept -> reference_kind {
+	KANGARU5_EXPORT inline constexpr auto operator~(reference_kind q) noexcept -> reference_kind {
 		return static_cast<reference_kind>(~static_cast<std::uint8_t>(q) & 0b1111);
 	}
 	
-	template<typename Deducer, reference_kind kind>
+	KANGARU5_EXPORT template<typename Deducer, reference_kind kind>
 	struct filtered_value_category_deducer {
 		using is_deducer = typename Deducer::is_deducer;
 		
@@ -527,16 +529,16 @@ namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	using exclude_prvalue_deducer = filtered_value_category_deducer<Deducer, reference_kind::all_reference_kind>;
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	using exclude_references_deducer = filtered_value_category_deducer<Deducer, reference_kind::none>;
 	
-	template<typename Deducer>
+	KANGARU5_EXPORT template<typename Deducer>
 	using lvalue_reference_deducer = filtered_value_category_deducer<Deducer, reference_kind::lvalue_reference>;
 	
-	template<deducible T>
+	KANGARU5_EXPORT template<deducible T>
 	inline constexpr auto exclude_special_constructors_for(deducer auto deducer) {
 		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
 	}
@@ -712,7 +714,7 @@ namespace kangaru {
 		}
 	}
 	
-	template<deducer... Deducers>
+	KANGARU5_EXPORT template<deducer... Deducers>
 	inline constexpr auto invoke_with_deducers(
 		callable<Deducers...> auto&& function, Deducers... deduce
 	) -> decltype(
@@ -721,21 +723,21 @@ namespace kangaru {
 		return detail::deducer::invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 	}
 	
-	template<typename F, typename... Deducers>
+	KANGARU5_EXPORT template<typename F, typename... Deducers>
 	concept callable_with_deducers =
 		    (... and deducer<Deducers>)
 		and requires(F&& f, Deducers... deduce) {
 			invoke_with_deducers(KANGARU5_FWD(f), deduce...);
 		};
 	
-	template<typename F, typename R, typename... Deducers>
+	KANGARU5_EXPORT template<typename F, typename R, typename... Deducers>
 	concept callable_with_deducers_returns =
 		    callable_with_deducers<F, Deducers...>
 		and requires(F&& f, Deducers... deduce) {
 			{ invoke_with_deducers(KANGARU5_FWD(f), deduce...) } -> std::same_as<R>;
 		};
 	
-	template<typename F, deducer... Deducers>
+	KANGARU5_EXPORT template<typename F, deducer... Deducers>
 		requires callable_with_deducers<F, Deducers...>
 	using call_with_deducers_result = decltype(invoke_with_deducers(std::declval<F>(), std::declval<Deducers>()...));
 } // namespace kangaru

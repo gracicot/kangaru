@@ -3,6 +3,8 @@
 
 #include "concepts.hpp"
 #include "source.hpp"
+
+#ifndef KANGARU5_MODULES
 #include <concepts>
 #include <initializer_list>
 #include <memory>
@@ -10,14 +12,15 @@
 #include <utility>
 #include <compare>
 #include <functional>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	struct in_place_t{} constexpr in_place;
-	struct nullopt_t {} constexpr nullopt;
+	KANGARU5_EXPORT struct in_place_t{} constexpr in_place;
+	KANGARU5_EXPORT struct nullopt_t {} constexpr nullopt;
 	
-	template<injectable T>
+	KANGARU5_EXPORT template<injectable T>
 	struct optional;
 }
 
@@ -33,7 +36,7 @@ namespace kangaru::detail::optional {
 }
 
 namespace kangaru {
-	template<unqualified_object T>
+	KANGARU5_EXPORT template<unqualified_object T>
 	struct optional<T> {
 		constexpr optional() = default;
 		
@@ -379,7 +382,7 @@ namespace kangaru {
 		bool engaged = false;
 	};
 	
-	template<reference T>
+	KANGARU5_EXPORT template<reference T>
 	struct optional<T> {
 	private:
 		using object_type = std::remove_reference_t<T>;

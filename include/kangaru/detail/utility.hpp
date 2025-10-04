@@ -1,9 +1,11 @@
 #ifndef KANGARU5_DETAIL_UTILITY_HPP
 #define KANGARU5_DETAIL_UTILITY_HPP
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <utility>
 #include <tuple>
+#endif
 
 #include "define.hpp"
 

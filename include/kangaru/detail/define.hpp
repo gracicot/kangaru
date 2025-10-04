@@ -2,7 +2,15 @@
 #define KANGARU5_DETAIL_DEFINE_HPP
 
 // We include version to check __cpp_explicit_this_parameter
+#ifndef KANGARU5_MODULES
 #include <version>
+#endif
+
+#ifdef KANGARU5_MODULES
+	#define KANGARU5_EXPORT export
+#else
+	#define KANGARU5_EXPORT
+#endif
 
 #if defined(_MSC_VER) && !defined(__clang__)
 	#define KANGARU5_IS_MSVC() true

@@ -11,14 +11,16 @@
 #include "source_rebind.hpp"
 #include "type_traits.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <utility>
 #include <concepts>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object MakeInjector>
 	struct basic_non_empty_constructor {
 		constexpr basic_non_empty_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -51,9 +53,9 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	using non_empty_constructor = basic_non_empty_constructor<make_spread_injector_function>;
+	KANGARU5_EXPORT using non_empty_constructor = basic_non_empty_constructor<make_spread_injector_function>;
 	
-	template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object MakeInjector>
 	struct basic_unsafe_exhaustive_constructor {
 		constexpr basic_unsafe_exhaustive_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -90,9 +92,9 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	using unsafe_exhaustive_constructor = basic_unsafe_exhaustive_constructor<make_spread_injector_function>;
+	KANGARU5_EXPORT using unsafe_exhaustive_constructor = basic_unsafe_exhaustive_constructor<make_spread_injector_function>;
 	
-	template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object MakeInjector>
 	struct basic_exhaustive_constructor {
 		constexpr basic_exhaustive_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -131,9 +133,9 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	using exhaustive_constructor = basic_exhaustive_constructor<make_spread_injector_function>;
+	KANGARU5_EXPORT using exhaustive_constructor = basic_exhaustive_constructor<make_spread_injector_function>;
 	
-	template<injectable Type, movable_object MakeInjector>
+	KANGARU5_EXPORT template<injectable Type, movable_object MakeInjector>
 	struct basic_placeholder_constructor_except {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except() requires std::default_initializable<MakeInjector> = default;
 		
@@ -163,10 +165,10 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	template<injectable Type>
+	KANGARU5_EXPORT template<injectable Type>
 	using placeholder_constructor_except = basic_placeholder_constructor_except<Type, make_spread_injector_function>;
 	
-	template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object MakeInjector>
 	struct basic_placeholder_constructor {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -196,9 +198,9 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	using placeholder_constructor = basic_placeholder_constructor<make_spread_injector_function>;
+	KANGARU5_EXPORT using placeholder_constructor = basic_placeholder_constructor<make_spread_injector_function>;
 	
-	template<source Source, movable_object Function, movable_object MakeInjector = make_spread_injector_function>
+	KANGARU5_EXPORT template<source Source, movable_object Function, movable_object MakeInjector = make_spread_injector_function>
 	struct with_function_call {
 	private:
 		using construction_type = std::remove_reference_t<maybe_unwrap_result_t<Function>>;
@@ -244,7 +246,7 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	template<movable_object... Functions>
+	KANGARU5_EXPORT template<movable_object... Functions>
 	struct overload {
 		explicit(sizeof...(Functions) == 1) constexpr overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
 		
@@ -309,7 +311,7 @@ namespace kangaru {
 		std::tuple<Functions...> functions;
 	};
 	
-	template<movable_object Function, movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object Function, movable_object MakeInjector>
 	struct function {
 	private:
 		template<injectable T>
@@ -347,12 +349,12 @@ namespace kangaru {
 		MakeInjector make_injector;
 	};
 	
-	template<forwarded_source Source, movable_object Function>
+	KANGARU5_EXPORT template<forwarded_source Source, movable_object Function>
 	inline constexpr auto make_source_with_function_call(Source&& source, Function&& function) {
 		return with_function_call<std::decay_t<Source>, std::decay_t<Function>>{KANGARU5_FWD(source), KANGARU5_FWD(function)};
 	}
 	
-	template<source Source, source Passthrough, movable_object Constructor>
+	KANGARU5_EXPORT template<source Source, source Passthrough, movable_object Constructor>
 	struct with_construction_original_passthrough {
 		explicit constexpr with_construction_original_passthrough(Source source) noexcept
 				requires std::default_initializable<Constructor> :
@@ -403,7 +405,7 @@ namespace kangaru {
 		Constructor construction;
 	};
 	
-	template<source Source, movable_object Constructor>
+	KANGARU5_EXPORT template<source Source, movable_object Constructor>
 	struct with_construction {
 		explicit constexpr with_construction(Source source) noexcept
 			requires std::default_initializable<Constructor> :
@@ -445,26 +447,26 @@ namespace kangaru {
 		Constructor construction;
 	};
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using with_non_empty_construction = with_construction<Source, non_empty_constructor>;
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_non_empty_construction(Source&& source) {
 		return with_construction<std::decay_t<Source>, non_empty_constructor>{KANGARU5_FWD(source), non_empty_constructor{}};
 	}
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using with_exhaustive_construction = with_construction<Source, exhaustive_constructor>;
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_exhaustive_construction(Source&& source) {
 		return with_construction<std::decay_t<Source>, exhaustive_constructor>{KANGARU5_FWD(source), exhaustive_constructor{}};
 	}
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	using with_unsafe_exhaustive_construction = with_construction<Source, unsafe_exhaustive_constructor>;
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {
 		return with_construction<std::decay_t<Source>, unsafe_exhaustive_constructor>{KANGARU5_FWD(source), unsafe_exhaustive_constructor{}};
 	}
@@ -483,7 +485,7 @@ namespace kangaru {
 		};
 	}
 	
-	template<rebindable_source Source>
+	KANGARU5_EXPORT template<rebindable_source Source>
 	struct with_recursion {
 		Source source;
 		
@@ -514,15 +516,15 @@ namespace kangaru {
 	};
 	
 	// This deduction guide is required for clang 16 to work
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	with_recursion(Source const& source) -> with_recursion<Source>;
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_recursion(Source&& source) {
 		return with_recursion<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	template<typename Tree, typename Type>
+	KANGARU5_EXPORT template<typename Tree, typename Type>
 	concept construction_tree_needs = injectable<Tree> and injectable<Type> and not source_of<
 		with_recursion<
 			with_function_call<

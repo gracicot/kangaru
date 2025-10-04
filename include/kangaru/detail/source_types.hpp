@@ -10,15 +10,17 @@
 #include "tag.hpp"
 #include "source_rebind.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <tuple>
 #include <concepts>
 #include <algorithm>
 #include <type_traits>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<source... Sources> requires (sizeof...(Sources) > 0)
+	KANGARU5_EXPORT template<source... Sources> requires (sizeof...(Sources) > 0)
 	struct composed_source {
 		explicit constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
@@ -46,11 +48,11 @@ namespace kangaru {
 		std::tuple<Sources...> sources;
 	};
 	
-	inline constexpr auto compose(forwarded_source auto&&... sources) {
+	KANGARU5_EXPORT inline constexpr auto compose(forwarded_source auto&&... sources) {
 		return composed_source<std::decay_t<decltype(sources)>...>{KANGARU5_FWD(sources)...};
 	}
 	
-	template<source... Sources>
+	KANGARU5_EXPORT template<source... Sources>
 	struct select_first_source {
 		explicit constexpr select_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
 		
@@ -76,7 +78,7 @@ namespace kangaru {
 		std::tuple<Sources...> sources;
 	};
 	
-	template<object... Ts>
+	KANGARU5_EXPORT template<object... Ts>
 	struct tuple_source {
 		explicit constexpr tuple_source(std::tuple<Ts...> objects) noexcept : objects{std::move(objects)} {}
 		
@@ -89,7 +91,7 @@ namespace kangaru {
 		std::tuple<Ts...> objects;
 	};
 	
-	template<callable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<detail::type_traits::call_result_t<F>>)
+	KANGARU5_EXPORT template<callable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<detail::type_traits::call_result_t<F>>)
 	struct function_source {
 		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
 		
@@ -102,7 +104,7 @@ namespace kangaru {
 		F function;
 	};
 	
-	template<unqualified_object T>
+	KANGARU5_EXPORT template<unqualified_object T>
 	struct object_source {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr object_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
@@ -126,13 +128,13 @@ namespace kangaru {
 		T object;
 	};
 	
-	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	object_source(T&&) -> object_source<std::decay_t<T>>;
 	
-	template<unqualified_object T>
+	KANGARU5_EXPORT template<unqualified_object T>
 	inline constexpr auto is_empty_injection_constructible_v<object_source<T>> = true;
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	struct rvalue_source {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr rvalue_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
@@ -160,13 +162,13 @@ namespace kangaru {
 		T object;
 	};
 	
-	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	rvalue_source(T&&) -> rvalue_source<std::decay_t<T>>;
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	inline constexpr auto is_empty_injection_constructible_v<rvalue_source<T>> = true;
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	struct reference_source {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr reference_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
@@ -194,13 +196,13 @@ namespace kangaru {
 		T object;
 	};
 	
-	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	reference_source(T&&) -> reference_source<std::decay_t<T>>;
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	inline constexpr auto is_empty_injection_constructible_v<reference_source<T>> = true;
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	struct external_rvalue_source {
 		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
 		
@@ -212,7 +214,7 @@ namespace kangaru {
 		T* reference;
 	};
 	
-	template<object T>
+	KANGARU5_EXPORT template<object T>
 	struct external_reference_source {
 		explicit constexpr external_reference_source(T& reference) noexcept : reference{std::addressof(reference)} {}
 		
@@ -224,7 +226,7 @@ namespace kangaru {
 		T* reference;
 	};
 	
-	template<source Source, source Alternative>
+	KANGARU5_EXPORT template<source Source, source Alternative>
 	struct with_alternative {
 		constexpr with_alternative(Source source, Alternative alternative) noexcept : source{std::move(source)}, alternative{std::move(alternative)} {}
 		
@@ -251,12 +253,12 @@ namespace kangaru {
 		Alternative alternative;
 	};
 	
-	template<forwarded_source Wrapped, forwarded_source Alternative>
+	KANGARU5_EXPORT template<forwarded_source Wrapped, forwarded_source Alternative>
 	inline constexpr auto make_source_with_alternative(Wrapped&& wrapped, Alternative&& alternative) {
 		return with_alternative<std::decay_t<Wrapped>, std::decay_t<Alternative>>{KANGARU5_FWD(wrapped), KANGARU5_FWD(alternative)};
 	}
 	
-	template<source Source, injectable Type>
+	KANGARU5_EXPORT template<source Source, injectable Type>
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
 		
@@ -269,7 +271,7 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<source Source, std::default_initializable Filter>
+	KANGARU5_EXPORT template<source Source, std::default_initializable Filter>
 	struct filter_if_source {
 		constexpr filter_if_source(Source source) noexcept : source{std::move(source)} {}
 		
@@ -282,17 +284,17 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<injectable T, forwarded_source Source>
+	KANGARU5_EXPORT template<injectable T, forwarded_source Source>
 	inline constexpr auto filter(Source&& source) {
 		return filter_source<std::decay_t<Source>, T>{KANGARU5_FWD(source)};
 	}
 	
-	template<forwarded_source Source, std::default_initializable Filter>
+	KANGARU5_EXPORT template<forwarded_source Source, std::default_initializable Filter>
 	inline constexpr auto filter_if(Source&& source, [[maybe_unused]] Filter filter) {
 		return filter_if_source<std::decay_t<Source>, Filter>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct with_passthrough {
 		explicit constexpr with_passthrough(Source source) noexcept : source{std::move(source)} {}
 		
@@ -311,12 +313,12 @@ namespace kangaru {
 		}
 	};
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_passthrough(Source&& source) noexcept {
 		return with_passthrough<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct with_dereference {
 		explicit constexpr with_dereference(Source source) noexcept : source{std::move(source)} {}
 		
@@ -333,13 +335,13 @@ namespace kangaru {
 		}
 	};
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_dereference(Source&& source) {
 		return with_dereference<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	// TODO: Create singular source to deduce the from?
-	template<source Source, injectable From> requires source_of<Source, From>
+	KANGARU5_EXPORT template<source Source, injectable From> requires source_of<Source, From>
 	struct with_cast_from {
 		Source source;
 		
@@ -355,16 +357,16 @@ namespace kangaru {
 		}
 	};
 	
-	template<injectable From, forwarded_source Source>
+	KANGARU5_EXPORT template<injectable From, forwarded_source Source>
 	inline constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
 		return with_cast_from<std::decay_t<Source>, From>{};
 	}
 	
 	// TODO: Is it at the right place?
-	template<source Source, injectable From> requires source_of<Source, From>
+	KANGARU5_EXPORT template<source Source, injectable From> requires source_of<Source, From>
 	struct overrides_types_in_cache<with_cast_from<Source, From>> : overrides_types_in_cache<Source> {};
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct with_source_wrapping {
 		Source source;
 		
@@ -374,12 +376,12 @@ namespace kangaru {
 		}
 	};
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_source_wrapping(Source&& source) {
 		return with_source_wrapping<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct basic_wrapping_source {
 		template<injectable T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -389,12 +391,12 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto wrap_source(Source&& source) {
 		return basic_wrapping_source<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	inline constexpr auto tie(source auto&... sources) {
+	KANGARU5_EXPORT inline constexpr auto tie(source auto&... sources) {
 		return KANGARU5_NO_ADL(compose)(kangaru::ref(sources)...);
 	}
 }

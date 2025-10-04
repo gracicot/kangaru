@@ -8,8 +8,10 @@
 #include "cache.hpp"
 #include "heap_storage.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <unordered_map>
 #include <concepts>
+#endif
 
 #include "define.hpp"
 
@@ -27,7 +29,7 @@ namespace kangaru {
 		using polymorphic_to_concrete_t = typename polymorphic_to_concrete<T>::type;
 	}
 	
-	template<rebindable_source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
+	KANGARU5_EXPORT template<rebindable_source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
 	struct polymorphic_container {
 		explicit constexpr polymorphic_container(Source source) noexcept :
 			state{

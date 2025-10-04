@@ -10,6 +10,7 @@
 #include "allocator.hpp"
 #include "source_types.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <cstddef>
 #include <type_traits>
 #include <concepts>
@@ -17,11 +18,12 @@
 #include <unordered_map>
 #include <iterator>
 #include <utility>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept non_ref_cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
 		{ map.begin() } -> std::forward_iterator;
 		{ map.end() } -> std::forward_iterator;
@@ -44,17 +46,17 @@ namespace kangaru {
 		typename T::const_iterator;
 	};
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept cache_map = non_ref_cache_map<T> or requires {
 		requires non_ref_cache_map<source_reference_wrapped_type<T>>;
 	};
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept forwarded_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<std::size_t, void*>>);
 	
-	template<cache_map Map>
+	KANGARU5_EXPORT template<cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;
 		using mapped_type = typename Map::mapped_type;

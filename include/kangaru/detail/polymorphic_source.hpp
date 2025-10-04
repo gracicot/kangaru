@@ -6,17 +6,19 @@
 #include "utility.hpp"
 #include "tag.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <memory>
 #include <type_traits>
 #include <any>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	struct type_erased_source_reference;
+	KANGARU5_EXPORT struct type_erased_source_reference;
 	
 	// TODO: Rewrite without std::any
-	template<injectable T>
+	KANGARU5_EXPORT template<injectable T>
 	struct any_copiable_source_of_const {
 		template<not_self<any_copiable_source_of_const> Source> requires source_of<Source const&, T>
 		explicit constexpr any_copiable_source_of_const(Source source) noexcept :
@@ -39,7 +41,7 @@ namespace kangaru {
 	};
 	
 	// TODO: Rewrite without std::any
-	template<injectable T>
+	KANGARU5_EXPORT template<injectable T>
 	struct any_copiable_source_of {
 		template<not_self<any_copiable_source_of> Source> requires source_of<Source&, T>
 		explicit constexpr any_copiable_source_of(Source source) noexcept :
@@ -62,7 +64,7 @@ namespace kangaru {
 	};
 	
 	// TODO: Review constructors/conversions
-	template<injectable T>
+	KANGARU5_EXPORT template<injectable T>
 	struct polymorphic_source {
 		template<not_self<polymorphic_source> Source> requires source_of<Source, T>
 		explicit constexpr polymorphic_source(Source& source) noexcept :
@@ -123,7 +125,7 @@ namespace kangaru {
 	/**
 	 * @brief A type erased source which completely hides the source type and provide type.
 	 */
-	struct type_erased_source_reference {
+	KANGARU5_EXPORT struct type_erased_source_reference {
 		/**
 		 * Constructs a type erased source reference from an existing function pointer and void pointer.
 		 *
@@ -186,7 +188,7 @@ namespace kangaru {
 		}
 	}
 	
-	template<source Source, injectable Primary>
+	KANGARU5_EXPORT template<source Source, injectable Primary>
 	struct with_polymorphic_cast {
 		Source source;
 		
@@ -221,7 +223,7 @@ namespace kangaru {
 	}
 	
 	// TODO: Check if this is at the right place
-	template<source Source, injectable Primary>
+	KANGARU5_EXPORT template<source Source, injectable Primary>
 	struct overrides_types_in_cache<with_polymorphic_cast<Source, Primary>> :
 		detail::polymorphic_source::override_polymorphic<overrides_types_in_cache_t<Primary>> {
 	};

@@ -4,18 +4,20 @@
 #include "source.hpp"
 #include "concepts.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <memory>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept reference_wrapper = source<T> and requires(T ref) {
 		{ ref.unwrap() } -> reference;
 	};
 	
-	template<object Source> requires (source<std::remove_const_t<Source>> and not reference_wrapper<std::remove_const_t<Source>>)
+	KANGARU5_EXPORT template<object Source> requires (source<std::remove_const_t<Source>> and not reference_wrapper<std::remove_const_t<Source>>)
 	struct source_reference_wrapper {
 		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
@@ -34,7 +36,7 @@ namespace kangaru {
 	};
 	
 	// TODO: It seems unsafe to expose rvalues through an lvalue. Is there a way to fix usage?
-	template<source_ref Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	KANGARU5_EXPORT template<source_ref Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	struct source_forwarding_reference_wrapper {
 		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
 		
@@ -52,63 +54,63 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	source_forwarding_reference_wrapper(Source&&) -> source_forwarding_reference_wrapper<Source&&>;
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept forwarded_reference_wrapper = reference_wrapper<std::remove_reference_t<T>>;
 	
-	template<reference_wrapper Wrapper>
+	KANGARU5_EXPORT template<reference_wrapper Wrapper>
 	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
 	
-	inline constexpr auto maybe_unwrap(forwarded_reference_wrapper auto&& ref) noexcept -> decltype(auto) {
+	KANGARU5_EXPORT inline constexpr auto maybe_unwrap(forwarded_reference_wrapper auto&& ref) noexcept -> decltype(auto) {
 		return KANGARU5_FWD(ref).unwrap();
 	}
 	
-	inline constexpr auto maybe_unwrap(auto&& any) -> decltype(any) {
+	KANGARU5_EXPORT inline constexpr auto maybe_unwrap(auto&& any) -> decltype(any) {
 		return KANGARU5_FWD(any);
 	}
 	
-	template<typename MaybeWrapper>
+	KANGARU5_EXPORT template<typename MaybeWrapper>
 	using maybe_unwrap_result_t = decltype(KANGARU5_NO_ADL(maybe_unwrap)(std::declval<MaybeWrapper>()));
 	
-	template<source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	KANGARU5_EXPORT template<source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper<Source> {
 		return source_reference_wrapper<Source>{source};
 	}
 	
-	template<source Source> requires (not reference_wrapper<Source>)
+	KANGARU5_EXPORT template<source Source> requires (not reference_wrapper<Source>)
 	inline constexpr auto ref(source_reference_wrapper<Source> source) -> source_reference_wrapper<Source> {
 		return source;
 	}
 	
-	template<source_ref Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	KANGARU5_EXPORT template<source_ref Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto ref(source_forwarding_reference_wrapper<Source> source) -> source_reference_wrapper<std::remove_reference_t<Source>> {
 		return source_reference_wrapper<std::remove_reference_t<Source>>{source.unwrap()};
 	}
 	
-	template<forwarded_source Source> requires (not forwarded_reference_wrapper<Source>)
+	KANGARU5_EXPORT template<forwarded_source Source> requires (not forwarded_reference_wrapper<Source>)
 	inline constexpr auto fwd_ref(Source&& source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
 	}
 	
-	template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	KANGARU5_EXPORT template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto fwd_ref(source_forwarding_reference_wrapper<Source> source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source;
 	}
 	
-	template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
+	KANGARU5_EXPORT template<forwarded_source Source> requires (not reference_wrapper<std::remove_cvref_t<Source>>)
 	inline constexpr auto fwd_ref(source_reference_wrapper<Source> source) -> source_forwarding_reference_wrapper<Source&> {
 		return source_forwarding_reference_wrapper<Source&>{source.unwrap()};
 	}
 	
-	template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
+	KANGARU5_EXPORT template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
 	using ref_result_t = decltype(KANGARU5_NO_ADL(ref)(std::declval<Source>()));
 	
-	template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
+	KANGARU5_EXPORT template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)
 	using fwd_ref_result_t = decltype(KANGARU5_NO_ADL(fwd_ref)(std::declval<Source>()));
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct with_source_reference_wrapping {
 		Source source;
 		
@@ -122,7 +124,7 @@ namespace kangaru {
 		}
 	};
 	
-	template<source Source>
+	KANGARU5_EXPORT template<source Source>
 	struct with_source_forwarding_reference_wrapping {
 		Source source;
 		

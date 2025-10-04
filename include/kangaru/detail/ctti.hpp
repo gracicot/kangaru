@@ -4,8 +4,10 @@
 #include "concepts.hpp"
 #include "murmur.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <string_view>
 #include <cstddef>
+#endif
 
 #include "define.hpp"
 

@@ -1,7 +1,11 @@
 #ifndef KANGARU_DETAIL_TYPE_TRAITS_HPP
 #define KANGARU_DETAIL_TYPE_TRAITS_HPP
 
+#ifndef KANGARU5_MODULES
 #include <utility>
+#endif
+
+#include "define.hpp"
 
 namespace kangaru::detail::type_traits {
 	// Faster conditional implementation
@@ -26,5 +30,7 @@ namespace kangaru::detail::type_traits {
 	template<typename F, typename... Args>
 	using call_result_t = decltype(std::declval<F>()(std::declval<Args>()...));
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU_DETAIL_TYPE_TRAITS_HPP

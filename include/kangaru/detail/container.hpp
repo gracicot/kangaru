@@ -6,18 +6,19 @@
 #include "cache.hpp"
 #include "heap_storage.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <unordered_map>
 #include <concepts>
+#endif
 
 #include "define.hpp"
 
-
 namespace kangaru {
-	template<injectable T>
+	KANGARU5_EXPORT template<injectable T>
 	using cached_reference_to_reference_source =
 		detail::utility::ttype_t<cached_reference_to_source<reference_source>, T>;
 	
-	template<
+	KANGARU5_EXPORT template<
 		rebindable_source Source,
 		cache_map Cache = std::unordered_map<std::size_t, void*>,
 		heap_storage Storage = default_heap_storage

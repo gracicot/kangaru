@@ -1,13 +1,17 @@
-#ifndef KANGARU5_DETAIL_CONSTRUCOR_HPP
-#define KANGARU5_DETAIL_CONSTRUCOR_HPP
+#ifndef KANGARU5_DETAIL_CONSTRUCTOR_HPP
+#define KANGARU5_DETAIL_CONSTRUCTOR_HPP
 
 #include "concepts.hpp"
 #include "utility.hpp"
 
+#ifndef KANGARU5_MODULES
+#include <utility>
+#endif
+
 #include "define.hpp"
 
 namespace kangaru {
-	template<unqualified_object Type>
+	KANGARU5_EXPORT template<unqualified_object Type>
 	inline constexpr auto constructor() noexcept {
 		auto const call_constructor = ::kangaru::detail::utility::overload{
 			[](int, auto&&... args)
@@ -32,4 +36,4 @@ namespace kangaru {
 
 #include "undef.hpp"
 
-#endif // KANGARU5_DETAIL_CONSTRUCOR_HPP
+#endif // KANGARU5_DETAIL_CONSTRUCTOR_HPP

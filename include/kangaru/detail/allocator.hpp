@@ -1,19 +1,23 @@
 #ifndef KANGARU5_DETAIL_ALLOCATOR_HPP
 #define KANGARU5_DETAIL_ALLOCATOR_HPP
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <cstddef>
 #include <memory>
 #include <limits>
+#endif
+
+#include "define.hpp"
 
 namespace kangaru {
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept object_allocator = requires(T allocator, int* ptr) {
 		{ allocator.template allocate_object<int>() } -> std::same_as<int*>;
 		{ allocator.template deallocate_object<int>(ptr) } -> std::same_as<void>;
 	};
 	
-	struct default_allocator {
+	KANGARU5_EXPORT struct default_allocator {
 		constexpr auto allocate_bytes(std::size_t size, std::size_t alignment) -> void* {
 			if (std::is_constant_evaluated()) {
 				// We ignore alignment in constexpr
@@ -54,5 +58,7 @@ namespace kangaru {
 		}
 	};
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU5_DETAIL_ALLOCATOR_HPP

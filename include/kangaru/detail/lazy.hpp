@@ -4,8 +4,14 @@
 #include "source.hpp"
 #include "optional.hpp"
 
+#ifndef KANGARU5_MODULES
+#include <concepts>
+#endif
+
+#include "define.hpp"
+
 namespace kangaru {
-	template<injectable T, source_of<T> Source>
+	KANGARU5_EXPORT template<injectable T, source_of<T> Source>
 	struct lazy {
 		explicit constexpr lazy(Source source) noexcept : source{std::move(source)} {}
 		
@@ -40,5 +46,7 @@ namespace kangaru {
 		optional<T> object;
 	};
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU5_DETAIL_LAZY_HPP

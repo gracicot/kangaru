@@ -5,8 +5,10 @@
 #include "source_reference_wrapper.hpp"
 #include "utility.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <concepts>
+#endif
 
 #include "define.hpp"
 
@@ -48,7 +50,7 @@ namespace kangaru {
 		};
 	} // namespace detail::source_rebind
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept transparent_rebindable_wrapping_source =
 		    wrapping_source<Source>
 		and requires(Source source) {
@@ -59,14 +61,14 @@ namespace kangaru {
 			>;
 		};
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept stateful_rebindable_wrapping_source =
 		    wrapping_source<Source>
 		and requires(Source source) {
 			std::decay_t<Source>::rebind(source, [](auto&&) -> none_source { return {}; });
 		};
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept rebindable_wrapping_source =
 		   transparent_rebindable_wrapping_source<Source>
 		or stateful_rebindable_wrapping_source<Source>;
@@ -124,17 +126,17 @@ namespace kangaru {
 		}
 	} // namespace detail::source_rebind
 	
-	inline namespace niebloid {
+	KANGARU5_EXPORT inline namespace niebloid {
 		using namespace detail::source_rebind::niebloid;
 	}
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept rebindable_source = source<Source> and detail::source_rebind::is_rebindable_v<Source>;
 	
-	template<rebindable_source Source, forwarded_source Leaf>
+	KANGARU5_EXPORT template<rebindable_source Source, forwarded_source Leaf>
 	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
 	
-	template<forwarded_wrapping_source Source, forwarded_source Leaf>
+	KANGARU5_EXPORT template<forwarded_wrapping_source Source, forwarded_source Leaf>
 	using wrapped_source_rebind_result_t = decltype(kangaru::rebind(std::declval<forwarded_wrapped_source_t<Source>>(), std::declval<Leaf>()));
 } // namespace kangaru
 

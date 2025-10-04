@@ -8,10 +8,12 @@
 #include "cache_types.hpp"
 #include "source_rebind.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <concepts>
 #include <utility>
 #include <any>
+#endif
 
 #include "define.hpp"
 
@@ -26,6 +28,7 @@ namespace kangaru {
 		};
 	}
 	
+	KANGARU5_EXPORT
 	template<
 		source Source,
 		cache_map Cache = std::unordered_map<std::size_t, std::any>,
@@ -172,17 +175,17 @@ namespace kangaru {
 		cache_type cache;
 	};
 	
-	template<template<source> typename CacheFrom, forwarded_source Source, forwarded_cache_map Cache>
+	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source, forwarded_cache_map Cache>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	template<template<source> typename CacheFrom, forwarded_source Source>
+	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	
-	template<
+	KANGARU5_EXPORT template<
 		source Source,
 		cache_map Cache = std::unordered_map<std::size_t, std::any>
 	>
@@ -221,12 +224,12 @@ namespace kangaru {
 		}
 	};
 	
-	template<forwarded_source Source, forwarded_cache_map Cache>
+	KANGARU5_EXPORT template<forwarded_source Source, forwarded_cache_map Cache>
 	constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
 		return with_cache<std::decay_t<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	template<forwarded_source Source>
+	KANGARU5_EXPORT template<forwarded_source Source>
 	constexpr auto make_source_with_cache(Source&& source) {
 		return with_cache<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
@@ -235,7 +238,7 @@ namespace kangaru {
 	static_assert(cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
 	
-	template<template<unqualified_object> typename SourceType>
+	KANGARU5_EXPORT template<template<unqualified_object> typename SourceType>
 	struct cached_reference_to_source {
 		template<injectable T>
 		struct ttype {
@@ -243,7 +246,7 @@ namespace kangaru {
 		};
 	};
 	
-	template<source Source, template<typename> typename SourceFor>
+	KANGARU5_EXPORT template<source Source, template<typename> typename SourceFor>
 	struct with_cache_using_source {
 		template<injectable T, forwarded<with_cache_using_source> Self>
 			requires (
@@ -259,7 +262,7 @@ namespace kangaru {
 		Source source;
 	};
 	
-	template<template<typename> typename SourceFor>
+	KANGARU5_EXPORT template<template<typename> typename SourceFor>
 	inline constexpr auto make_source_with_cache_using_source(forwarded_source auto&& source) {
 		return with_cache_using_source<std::decay_t<decltype(source)>, SourceFor>{KANGARU5_FWD(source)};
 	}

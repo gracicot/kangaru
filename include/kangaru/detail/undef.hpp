@@ -5,6 +5,7 @@
 #error "Must include define.hpp before including undef.hpp"
 #endif
 
+#undef KANGARU5_EXPORT
 #undef KANGARU5_NO_UNIQUE_ADDRESS
 #undef KANGARU5_FUNCTION_SIGNATURE
 #undef KANGARU5_FWD

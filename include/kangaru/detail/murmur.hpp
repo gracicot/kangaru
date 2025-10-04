@@ -1,19 +1,23 @@
 #ifndef KANGARU5_DETAIL_MURMUR_HPP
 #define KANGARU5_DETAIL_MURMUR_HPP
 
+#ifndef KANGARU5_MODULES
 #include <cstddef>
 #include <cstdint>
 #include <span>
 #include <concepts>
 #include <string_view>
 #include <vector>
+#endif
+
+#include "define.hpp"
 
 namespace kangaru::detail::murmur {
-	using hash_t = std::uint64_t;
+	KANGARU5_EXPORT using hash_t = std::uint64_t;
 	
-	inline constexpr auto murmur_default_seed = hash_t{0};
+	KANGARU5_EXPORT inline constexpr auto murmur_default_seed = hash_t{0};
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept byte_like =
 		   std::same_as<char, T>
 		or std::same_as<char8_t, T>
@@ -25,7 +29,7 @@ namespace kangaru::detail::murmur {
 	 * Constexpr compatible implementation of murmur hash 64a.
 	 * Theorically slightly slower since it only does aligned reads.
 	 */
-	template<byte_like T>
+	KANGARU5_EXPORT template<byte_like T>
 	constexpr auto murmur64a(std::span<T const> const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		auto constexpr m = std::uint64_t{0xc6a4a7935bd1e995ull};
 		auto constexpr r = int{47};
@@ -75,23 +79,25 @@ namespace kangaru::detail::murmur {
 		return static_cast<hash_t>(hash);
 	}
 	
-	constexpr auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	KANGARU5_EXPORT constexpr auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return murmur64a(std::span<char const>{buf.data(), buf.size()}, seed);
 	}
 	
-	constexpr auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	KANGARU5_EXPORT constexpr auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return murmur64a(std::span<char8_t const>{buf.data(), buf.size()}, seed);
 	}
 	
-	template<byte_like T>
+	KANGARU5_EXPORT template<byte_like T>
 	constexpr auto murmur64a(std::vector<T> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return murmur64a(std::span{buf}, seed);
 	}
 	
-	template<byte_like T, std::size_t n>
+	KANGARU5_EXPORT template<byte_like T, std::size_t n>
 	constexpr auto murmur64a(std::array<T, n> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return murmur64a(std::span<T const>{buf.data(), n}, seed);
 	}
 }
+
+#include "undef.hpp"
 
 #endif // KANGARU5_DETAIL_MURMUR_HPP

@@ -4,21 +4,25 @@
 #include "concepts.hpp"
 #include "utility.hpp"
 
+#ifndef KANGARU5_MODULES
 #include <concepts>
+#include <type_traits>
+#include <utility>
+#endif
 
 #include "define.hpp"
 
 namespace kangaru {
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept injectable = unqualified_object<T> or reference<T>;
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept source = object<T> and std::move_constructible<T> and std::is_class_v<T>;
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept source_ref = reference<T> and source<std::remove_cvref_t<T>>;
 	
-	template<typename T>
+	KANGARU5_EXPORT template<typename T>
 	concept forwarded_source = source<std::remove_reference_t<T>>;
 	
 	namespace detail::source {
@@ -86,47 +90,47 @@ namespace kangaru {
 		}
 	}
 	
-	inline namespace niebloid {
+	KANGARU5_EXPORT inline namespace niebloid {
 		using namespace detail::source::niebloid;
 	}
 	
-	template<typename Source, typename T>
+	KANGARU5_EXPORT template<typename Source, typename T>
 	concept source_of =
 		   detail::source::member_source_of<Source, T>
 		or detail::source::member_template_source_of<Source, T>
 		or detail::source::adl_nonmember_source_of<Source, T>
 		or detail::source::adl_nonmember_template_source_of<Source, T>;
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept weak_wrapping_source =
 		    source<std::remove_reference_t<Source>>
 		and requires(Source source) {
 			{ source.source };
 		};
 	
-	template<typename Source> requires weak_wrapping_source<std::remove_reference_t<Source>>
+	KANGARU5_EXPORT template<typename Source> requires weak_wrapping_source<std::remove_reference_t<Source>>
 	using wrapped_source_t = std::remove_reference_t<decltype((std::declval<Source&&>().source))>;
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept wrapping_source =
 		    weak_wrapping_source<Source>
 		and source<wrapped_source_t<Source>>;
 	
-	template<typename Source>
+	KANGARU5_EXPORT template<typename Source>
 	concept forwarded_wrapping_source = wrapping_source<std::remove_reference_t<Source>>;
 	
-	struct none_source {};
+	KANGARU5_EXPORT struct none_source {};
 	static_assert(source<none_source>);
 	
-	template<wrapping_source Source>
+	KANGARU5_EXPORT template<wrapping_source Source>
 	using forwarded_wrapped_source_t = detail::utility::forward_like_t<Source, wrapped_source_t<Source>>;
 	
-	template<typename Source, typename T>
+	KANGARU5_EXPORT template<typename Source, typename T>
 	concept wrapping_source_of =
 		    wrapping_source<std::remove_reference_t<Source>>
 		and source_of<forwarded_wrapped_source_t<Source>, T>;
 	
-	template<injectable T, source Source>
+	KANGARU5_EXPORT template<injectable T, source Source>
 		requires (
 			   source_of<Source&, T>
 			or source_of<Source const&, T>
@@ -156,7 +160,7 @@ namespace kangaru {
 		Source source;
 	};
 	
-	struct placeholder_source {
+	KANGARU5_EXPORT struct placeholder_source {
 		consteval placeholder_source() = default;
 		
 		template<injectable T>

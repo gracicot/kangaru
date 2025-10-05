@@ -27,7 +27,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'ce613c41372b23b1f51333815feb3edd87ef8a8b'
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -134,7 +134,7 @@ jobs:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           useVcpkgToolchainFile: true
-          vcpkgGitCommitId: 'ce613c41372b23b1f51333815feb3edd87ef8a8b'
+          vcpkgGitCommitId: '120deac3062162151622ca4860575a33844ba10b'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

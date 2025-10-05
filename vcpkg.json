@@ -1,7 +1,7 @@
 {
   "name": "kangaru",
   "version-string": "5.0.0",
-  "builtin-baseline": "ce613c41372b23b1f51333815feb3edd87ef8a8b",
+  "builtin-baseline": "120deac3062162151622ca4860575a33844ba10b",
   "dependencies": [
     "catch2",
     "fmt"

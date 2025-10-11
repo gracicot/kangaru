@@ -11,6 +11,22 @@ struct service_2_a { service_1_a s1a; int i; };
 struct service_2_b { service_1_b s1b; service_2_a s2a; };
 
 namespace kangaru {
+	struct placeholder_source {
+		consteval placeholder_source() = default;
+		
+		template<injectable T>
+		auto provide() const& -> T;
+	};
+	
+	template<typename F, template<typename> typename InjectorType>
+	concept inject_callable =
+		    function_object<F>
+		and injector<InjectorType<placeholder_source>>
+		and callable<InjectorType<placeholder_source>, F>;
+
+	template<function_object F, template<typename> typename InjectorType>
+	using inject_result_t = detail::type_traits::call_result_t<InjectorType<placeholder_source>, F>;
+	
 	template<source Source, injectable T> requires source_of<Source, T>
 	struct with_cache_one {
 		Source source;

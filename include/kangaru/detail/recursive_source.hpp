@@ -251,28 +251,28 @@ namespace kangaru {
 		explicit(sizeof...(Functions) == 1) constexpr overload(Functions... funcs) noexcept : functions{std::move(funcs)...} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+			requires (((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ... + 0) == 1)
 		constexpr auto operator()(Source&& source) & -> T {
 			constexpr auto index = index_of<T, overload&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
 		template<injectable T, forwarded_source Source>
-			requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+			requires (((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ... + 0) == 1)
 		constexpr auto operator()(Source&& source) const& -> T {
 			constexpr auto index = index_of<T, overload const&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(functions).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
 		template<injectable T, forwarded_source Source>
-			requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+			requires (((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ... + 0) == 1)
 		constexpr auto operator()(Source&& source) && -> T {
 			constexpr auto index = index_of<T, overload&&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
 		}
 		
 		template<injectable T, forwarded_source Source>
-			requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) == 1)
+			requires (((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ... + 0) == 1)
 		constexpr auto operator()(Source&& source) const&& -> T {
 			constexpr auto index = index_of<T, overload const&&, decltype(source)>(std::index_sequence_for<Functions...>{});
 			return std::get<index>(std::move(functions)).template operator()<T>(KANGARU5_FWD(source));
@@ -280,32 +280,32 @@ namespace kangaru {
 		
 		template<injectable T, forwarded_source Source> requires (
 			"Ambiguous resolution, multiple callable functions can return type T",
-			((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ...) > 1
+			((callable_template_1t_returns<Functions&, T, T, Source&&> ? 1 : 0) + ... + 0) > 1
 		)
 		constexpr auto operator()(Source&& source) & -> T = delete;
 		
 		template<injectable T, forwarded_source Source> requires (
 			"Ambiguous resolution, multiple callable functions can return type T",
-			((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ...) > 1
+			((callable_template_1t_returns<Functions const&, T, T, Source&&> ? 1 : 0) + ... + 0) > 1
 		)
 		constexpr auto operator()(Source&& source) const& -> T = delete;
 		
 		template<injectable T, forwarded_source Source> requires (
 			"Ambiguous resolution, multiple callable functions can return type T",
-			((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ...) > 1
+			((callable_template_1t_returns<Functions&&, T, T, Source&&> ? 1 : 0) + ... + 0) > 1
 		)
 		constexpr auto operator()(Source&& source) && -> T = delete;
 		
 		template<injectable T, forwarded_source Source> requires (
 			"Ambiguous resolution, multiple callable functions can return type T",
-			((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ...) > 1
+			((callable_template_1t_returns<Functions const&&, T, T, Source&&> ? 1 : 0) + ... + 0) > 1
 		)
 		constexpr auto operator()(Source&& source) const&& -> T = delete;
 		
 	private:
 		template<typename T, typename Self, typename Source, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
-			return ((callable_template_1t_returns<detail::utility::forward_like_t<Self, Functions>, T, T, Source&&> ? S : 0) + ...);
+			return ((callable_template_1t_returns<detail::utility::forward_like_t<Self, Functions>, T, T, Source&&> ? S : 0) + ... + 0);
 		}
 		
 		std::tuple<Functions...> functions;

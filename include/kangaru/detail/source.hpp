@@ -159,15 +159,6 @@ namespace kangaru {
 	private:
 		Source source;
 	};
-	
-	KANGARU5_EXPORT struct placeholder_source {
-		consteval placeholder_source() = default;
-		
-		template<injectable T>
-		consteval auto provide() const& -> T {
-			detail::utility::noreturn();
-		}
-	};
 } // namespace kangaru
 
 #include "undef.hpp"

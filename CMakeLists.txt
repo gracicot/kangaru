@@ -88,11 +88,12 @@ PUBLIC FILE_SET HEADERS
 )
 
 if(KANGARU_HAS_CPP_MODULES)
-target_sources(kangaru
-	PUBLIC FILE_SET CXX_MODULES
-		FILES
-			src/kangaru.cpp
-)
+	target_sources(kangaru
+		PUBLIC FILE_SET CXX_MODULES
+			FILES
+				src/kangaru.cpp
+	)
+	target_compile_features(kangaru PUBLIC cxx_std_20)
 endif()
 
 target_compile_features(kangaru INTERFACE cxx_std_20)

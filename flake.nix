@@ -63,7 +63,7 @@
           ci-clang13 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_13.libcxxStdenv; };
           ci-clang14 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_14.libcxxStdenv; };
           ci-clang15 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_15.libcxxStdenv; };
-          ci-clang16 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_16.stdenv; };
+          ci-clang16 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_16.libcxxStdenv; };
           ci-clang17 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_17.stdenv; };
           ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; };
           ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };

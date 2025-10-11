@@ -356,15 +356,6 @@ namespace kangaru {
 		}
 	}
 	
-	KANGARU5_EXPORT template<function_object F, template<typename> typename InjectorType>
-	using inject_result_t = detail::type_traits::call_result_t<InjectorType<placeholder_source>, F>;
-	
-	KANGARU5_EXPORT template<typename F, template<typename> typename InjectorType>
-	concept inject_callable =
-		    function_object<F>
-		and injector<InjectorType<placeholder_source>>
-		and callable<InjectorType<placeholder_source>, F>;
-	
 	// TODO: While this implementation is simpler, it makes GCC cry
 	/* auto compose(auto first, auto second) {
 		constexpr auto call_function = [](auto function, auto... args_first) {

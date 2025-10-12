@@ -27,7 +27,7 @@ jobs:
         with:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: 'dd3097e305afa53f7b4312371f62058d2e665320'
+          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -74,21 +74,46 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
 
+  linux-old-gcc:
+    name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc: [11, 12]
+        cxx: [20, 23]
+        exclude:
+          - gcc: 11
+            cxx: 23
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: lukka/get-cmake@v3.31
+
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: ${{ matrix.gcc }}
+          platform: x64
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+
   linux-gcc:
     name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        gcc: [11, 12, 13, 14, 15]
+        gcc: [13, 14, 15]
         cxx: [20, 23, 26]
         exclude:
-          - gcc: 11
-            cxx: 23
-          - gcc: 11
-            cxx: 26
-          - gcc: 12
-            cxx: 26
           - gcc: 13
             cxx: 26
 
@@ -134,7 +159,7 @@ jobs:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           useVcpkgToolchainFile: true
-          vcpkgGitCommitId: 'dd3097e305afa53f7b4312371f62058d2e665320'
+          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}

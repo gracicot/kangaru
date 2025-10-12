@@ -59,17 +59,13 @@
         let
           pkgs = nixpkgsFor.${system};
         in {
-          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };
-          ci-clang13 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_13.libcxxStdenv; };
-          ci-clang14 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_14.libcxxStdenv; };
-          ci-clang15 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_15.libcxxStdenv; };
+          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; };
           ci-clang16 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_16.libcxxStdenv; };
           ci-clang17 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_17.stdenv; };
           ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; };
           ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
           ci-clang20 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };
-          ci-gcc11 = makeShell { inherit pkgs; stdenv = pkgs.gcc11Stdenv; };
-          ci-gcc12 = makeShell { inherit pkgs; stdenv = pkgs.gcc12Stdenv; };
+          ci-clang21 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; };
           ci-gcc13 = makeShell { inherit pkgs; stdenv = pkgs.gcc13Stdenv; };
           ci-gcc14 = makeShell { inherit pkgs; stdenv = pkgs.gcc14Stdenv; };
           ci-gcc15 = makeShell { inherit pkgs; stdenv = pkgs.gcc15Stdenv; };

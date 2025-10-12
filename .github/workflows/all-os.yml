@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: lukka/get-cmake@v3.31
+      - uses: lukka/get-cmake@v3.31.0
 
       - name: Set up GCC
         uses: egor-tensin/setup-gcc@v1

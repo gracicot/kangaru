@@ -97,6 +97,17 @@ jobs:
           version: ${{ matrix.gcc }}
           platform: x64
 
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
+        with:
+          # Location of the vcpkg as submodule of the repository.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          useVcpkgToolchainFile: true
+          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
+          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
+          # compute its hash and append this to the computed cache's key.
+          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
+
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:

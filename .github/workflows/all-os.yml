@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [16, 17, 18, 19, 20]
+        clang: [16, 17, 18, 19, 20, 21]
         cxx: [20, 23, 26]
         exclude:
           - clang: 16

@@ -124,6 +124,9 @@ namespace kangaru {
 		}
 	};
 	
+	KANGARU5_EXPORT template<typename Source>
+	with_source_reference_wrapping(Source const&) -> with_source_reference_wrapping<Source>;
+	
 	KANGARU5_EXPORT template<source Source>
 	struct with_source_forwarding_reference_wrapping {
 		Source source;

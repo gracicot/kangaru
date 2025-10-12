@@ -17,8 +17,8 @@
 #include "define.hpp"
 
 namespace kangaru {
-	KANGARU5_EXPORT struct in_place_t{} constexpr in_place;
-	KANGARU5_EXPORT struct nullopt_t {} constexpr nullopt;
+	KANGARU5_EXPORT struct in_place_t{} inline constexpr in_place;
+	KANGARU5_EXPORT struct nullopt_t {} inline constexpr nullopt;
 	
 	KANGARU5_EXPORT template<injectable T>
 	struct optional;

@@ -8,9 +8,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-15]
-        xcode: [16.0, 16.1, 16.2, 16.3, 16.4, 26.0, 26.1]
+        os: [macos-15, macos-26]
+        xcode: [16.0, 16.1, 16.2, 16.3, 16.4, 26.0]
         cxx: [20, 23, 26]
+        exclude:
+          - os: macos-15
+            xcode: 26.0
+          - os: macos-15
+            xcode: 26.1
+          - os: macos-26
+            xcode: 16.0
+          - os: macos-26
+            xcode: 16.1
+          - os: macos-26
+            xcode: 16.2
+          - os: macos-26
+            xcode: 16.3
+          - os: macos-26
+            xcode: 16.4
 
     steps:
       - uses: actions/checkout@v4

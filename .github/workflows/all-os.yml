@@ -24,13 +24,6 @@ jobs:
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
-        with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
 
       - name: 'run cmake'
         uses: lukka/run-cmake@v10
@@ -38,7 +31,7 @@ jobs:
           configurepreset: 'ci-macos'
           buildpreset: 'ci-macos'
           testpreset: 'ci-macos'
-          configurepresetcmdstring: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}
@@ -61,7 +54,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: nicknovitski/nix-develop@v1
         with:
           arguments: ".#ci-clang${{ matrix.clang }}"
@@ -72,7 +66,7 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-old-gcc:
     name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
@@ -99,14 +93,6 @@ jobs:
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
-        with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          useVcpkgToolchainFile: true
-          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
 
       - name: 'Run CMake'
         uses: lukka/run-cmake@v10
@@ -114,7 +100,7 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-gcc:
     name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
@@ -131,7 +117,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: nicknovitski/nix-develop@v1
         with:
           arguments: ".#ci-gcc${{ matrix.gcc }}"
@@ -142,7 +129,7 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`]'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   windows-msvc:
     runs-on: windows-latest
@@ -170,7 +157,6 @@ jobs:
           # Location of the vcpkg as submodule of the repository.
           vcpkgDirectory: '${{ github.workspace }}/vcpkg'
           useVcpkgToolchainFile: true
-          vcpkgGitCommitId: '4334d8b4c8916018600212ab4dd4bbdc343065d1'
           # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
@@ -181,5 +167,5 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          configurePresetCmdString: '[`--preset`, `$[env.CONFIGURE_PRESET_NAME]`, `-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}`]'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 

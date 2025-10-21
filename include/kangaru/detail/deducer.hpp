@@ -639,9 +639,9 @@ namespace kangaru {
 						max
 					>;
 				
-				// Here we finally check for value references. They can match rvalue references, rvalue cosnt references, and
-				// lvalue const references. We need to check for those two if we matched them before in order to do the check
-				// With the little dance of checking for ambiguous calls
+				// Here we finally check for rvalue references. They can match rvalue references, rvalue const references, and
+				// lvalue const references. We need take into account if we matched for them them before in order to do the right
+				// little dance of ambiguous call check.
 				constexpr auto callable_with_rvalue_ref = callable_with_rvalue_const_ref
 					? not callable_with_nth_parameter_being<
 						filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,

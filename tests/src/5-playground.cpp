@@ -11,21 +11,13 @@ struct service_2_a { service_1_a s1a; int i; };
 struct service_2_b { service_1_b s1b; service_2_a s2a; };
 
 namespace kangaru {
-	struct placeholder_source {
-		consteval placeholder_source() = default;
-		
-		template<injectable T>
-		auto provide() const& -> T;
-	};
-	
-	template<typename F, template<typename> typename InjectorType>
+	template<typename F>
 	concept inject_callable =
 		    function_object<F>
-		and injector<InjectorType<placeholder_source>>
-		and callable<InjectorType<placeholder_source>, F>;
+		and kangaru::reflectable_function<F, 8>;
 
-	template<function_object F, template<typename> typename InjectorType>
-	using inject_result_t = detail::type_traits::call_result_t<InjectorType<placeholder_source>, F>;
+	template<function_object F>
+	using inject_result_t = kangaru::reflected_return_type<F, 8>;
 	
 	template<source Source, injectable T> requires source_of<Source, T>
 	struct with_cache_one {
@@ -142,7 +134,7 @@ namespace kangaru {
 				Something,
 				overload<function<Functions, make_spread_injector_function>...>
 			>,
-			type_based_cache<inject_result_t<Functions, spread_injector>...>
+			type_based_cache<inject_result_t<Functions>...>
 		>;
 		
 	public:
@@ -151,7 +143,7 @@ namespace kangaru {
 		
 		explicit(sizeof...(Functions) == 0) constexpr modular_source(Something something, Functions... functions) noexcept :
 			source{
-				KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Functions, spread_injector>...>)(
+				KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Functions>...>)(
 					with_function_call{
 						std::move(something),
 						overload{
@@ -176,15 +168,15 @@ namespace kangaru {
 	
 	template<object Module>
 	struct source_from_module {
-		explicit constexpr source_from_module(inject_result_t<Module, spread_injector>& source) noexcept : source{KANGARU5_NO_ADL(ref)(source)} {}
+		explicit constexpr source_from_module(inject_result_t<Module>& source) noexcept : source{KANGARU5_NO_ADL(ref)(source)} {}
 		
-		template<injectable T, forwarded<source_from_module> Self> requires source_of<source_reference_wrapper<inject_result_t<Module, spread_injector>>, T>
+		template<injectable T, forwarded<source_from_module> Self> requires source_of<source_reference_wrapper<inject_result_t<Module>>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 	private:
-		source_reference_wrapper<inject_result_t<Module, spread_injector>> source;
+		source_reference_wrapper<inject_result_t<Module>> source;
 	};
 	
 	template<source Source, typename... Modules>
@@ -196,7 +188,7 @@ namespace kangaru {
 			source{
 				// KANGARU5_NO_ADL(make_source_with_non_empty_construction)(
 					with_source_reference_wrapping{
-						KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Modules, spread_injector>...>)(
+						KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Modules>...>)(
 							with_function_call{
 								std::move(source),
 								overload{
@@ -219,7 +211,7 @@ namespace kangaru {
 						Source,
 						overload<function<Modules, make_spread_injector_function>...>
 					>,
-					type_based_cache<inject_result_t<Modules, spread_injector>...>
+					type_based_cache<inject_result_t<Modules>...>
 			// 	>
 			>
 		> source;
@@ -227,11 +219,11 @@ namespace kangaru {
 		template<injectable T, forwarded<modular_container> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
 		requires (
-			((source_of<inject_result_t<Modules, spread_injector>&, T> ? 1 : 0) + ...) == 1
+			((source_of<inject_result_t<Modules>&, T> ? 1 : 0) + ...) == 1
 		) {
 			using source_t = std::tuple_element_t<index_of<T, decltype(source)>(std::index_sequence_for<Modules...>{}), std::tuple<Modules...>>;
 			return kangaru::provide<T>(
-				kangaru::provide<source_reference_wrapper<inject_result_t<source_t, spread_injector>>>(
+				kangaru::provide<source_reference_wrapper<inject_result_t<source_t>>>(
 					with_recursion{KANGARU5_NO_ADL(fwd_ref)(source.source)}
 				)
 			);
@@ -240,7 +232,7 @@ namespace kangaru {
 	private:
 		template<typename T, typename Self, std::size_t... S>
 		constexpr static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<inject_result_t<Modules, spread_injector>&, T> ? S : 0) + ...);
+			return ((source_of<inject_result_t<Modules>&, T> ? S : 0) + ...);
 		}
 	};
 } // namespace kangaru
@@ -252,7 +244,7 @@ constexpr auto module0 = []() {
 // NOTE: If using reference_source / object_source, should we do eager injection or lazy injection?
 //       Do we really want to reproduce the basic sources as callbacks?
 //       We should receive a modular container as parameter? Maybe?
-constexpr auto module1 = [](kangaru::source_reference_wrapper<kangaru::inject_result_t<decltype(module0), kangaru::spread_injector>> m0) {
+constexpr auto module1 = [](kangaru::source_reference_wrapper<kangaru::reflected_return_type<decltype(module0), 8>> m0) {
 	return kangaru::modular_source{
 		m0,
 		[] {
@@ -263,7 +255,7 @@ constexpr auto module1 = [](kangaru::source_reference_wrapper<kangaru::inject_re
 	};
 };
 
-constexpr auto module2 = [](kangaru::source_reference_wrapper<kangaru::inject_result_t<decltype(module1), kangaru::spread_injector>> m1) {
+constexpr auto module2 = [](kangaru::source_reference_wrapper<kangaru::reflected_return_type<decltype(module1), 8>> m1) {
 	return kangaru::modular_source{
 		m1,
 		[](service_1_a s1a){ return service_2_a{.s1a = s1a, .i = 8}; },

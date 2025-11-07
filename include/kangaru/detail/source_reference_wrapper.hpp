@@ -54,7 +54,7 @@ namespace kangaru {
 		std::remove_reference_t<Source>* source;
 	};
 	
-	KANGARU5_EXPORT template<forwarded_source Source>
+	KANGARU5_EXPORT template<typename Source>
 	source_forwarding_reference_wrapper(Source&&) -> source_forwarding_reference_wrapper<Source&&>;
 	
 	KANGARU5_EXPORT template<typename T>

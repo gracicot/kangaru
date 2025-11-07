@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_CONSTRUCTOR_HPP
 
 #include "concepts.hpp"
+#include "kangaru/detail/type_traits.hpp"
 #include "utility.hpp"
 #include "deducer.hpp"
 

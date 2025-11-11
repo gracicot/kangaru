@@ -17,7 +17,6 @@
 
       makeShell = { pkgs, stdenv }:
         let
-          frameworks = pkgs.darwin.apple_sdk_11_0.frameworks;
           mkShell = pkgs.mkShell.override { inherit stdenv; };
         in mkShell {
             nativeBuildInputs = with pkgs; [
@@ -47,7 +46,7 @@
               pkg-config
               zip
               zstd
-            ] ++ lib.optionals stdenv.isDarwin [ darwin.DarwinTools frameworks.ApplicationServices ];
+            ];
 
             hardeningDisable = [ "fortify" ];
             VCPKG_ROOT = "${pkgs.vcpkg}/share/vcpkg";

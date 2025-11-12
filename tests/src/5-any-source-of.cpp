@@ -53,8 +53,8 @@ TEST_CASE("any_source_of type erase sources", "[any_source_of]") {
 		SECTION("Can reassign to another any_source_of") {
 			auto source2 = kangaru::any_source_of<int, float>{int_float_source_type2{9.5f}};
 			source = std::move(source2);
-			REQUIRE(kangaru::provide<int>(source) == 6);
-			REQUIRE(kangaru::provide<float>(source) == 6.5f);
+			REQUIRE(kangaru::provide<int>(source) == 9);
+			REQUIRE(kangaru::provide<float>(source) == 9.5f);
 		}
 	}
 }

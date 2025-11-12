@@ -9,7 +9,6 @@
 #ifndef KANGARU5_MODULES
 #include <memory>
 #include <type_traits>
-#include <any>
 #endif
 
 #include "define.hpp"

@@ -32,6 +32,7 @@ function(add_kgr_test TEST_NAME)
 endfunction()
 
 if(KANGARU_TEST)
+	add_kgr_test(5-any-source-of)
 	add_kgr_test(5-cache-source-heap-storage)
 	add_kgr_test(5-reference-deducer)
 	add_kgr_test(5-container)

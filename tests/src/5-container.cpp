@@ -141,17 +141,3 @@ TEST_CASE("Container can have a base source", "[container]") {
 	}
 }
 
-TEST_CASE("Can use any_copiable_source_of as type erased source") {
-	SECTION("const") {
-		auto a = service_a{};
-		auto source = kangaru::any_copiable_source_of<service_a&>{kangaru::external_reference_source<service_a>{a}};
-		
-		CHECK(std::addressof(kangaru::provide<service_a&>(source)) == std::addressof(a));
-	}
-	
-	SECTION("non const") {
-		auto source = kangaru::any_copiable_source_of<service_a&>{kangaru::reference_source<service_a>{}};
-		CHECK(kangaru::source_of<decltype(source), service_a&>);
-	}
-}
-

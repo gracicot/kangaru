@@ -6,7 +6,6 @@ struct aggregate { type1 t1; type2& t2; };
 struct type3 { aggregate agg; };
 
 int main() {
-	auto obj = type2{.id = 8};
 	auto source = kangaru::with_recursion{
 		kangaru::make_source_with_non_empty_construction(
 			kangaru::composed_source{

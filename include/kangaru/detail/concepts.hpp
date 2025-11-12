@@ -8,6 +8,13 @@
 
 #include "define.hpp"
 
+namespace kangaru::detail::concepts {
+	template<typename Type, typename... Pack>
+	consteval auto count_type_in_pack() -> std::size_t {
+		return ((std::same_as<Type, Pack> ? std::size_t{1} : std::size_t{0}) + ... + std::size_t{0});
+	}
+}
+
 namespace kangaru {
 	KANGARU5_EXPORT template<typename T, typename U>
 	concept different_from = not std::same_as<T, U>;
@@ -44,9 +51,6 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename T>
 	concept pointer = object<T> and std::is_pointer_v<T>;
-	
-	KANGARU5_EXPORT template<typename Rhs, typename Lhs>
-	concept assign_into = std::assignable_from<Lhs, Rhs>;
 	
 	// Matches more our usage of syntax for function calling
 	KANGARU5_EXPORT template<typename F, typename... Args>
@@ -89,10 +93,14 @@ namespace kangaru {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
 	
+	// TODO: Actually not safe when converting to a type with ref semantics
 	KANGARU5_EXPORT template<typename From, typename To>
 	concept safe_convertible_to =
 		    std::convertible_to<From, To>
 		and (reference<From> or unqualified_object<To>);
+	
+	template<typename... Pack>
+	concept pack_distinct = (... and (detail::concepts::count_type_in_pack<Pack, Pack...>() == 1));
 }
 
 #include "undef.hpp"

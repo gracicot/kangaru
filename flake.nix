@@ -20,9 +20,9 @@
           mkShell = pkgs.mkShell.override { inherit stdenv; };
         in mkShell {
             nativeBuildInputs = with pkgs; [
-              llvmPackages_20.llvm
-              llvmPackages_20.clang-tools
-              llvmPackages_20.lldb
+              llvmPackages_21.llvm
+              llvmPackages_21.clang-tools
+              llvmPackages_21.lldb
             ];
             buildInputs = with pkgs; [
               cmake

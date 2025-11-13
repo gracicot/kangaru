@@ -265,13 +265,6 @@ jobs:
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
-        with:
-          # Location of the vcpkg as submodule of the repository.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-          useVcpkgToolchainFile: true
-          # Since the cache must be invalidated when content of the vcpkg.json file changes, let's
-          # compute its hash and append this to the computed cache's key.
-          appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
 
       - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10

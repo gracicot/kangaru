@@ -94,7 +94,7 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
   linux-clang:
     name: Clang ${{ matrix.clang }} Linux

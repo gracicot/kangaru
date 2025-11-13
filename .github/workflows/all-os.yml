@@ -40,13 +40,29 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'run cmake'
+      - name: 'Run CMake'
         uses: lukka/run-cmake@v10
         with:
-          configurepreset: 'ci-macos'
-          buildpreset: 'ci-macos'
-          testpreset: 'ci-macos'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   linux-old-clang:
     name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}

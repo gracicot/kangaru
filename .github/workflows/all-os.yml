@@ -3,7 +3,7 @@ on: [push, pull_request]
 
 jobs:
   apple-clang:
-    name: AppleClang ${{ matrix.xcode }} MacOS C++
+    name: AppleClang ${{ matrix.xcode }} MacOS
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -39,7 +39,7 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -47,7 +47,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++23'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -55,7 +55,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++26'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -64,13 +64,12 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   linux-old-clang:
-    name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}
+    name: Clang ${{ matrix.clang }} Linux
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         clang: [16, 17]
-        cxx: [20]
 
     steps:
       - uses: actions/checkout@v5
@@ -98,7 +97,7 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-clang:
-    name: Clang ${{ matrix.clang }} Linux C++
+    name: Clang ${{ matrix.clang }} Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -114,7 +113,7 @@ jobs:
         with:
           arguments: ".#ci-clang${{ matrix.clang }}"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -122,7 +121,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++23'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -130,7 +129,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++26'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -138,17 +137,13 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
-  linux-old-gcc:
-    name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
+  linux-old-gcc-cxx-20:
+    name: GCC ${{ matrix.gcc }} Linux
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        gcc: [11, 12, 13]
-        cxx: [20, 23]
-        exclude:
-          - gcc: 11
-            cxx: 23
+        gcc: [11]
 
     steps:
       - uses: actions/checkout@v5
@@ -164,16 +159,54 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+  linux-old-gcc-cxx-23:
+    name: GCC ${{ matrix.gcc }} Linux
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        gcc: [12, 13]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: lukka/get-cmake@v4.1.2
+
+      - name: Set up GCC
+        uses: egor-tensin/setup-gcc@v1
+        with:
+          version: ${{ matrix.gcc }}
+          platform: x64
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: 'Run CMake C++20'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+      - name: 'Run CMake C++23'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
 
   linux-gcc:
-    name: GCC ${{ matrix.gcc }} Linux C++
+    name: GCC ${{ matrix.gcc }} Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -189,7 +222,7 @@ jobs:
         with:
           arguments: ".#ci-gcc${{ matrix.gcc }}"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -197,7 +230,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++23'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -205,7 +238,7 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++26'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-linux'
@@ -215,13 +248,12 @@ jobs:
 
   windows-msvc:
     runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows C++${{ matrix.cxx }}
+    name: MSVC ${{ matrix.msvc-version }} Windows
     strategy:
       fail-fast: false
       matrix:
         os: [windows-2022]
         arch: [x64]
-        cxx: [20, 23]
 
     steps:
       - uses: actions/checkout@v5
@@ -243,11 +275,18 @@ jobs:
           # compute its hash and append this to the computed cache's key.
           appendedCacheKey: ${{ hashFiles( '**/vcpkg.json' ) }}
 
-      - name: 'Run CMake'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20]"
 
+      - name: 'Run CMake C++23'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"

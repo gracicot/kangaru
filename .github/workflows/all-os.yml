@@ -281,7 +281,7 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20]"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
       - name: 'Run CMake C++23'
         uses: lukka/run-cmake@v10

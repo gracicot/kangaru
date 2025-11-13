@@ -83,13 +83,12 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-clang:
-    name: Clang ${{ matrix.clang }} Linux C++${{ matrix.cxx }}
+    name: Clang ${{ matrix.clang }} Linux C++
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         clang: [18, 19, 20, 21]
-        cxx: [20, 23, 26]
 
     steps:
       - uses: actions/checkout@v5
@@ -106,7 +105,23 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   linux-old-gcc:
     name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
@@ -114,7 +129,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc: [11, 12]
+        gcc: [11, 12, 13]
         cxx: [20, 23]
         exclude:
           - gcc: 11
@@ -143,16 +158,12 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
 
   linux-gcc:
-    name: GCC ${{ matrix.gcc }} Linux C++${{ matrix.cxx }}
+    name: GCC ${{ matrix.gcc }} Linux C++
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        gcc: [13, 14, 15]
-        cxx: [20, 23, 26]
-        exclude:
-          - gcc: 13
-            cxx: 26
+        gcc: [14, 15]
 
     steps:
       - uses: actions/checkout@v5
@@ -169,7 +180,23 @@ jobs:
           configurePreset: 'ci-linux'
           buildPreset: 'ci-linux'
           testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
+
+      - name: 'Run CMake'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   windows-msvc:
     runs-on: windows-latest

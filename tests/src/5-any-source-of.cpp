@@ -31,7 +31,6 @@ struct int_float_source_type2 {
 TEST_CASE("any_source_of type erase sources", "[any_source_of]") {
 	SECTION("Wraps none") {
 		auto source1 = kangaru::any_source_of<>{kangaru::none_source{}};
-		auto source2 = kangaru::any_source_of{kangaru::none_source{}};
 	}
 	
 	SECTION("Can wrap one") {

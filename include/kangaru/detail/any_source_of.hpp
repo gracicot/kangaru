@@ -22,12 +22,12 @@ KANGARU5_EXPORT namespace kangaru {
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
 	struct any_source_of {
-		template<forwarded_source Source> requires(not_self<Source, any_source_of> and ... and source_of<Source&, Types>)
+		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		constexpr any_source_of(Source&& source) :
 			source{new Source{KANGARU5_FWD(source)}},
 			vtable{std::addressof(vtable_instance<std::remove_cvref_t<Source>>)} {}
 		
-		template<forwarded_source Source> requires(not_self<std::remove_cvref_t<Source>, any_source_of> and ... and source_of<Source&, Types>)
+		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		auto operator=(Source&& rhs) -> any_source_of& {
 			if (source) {
 				vtable->destroy(source);

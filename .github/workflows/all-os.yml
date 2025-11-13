@@ -3,14 +3,13 @@ on: [push, pull_request]
 
 jobs:
   apple-clang:
-    name: AppleClang ${{ matrix.xcode }} MacOS C++${{ matrix.cxx }}
+    name: AppleClang ${{ matrix.xcode }} MacOS C++
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [macos-15, macos-26]
         xcode: [16.0, 16.1, 16.2, 16.3, 16.4, 26.0]
-        cxx: [20, 23, 26]
         exclude:
           - os: macos-15
             xcode: 26.0

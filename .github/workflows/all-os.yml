@@ -108,7 +108,6 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: DeterminateSystems/determinate-nix-action@v3
-      - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: nicknovitski/nix-develop@v1
         with:
           arguments: ".#ci-clang${{ matrix.clang }}"
@@ -217,7 +216,6 @@ jobs:
       - uses: actions/checkout@v5
 
       - uses: DeterminateSystems/determinate-nix-action@v3
-      - uses: DeterminateSystems/magic-nix-cache-action@main
       - uses: nicknovitski/nix-develop@v1
         with:
           arguments: ".#ci-gcc${{ matrix.gcc }}"

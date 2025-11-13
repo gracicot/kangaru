@@ -59,8 +59,6 @@
           pkgs = nixpkgsFor.${system};
         in {
           default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; };
-          ci-clang16 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_16.libcxxStdenv; };
-          ci-clang17 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_17.stdenv; };
           ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; };
           ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
           ci-clang20 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };

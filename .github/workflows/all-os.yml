@@ -68,6 +68,9 @@ jobs:
           version: ${{ matrix.clang }}
           platform: x64
 
+      - name: Setup Clang Tools
+        run: sudo apt install -y clang-tools-${{ matrix.clang }}
+
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 

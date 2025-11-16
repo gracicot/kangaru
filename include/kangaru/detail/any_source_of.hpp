@@ -3,6 +3,7 @@
 
 #include "source.hpp"
 #include "concepts.hpp"
+#include "type_traits.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <utility>
@@ -22,42 +23,48 @@ KANGARU5_EXPORT namespace kangaru {
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
 	struct any_source_of {
+		// TODO: Should all sources have a function based init?
+		template<callable Function> requires(true and ... and source_of<detail::type_traits::call_result_t<Function>, Types>)
+		explicit any_source_of(Function function) :
+			source{new detail::type_traits::call_result_t<Function>(function())},
+			source_vtable{get_vtable_for<detail::type_traits::call_result_t<Function>>()} {}
+		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
-		constexpr any_source_of(Source&& source) :
+		explicit constexpr any_source_of(Source&& source) :
 			source{new Source{KANGARU5_FWD(source)}},
-			vtable{std::addressof(vtable_instance<std::remove_cvref_t<Source>>)} {}
+			source_vtable{get_vtable_for<std::remove_cvref_t<Source>>()} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		auto operator=(Source&& rhs) -> any_source_of& {
 			if (source) {
-				vtable->destroy(source);
+				vtable().destroy(source);
 			}
 			
 			source = new Source{KANGARU5_FWD(rhs)};
-			vtable = std::addressof(vtable_instance<std::remove_cvref_t<Source>>);
+			source_vtable = get_vtable_for<std::remove_cvref_t<Source>>();
 			return *this;
 		}
 		
 		any_source_of(any_source_of const&) = delete;
 		auto operator=(any_source_of const&) -> any_source_of& = delete;
 		
-		any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, vtable{std::exchange(other.vtable, nullptr)} {}
+		any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, nullptr)} {}
 		
 		auto operator=(any_source_of&& rhs) -> any_source_of& {
 			std::swap(source, rhs.source);
-			std::swap(vtable, rhs.vtable);
+			std::swap(source_vtable, rhs.source_vtable);
 			return *this;
 		}
 		
 		~any_source_of() noexcept {
 			if (source) {
-				vtable->destroy(source);
+				 vtable().destroy(source);
 			}
 		}
 		
 		template<injectable T, forwarded<any_source_of> Self> requires(... || std::same_as<Types, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return std::get<provide_function_ptr<T>>(KANGARU5_FWD(source).vtable->provide)(KANGARU5_FWD(source).source);
+			return std::get<provide_function_ptr<T>>(source.vtable().provide)(source.source);
 		}
 		
 	private:
@@ -69,7 +76,7 @@ KANGARU5_EXPORT namespace kangaru {
 			auto(*destroy)(void const*) -> void;
 			
 			template<source Source>
-			static constexpr auto init_for() -> vtable_t {
+			static consteval auto init_for() -> vtable_t {
 				return vtable_t{
 					.provide = {
 						[](void* source) KANGARU5_CONSTEXPR_VOIDSTAR -> Types {
@@ -83,11 +90,31 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		};
 		
-		template<source Source>
-		inline static constexpr auto vtable_instance = vtable_t::template init_for<Source>();
+		static constexpr auto should_inline_vtable = sizeof...(Types) < 4;
+		using vtable_type = detail::type_traits::conditional_t<should_inline_vtable, vtable_t, vtable_t const*>;
 		
+		template<source Source>
+		static consteval auto get_vtable_for() {
+			if constexpr (should_inline_vtable) {
+				return vtable_t::template init_for<Source>();
+			} else {
+				return std::addressof(vtable_instance<Source>);
+			}
+		}
+		
+		template<source Source>
+		static constexpr auto vtable_instance = vtable_t::template init_for<Source>();
+		
+		constexpr auto vtable() -> vtable_t const& {
+			if constexpr (should_inline_vtable) {
+				return source_vtable;
+			} else {
+				return *source_vtable;
+			}
+		}
+		
+		vtable_type source_vtable;
 		void* source;
-		vtable_t const* vtable;
 	};
 }
 

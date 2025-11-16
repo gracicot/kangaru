@@ -29,16 +29,13 @@ namespace kangaru {
 		
 		template<unqualified_object T>
 		struct construct {
-			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
+			constexpr auto operator()(auto&& first, auto&&... args) const -> T
 			requires constructor_callable<
 				T,
-				exclude_special_constructors_deducer<T, decltype(deduce1)>,
-				exclude_deducer<T, decltype(deduce)>...
+				decltype(first),
+				decltype(args)...
 			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(
-					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
-					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
-				);
+				return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
 			}
 		};
 		
@@ -62,29 +59,10 @@ namespace kangaru {
 		explicit constexpr basic_unsafe_exhaustive_constructor(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<unqualified_object T>
-		struct construct {
-			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, decltype(deduce1)>,
-				exclude_deducer<T, decltype(deduce)>...
-			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(
-					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
-					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
-				);
-			}
-			
-			constexpr auto operator()() const -> T requires constructor_callable<T> {
-				return KANGARU5_NO_ADL(constructor<T>)()();
-			}
-		};
-		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
 		constexpr auto operator()(Source&& source) const {
-			return make_injector(KANGARU5_FWD(source))(construct<T>{});
+			return make_injector(KANGARU5_FWD(source))(constructor_function<T>{});
 		}
 	
 	private:
@@ -103,22 +81,19 @@ namespace kangaru {
 		
 		template<unqualified_object T>
 		struct construct {
-			constexpr auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
+			constexpr auto operator()(auto&& first, auto&&... args) const -> T
 			requires constructor_callable<
 				T,
-				exclude_special_constructors_deducer<T, decltype(deduce1)>,
-				exclude_deducer<T, decltype(deduce)>...
+				decltype(first),
+				decltype(args)...
 			> {
-				return KANGARU5_NO_ADL(constructor<T>)()(
-					KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1),
-					KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...
-				);
+				return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
 			}
 			
 			constexpr auto operator()() const -> T requires(
 				constructor_callable<T> and is_empty_injection_constructible_v<T>
 			) {
-				return KANGARU5_NO_ADL(constructor<T>)()();
+				return KANGARU5_NO_ADL(constructor<T>)();
 			}
 		};
 		
@@ -142,22 +117,8 @@ namespace kangaru {
 		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<injectable T>
-		struct construct {
-			[[noreturn]]
-			auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
-			requires (different_from<T, Type> and constructor_callable<
-				std::decay_t<T>,
-				exclude_special_constructors_deducer<std::decay_t<T>, decltype(deduce1)>,
-				exclude_deducer<T, decltype(deduce)>...
-			>);
-			
-			[[noreturn]]
-			auto operator()() const -> T requires (different_from<T, Type> and constructor_callable<std::decay_t<T>>);
-		};
-		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
 		auto operator()(Source&& source) const -> T;
 	
 	private:
@@ -175,22 +136,8 @@ namespace kangaru {
 		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<injectable T>
-		struct construct {
-			[[noreturn]]
-			auto operator()(deducer auto deduce1, deducer auto... deduce) const -> T
-			requires (not unqualified_object<T> and constructor_callable<
-				std::decay_t<T>,
-				exclude_special_constructors_deducer<std::decay_t<T>, decltype(deduce1)>,
-				exclude_deducer<std::decay_t<T>, decltype(deduce)>...
-			>);
-			
-			[[noreturn]]
-			auto operator()() const -> T requires constructor_callable<T>;
-		};
-		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
 		auto operator()(Source&& source) const -> T;
 	
 	private:

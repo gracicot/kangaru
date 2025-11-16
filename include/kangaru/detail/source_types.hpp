@@ -109,16 +109,8 @@ namespace kangaru {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr object_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
 		
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) constexpr object_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		constexpr object_source() requires std::default_initializable<T> : object{} {}
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr object_source(Args... args) : object(constructor<T>(KANGARU5_FWD(args)...)) {}
 		
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<object_source> auto&& source) -> T {
 			return KANGARU5_FWD(source).object;
@@ -139,16 +131,8 @@ namespace kangaru {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr rvalue_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
 		
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) constexpr rvalue_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		constexpr rvalue_source() requires std::default_initializable<T> : object{} {}
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr rvalue_source(Args... args) : object(constructor<T>(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> T&& {
 			return std::move(object);
@@ -173,16 +157,8 @@ namespace kangaru {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr reference_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
 		
-		template<deducer Deducer1, deducer... Deducer>
-			requires constructor_callable<
-				T,
-				exclude_special_constructors_deducer<T, Deducer1>,
-				Deducer&...
-			>
-		explicit(sizeof...(Deducer) == 0) constexpr reference_source(Deducer1 deduce1, Deducer... deduce) :
-			object(KANGARU5_NO_ADL(constructor<T>)()(KANGARU5_NO_ADL(exclude_special_constructors_for<T>)(deduce1), deduce...)) {}
-		
-		constexpr reference_source() requires std::default_initializable<T> : object{} {}
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr reference_source(Args... args) : object(constructor<T>(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> T& {
 			return object;

@@ -70,9 +70,6 @@ namespace kangaru {
 		T{KANGARU5_FWD(args)...};
 	};
 	
-	KANGARU5_EXPORT template<typename T, typename... Args>
-	concept constructor_callable = std::constructible_from<T, Args...> or brace_constructible<T, Args...>;
-	
 	KANGARU5_EXPORT template<typename F, typename T, typename... Args>
 	concept callable_template_1t = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);

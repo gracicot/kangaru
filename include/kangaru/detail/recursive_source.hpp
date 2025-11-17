@@ -114,13 +114,10 @@ namespace kangaru {
 	struct basic_placeholder_constructor_except {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except() requires std::default_initializable<MakeInjector> = default;
 		
-		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except(MakeInjector make_injector) noexcept :
-			make_injector{std::move(make_injector)} {}
-		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
+			requires(different_from<T, Type> and callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>)
 		auto operator()(Source&& source) const -> T;
-	
+		
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -137,7 +134,7 @@ namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>
 		auto operator()(Source&& source) const -> T;
 	
 	private:

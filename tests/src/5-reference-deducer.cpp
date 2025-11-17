@@ -249,45 +249,61 @@ struct type_1111 {
 	explicit type_1111(injected const&&);
 };
 
+template<kangaru::unqualified_object T>
+struct restricted_constructor_function {
+	constexpr auto operator()(kangaru::deducer auto deduce1, kangaru::deducer auto... deduce) const -> T
+	requires kangaru::raw_constructor_callable<
+		T,
+		kangaru::exclude_special_constructors_deducer<T, decltype(deduce1)>,
+		kangaru::exclude_deducer<T, decltype(deduce)>...
+	> {
+		return kangaru::raw_constructor<T>(
+			kangaru::exclude_special_constructors_for<T>(deduce1),
+			kangaru::exclude_deduction<T>(deduce)...
+		);
+	}
+};
+
 template<typename T>
 auto restricted_constructor() {
-	return kangaru::non_empty_constructor::construct<T>{};
+	return restricted_constructor_function<T>{};
 }
 
 TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 	SECTION("Strict reference deducer") {
-		auto constructor_0000 = restricted_constructor<type_0000>();
-		using constructor_0000_t = decltype(constructor_0000);
-		auto constructor_0001 = restricted_constructor<type_0001>();
-		using constructor_0001_t = decltype(constructor_0001);
-		auto constructor_0010 = restricted_constructor<type_0010>();
-		using constructor_0010_t = decltype(constructor_0010);
-		auto constructor_0011 = restricted_constructor<type_0011>();
-		using constructor_0011_t = decltype(constructor_0011);
-		auto constructor_0100 = restricted_constructor<type_0100>();
-		using constructor_0100_t = decltype(constructor_0100);
-		auto constructor_0101 = restricted_constructor<type_0101>();
-		using constructor_0101_t = decltype(constructor_0101);
-		auto constructor_0110 = restricted_constructor<type_0110>();
-		using constructor_0110_t = decltype(constructor_0110);
-		auto constructor_0111 = restricted_constructor<type_0111>();
-		using constructor_0111_t = decltype(constructor_0111);
-		auto constructor_1000 = restricted_constructor<type_1000>();
-		using constructor_1000_t = decltype(constructor_1000);
-		auto constructor_1001 = restricted_constructor<type_1001>();
-		using constructor_1001_t = decltype(constructor_1001);
-		auto constructor_1010 = restricted_constructor<type_1010>();
-		using constructor_1010_t = decltype(constructor_1010);
-		auto constructor_1011 = restricted_constructor<type_1011>();
-		using constructor_1011_t = decltype(constructor_1011);
-		auto constructor_1100 = restricted_constructor<type_1100>();
-		using constructor_1100_t = decltype(constructor_1100);
-		auto constructor_1101 = restricted_constructor<type_1101>();
-		using constructor_1101_t = decltype(constructor_1101);
-		auto constructor_1110 = restricted_constructor<type_1110>();
-		using constructor_1110_t = decltype(constructor_1110);
-		auto constructor_1111 = restricted_constructor<type_1111>();
-		using constructor_1111_t = decltype(constructor_1111);
+		using constructor_0000_t = kangaru::constructor_function<type_0000>;
+		using constructor_0001_t = kangaru::constructor_function<type_0001>;
+		using constructor_0010_t = kangaru::constructor_function<type_0010>;
+		using constructor_0011_t = kangaru::constructor_function<type_0011>;
+		using constructor_0100_t = kangaru::constructor_function<type_0100>;
+		using constructor_0101_t = kangaru::constructor_function<type_0101>;
+		using constructor_0110_t = kangaru::constructor_function<type_0110>;
+		using constructor_0111_t = kangaru::constructor_function<type_0111>;
+		using constructor_1000_t = kangaru::constructor_function<type_1000>;
+		using constructor_1001_t = kangaru::constructor_function<type_1001>;
+		using constructor_1010_t = kangaru::constructor_function<type_1010>;
+		using constructor_1011_t = kangaru::constructor_function<type_1011>;
+		using constructor_1100_t = kangaru::constructor_function<type_1100>;
+		using constructor_1101_t = kangaru::constructor_function<type_1101>;
+		using constructor_1110_t = kangaru::constructor_function<type_1110>;
+		using constructor_1111_t = kangaru::constructor_function<type_1111>;
+		
+		auto constructor_0000 = constructor_0000_t{};
+		auto constructor_0001 = constructor_0001_t{};
+		auto constructor_0010 = constructor_0010_t{};
+		auto constructor_0011 = constructor_0011_t{};
+		auto constructor_0100 = constructor_0100_t{};
+		auto constructor_0101 = constructor_0101_t{};
+		auto constructor_0110 = constructor_0110_t{};
+		auto constructor_0111 = constructor_0111_t{};
+		auto constructor_1000 = constructor_1000_t{};
+		auto constructor_1001 = constructor_1001_t{};
+		auto constructor_1010 = constructor_1010_t{};
+		auto constructor_1011 = constructor_1011_t{};
+		auto constructor_1100 = constructor_1100_t{};
+		auto constructor_1101 = constructor_1101_t{};
+		auto constructor_1110 = constructor_1110_t{};
+		auto constructor_1111 = constructor_1111_t{};
 		
 		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>));
 		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>));

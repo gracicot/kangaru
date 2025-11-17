@@ -27,22 +27,10 @@ namespace kangaru {
 		explicit constexpr basic_non_empty_constructor(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<unqualified_object T>
-		struct construct {
-			constexpr auto operator()(auto&& first, auto&&... args) const -> T
-			requires constructor_callable<
-				T,
-				decltype(first),
-				decltype(args)...
-			> {
-				return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
-			}
-		};
-		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, non_default_constructor_function<T>>
 		constexpr auto operator()(Source&& source) const {
-			return make_injector(KANGARU5_FWD(source))(construct<T>{});
+			return make_injector(KANGARU5_FWD(source))(non_default_constructor_function<T>{});
 		}
 		
 	private:
@@ -74,33 +62,24 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<movable_object MakeInjector>
 	struct basic_exhaustive_constructor {
+	private:
+		template<unqualified_object T>
+		using constructor_type = detail::type_traits::conditional_t<
+			is_empty_injection_constructible_v<T>,
+			constructor_function<T>,
+			non_default_constructor_function<T>
+		>;
+		
+	public:
 		constexpr basic_exhaustive_constructor() requires std::default_initializable<MakeInjector> = default;
 		
 		explicit constexpr basic_exhaustive_constructor(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
-		template<unqualified_object T>
-		struct construct {
-			constexpr auto operator()(auto&& first, auto&&... args) const -> T
-			requires constructor_callable<
-				T,
-				decltype(first),
-				decltype(args)...
-			> {
-				return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
-			}
-			
-			constexpr auto operator()() const -> T requires(
-				constructor_callable<T> and is_empty_injection_constructible_v<T>
-			) {
-				return KANGARU5_NO_ADL(constructor<T>)();
-			}
-		};
-		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source&&>, construct<T>>
+			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source&&>, constructor_type<T>>
 		constexpr auto operator()(Source&& source) const {
-			return make_injector(KANGARU5_FWD(source))(construct<T>{});
+			return make_injector(KANGARU5_FWD(source))(constructor_type<T>{});
 		}
 		
 	private:

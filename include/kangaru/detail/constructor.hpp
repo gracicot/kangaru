@@ -81,15 +81,34 @@ namespace kangaru {
 		}
 	};
 	
-	template<unqualified_object Type>
+	KANGARU5_EXPORT template<typename Type, typename... Args>
+	concept constructor_callable = unqualified_object<Type> and callable<constructor_function<Type>, Args...>;
+	
+	KANGARU5_EXPORT template<unqualified_object Type>
 	inline constexpr auto constructor(auto&&... args) -> Type requires(
-		callable<constructor_function<Type>, decltype(args)...>
+		constructor_callable<Type, decltype(args)...>
 	) {
 		return constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
 	
-	template<typename Type, typename... Args>
-	concept constructor_callable = unqualified_object<Type> and callable<constructor_function<Type>, Args...>;
+	KANGARU5_EXPORT template<unqualified_object Type>
+	struct non_default_constructor_function {
+		constexpr auto operator()(auto&& first, auto&&... args) -> Type requires(
+			constructor_callable<Type, decltype(first), decltype(args)...>
+		) {
+			return KANGARU5_NO_ADL(constructor<Type>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
+		}
+	};
+	
+	KANGARU5_EXPORT template<typename Type, typename... Args>
+	concept non_default_constructor_callable = unqualified_object<Type> and callable<non_default_constructor_function<Type>, Args...>;
+	
+	KANGARU5_EXPORT template<unqualified_object Type>
+	inline constexpr auto non_default_constructor(auto&&... args) -> Type requires(
+		non_default_constructor_callable<Type, decltype(args)...>
+	) {
+		return non_default_constructor_function<Type>{}(KANGARU5_FWD(args)...);
+	}
 }
 
 #include "undef.hpp"

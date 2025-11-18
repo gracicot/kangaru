@@ -20,7 +20,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	KANGARU5_EXPORT template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<copiable_object MakeInjector>
 	struct basic_non_empty_constructor {
 		constexpr basic_non_empty_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -40,7 +40,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT using non_empty_constructor = basic_non_empty_constructor<make_spread_injector_function>;
 	
-	KANGARU5_EXPORT template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<copiable_object MakeInjector>
 	struct basic_unsafe_exhaustive_constructor {
 		constexpr basic_unsafe_exhaustive_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -60,7 +60,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT using unsafe_exhaustive_constructor = basic_unsafe_exhaustive_constructor<make_spread_injector_function>;
 	
-	KANGARU5_EXPORT template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<copiable_object MakeInjector>
 	struct basic_exhaustive_constructor {
 	private:
 		template<unqualified_object T>
@@ -89,9 +89,12 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT using exhaustive_constructor = basic_exhaustive_constructor<make_spread_injector_function>;
 	
-	KANGARU5_EXPORT template<injectable Type, movable_object MakeInjector>
+	KANGARU5_EXPORT template<injectable Type, copiable_object MakeInjector>
 	struct basic_placeholder_constructor_except {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except() requires std::default_initializable<MakeInjector> = default;
+		
+		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor_except(MakeInjector make_injector) noexcept :
+			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
 			requires(different_from<T, Type> and callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>)
@@ -105,7 +108,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<injectable Type>
 	using placeholder_constructor_except = basic_placeholder_constructor_except<Type, make_spread_injector_function>;
 	
-	KANGARU5_EXPORT template<movable_object MakeInjector>
+	KANGARU5_EXPORT template<copiable_object MakeInjector>
 	struct basic_placeholder_constructor {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_constructor() requires std::default_initializable<MakeInjector> = default;
 		
@@ -123,7 +126,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT using placeholder_constructor = basic_placeholder_constructor<make_spread_injector_function>;
 	
-	KANGARU5_EXPORT template<source Source, movable_object Function, movable_object MakeInjector = make_spread_injector_function>
+	KANGARU5_EXPORT template<source Source, movable_object Function, copiable_object MakeInjector = make_spread_injector_function>
 	struct with_function_call {
 	private:
 		using construction_type = std::remove_reference_t<maybe_unwrap_result_t<Function>>;
@@ -149,6 +152,7 @@ namespace kangaru {
 			return std::as_const(source.function).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
+		// TODO: Check all rebind so that we put the right requirement for move/copy construction
 		template<forwarded<with_function_call> Original, forwarded_source NewLeaf>
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
 			-> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Function, MakeInjector>
@@ -234,7 +238,7 @@ namespace kangaru {
 		std::tuple<Functions...> functions;
 	};
 	
-	KANGARU5_EXPORT template<movable_object Function, movable_object MakeInjector>
+	KANGARU5_EXPORT template<movable_object Function, copiable_object MakeInjector>
 	struct function {
 	private:
 		template<injectable T>
@@ -277,7 +281,7 @@ namespace kangaru {
 		return with_function_call<std::decay_t<Source>, std::decay_t<Function>>{KANGARU5_FWD(source), KANGARU5_FWD(function)};
 	}
 	
-	KANGARU5_EXPORT template<source Source, source Passthrough, movable_object Constructor>
+	KANGARU5_EXPORT template<source Source, source Passthrough, copiable_object Constructor>
 	struct with_construction_original_passthrough {
 		explicit constexpr with_construction_original_passthrough(Source source) noexcept
 				requires std::default_initializable<Constructor> :
@@ -328,7 +332,7 @@ namespace kangaru {
 		Constructor construction;
 	};
 	
-	KANGARU5_EXPORT template<source Source, movable_object Constructor>
+	KANGARU5_EXPORT template<source Source, copiable_object Constructor>
 	struct with_construction {
 		explicit constexpr with_construction(Source source) noexcept
 			requires std::default_initializable<Constructor> :

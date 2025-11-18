@@ -44,6 +44,9 @@ namespace kangaru {
 	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
 	KANGARU5_EXPORT template<typename T>
+	concept copiable_object = unqualified_object<T> and std::copy_constructible<T>;
+	
+	KANGARU5_EXPORT template<typename T>
 	concept function_object = object<T> and std::move_constructible<T>;
 	
 	KANGARU5_EXPORT template<typename T, typename Self>

@@ -21,7 +21,7 @@ endif()
 
 configure_file(
 	cmake/config/config.hpp.in
-	${CMAKE_CURRENT_BINARY_DIR}/generated/include/kangaru/detail/config.hpp
+	${CMAKE_CURRENT_BINARY_DIR}/generated/include/kangaru/detail/config_prev.hpp
 	@ONLY
 )
 

@@ -1,7 +1,7 @@
 #ifndef KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFAULT_SOURCE_HPP
 #define KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFAULT_SOURCE_HPP
 
-#include "kangaru/detail/config.hpp"
+#include "kangaru/detail/config_prev.hpp"
 
 #include "../type_id.hpp"
 #include "traits.hpp"

@@ -2,7 +2,7 @@
 #define KANGARU5_DETAIL_CACHE_TYPES_HPP
 
 #include "constructor.hpp"
-#include "tag.hpp"
+#include "config.hpp"
 #include "utility.hpp"
 #include "source.hpp"
 #include "ctti.hpp"

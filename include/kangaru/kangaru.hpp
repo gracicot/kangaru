@@ -6,6 +6,7 @@
 #include "detail/cache.hpp"
 #include "detail/cache_types.hpp"
 #include "detail/concepts.hpp"
+#include "detail/config.hpp"
 #include "detail/constructor.hpp"
 #include "detail/container.hpp"
 #include "detail/ctti.hpp"
@@ -22,7 +23,6 @@
 #include "detail/source_rebind.hpp"
 #include "detail/source_reference_wrapper.hpp"
 #include "detail/source_types.hpp"
-#include "detail/tag.hpp"
 #include "detail/type_traits.hpp"
 #include "detail/utility.hpp"
 

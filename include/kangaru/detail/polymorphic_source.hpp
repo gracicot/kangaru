@@ -4,7 +4,7 @@
 #include "source_reference_wrapper.hpp"
 #include "source.hpp"
 #include "utility.hpp"
-#include "tag.hpp"
+#include "config.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <memory>

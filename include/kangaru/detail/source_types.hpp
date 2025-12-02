@@ -7,7 +7,7 @@
 #include "utility.hpp"
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
-#include "tag.hpp"
+#include "config.hpp"
 #include "source_rebind.hpp"
 
 #ifndef KANGARU5_MODULES

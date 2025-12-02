@@ -64,6 +64,7 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/cache.hpp
 		include/kangaru/detail/cache_types.hpp
 		include/kangaru/detail/concepts.hpp
+		include/kangaru/detail/config.hpp
 		include/kangaru/detail/constructor.hpp
 		include/kangaru/detail/container.hpp
 		include/kangaru/detail/ctti.hpp
@@ -80,7 +81,6 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/source_rebind.hpp
 		include/kangaru/detail/source_reference_wrapper.hpp
 		include/kangaru/detail/source_types.hpp
-		include/kangaru/detail/tag.hpp
 		include/kangaru/detail/type_traits.hpp
 		include/kangaru/detail/utility.hpp
 )

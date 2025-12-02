@@ -118,13 +118,12 @@ namespace kangaru {
 		
 	private:
 		T object;
+		
+		friend auto config(allow_empty_injection<object_source<T>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	object_source(T&&) -> object_source<std::decay_t<T>>;
-	
-	KANGARU5_EXPORT template<unqualified_object T>
-	inline constexpr auto is_empty_injection_constructible_v<object_source<T>> = true;
 	
 	KANGARU5_EXPORT template<object T>
 	struct rvalue_source {
@@ -144,13 +143,12 @@ namespace kangaru {
 		
 	private:
 		T object;
+		
+		friend auto config(allow_empty_injection<rvalue_source<T>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	rvalue_source(T&&) -> rvalue_source<std::decay_t<T>>;
-	
-	KANGARU5_EXPORT template<object T>
-	inline constexpr auto is_empty_injection_constructible_v<rvalue_source<T>> = true;
 	
 	KANGARU5_EXPORT template<object T>
 	struct reference_source {
@@ -170,13 +168,12 @@ namespace kangaru {
 		
 	private:
 		T object;
+		
+		friend auto config(allow_empty_injection<reference_source>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
 	reference_source(T&&) -> reference_source<std::decay_t<T>>;
-	
-	KANGARU5_EXPORT template<object T>
-	inline constexpr auto is_empty_injection_constructible_v<reference_source<T>> = true;
 	
 	KANGARU5_EXPORT template<object T>
 	struct external_rvalue_source {
@@ -331,16 +328,14 @@ namespace kangaru {
 			decltype(auto) result = kangaru::provide<From>(KANGARU5_FWD(source).source);
 			return static_cast<T>(result);
 		}
+		
+		friend auto config(overrides_types_in_cache<with_cast_from>) -> overrides_types_in_cache<Source>;
 	};
 	
 	KANGARU5_EXPORT template<injectable From, forwarded_source Source>
 	inline constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
 		return with_cast_from<std::decay_t<Source>, From>{};
 	}
-	
-	// TODO: Is it at the right place?
-	KANGARU5_EXPORT template<source Source, injectable From> requires source_of<Source, From>
-	struct overrides_types_in_cache<with_cast_from<Source, From>> : overrides_types_in_cache<Source> {};
 	
 	KANGARU5_EXPORT template<source Source>
 	struct with_source_wrapping {

@@ -7,13 +7,13 @@
 
 struct service_a {
 	int i;
-	friend auto tag(kangaru::tag_for<service_a&>) -> kangaru::tags<kangaru::cached>;
+	friend auto config(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
 
 struct service_b {
 	service_a& a;
 	
-	friend auto tag(kangaru::tag_for<service_b&>) -> kangaru::tags<kangaru::cached>;
+	friend auto config(kangaru::allow_runtime_caching<service_b&>) -> std::true_type;
 };
 
 struct service_aggregate {
@@ -25,7 +25,7 @@ struct service_c {
 	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
-	friend auto tag(kangaru::tag_for<service_c&>) -> kangaru::tags<kangaru::cached>;
+	friend auto config(kangaru::allow_runtime_caching<service_c&>) -> std::true_type;
 };
 
 TEST_CASE("Container act a bit like kangaru 4", "[container]") {
@@ -48,8 +48,8 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 }
 
 struct service_aa : service_a {
-	// TODO: Better syntax for tags
-	friend auto tag(kangaru::tag_for<service_aa&>) -> kangaru::tags<kangaru::cached, kangaru::overrides<service_a&>>;
+	friend auto config(kangaru::allow_runtime_caching<service_aa&>) -> std::true_type;
+	friend auto config(kangaru::overrides_types_in_cache<service_aa&>) -> std::tuple<service_a&>;
 };
 
 TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {

@@ -24,7 +24,6 @@ namespace kangaru::detail::ctti {
 	
 	static_assert(signature_prefix_length != std::string_view::npos, "Cannot find the type name in the function signature");
 	
-	// TODO: Get stable type name on all compilers
 	template<typename T>
 	inline consteval auto type_name_prefix_length() -> std::size_t {
 		using namespace std::literals;

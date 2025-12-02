@@ -250,7 +250,7 @@ namespace kangaru {
 	struct with_cache_using_source {
 		template<injectable T, forwarded<with_cache_using_source> Self>
 			requires (
-				    is_cachable_v<T>
+				    allow_runtime_caching_v<T>
 				and not detail::utility::is_specialisation_of_v<SourceFor, T>
 				and wrapping_source_of<Self, SourceFor<T>>
 			)

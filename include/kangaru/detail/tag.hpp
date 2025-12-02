@@ -11,118 +11,67 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<typename>
-	struct tag_for {};
+namespace kangaru::detail::tag {
+	auto config(auto&&) -> void requires false;
 	
-	KANGARU5_EXPORT struct tags_tag {};
-	
-	KANGARU5_EXPORT template<typename T>
-	inline constexpr auto tag_for_v = tag_for<T>{};
-	
-	KANGARU5_EXPORT template<typename T>
-	concept weak_tag = requires {
-		requires std::same_as<tags_tag, typename T::meta>;
+	template<injectable T, typename Default, template<typename> typename Tag>
+	struct tag_function {
+		template<typename A>
+		static constexpr auto lookup(int) -> decltype(config(std::declval<Tag<A>&>()));
+		
+		template<typename A>
+		static constexpr auto lookup(void*) -> Default;
+	public:
+		using type = decltype(lookup<T>(0));
 	};
 	
-	namespace detail::tag {
-		auto tag(auto&&) -> void requires false;
-		
-		template<typename T>
-		concept adl_nonmember_tag =
-			requires(tag_for<T> t) {
-				{ tag(t) } -> kangaru::weak_tag;
-			};
-		
-		template<typename T>
-		struct tag_function {};
-		
-		template<adl_nonmember_tag T>
-		struct tag_function<T> {
-			using type = decltype(tag(tag_for_v<T>));
-		};
-		
-		template<typename T>
-		using tag_function_t = typename tag_function<T>::type;
-	}
+	template<injectable T, typename Default, template<typename> typename Tag>
+	using tag_function_t = typename tag_function<T, Default, Tag>::type;
 	
-	KANGARU5_EXPORT template<typename T>
-	struct tags_of {};
-	
-	KANGARU5_EXPORT template<detail::tag::adl_nonmember_tag T>
-	struct tags_of<T> {
-		using type = detail::tag::tag_function_t<T>;
+	template<template<injectable> typename Trait, injectable T>
+	struct evaluate_tag {
+		using type = Trait<T>;
 	};
 	
-	KANGARU5_EXPORT template<typename T>
-	using tags_of_t = typename tags_of<T>::type;
+	template<template<injectable> typename Trait, injectable T>
+		requires requires{ typename Trait<T>::template ttype<T>; }
+	struct evaluate_tag<Trait, T> {
+		using type = typename Trait<T>::template ttype<T>;
+	};
 	
-	KANGARU5_EXPORT template<typename T>
-	concept provides_tags = weak_tag<tags_of_t<T>>;
+	template<template<injectable> typename Trait, injectable T>
+	using evaluate_tag_t = typename evaluate_tag<Trait, T>::type;
+}
+
+KANGARU5_EXPORT namespace kangaru {
+	template<injectable T>
+	struct allow_runtime_caching {
+		template<injectable A>
+		using ttype = typename detail::tag::tag_function_t<A, std::false_type, allow_runtime_caching>;
+	};
 	
-	KANGARU5_EXPORT template<typename T>
-	concept tag_empty_injection_constructible =
-		    provides_tags<T>
-		and requires {
-			requires std::same_as<typename tags_of_t<T>::allow_empty_injection, std::true_type>;
-		};
-	 
-	KANGARU5_EXPORT template<typename T>
-	concept tag_allow_caching =
-		    provides_tags<T>
-		and requires {
-			requires std::same_as<typename tags_of_t<T>::allow_runtime_caching, std::true_type>;
-		};
+	template<injectable T>
+	inline constexpr auto allow_runtime_caching_v = detail::tag::evaluate_tag_t<allow_runtime_caching, T>::value;
 	
-	KANGARU5_EXPORT template<typename T>
-	inline constexpr auto is_empty_injection_constructible_v = tag_empty_injection_constructible<T>;
+	template<injectable T>
+	struct allow_empty_injection {
+		template<injectable A>
+		using ttype = typename detail::tag::tag_function_t<A, std::false_type, allow_empty_injection>;
+	};
 	
-	KANGARU5_EXPORT template<typename T>
-	concept tag_overrides_types_in_cache =
-		    provides_tags<T>
-		and requires {
-			typename tags_of_t<T>::overrides_types_in_cache;
-			{ detail::utility::decay_copy(std::tuple_size<typename tags_of_t<T>::overrides_types_in_cache>::value) } -> std::same_as<std::size_t>;
-		};
+	template<injectable T>
+	inline constexpr auto allow_empty_injection_v = detail::tag::evaluate_tag_t<allow_empty_injection, T>::value;
 	
-	KANGARU5_EXPORT template<typename>
+	template<injectable T>
 	struct overrides_types_in_cache {
-		using type = std::tuple<>;
+		template<injectable A>
+		struct ttype {
+			using type = detail::tag::tag_function_t<A, std::tuple<>, overrides_types_in_cache>;
+		};
 	};
 	
-	KANGARU5_EXPORT template<tag_overrides_types_in_cache T>
-	struct overrides_types_in_cache<T> {
-		using type = typename tags_of_t<T>::overrides_types_in_cache;
-	};
-	
-	KANGARU5_EXPORT template<typename T>
-	using overrides_types_in_cache_t = typename overrides_types_in_cache<T>::type;
-	
-	KANGARU5_EXPORT struct empty_injectable {
-		using meta = tags_tag;
-		using allow_empty_injection = std::true_type;
-	};
-	
-	KANGARU5_EXPORT struct cached {
-		using meta = tags_tag;
-		using allow_runtime_caching = std::true_type;
-	};
-	
-	KANGARU5_EXPORT template<typename T>
-	inline constexpr auto is_cachable_v = tag_allow_caching<T>;
-	
-	KANGARU5_EXPORT template<typename... Ts> requires (sizeof...(Ts) > 0)
-	struct overrides {
-		using meta = tags_tag;
-		
-		// TODO: Use meta list
-		using overrides_types_in_cache = std::tuple<Ts...>;
-	};
-	
-	KANGARU5_EXPORT template<weak_tag... Tags>
-	struct tags : Tags... {
-		using meta = tags_tag;
-	};
+	template<typename T>
+	using overrides_types_in_cache_t = typename detail::tag::evaluate_tag_t<overrides_types_in_cache, T>::type;
 }
 
 #include "undef.hpp"

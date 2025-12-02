@@ -17,7 +17,7 @@ struct Derived final : Base {
 		return id;
 	}
 	
-	friend auto tag(kangaru::tag_for<Derived*>) -> kangaru::overrides<Base*>;
+	friend auto config(kangaru::overrides_types_in_cache<Derived*>) -> std::tuple<Base*>;
 };
 
 struct increment_source {

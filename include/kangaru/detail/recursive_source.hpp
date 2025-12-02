@@ -65,7 +65,7 @@ namespace kangaru {
 	private:
 		template<unqualified_object T>
 		using constructor_type = detail::type_traits::conditional_t<
-			is_empty_injection_constructible_v<T>,
+			allow_empty_injection_v<T>,
 			constructor_function<T>,
 			non_default_constructor_function<T>
 		>;

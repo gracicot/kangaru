@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "kangaru/detail/config.hpp"
+#include "kangaru/detail/config_prev.hpp"
 
 #ifdef KGR_KANGARU_HASH_TYPE_ID
 #include "detail/string_view.hpp"

@@ -7,7 +7,7 @@
 #include "utility.hpp"
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
-#include "config.hpp"
+#include "attributes.hpp"
 #include "source_rebind.hpp"
 
 #ifndef KANGARU5_MODULES
@@ -41,7 +41,7 @@ namespace kangaru {
 		
 	private:
 		template<typename T, typename Self, std::size_t... S>
-		constexpr static auto index_of(std::index_sequence<S...>) {
+		consteval static auto index_of(std::index_sequence<S...>) {
 			return ((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? S : 0) + ...);
 		}
 		
@@ -65,7 +65,7 @@ namespace kangaru {
 		
 	private:
 		template<typename T, typename Self, std::size_t... S>
-		constexpr static auto index_of(std::index_sequence<S...>) {
+		consteval static auto index_of(std::index_sequence<S...>) {
 			auto const source_handles = std::array{std::pair{S, source_of<detail::utility::forward_like_t<Self, Sources>, T>}...};
 			
 			auto const it = std::find_if(source_handles.begin(), source_handles.end(), [](std::pair<std::size_t, bool> source) {
@@ -120,7 +120,7 @@ namespace kangaru {
 		T object;
 		
 		template<unqualified_object U>
-		friend auto config(allow_empty_injection<object_source<U>>) -> std::true_type;
+		friend auto attribute(allow_empty_injection<object_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -146,7 +146,7 @@ namespace kangaru {
 		T object;
 		
 		template<kangaru::object U>
-		friend auto config(allow_empty_injection<rvalue_source<U>>) -> std::true_type;
+		friend auto attribute(allow_empty_injection<rvalue_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -172,7 +172,7 @@ namespace kangaru {
 		T object;
 		
 		template<kangaru::object U>
-		friend auto config(allow_empty_injection<reference_source<U>>) -> std::true_type;
+		friend auto attribute(allow_empty_injection<reference_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -249,7 +249,8 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source Source, std::default_initializable Filter>
 	struct filter_if_source {
-		constexpr filter_if_source(Source source) noexcept : source{std::move(source)} {}
+		explicit constexpr filter_if_source(Source source) noexcept : source{std::move(source)} {}
+		constexpr filter_if_source(Source source, Filter) noexcept : source{std::move(source)} {}
 		
 	private:
 		template<injectable T> requires(Filter{}.template operator()<T>())
@@ -260,9 +261,14 @@ namespace kangaru {
 		Source source;
 	};
 	
-	KANGARU5_EXPORT template<injectable T, forwarded_source Source>
+	KANGARU5_EXPORT template<std::default_initializable Filter, forwarded_source Source>
 	inline constexpr auto filter(Source&& source) {
-		return filter_source<std::decay_t<Source>, T>{KANGARU5_FWD(source)};
+		return filter_source<std::decay_t<Source>, Filter>{KANGARU5_FWD(source)};
+	}
+	
+	KANGARU5_EXPORT template<forwarded_source Source>
+	inline constexpr auto filter(Source&& source, std::default_initializable auto filter) {
+		return filter_source<std::decay_t<Source>, decltype(filter)>{KANGARU5_FWD(source), filter};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source, std::default_initializable Filter>
@@ -333,12 +339,12 @@ namespace kangaru {
 		}
 		
 		template<kangaru::source S, injectable F>
-		friend auto config(overrides_types_in_cache<with_cast_from<S, F>>) -> overrides_types_in_cache<S>;
+		friend auto attribute(overrides_types_in_cache<with_cast_from<S, F>>) -> overrides_types_in_cache<S>;
 	};
 	
-	KANGARU5_EXPORT template<injectable From, forwarded_source Source>
-	inline constexpr auto make_source_with_cast_from(Source&& source) noexcept -> with_cast_from<std::decay_t<Source>, From> {
-		return with_cast_from<std::decay_t<Source>, From>{};
+	KANGARU5_EXPORT template<injectable From>
+	inline constexpr auto make_source_with_cast_from(forwarded_source auto&& source) noexcept -> with_cast_from<std::decay_t<decltype(source)>, From> {
+		return with_cast_from<std::decay_t<decltype(source)>, From>{KANGARU5_FWD(source)};
 	}
 	
 	KANGARU5_EXPORT template<source Source>

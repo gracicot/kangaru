@@ -3,10 +3,10 @@
 
 #include "detail/allocator.hpp"
 #include "detail/any_source_of.hpp"
+#include "detail/attributes.hpp"
 #include "detail/cache.hpp"
 #include "detail/cache_types.hpp"
 #include "detail/concepts.hpp"
-#include "detail/config.hpp"
 #include "detail/constructor.hpp"
 #include "detail/container.hpp"
 #include "detail/ctti.hpp"

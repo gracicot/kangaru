@@ -29,7 +29,7 @@ struct int_float_source_type2 {
 };
 
 struct many_source {
-	template<typename T> requires (std::integral<T>)
+	template<std::integral T>
 	auto provide() -> T {
 		return static_cast<T>(value);
 	}

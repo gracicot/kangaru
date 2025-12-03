@@ -4,7 +4,7 @@
 #include "utility.hpp"
 #include "constructor.hpp"
 #include "injector.hpp"
-#include "config.hpp"
+#include "attributes.hpp"
 #include "source.hpp"
 #include "source_types.hpp"
 #include "source_reference_wrapper.hpp"

@@ -1,5 +1,5 @@
 #include "kangaru/detail/source_types.hpp"
-#include "kangaru/detail/config.hpp"
+#include "kangaru/detail/attributes.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
@@ -7,13 +7,13 @@
 
 struct service_a {
 	int i;
-	friend auto config(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
 
 struct service_b {
 	service_a& a;
 	
-	friend auto config(kangaru::allow_runtime_caching<service_b&>) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_b&>) -> std::true_type;
 };
 
 struct service_aggregate {
@@ -25,7 +25,7 @@ struct service_c {
 	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
-	friend auto config(kangaru::allow_runtime_caching<service_c&>) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_c&>) -> std::true_type;
 };
 
 TEST_CASE("Container act a bit like kangaru 4", "[container]") {
@@ -48,8 +48,8 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 }
 
 struct service_aa : service_a {
-	friend auto config(kangaru::allow_runtime_caching<service_aa&>) -> std::true_type;
-	friend auto config(kangaru::overrides_types_in_cache<service_aa&>) -> std::tuple<service_a&>;
+	friend auto attribute(kangaru::allow_runtime_caching<service_aa&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_aa&>) -> std::tuple<service_a&>;
 };
 
 TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {

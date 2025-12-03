@@ -34,15 +34,15 @@ set(KANGARU_HAS_CPP_MODULES OFF)
 
 # Check compiler and version
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19)
-        set(KANGARU_HAS_CPP_MODULES ON)
-    endif()
+	if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19)
+		set(KANGARU_HAS_CPP_MODULES ON)
+	endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 	set(KANGARU_HAS_CPP_MODULES OFF) # GCC 15 simply ICE with modules
 elseif(MSVC)
-    if(MSVC_VERSION GREATER_EQUAL 1942)
-        set(KANGARU_HAS_CPP_MODULES ON)
-    endif()
+	if(MSVC_VERSION GREATER_EQUAL 1942)
+		set(KANGARU_HAS_CPP_MODULES ON)
+	endif()
 endif()
 
 if(KANGARU_HAS_CPP_MODULES)
@@ -61,14 +61,16 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/kangaru.hpp
 		include/kangaru/short.hpp
 		include/kangaru/detail/allocator.hpp
+		include/kangaru/detail/any_source_of.hpp
+		include/kangaru/detail/attributes.hpp
 		include/kangaru/detail/cache.hpp
 		include/kangaru/detail/cache_types.hpp
 		include/kangaru/detail/concepts.hpp
-		include/kangaru/detail/config.hpp
 		include/kangaru/detail/constructor.hpp
 		include/kangaru/detail/container.hpp
 		include/kangaru/detail/ctti.hpp
 		include/kangaru/detail/deducer.hpp
+		include/kangaru/detail/define.hpp
 		include/kangaru/detail/heap_storage.hpp
 		include/kangaru/detail/injector.hpp
 		include/kangaru/detail/lazy.hpp
@@ -82,6 +84,7 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/source_reference_wrapper.hpp
 		include/kangaru/detail/source_types.hpp
 		include/kangaru/detail/type_traits.hpp
+		include/kangaru/detail/undef.hpp
 		include/kangaru/detail/utility.hpp
 )
 
@@ -120,32 +123,24 @@ write_basic_package_version_file(
 	ARCH_INDEPENDENT
 )
 
-# build tree package config
-configure_file(
-	cmake/config/kangaru-config.cmake.in
-	kangaru-config.cmake
-	@ONLY
-)
-
 install(
 	FILES
-		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config.cmake"
 		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
 	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
 )
 
 if(KANGARU_HAS_CPP_MODULES)
-install(TARGETS kangaru
-	EXPORT kangaru-targets
-	FILE_SET HEADERS
-	FILE_SET CXX_MODULES
-		DESTINATION ${KANGARU_INSTALL_CMAKEDIR}/interfaces
-)
+	install(TARGETS kangaru
+		EXPORT kangaru-targets
+		FILE_SET HEADERS
+		FILE_SET CXX_MODULES
+			DESTINATION ${KANGARU_INSTALL_CMAKEDIR}/interfaces
+	)
 else()
-install(TARGETS kangaru
-	EXPORT kangaru-targets
-	FILE_SET HEADERS
-)
+	install(TARGETS kangaru
+		EXPORT kangaru-targets
+		FILE_SET HEADERS
+	)
 endif()
 
 install(
@@ -156,10 +151,10 @@ install(
 
 export(
 	EXPORT kangaru-targets
-	FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaru-targets.cmake"
+	FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaru-config.cmake"
 )
 
 install(
-	EXPORT kangaru-targets FILE kangaru-targets.cmake
+	EXPORT kangaru-targets FILE kangaru-config.cmake
 	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
 )

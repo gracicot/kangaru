@@ -16,13 +16,13 @@ struct increment_source {
 struct service_a {
 	explicit service_a(int a) : a{a} {}
 	int a = 0;
-	friend auto config(kangaru::allow_runtime_caching<service_a&>&) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
 
 struct service_b {
 	service_a& a;
 	
-	friend auto config(kangaru::allow_runtime_caching<service_b&>&) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_b&>) -> std::true_type;
 };
 
 struct service_aggregate {
@@ -34,7 +34,7 @@ struct service_c {
 	explicit service_c(service_aggregate services) noexcept : services{services} {}
 	service_aggregate services;
 	
-	friend auto config(kangaru::allow_runtime_caching<service_c&>&) -> std::true_type;
+	friend auto attribute(kangaru::allow_runtime_caching<service_c&>) -> std::true_type;
 };
 
 struct needs_int_ref {

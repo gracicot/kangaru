@@ -28,12 +28,12 @@ namespace kangaru::detail::config {
 	template<injectable T, typename Default, template<typename> typename Config>
 	using config_function_t = typename config_function<T, Default, Config>::type;
 	
-	template<template<injectable> typename Trait, injectable T>
+	template<template<typename> typename Trait, injectable T>
 	struct evaluate_config {
 		using type = Trait<T>;
 	};
 	
-	template<template<injectable> typename Trait, injectable T>
+	template<template<typename> typename Trait, injectable T>
 		requires requires{ typename Trait<T>::template ttype<T>; }
 	struct evaluate_config<Trait, T> {
 		using type = typename Trait<T>::template ttype<T>;

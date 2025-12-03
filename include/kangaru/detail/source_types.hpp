@@ -119,7 +119,8 @@ namespace kangaru {
 	private:
 		T object;
 		
-		friend auto config(allow_empty_injection<object_source<T>>) -> std::true_type;
+		template<unqualified_object U>
+		friend auto config(allow_empty_injection<object_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -144,7 +145,8 @@ namespace kangaru {
 	private:
 		T object;
 		
-		friend auto config(allow_empty_injection<rvalue_source<T>>) -> std::true_type;
+		template<kangaru::object U>
+		friend auto config(allow_empty_injection<rvalue_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -169,7 +171,8 @@ namespace kangaru {
 	private:
 		T object;
 		
-		friend auto config(allow_empty_injection<reference_source>) -> std::true_type;
+		template<kangaru::object U>
+		friend auto config(allow_empty_injection<reference_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -329,7 +332,8 @@ namespace kangaru {
 			return static_cast<T>(result);
 		}
 		
-		friend auto config(overrides_types_in_cache<with_cast_from>) -> overrides_types_in_cache<Source>;
+		template<kangaru::source S, injectable F>
+		friend auto config(overrides_types_in_cache<with_cast_from<S, F>>) -> overrides_types_in_cache<S>;
 	};
 	
 	KANGARU5_EXPORT template<injectable From, forwarded_source Source>

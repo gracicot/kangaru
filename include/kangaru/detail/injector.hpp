@@ -15,6 +15,7 @@
 
 namespace kangaru {
 	namespace detail::injector {
+		// TODO: Can we do that without template metaprogramming?
 		template<typename Function, typename>
 		struct parameter_sequence_impl {};
 		
@@ -45,6 +46,7 @@ namespace kangaru {
 			detail::deducer::invoke_with_deducer_sequence(seq, KANGARU5_FWD(function), deduce);
 		};
 		
+		// TODO: Can we do that without template metaprogramming?
 		template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, typename, typename = std::index_sequence<>>
 		struct injectable_sequence {};
 		
@@ -111,7 +113,7 @@ namespace kangaru {
 		template<std::size_t... s>
 		static constexpr auto expand_deducers(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
 			using deducer = Deducer<decltype(source)>;
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
+			return KANGARU5_NO_ADL(invoke_with_deducers)(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
 		}
 		
 		Source source;
@@ -197,7 +199,7 @@ namespace kangaru {
 		template<std::size_t... s>
 		static constexpr auto expand_deducers(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
 			using deducer = Deducer<decltype(source)>;
-			return kangaru::invoke_with_deducers(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
+			return KANGARU5_NO_ADL(invoke_with_deducers)(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
 		}
 		
 		Source source;

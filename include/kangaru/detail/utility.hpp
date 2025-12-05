@@ -29,10 +29,10 @@ namespace kangaru::detail::utility {
 	}
 	
 	[[noreturn]]
-	extern auto nonconsteval() -> void;
+	extern auto nonconsteval() -> void; // Left unimplemented
 	
 	template<typename T = void> [[noreturn]]
-	consteval inline auto noreturn() -> T { nonconsteval(); }
+	consteval inline auto noreturn() -> T { KANGARU5_NO_ADL(nonconsteval)(); }
 	
 	template<typename T>
 	auto decay_copy(T&& v) -> std::decay_t<T> {

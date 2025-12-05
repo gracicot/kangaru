@@ -10,14 +10,14 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<typename T>
+KANGARU5_EXPORT namespace kangaru {
+	template<typename T>
 	concept object_allocator = requires(T allocator, int* ptr) {
 		{ allocator.template allocate_object<int>() } -> std::same_as<int*>;
 		{ allocator.template deallocate_object<int>(ptr) } -> std::same_as<void>;
 	};
 	
-	KANGARU5_EXPORT struct default_allocator {
+	struct default_allocator {
 		constexpr auto allocate_bytes(std::size_t size, std::size_t alignment) -> void* {
 			if (std::is_constant_evaluated()) {
 				// We ignore alignment in constexpr
@@ -42,7 +42,7 @@ namespace kangaru {
 			}
 			
 			if (std::is_constant_evaluated()) {
-				return std::allocator<U>().allocate(n);
+				return std::allocator<U>{}.allocate(n);
 			} else {
 				return static_cast<U*>(allocate_bytes(n * sizeof(U), alignof(U)));
 			}

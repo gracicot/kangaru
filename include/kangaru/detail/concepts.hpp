@@ -15,86 +15,86 @@ namespace kangaru::detail::concepts {
 	}
 }
 
-namespace kangaru {
-	KANGARU5_EXPORT template<typename T, typename U>
+KANGARU5_EXPORT namespace kangaru {
+	template<typename T, typename U>
 	concept different_from = not std::same_as<T, U>;
 	
-	KANGARU5_EXPORT template<typename Forwarded, typename T>
+	template<typename Forwarded, typename T>
 	concept forwarded = std::same_as<T, std::remove_cvref_t<Forwarded>>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept object = std::is_object_v<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept forwarded_object = object<std::remove_reference_t<T>>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept unqualified_object = object<T> and not std::is_const_v<T> and not std::is_volatile_v<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept reference = not object<T> and not unqualified_object<T> and std::is_reference_v<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept lvalue_reference = reference<T> and std::is_lvalue_reference_v<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept rvalue_reference = reference<T> and std::is_rvalue_reference_v<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept copiable_object = unqualified_object<T> and std::copy_constructible<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept function_object = object<T> and std::move_constructible<T>;
 	
-	KANGARU5_EXPORT template<typename T, typename Self>
+	template<typename T, typename Self>
 	concept not_self = unqualified_object<T> and different_from<T, std::decay_t<Self>>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept pointer = object<T> and std::is_pointer_v<T>;
 	
 	// Matches more our usage of syntax for function calling
-	KANGARU5_EXPORT template<typename F, typename... Args>
+	template<typename F, typename... Args>
 	concept callable = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f)(KANGARU5_FWD(args)...);
 	};
 	
-	KANGARU5_EXPORT template<typename F, typename R, typename... Args>
+	template<typename F, typename R, typename... Args>
 	concept callable_returns =
 		    callable<F, Args...>
 		and requires(F&& f, Args&&... args) {
 			{ KANGARU5_FWD(f)(KANGARU5_FWD(args)...) } -> std::same_as<R>;
 		};
 	
-	KANGARU5_EXPORT template<typename T, typename... Args>
+	template<typename T, typename... Args>
 	concept brace_constructible = requires(Args&&... args) {
 		T{KANGARU5_FWD(args)...};
 	};
 	
-	KANGARU5_EXPORT template<typename F, typename T, typename... Args>
+	template<typename F, typename T, typename... Args>
 	concept callable_template_1t = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);
 	};
 	
-	KANGARU5_EXPORT template<typename F, typename R, typename T, typename...Args>
+	template<typename F, typename R, typename T, typename...Args>
 	concept callable_template_1t_returns =
 		    callable_template_1t<F, T, Args...>
 		and requires(F&& f, Args&&... args) {
 			{ KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...) } -> std::same_as<R>;
 		};
 	
-	KANGARU5_EXPORT template<typename T, typename U>
+	template<typename T, typename U>
 	concept allows_construction_of = std::constructible_from<U, T>;
 	
-	KANGARU5_EXPORT template<typename From, typename To>
+	template<typename From, typename To>
 	concept explicitly_castable_to = requires(From&& from) {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
 	
 	// TODO: Actually not safe when converting to a type with ref semantics
-	KANGARU5_EXPORT template<typename From, typename To>
+	template<typename From, typename To>
 	concept safe_convertible_to =
 		    std::convertible_to<From, To>
 		and (reference<From> or unqualified_object<To>);

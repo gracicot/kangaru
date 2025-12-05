@@ -40,10 +40,10 @@ namespace kangaru {
 				provide_function{provide_function_for<source_reference_wrapped_type<Source>>()} {}
 		
 		/**
-		 * @brief Unsafe constructor that allows construction from a type erased source and a function pointer to call
+		 * Unsafe constructor that allows construction from a type erased source and a function pointer to call
 		 * provide on.
 		 * 
-		 * @details The reason why this function is unsafe is that there is no way to verify at this point if calling
+		 * The reason why this function is unsafe is that there is no way to verify at this point if calling
 		 * the function pointer with the source void pointer parameter will result in undefined behavior or not. It it
 		 * meant to be called only if the source is known to be the type the provide function expects.
 		 * 
@@ -123,8 +123,7 @@ namespace kangaru {
 	private:
 		template<injectable T>
 		struct function_container {
-			using provide_t = auto(*)(void*) -> T;
-			provide_t provide_function;
+			detail::utility::function_pointer_t<auto(void*) -> T> provide_function;
 		};
 		
 		using dummy_function_container = function_container<int>;

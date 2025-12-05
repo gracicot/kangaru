@@ -27,7 +27,7 @@ namespace kangaru::detail::ctti {
 	template<typename T>
 	inline consteval auto type_name_prefix_length() -> std::size_t {
 		using namespace std::literals;
-		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(signature_prefix_length);
+		auto const sig_prefix_trimmed = KANGARU5_NO_ADL(raw_typed_signature<T>)().substr(signature_prefix_length);
 		
 		if (sig_prefix_trimmed.starts_with("class ")) {
 			return signature_prefix_length + "class "sv.size();
@@ -42,7 +42,7 @@ namespace kangaru::detail::ctti {
 	
 	template<typename T>
 	inline consteval auto type_name() -> std::string_view {
-		auto const sig_prefix_trimmed = raw_typed_signature<T>().substr(type_name_prefix_length<T>());
+		auto const sig_prefix_trimmed = KANGARU5_NO_ADL(raw_typed_signature<T>)().substr(KANGARU5_NO_ADL(type_name_prefix_length<T>)());
 		return sig_prefix_trimmed.substr(
 			0,
 			sig_prefix_trimmed.size() - signature_postfix_length
@@ -51,7 +51,7 @@ namespace kangaru::detail::ctti {
 	
 	// TODO: This cannot be private since it's needs to be in the public interface
 	template<typename T>
-	struct type_id_for_result : std::integral_constant<std::size_t, detail::murmur::murmur64a(type_name<T>())> {};
+	struct type_id_for_result : std::integral_constant<std::size_t, detail::murmur::murmur64a(KANGARU5_NO_ADL(type_name<T>)())> {};
 	
 	template<typename T>
 	inline consteval auto type_id_for() -> type_id_for_result<T> {

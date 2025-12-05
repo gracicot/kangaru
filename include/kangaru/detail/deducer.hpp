@@ -538,6 +538,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename Deducer>
 	using lvalue_reference_deducer = filtered_value_category_deducer<Deducer, reference_kind::lvalue_reference>;
 	
+	// TODO: Deducible is the right choice?
 	KANGARU5_EXPORT template<deducible T>
 	inline constexpr auto exclude_special_constructors_for(deducer auto deducer) {
 		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
@@ -556,7 +557,7 @@ namespace kangaru {
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
 		inline constexpr auto callable_with_nth_parameter_being = bool{
-			callable_with_nth_parameter_being_expand<T, F>(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{})
+			KANGARU5_NO_ADL(callable_with_nth_parameter_being_expand<T, F>)(std::make_index_sequence<nth>{}, std::make_index_sequence<max - nth - 1>{})
 		};
 		
 		template<typename F, std::size_t nth, std::size_t max>
@@ -676,7 +677,7 @@ namespace kangaru {
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
 		using filtered_value_category_deducer_for = filtered_value_category_deducer<
 			Deducer,
-			reference_kind_for_nth_parameter<placeholder_deducer, F, nth, arity>()
+			KANGARU5_NO_ADL(reference_kind_for_nth_parameter<placeholder_deducer, F, nth, arity>)()
 		>;
 		
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
@@ -708,9 +709,9 @@ namespace kangaru {
 		inline constexpr auto invoke_with_deducer_sequence(
 			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
 		) -> decltype(
-			invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
+			KANGARU5_NO_ADL(invoke_with_deducers_impl)(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
 		) {
-			return invoke_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
+			return KANGARU5_NO_ADL(invoke_with_deducers_impl)(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
 		}
 	}
 	
@@ -727,19 +728,19 @@ namespace kangaru {
 	concept callable_with_deducers =
 		    (... and deducer<Deducers>)
 		and requires(F&& f, Deducers... deduce) {
-			invoke_with_deducers(KANGARU5_FWD(f), deduce...);
+			KANGARU5_NO_ADL(invoke_with_deducers)(KANGARU5_FWD(f), deduce...);
 		};
 	
 	KANGARU5_EXPORT template<typename F, typename R, typename... Deducers>
 	concept callable_with_deducers_returns =
 		    callable_with_deducers<F, Deducers...>
 		and requires(F&& f, Deducers... deduce) {
-			{ invoke_with_deducers(KANGARU5_FWD(f), deduce...) } -> std::same_as<R>;
+			{ KANGARU5_NO_ADL(invoke_with_deducers)(KANGARU5_FWD(f), deduce...) } -> std::same_as<R>;
 		};
 	
 	KANGARU5_EXPORT template<typename F, deducer... Deducers>
 		requires callable_with_deducers<F, Deducers...>
-	using call_with_deducers_result = decltype(invoke_with_deducers(std::declval<F>(), std::declval<Deducers>()...));
+	using call_with_deducers_result = decltype(KANGARU5_NO_ADL(invoke_with_deducers)(std::declval<F>(), std::declval<Deducers>()...));
 } // namespace kangaru
 
 #include "undef.hpp"

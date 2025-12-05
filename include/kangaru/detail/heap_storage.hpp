@@ -209,15 +209,15 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT template<forwarded_source Source, forwarded_heap_storage Storage>
-	constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage) {
+	inline constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage) {
 		return with_heap_storage<std::decay_t<Source>, std::decay_t<Storage>>{
 			KANGARU5_FWD(source), KANGARU5_FWD(storage)
 		};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source>
-	constexpr auto make_source_with_heap_storage(Source&& source) {
-		return with_heap_storage<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+	inline constexpr auto make_source_with_heap_storage(Source&& source) {
+		return with_heap_storage<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	static_assert(heap_storage<with_heap_storage<none_source>>);

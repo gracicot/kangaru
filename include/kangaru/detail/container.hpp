@@ -13,12 +13,12 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<injectable T>
+KANGARU5_EXPORT namespace kangaru {
+	template<injectable T>
 	using cached_reference_to_reference_source =
 		detail::utility::ttype_t<cached_reference_to_source<reference_source>, T>;
 	
-	KANGARU5_EXPORT template<
+	template<
 		rebindable_source Source,
 		cache_map Cache = std::unordered_map<std::size_t, void*>,
 		heap_storage Storage = default_heap_storage

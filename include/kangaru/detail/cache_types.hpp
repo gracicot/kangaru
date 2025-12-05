@@ -1,23 +1,19 @@
 #ifndef KANGARU5_DETAIL_CACHE_TYPES_HPP
 #define KANGARU5_DETAIL_CACHE_TYPES_HPP
 
-#include "constructor.hpp"
 #include "attributes.hpp"
 #include "utility.hpp"
 #include "source.hpp"
 #include "ctti.hpp"
 #include "concepts.hpp"
-#include "allocator.hpp"
-#include "source_types.hpp"
+#include "source_reference_wrapper.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <cstddef>
-#include <type_traits>
 #include <concepts>
-#include <memory>
-#include <unordered_map>
 #include <iterator>
 #include <utility>
+#include <unordered_map>
 #endif
 
 #include "define.hpp"

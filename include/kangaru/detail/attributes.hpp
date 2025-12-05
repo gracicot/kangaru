@@ -2,8 +2,6 @@
 #define KANGARU5_DETAIL_ATTRIBUTES_HPP
 
 #include "source.hpp"
-#include "concepts.hpp"
-#include "utility.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <type_traits>

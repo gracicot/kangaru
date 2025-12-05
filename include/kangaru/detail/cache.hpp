@@ -185,6 +185,7 @@ namespace kangaru {
 		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	
+	// TODO: Make it readable
 	KANGARU5_EXPORT template<
 		source Source,
 		cache_map Cache = std::unordered_map<std::size_t, std::any>
@@ -225,12 +226,12 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT template<forwarded_source Source, forwarded_cache_map Cache>
-	constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
+	inline constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
 		return with_cache<std::decay_t<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source>
-	constexpr auto make_source_with_cache(Source&& source) {
+	inline constexpr auto make_source_with_cache(Source&& source) {
 		return with_cache<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	

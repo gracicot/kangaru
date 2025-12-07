@@ -20,7 +20,7 @@
 
 namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
-	concept non_ref_cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
+	concept cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
 		{ map.begin() } -> std::forward_iterator;
 		{ map.end() } -> std::forward_iterator;
 		{ std::as_const(map).begin() } -> std::forward_iterator;
@@ -43,16 +43,16 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT template<typename T>
-	concept cache_map = non_ref_cache_map<T> or requires {
-		requires non_ref_cache_map<source_reference_wrapped_type<T>>;
+	concept dereferenceable_cache_map = cache_map<T> or requires {
+		requires cache_map<source_reference_wrapped_type<T>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T>
-	concept forwarded_cache_map = cache_map<std::remove_cvref_t<T>>;
+	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<std::size_t, void*>>);
 	
-	KANGARU5_EXPORT template<cache_map Map>
+	KANGARU5_EXPORT template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;
 		using mapped_type = typename Map::mapped_type;
@@ -136,13 +136,13 @@ namespace kangaru {
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& k, U&& obj) {
 			insert_or_assign_overrides(obj);
-			map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
+			return map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T> const& k, U&& obj) {
 			insert_or_assign_overrides(obj);
-			map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
+			return map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		constexpr auto erase(iterator pos) -> iterator {
@@ -234,7 +234,7 @@ namespace kangaru {
 				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
 					constexpr auto id = detail::ctti::type_id_for<override>();
-					map.insert_or_assign(std::pair{id, static_cast<override>(value)});
+					map.insert_or_assign(id, static_cast<override>(value));
 				};
 				(for_each(s, value), ...);
 			}, detail::utility::sequence_tuple_for_tuple<overrides>{});

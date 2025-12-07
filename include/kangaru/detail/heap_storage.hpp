@@ -33,9 +33,8 @@ namespace kangaru {
 			ptr{std::exchange(other.ptr, nullptr)}, deleter{std::exchange(other.deleter, nullptr)} {}
 		
 		constexpr auto operator=(runtime_dynamic_storage&& rhs) noexcept -> runtime_dynamic_storage& {
-			using std::swap;
-			swap(ptr, rhs.ptr);
-			swap(deleter, rhs.deleter);
+			std::ranges::swap(ptr, rhs.ptr);
+			std::ranges::swap(deleter, rhs.deleter);
 			return *this;
 		}
 		
@@ -113,9 +112,8 @@ namespace kangaru {
 			allocator{std::move(other.allocator)}, container{std::move(other.container)} {}
 		
 		constexpr auto operator=(basic_heap_storage&& rhs) noexcept -> basic_heap_storage& {
-			using std::swap;
-			swap(allocator, rhs.allocator);
-			swap(container, rhs.container);
+			std::ranges::swap(allocator, rhs.allocator);
+			std::ranges::swap(container, rhs.container);
 			return *this;
 		}
 		
@@ -143,32 +141,32 @@ namespace kangaru {
 		}
 		
 	private:
+		Container container;
+		
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Allocator allocator;
-		
-		Container container;
 	};
 	
 	KANGARU5_EXPORT using default_heap_storage = basic_heap_storage<std::vector<runtime_dynamic_storage>, default_allocator>;
 	
 	KANGARU5_EXPORT template<typename T>
-	concept non_ref_heap_storage =
+	concept heap_storage =
 		    std::move_constructible<T>
-		and requires(T storage, int(*function)()) {
+		and requires(T storage, detail::utility::function_pointer_t<auto() -> int> function) {
 			{ storage.emplace_from(function) } -> std::same_as<int*>;
 		};
 	
 	KANGARU5_EXPORT template<typename T>
-	concept heap_storage = non_ref_heap_storage<T> or requires {
-		requires non_ref_heap_storage<source_reference_wrapped_type<T>>;
+	concept dereferenceable_heap_storage = heap_storage<T> or requires {
+		requires heap_storage<source_reference_wrapped_type<T>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T>
-	concept forwarded_heap_storage = heap_storage<std::remove_cvref_t<T>>;
+	concept forwarded_heap_storage = dereferenceable_heap_storage<std::remove_cvref_t<T>>;
 	
 	static_assert(heap_storage_container<std::vector<runtime_dynamic_storage>>);
 	
-	KANGARU5_EXPORT template<source Source, heap_storage Storage = default_heap_storage>
+	KANGARU5_EXPORT template<source Source, dereferenceable_heap_storage Storage = default_heap_storage>
 	struct with_heap_storage {
 		using source_type = Source;
 		

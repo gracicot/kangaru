@@ -32,7 +32,7 @@ namespace kangaru::detail::utility {
 	extern auto nonconsteval() -> void; // Left unimplemented
 	
 	template<typename T = void> [[noreturn]]
-	consteval inline auto noreturn() -> T { KANGARU5_NO_ADL(nonconsteval)(); }
+	consteval inline auto noreturn() -> T { nonconsteval(); }
 	
 	template<typename T>
 	auto decay_copy(T&& v) -> std::decay_t<T> {
@@ -47,14 +47,6 @@ namespace kangaru::detail::utility {
 	
 	template<typename T, std::size_t>
 	using expand = T;
-	
-	template<typename... Functions>
-	struct overload : Functions... {
-		using Functions::operator()...;
-	};
-	
-	template<typename... Functions>
-	overload(Functions...) -> overload<Functions...>;
 	
 	template<typename>
 	struct make_sequence_tuple_impl;

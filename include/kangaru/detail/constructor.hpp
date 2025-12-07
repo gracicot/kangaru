@@ -18,22 +18,19 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<unqualified_object Type>
 	struct raw_constructor_function {
-		inline constexpr auto operator()(auto&&... args) const noexcept requires(
+		constexpr auto operator()(auto&&... args) const& requires(
 			raw_constructor_callable<Type, decltype(args)...>
 		) {
-			auto const call_constructor = ::kangaru::detail::utility::overload{
-				[](int, auto&&... args)
-					noexcept(noexcept(Type(KANGARU5_FWD(args)...)))
-					-> decltype(Type(KANGARU5_FWD(args)...)) {
-						return Type(KANGARU5_FWD(args)...);
-					},
-				[](void*, auto&&... args)
-					noexcept(noexcept(Type{KANGARU5_FWD(args)...}))
-					-> decltype(Type{KANGARU5_FWD(args)...}) {
-						return Type{KANGARU5_FWD(args)...};
-					},
-			};
 			return call_constructor(0, KANGARU5_FWD(args)...);
+		}
+		
+	private:
+		constexpr static auto call_constructor(int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) {
+			return Type(KANGARU5_FWD(args)...);
+		}
+		
+		constexpr static auto call_constructor(void*, auto&&... args) -> decltype(Type{KANGARU5_FWD(args)...}) {
+			return Type{KANGARU5_FWD(args)...};
 		}
 	};
 	
@@ -109,6 +106,22 @@ namespace kangaru {
 	) {
 		return non_default_constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
+	
+	template<callable F>
+	struct construct_from_call {
+		explicit constexpr construct_from_call(F function) : function(std::move(function)) {}
+		
+		constexpr operator detail::type_traits::call_result_t<F>() && {
+			return std::move(function)();
+		}
+		
+		constexpr operator detail::type_traits::call_result_t<F>() const& {
+			return function();
+		}
+		
+	private:
+		F function;
+	};
 }
 
 #include "undef.hpp"

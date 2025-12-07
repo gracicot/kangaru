@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_CONTAINER_HPP
 
 #include "cache_types.hpp"
+#include "kangaru/detail/type_traits.hpp"
 #include "recursive_source.hpp"
 #include "cache.hpp"
 #include "heap_storage.hpp"
@@ -20,33 +21,52 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<
 		rebindable_source Source,
-		cache_map Cache = std::unordered_map<std::size_t, void*>,
-		heap_storage Storage = default_heap_storage
+		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, void*>,
+		dereferenceable_heap_storage Storage = default_heap_storage
 	>
 	struct container {
-		explicit constexpr container(Source source) noexcept :
+		constexpr container(Source source, Cache cache, Storage storage) noexcept :
 			state{
 				with_cache{
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 							std::move(source)
-						)
+						),
+						std::move(storage),
 					},
-					Cache{}
+					std::move(cache),
 				}
 			} {}
 		
-		constexpr container() noexcept requires std::default_initializable<Source> :
-			container{Source{}} {}
+		constexpr container(Source source, Cache cache) noexcept
+			requires std::default_initializable<Storage> :
+			container{std::move(source), std::move(cache), Storage{}} {}
+		
+		explicit constexpr container(Source source) noexcept
+			requires(
+				    std::default_initializable<Cache>
+				and std::default_initializable<Storage>
+			) :
+			container{std::move(source), Cache{}, Storage{}} {}
+		
+		constexpr container() noexcept
+			requires(
+				    std::default_initializable<Source>
+				and std::default_initializable<Cache>
+				and std::default_initializable<Storage>
+			) :
+			container{Source{}, Cache{}, Storage{}} {}
 		
 	private:
-		with_cache<
+		using state_type = with_cache<
 			with_heap_storage<
 				with_exhaustive_construction<Source>,
 				Storage
 			>,
 			Cache
-		> state;
+		>;
+		
+		state_type state;
 		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
@@ -89,6 +109,43 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(
 				container_source(std::move(*this), std::move(state))
 			);
+		}
+		
+		constexpr auto scoped() const& -> container<ref_result_t<Source const&>, Cache, Storage>
+		requires(
+				not reference_wrapper<Cache>
+			and std::default_initializable<Cache>
+			and std::default_initializable<Storage>
+		) {
+			auto cache = Cache{};
+			cache.insert(state.begin(), state.end());
+			return container<ref_result_t<Source const&>, Cache, Storage>{
+				KANGARU5_NO_ADL(ref)(state.source.source.source),
+				std::move(cache),
+			};
+		}
+		
+		template<reference T>
+		constexpr auto has_in_cache() -> bool {
+			return state.contains(detail::ctti::type_id_for<reference_source<std::remove_reference_t<T>>*>());
+		}
+		
+		template<object T>
+		constexpr auto has_in_cache() -> bool {
+			return false;
+		}
+		
+		template<callable F> requires(
+			    std::move_constructible<F>
+			and injectable<detail::type_traits::call_result_t<F>>
+		)
+		constexpr auto replace(F function) -> detail::type_traits::call_result_t<F>& {
+			using result_type = detail::type_traits::call_result_t<F>;
+			auto const ptr = state.source.emplace_from([&] {
+				return reference_source<result_type>{construct_from_call{std::move(function)}};
+			});
+			state.insert_or_assign(detail::ctti::type_id_for<reference_source<result_type>*>(), ptr);
+			return kangaru::provide<result_type&>(*ptr);
 		}
 	};
 }

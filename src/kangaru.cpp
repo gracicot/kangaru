@@ -25,5 +25,5 @@ export module kangaru;
 #define KANGARU5_MODULES
 
 extern "C++" {
-#include "kangaru/kangaru.hpp"
+	#include "kangaru/kangaru.hpp"
 }

@@ -14,7 +14,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	KANGARU5_EXPORT struct type_erased_source_reference;
+	struct type_erased_source_reference;
 	
 	// TODO: Review constructors/conversions
 	KANGARU5_EXPORT template<injectable T>
@@ -61,7 +61,7 @@ namespace kangaru {
 			return provide_function(source);
 		}
 		
-		explicit constexpr operator type_erased_source_reference() const noexcept;
+		friend struct type_erased_source_reference;
 		
 	private:
 		template<source Source>
@@ -79,20 +79,8 @@ namespace kangaru {
 	 * @brief A type erased source which completely hides the source type and provide type.
 	 */
 	KANGARU5_EXPORT struct type_erased_source_reference {
-		/**
-		 * Constructs a type erased source reference from an existing function pointer and void pointer.
-		 *
-		 * This function is unsafe because there's no way to verify if the provide function is callable using the provided source
-		 *
-		 * @warning Unsafe
-		 */
-		template<injectable T> KANGARU5_UNSAFE
-		constexpr type_erased_source_reference(
-			void* source,
-			detail::utility::function_pointer_t<auto(void*) -> T> provide_function
-		) noexcept :
-			source{source}
-		{
+		template<injectable T>
+		explicit constexpr type_erased_source_reference(polymorphic_source<T> const& source) : source{source.source} {
 			static_assert(
 				sizeof(dummy_function_container) == sizeof(function_container<T>),
 				"function container has a different size for type T"
@@ -100,8 +88,20 @@ namespace kangaru {
 			
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
-				provide_function
+				source.provide_function
 			);
+		}
+		
+		template<injectable T>
+		constexpr auto operator=(polymorphic_source<T> const& other) -> type_erased_source_reference& {
+			source = other.source;
+			
+			std::construct_at(
+				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
+				other.provide_function
+			);
+			
+			return *this;
 		}
 		
 		/**
@@ -133,11 +133,17 @@ namespace kangaru {
 		std::byte function_container_type_erased[sizeof(dummy_function_container)];
 	};
 	
-	template<injectable T>
-	constexpr polymorphic_source<T>::operator type_erased_source_reference() const noexcept {
-		KANGARU5_UNSAFE_BLOCK {
-			return type_erased_source_reference{source, provide_function};
-		}
+	namespace detail::polymorphic_source {
+		template<typename>
+		struct override_polymorphic {};
+		
+		template<typename... Types>
+		struct override_polymorphic<std::tuple<Types&...>> {
+			 using type = std::tuple<kangaru::polymorphic_source<Types&>...>;
+		};
+		
+		template<typename Tuple>
+		using override_polymorphic_t = typename override_polymorphic<Tuple>::type;
 	}
 	
 	KANGARU5_EXPORT template<source Source, injectable Primary>
@@ -162,22 +168,10 @@ namespace kangaru {
 		explicit constexpr operator polymorphic_source<T>() const& {
 			return polymorphic_source<T>{source};
 		}
-	};
-	
-	namespace detail::polymorphic_source {
-		template<typename>
-		struct override_polymorphic {};
 		
-		template<typename... Types>
-		struct override_polymorphic<std::tuple<Types&...>> {
-			 using type = std::tuple<kangaru::polymorphic_source<Types&>...>;
-		};
-	}
-	
-	// TODO: Check if this is at the right place
-	KANGARU5_EXPORT template<source Source, injectable Primary>
-	struct overrides_types_in_cache<with_polymorphic_cast<Source, Primary>> :
-		detail::polymorphic_source::override_polymorphic<overrides_types_in_cache_t<Primary>> {
+		template<kangaru::source S, injectable P>
+		friend auto attribute(overrides_types_in_cache<with_polymorphic_cast<S, P>>)
+			-> detail::polymorphic_source::override_polymorphic_t<overrides_types_in_cache_t<P>>;
 	};
 }
 

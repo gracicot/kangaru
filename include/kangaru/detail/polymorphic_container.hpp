@@ -29,9 +29,13 @@ namespace kangaru {
 		using polymorphic_to_concrete_t = typename polymorphic_to_concrete<T>::type;
 	}
 	
-	KANGARU5_EXPORT template<rebindable_source Source, cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>, heap_storage Storage = default_heap_storage>
+	KANGARU5_EXPORT template<
+		rebindable_source Source,
+		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>,
+		dereferenceable_heap_storage Storage = default_heap_storage
+	>
 	struct polymorphic_container {
-		explicit constexpr polymorphic_container(Source source) noexcept :
+		constexpr polymorphic_container(Source source, Cache cache, Storage storage) noexcept :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<detail::polymorphic_container::polymorphic_to_concrete_t>)(
 					with_dereference{
@@ -42,15 +46,32 @@ namespace kangaru {
 										std::move(source)
 									)
 								)
-							)
+							),
+							std::move(storage),
 						}
 					},
-					Cache{}
+					std::move(cache)
 				)
 			} {}
 		
-		constexpr polymorphic_container() noexcept requires std::default_initializable<Source> :
-			polymorphic_container{Source{}} {}
+		constexpr polymorphic_container(Source source, Cache cache) noexcept
+			requires std::default_initializable<Storage> :
+			polymorphic_container{std::move(source), std::move(cache), Storage{}} {}
+		
+		explicit constexpr polymorphic_container(Source source) noexcept
+			requires(
+				    std::default_initializable<Cache>
+				and std::default_initializable<Storage>
+			) :
+			polymorphic_container{std::move(source), Cache{}, Storage{}} {}
+		
+		constexpr polymorphic_container() noexcept
+			requires(
+				    std::default_initializable<Source>
+				and std::default_initializable<Cache>
+				and std::default_initializable<Storage>
+			) :
+			polymorphic_container{Source{}, Cache{}, Storage{}} {}
 		
 	private:
 		with_cache_asymmetric<
@@ -94,6 +115,16 @@ namespace kangaru {
 			container_source(std::declval<Self>(), std::declval<Self>().state)
 		);
 		
+		template<typename To>
+		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {
+			return any_cast<To>(KANGARU5_FWD(any));
+		}
+		
+		template<typename To>
+		static constexpr auto cast(explicitly_castable_to<To> auto&& any) -> To {
+			return static_cast<To>(KANGARU5_FWD(any));
+		}
+		
 	public:
 		template<injectable T>
 		constexpr auto provide() & -> T requires source_of<container_source_tree_t<polymorphic_container&>, T> {
@@ -107,6 +138,55 @@ namespace kangaru {
 			return kangaru::provide<T>(
 				container_source(std::move(*this), std::move(state))
 			);
+		}
+		
+		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Cache>
+		requires(
+				not reference_wrapper<Cache>
+			and std::default_initializable<Cache>
+			and std::default_initializable<Storage>
+		) {
+			auto cache = Cache{};
+			cache.insert(state.begin(), state.end());
+			
+			return polymorphic_container<ref_result_t<Source const&>, Cache>{
+				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source),
+				std::move(cache),
+			};
+		}
+		
+		template<reference T>
+		constexpr auto has_in_cache() -> bool {
+			return state.contains(detail::ctti::type_id_for<polymorphic_source<T>>());
+		}
+		
+		template<object T>
+		constexpr auto has_in_cache() -> bool {
+			return false;
+		}
+		
+		template<callable F> requires(
+			    std::move_constructible<F>
+			and injectable<detail::type_traits::call_result_t<F>>
+		)
+		constexpr auto replace(F function) -> detail::type_traits::call_result_t<F>& {
+			using result_type = detail::type_traits::call_result_t<F>;
+			using contained_type = with_polymorphic_cast<with_cast_from<reference_source<result_type>, result_type&>, result_type&>;
+			constexpr auto id = detail::ctti::type_id_for<polymorphic_source<result_type&>>();
+			
+			auto const ptr = state.source.source.emplace_from([&] {
+				return contained_type{
+					with_cast_from<reference_source<result_type>, result_type&>{
+						reference_source<result_type>{
+							construct_from_call{function}
+						}
+					},
+				};
+			});
+			
+			auto const [it, _] = state.insert_or_assign(id, *ptr);
+			
+			return kangaru::provide<result_type&>(ptr->source.source);
 		}
 	};
 }

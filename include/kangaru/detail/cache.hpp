@@ -31,7 +31,7 @@ namespace kangaru {
 	KANGARU5_EXPORT
 	template<
 		source Source,
-		cache_map Cache = std::unordered_map<std::size_t, std::any>,
+		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, std::any>,
 		template<typename> typename CacheFrom = detail::utility::type_identity
 	>
 	struct with_cache_asymmetric {
@@ -65,6 +65,10 @@ namespace kangaru {
 		template<typename It>
 		constexpr auto insert(It begin, It end) requires requires(unwrapped_cache_type c) { c.insert(begin, end); } {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(begin, end);
+		}
+		
+		constexpr auto insert_or_assign(auto&& key, auto&& value) requires requires(unwrapped_cache_type c) { c.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); } {
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}
 		
 		[[nodiscard]]
@@ -175,7 +179,7 @@ namespace kangaru {
 		cache_type cache;
 	};
 	
-	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source, forwarded_cache_map Cache>
+	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
@@ -188,13 +192,13 @@ namespace kangaru {
 	// TODO: Make it readable
 	KANGARU5_EXPORT template<
 		source Source,
-		cache_map Cache = std::unordered_map<std::size_t, std::any>
+		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, std::any>
 	>
 	struct with_cache : with_cache_asymmetric<Source, Cache> {
 	private:
 		using parent_t = with_cache_asymmetric<Source, Cache>;
 		
-		template<source S, cache_map C>
+		template<source S, dereferenceable_cache_map C>
 		friend struct with_cache;
 		
 		explicit constexpr with_cache(parent_t&& parent) noexcept : with_cache_asymmetric<Source, Cache>{std::move(parent)} {}
@@ -225,7 +229,7 @@ namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT template<forwarded_source Source, forwarded_cache_map Cache>
+	KANGARU5_EXPORT template<forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
 		return with_cache<std::decay_t<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
@@ -236,7 +240,7 @@ namespace kangaru {
 	}
 	
 	static_assert(cache_map<with_cache<none_source>>);
-	static_assert(cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
+	static_assert(dereferenceable_cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
 	
 	KANGARU5_EXPORT template<template<unqualified_object> typename SourceType>

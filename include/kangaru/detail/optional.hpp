@@ -91,8 +91,7 @@ namespace kangaru {
 		constexpr auto swap(optional const& other) -> void {
 			if (other.engaged) {
 				if (engaged) {
-					using std::swap;
-					swap(storage.object, other.storage.object);
+					std::ranges::swap(storage.object, other.storage.object);
 				} else {
 					construct(other.storage.object);
 					other.reset();
@@ -129,8 +128,7 @@ namespace kangaru {
 		{
 			if (rhs.engaged) {
 				if (engaged) {
-					using std::swap;
-					swap(storage.object, rhs.storage.object);
+					std::ranges::swap(storage.object, rhs.storage.object);
 				} else {
 					emplace(std::move(rhs.storage.object));
 				}
@@ -164,8 +162,7 @@ namespace kangaru {
 		constexpr auto swap(optional&& other) -> void {
 			if (other.engaged) {
 				if (engaged) {
-					using std::swap;
-					swap(storage.object, std::move(other.storage.object));
+					std::ranges::swap(storage.object, std::move(other.storage.object));
 				} else {
 					construct(std::move(other.storage.object));
 					other.reset();

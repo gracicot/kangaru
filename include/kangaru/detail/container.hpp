@@ -119,31 +119,35 @@ KANGARU5_EXPORT namespace kangaru {
 		) {
 			auto cache = Cache{};
 			cache.insert(state.begin(), state.end());
+			
 			return container<ref_result_t<Source const&>, Cache, Storage>{
 				KANGARU5_NO_ADL(ref)(state.source.source.source),
 				std::move(cache),
 			};
 		}
 		
-		template<reference T>
+		template<injectable T> requires(source_of<container&, T>)
 		constexpr auto has_in_cache() -> bool {
-			return state.contains(detail::ctti::type_id_for<reference_source<std::remove_reference_t<T>>*>());
+			if constexpr (reference<T>) {
+				return state.contains(detail::ctti::type_id_for<reference_source<std::remove_reference_t<T>>*>());
+			} else {
+				return false;
+			}
 		}
 		
-		template<object T>
-		constexpr auto has_in_cache() -> bool {
-			return false;
-		}
-		
-		template<callable F> requires(
-			    std::move_constructible<F>
-			and injectable<detail::type_traits::call_result_t<F>>
-		)
+		template<callable F>
+			requires(
+				    std::move_constructible<F>
+				and object<detail::type_traits::call_result_t<F>>
+				and source_of<container&, detail::type_traits::call_result_t<F>&>
+			)
 		constexpr auto replace(F function) -> detail::type_traits::call_result_t<F>& {
 			using result_type = detail::type_traits::call_result_t<F>;
+			
 			auto const ptr = state.source.emplace_from([&] {
 				return reference_source<result_type>{construct_from_call{std::move(function)}};
 			});
+			
 			state.insert_or_assign(detail::ctti::type_id_for<reference_source<result_type>*>(), ptr);
 			return kangaru::provide<result_type&>(*ptr);
 		}

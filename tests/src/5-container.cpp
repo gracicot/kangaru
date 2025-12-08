@@ -78,27 +78,27 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 	}
 }
 
-struct service_aa : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_aa&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_aa&>) -> std::tuple<service_a&>;
+struct service_aa1 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_aa1&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_aa1&>) -> std::tuple<service_a&>;
 };
 
-struct service_aaa : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_aaa&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_aaa&>) -> std::tuple<service_a&>;
+struct service_aa2 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_aa2&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_aa2&>) -> std::tuple<service_a&>;
 };
 
 TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {
 	auto container = kangaru::polymorphic_container{kangaru::none_source{}};
 	
 	SECTION("Allow replacing instances that overrides") {
-		auto& aa = container.provide<service_aa&>();
-		CHECK(container.has_in_cache<service_aa&>());
+		auto& aa = container.provide<service_aa1&>();
+		CHECK(container.has_in_cache<service_aa1&>());
 		CHECK(container.has_in_cache<service_a&>());
 		aa.i = 9;
 		
 		auto& aaa = container.replace([] {
-			return service_aaa{service_a{.i = 5}};
+			return service_aa2{service_a{.i = 5}};
 		});
 		
 		auto& a = container.provide<service_a&>();
@@ -107,15 +107,15 @@ TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[cont
 	}
 
 	SECTION("Can create scoped instances") {
-		auto& a1 = container.provide<service_aa&>();
+		auto& a1 = container.provide<service_aa1&>();
 		{
 			auto c = container.scoped();
 			auto& a2 = container.provide<service_a&>();
 			CHECK(std::addressof(a1) == std::addressof(a2));
 			
 			{
-				container.replace([]{ return service_aaa{}; });
-				auto& a1 = container.provide<service_aa&>();
+				container.replace([]{ return service_aa2{}; });
+				auto& a1 = container.provide<service_aa1&>();
 				auto& a2 = container.provide<service_a&>();
 				CHECK(std::addressof(a1) != std::addressof(a2));
 			}
@@ -124,25 +124,29 @@ TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[cont
 	}
 	
 	SECTION("Reuse instances that can override each other") {
-		auto& aa = container.provide<service_aa&>();
+		auto& aa = container.provide<service_aa1&>();
 		aa.i = 9;
 		
 		auto& a = container.provide<service_a&>();
-		CHECK(a.i == 9);
 		auto& b = container.provide<service_b&>();
+		
+		CHECK(a.i == 9);
 		CHECK(std::addressof(a) == std::addressof(b.a));
+		CHECK(std::addressof(aa) == std::addressof(static_cast<service_aa1&>(b.a)));
 		
 		auto& c = container.provide<service_c&>();
 		
-		CHECK(std::addressof(c.services.sa) == std::addressof(a));
+		CHECK(std::addressof(c.services.sa) == std::addressof(static_cast<service_aa1&>(a)));
 	}
 	
 	SECTION("Can use injectors") {
 		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 		
-		injector([](service_a& a, service_c& c) {
+		auto& aa = container.provide<service_aa1&>();
+		injector([&](service_a& a, service_c& c) {
 			CHECK(std::addressof(c.services.sa) == std::addressof(a));
 			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
+			CHECK(std::addressof(aa) == std::addressof(static_cast<service_aa1&>(a)));
 		});
 	}
 }

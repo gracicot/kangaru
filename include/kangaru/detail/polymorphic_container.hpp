@@ -115,16 +115,6 @@ namespace kangaru {
 			container_source(std::declval<Self>(), std::declval<Self>().state)
 		);
 		
-		template<typename To>
-		static constexpr auto cast(detail::cache::adl_castable_to<To> auto&& any) -> To {
-			return any_cast<To>(KANGARU5_FWD(any));
-		}
-		
-		template<typename To>
-		static constexpr auto cast(explicitly_castable_to<To> auto&& any) -> To {
-			return static_cast<To>(KANGARU5_FWD(any));
-		}
-		
 	public:
 		template<injectable T>
 		constexpr auto provide() & -> T requires source_of<container_source_tree_t<polymorphic_container&>, T> {
@@ -155,20 +145,21 @@ namespace kangaru {
 			};
 		}
 		
-		template<reference T>
+		template<injectable T> requires(source_of<polymorphic_container&, T>)
 		constexpr auto has_in_cache() -> bool {
-			return state.contains(detail::ctti::type_id_for<polymorphic_source<T>>());
+			if constexpr (reference<T>) {
+				return state.contains(detail::ctti::type_id_for<polymorphic_source<T>>());
+			} else {
+				return false;
+			}
 		}
 		
-		template<object T>
-		constexpr auto has_in_cache() -> bool {
-			return false;
-		}
-		
-		template<callable F> requires(
-			    std::move_constructible<F>
-			and injectable<detail::type_traits::call_result_t<F>>
-		)
+		template<callable F>
+			requires(
+				    std::move_constructible<F>
+				and object<detail::type_traits::call_result_t<F>>
+				and source_of<polymorphic_container&, detail::type_traits::call_result_t<F>&>
+			)
 		constexpr auto replace(F function) -> detail::type_traits::call_result_t<F>& {
 			using result_type = detail::type_traits::call_result_t<F>;
 			using contained_type = with_polymorphic_cast<with_cast_from<reference_source<result_type>, result_type&>, result_type&>;
@@ -178,14 +169,13 @@ namespace kangaru {
 				return contained_type{
 					with_cast_from<reference_source<result_type>, result_type&>{
 						reference_source<result_type>{
-							construct_from_call{function}
+							construct_from_call{std::move(function)}
 						}
 					},
 				};
 			});
 			
-			auto const [it, _] = state.insert_or_assign(id, *ptr);
-			
+			state.insert_or_assign(id, *ptr);
 			return kangaru::provide<result_type&>(ptr->source.source);
 		}
 	};

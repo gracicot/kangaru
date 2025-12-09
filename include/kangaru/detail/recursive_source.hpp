@@ -52,7 +52,7 @@ namespace kangaru {
 		constexpr auto operator()(Source&& source) const {
 			return make_injector(KANGARU5_FWD(source))(constructor_function<T>{});
 		}
-	
+		
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
@@ -118,7 +118,7 @@ namespace kangaru {
 		template<injectable T, forwarded_source Source>
 			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>
 		auto operator()(Source&& source) const -> T;
-	
+		
 	private:
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;

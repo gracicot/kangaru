@@ -21,16 +21,11 @@ namespace kangaru {
 		constexpr auto operator()(auto&&... args) const& requires(
 			raw_constructor_callable<Type, decltype(args)...>
 		) {
-			return call_constructor(0, KANGARU5_FWD(args)...);
-		}
-		
-	private:
-		constexpr static auto call_constructor(int, auto&&... args) -> decltype(Type(KANGARU5_FWD(args)...)) {
-			return Type(KANGARU5_FWD(args)...);
-		}
-		
-		constexpr static auto call_constructor(void*, auto&&... args) -> decltype(Type{KANGARU5_FWD(args)...}) {
-			return Type{KANGARU5_FWD(args)...};
+			if constexpr (std::constructible_from<Type, decltype(args)...>) {
+				return Type(KANGARU5_FWD(args)...);
+			} else {
+				return Type{KANGARU5_FWD(args)...};
+			}
 		}
 	};
 	
@@ -57,7 +52,10 @@ namespace kangaru {
 				Args...
 			>
 		constexpr auto operator()(Deducer1 deduce1, Args&&... args) const -> Type {
-			return KANGARU5_NO_ADL(raw_constructor<Type>)(KANGARU5_NO_ADL(exclude_special_constructors_for<Type>)(deduce1), KANGARU5_FWD(args)...);
+			return KANGARU5_NO_ADL(raw_constructor<Type>)(
+				KANGARU5_NO_ADL(exclude_special_constructors_for<Type>)(deduce1),
+				KANGARU5_FWD(args)...
+			);
 		}
 		
 		template<typename FirstArg, typename... Args>

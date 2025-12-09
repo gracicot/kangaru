@@ -12,11 +12,11 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<typename T, typename... Args>
+KANGARU5_EXPORT namespace kangaru {
+	template<typename T, typename... Args>
 	concept raw_constructor_callable = std::constructible_from<T, Args...> or brace_constructible<T, Args...>;
 	
-	KANGARU5_EXPORT template<unqualified_object Type>
+	template<unqualified_object Type>
 	struct raw_constructor_function {
 		constexpr auto operator()(auto&&... args) const& requires(
 			raw_constructor_callable<Type, decltype(args)...>
@@ -36,7 +36,7 @@ namespace kangaru {
 		return raw_constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
 	
-	KANGARU5_EXPORT template<unqualified_object Type>
+	template<unqualified_object Type>
 	struct constructor_function {
 		template<typename From = Type>
 			requires (not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, Type>)
@@ -76,17 +76,17 @@ namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT template<typename Type, typename... Args>
+	template<typename Type, typename... Args>
 	concept constructor_callable = unqualified_object<Type> and callable<constructor_function<Type>, Args...>;
 	
-	KANGARU5_EXPORT template<unqualified_object Type>
+	template<unqualified_object Type>
 	inline constexpr auto constructor(auto&&... args) -> Type requires(
 		constructor_callable<Type, decltype(args)...>
 	) {
 		return constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
 	
-	KANGARU5_EXPORT template<unqualified_object Type>
+	template<unqualified_object Type>
 	struct non_default_constructor_function {
 		constexpr auto operator()(auto&& first, auto&&... args) -> Type requires(
 			constructor_callable<Type, decltype(first), decltype(args)...>
@@ -95,10 +95,10 @@ namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT template<typename Type, typename... Args>
+	template<typename Type, typename... Args>
 	concept non_default_constructor_callable = unqualified_object<Type> and callable<non_default_constructor_function<Type>, Args...>;
 	
-	KANGARU5_EXPORT template<unqualified_object Type>
+	template<unqualified_object Type>
 	inline constexpr auto non_default_constructor(auto&&... args) -> Type requires(
 		non_default_constructor_callable<Type, decltype(args)...>
 	) {

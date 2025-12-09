@@ -107,8 +107,8 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	template<callable F>
-	struct construct_from_call {
-		explicit constexpr construct_from_call(F function) : function(std::move(function)) {}
+	struct in_place_construct {
+		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
 		
 		constexpr operator detail::type_traits::call_result_t<F>() && {
 			return std::move(function)();

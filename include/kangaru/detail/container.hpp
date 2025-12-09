@@ -145,7 +145,7 @@ KANGARU5_EXPORT namespace kangaru {
 			using result_type = detail::type_traits::call_result_t<F>;
 			
 			auto const ptr = state.source.emplace_from([&] {
-				return reference_source<result_type>{construct_from_call{std::move(function)}};
+				return reference_source<result_type>{in_place_construct{std::move(function)}};
 			});
 			
 			state.insert_or_assign(detail::ctti::type_id_for<reference_source<result_type>*>(), ptr);

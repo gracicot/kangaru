@@ -169,7 +169,7 @@ namespace kangaru {
 				return contained_type{
 					with_cast_from<reference_source<result_type>, result_type&>{
 						reference_source<result_type>{
-							construct_from_call{std::move(function)}
+							in_place_construct{std::move(function)}
 						}
 					},
 				};

@@ -27,7 +27,7 @@ namespace kangaru {
 		template<injectable T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<composed_source> auto&& source) -> T
 		requires (
-			((sizeof...(Sources) > 0 and source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) == 1
+			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ... + 0) == 1
 		) {
 			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
 			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
@@ -36,11 +36,11 @@ namespace kangaru {
 		template<injectable T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<composed_source> auto&& source) -> T
 		requires ("Ambiguous source resolution: One or more source can provide type T",
-			((sizeof...(Sources) and source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ...) > 1
+			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ... + 0) > 1
 		) = delete;
 		
 	private:
-		template<typename T, typename Self, std::size_t... S>
+		template<typename T, typename Self, std::size_t... S> requires(sizeof...(Sources) > 0)
 		consteval static auto index_of(std::index_sequence<S...>) {
 			return ((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? S : 0) + ...);
 		}

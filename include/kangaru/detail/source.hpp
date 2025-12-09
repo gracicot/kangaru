@@ -17,6 +17,7 @@ namespace kangaru {
 	concept injectable = unqualified_object<T> or reference<T>;
 	
 	// TODO: Should we have movable_source?
+	// TODO: Restore movable requirement
 	KANGARU5_EXPORT template<typename T>
 	concept source = object<T> and std::is_class_v<T>;
 	

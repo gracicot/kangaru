@@ -276,21 +276,21 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT struct make_strict_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
+		template<forwarded_source Source>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
 	KANGARU5_EXPORT struct make_strict_slow_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
+		template<forwarded_source Source>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_slow_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
 	KANGARU5_EXPORT struct make_strict_optional_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
+		template<forwarded_source Source>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_optional_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}

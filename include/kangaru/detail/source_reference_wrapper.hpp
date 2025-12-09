@@ -17,6 +17,9 @@ namespace kangaru {
 		{ ref.unwrap() } -> reference;
 	};
 	
+	KANGARU5_EXPORT template<typename T>
+	concept forwarded_reference_wrapper = reference_wrapper<std::remove_reference_t<T>>;
+	
 	KANGARU5_EXPORT template<object Source> requires (source<std::remove_const_t<Source>> and not reference_wrapper<std::remove_const_t<Source>>)
 	struct source_reference_wrapper {
 		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
@@ -56,9 +59,6 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename Source>
 	source_forwarding_reference_wrapper(Source&&) -> source_forwarding_reference_wrapper<Source&&>;
-	
-	KANGARU5_EXPORT template<typename T>
-	concept forwarded_reference_wrapper = reference_wrapper<std::remove_reference_t<T>>;
 	
 	KANGARU5_EXPORT template<reference_wrapper Wrapper>
 	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;

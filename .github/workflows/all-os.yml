@@ -248,7 +248,7 @@ jobs:
 
   windows-msvc:
     runs-on: windows-${{ matrix.windows }}
-    name: MSVC ${{ matrix.msvc-version }} Windows ${{ matrix.windows }}
+    name: MSVC ${{ matrix.windows }} Windows
     strategy:
       fail-fast: false
       matrix:

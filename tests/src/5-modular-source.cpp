@@ -17,7 +17,7 @@ namespace kangaru {
 		
 		template<typename MakeHeadSource, typename... Constructed>
 			requires callable<detail::type_traits::call_result_t<make_strict_spread_injector_function, injection_source<Constructed...>>, MakeHeadSource>
-		auto construct_head_source(MakeHeadSource&& make_head, Constructed... constructed) {
+		inline constexpr auto construct_head_source(MakeHeadSource&& make_head, Constructed... constructed) {
 			return make_strict_spread_injector(with_recursion{with_construction{compose(constructed...), exhaustive_constructor{}}})(std::move(make_head));
 		}
 		
@@ -159,17 +159,17 @@ namespace kangaru {
 	};
 	
 	template<source Source, typename... Lambdas>
-	auto make_modular_source(Source source, Lambdas... lambdas) {
+	inline constexpr auto make_modular_source(Source source, Lambdas... lambdas) {
 		return modular_source<Source, Lambdas...>{std::move(source), lambdas...};
 	}
 	
 	template<source... Sources, source Source>
-	auto make_modular_source(Source source) {
+	inline constexpr auto make_modular_source(Source source) {
 		return modular_source<Source, kangaru::constructor_function<Sources>...>{std::move(source), kangaru::constructor_function<Sources>{}...};
 	}
 	
 	template<source... Sources>
-	auto make_modular_source() {
+	inline constexpr auto make_modular_source() {
 		return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...};
 	}
 	

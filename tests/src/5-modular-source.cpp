@@ -209,7 +209,7 @@ struct service_2_a { service_1_a s1a; agg1 agg; };
 struct service_2_b { service_1_b& s1b; service_2_a& s2a; };
 
 struct agg2 {
-	agg1 agg1;
+	agg1 agg;
 	service_1_a s1a;
 	service_1_b& s1b;
 	service_2_a& s2a;

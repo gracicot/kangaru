@@ -136,13 +136,13 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
-  linux-old-gcc-cxx-20:
+  linux-old-gcc-cxx-23:
     name: GCC ${{ matrix.gcc }} Linux
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        gcc: [11]
+        gcc: [12]
 
     steps:
       - uses: actions/checkout@v5
@@ -166,27 +166,29 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
 
-  linux-old-gcc-cxx-23:
+      - name: 'Run CMake C++23'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-linux'
+          buildPreset: 'ci-linux'
+          testPreset: 'ci-linux'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
+
+  linux-gcc-cxx-23:
     name: GCC ${{ matrix.gcc }} Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        gcc: [12, 13]
+        gcc: [13]
 
     steps:
       - uses: actions/checkout@v5
 
-      - uses: lukka/get-cmake@v4.1.2
-
-      - name: Set up GCC
-        uses: egor-tensin/setup-gcc@v1
+      - uses: DeterminateSystems/determinate-nix-action@v3
+      - uses: nicknovitski/nix-develop@v1
         with:
-          version: ${{ matrix.gcc }}
-          platform: x64
-
-      - name: Run vcpkg
-        uses: lukka/run-vcpkg@v11
+          arguments: ".#ci-gcc${{ matrix.gcc }}"
 
       - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10

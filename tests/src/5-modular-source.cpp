@@ -1,4 +1,9 @@
+#include "kangaru/detail/recursive_source.hpp"
+#include "kangaru/detail/source.hpp"
 #include "kangaru/detail/source_reference_wrapper.hpp"
+#include "kangaru/detail/source_types.hpp"
+#include "kangaru/detail/utility.hpp"
+#include <concepts>
 #include <kangaru/kangaru.hpp>
 
 #include <kangaru/detail/define.hpp>
@@ -7,14 +12,17 @@
 
 namespace kangaru {
 	namespace detail::modular_source {
+		template<typename... Sources>
+		using injection_source = with_recursion<with_construction<composed_source<Sources...>, exhaustive_constructor>>;
+		
 		template<typename MakeHeadSource, typename... Constructed>
-			requires callable<detail::type_traits::call_result_t<make_strict_spread_injector_function, composed_source<none_source, Constructed...>>, MakeHeadSource>
-		auto construct_head_source(MakeHeadSource make_head, Constructed... constructed) {
-			return make_strict_spread_injector(compose(constructed...))(make_head);
+			requires callable<detail::type_traits::call_result_t<make_strict_spread_injector_function, injection_source<Constructed...>>, MakeHeadSource>
+		auto construct_head_source(MakeHeadSource&& make_head, Constructed... constructed) {
+			return make_strict_spread_injector(with_recursion{with_construction{compose(constructed...), exhaustive_constructor{}}})(std::move(make_head));
 		}
 		
 		template<typename MakeHeadSource>
-		using constructed_head_source_t = kangaru::reflected_return_type<MakeHeadSource, 8>;
+		using constructed_head_source_t = reflected_return_type<MakeHeadSource, 8>;
 		
 		template<typename, typename...>
 		inline constexpr auto usable_as_head_v = false;
@@ -23,7 +31,7 @@ namespace kangaru {
 		inline constexpr auto usable_as_head_v<std::tuple<Back...>, Head, Tail...> = callable<
 			detail::type_traits::call_result_t<
 				make_strict_spread_injector_function,
-				composed_source<Back...>
+				injection_source<Back...>
 			>,
 			Head
 		> && usable_as_head_v<std::tuple<Back..., ref_result_t<constructed_head_source_t<Head>&>>, Tail...>;
@@ -43,7 +51,7 @@ namespace kangaru {
 			~modular_source_impl() = default;
 			
 			constexpr modular_source_impl(Head make_head, Tail... tail, reference_wrapper auto... constructed) :
-				head{construct_head_source(make_head, constructed...)},
+				head{construct_head_source(std::move(make_head), constructed...)},
 				tail{tail..., constructed..., ref(head)} {}
 			
 			using head_t = constructed_head_source_t<Head>;
@@ -63,18 +71,67 @@ namespace kangaru {
 			tail_t tail;
 		};
 		
-		// TODO: This takes memory space
-		template<>
-		struct modular_source_impl<> {
-			constexpr modular_source_impl(reference_wrapper auto...) {}
+		template<typename Head>
+		struct modular_source_impl<Head> {
+			constexpr modular_source_impl(Head make_head, reference_wrapper auto... constructed) :
+				head{construct_head_source(std::move(make_head), constructed...)} {}
+			
+			using head_t = constructed_head_source_t<Head>;
+			
+			template<injectable T, forwarded<modular_source_impl> Self> requires source_of<head_t, T>
+			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+				return kangaru::provide<T>(KANGARU5_FWD(source).head);
+			}
+			
+			head_t head;
 		};
+		
+		template<>
+		struct modular_source_impl<> {};
 		
 		template<kangaru::source Source>
 		struct use_source {
 			Source source;
 			
-			// TODO: Make it &&
-			auto operator()() { return std::move(source); }
+			constexpr auto operator()() && { return std::move(source); }
+		};
+		
+		template<typename Function>
+		constexpr auto make_module(Function function) {
+			return [function](auto&&... args) -> with_source_reference_wrapping<reference_source<detail::type_traits::call_result_t<Function, decltype(args)...>>> requires callable<Function const&, decltype(args)...> {
+				using type = decltype(function(KANGARU5_FWD(args)...));
+				auto construct_source = in_place_construct{[&]() -> type { return function(KANGARU5_FWD(args)...); }};
+				return with_source_reference_wrapping{reference_source<type>{construct_source}};
+			};
+		}
+		
+		template<typename... MakeModuleSources>
+			requires detail::modular_source::usable_as_head_v<std::tuple<>, decltype(make_module(std::declval<MakeModuleSources>()))...>
+		struct modular_container_impl {
+		private:
+			using modules_t = detail::modular_source::modular_source_impl<decltype(make_module(std::declval<MakeModuleSources>()))...>;
+			
+		public:
+			explicit constexpr modular_container_impl(MakeModuleSources... modules) : modules{make_module(modules)...} {}
+			
+			template<injectable T, forwarded<modular_container_impl> Self>
+			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
+			requires (
+				((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? 1 : 0) + ...) == 1
+			) {
+				using source_t = std::tuple_element_t<index_of<T, decltype(source)>(std::index_sequence_for<MakeModuleSources...>{}), std::tuple<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>...>>;
+				return kangaru::provide<T>(
+					kangaru::provide<source_t>(KANGARU5_FWD(source).modules)
+				);
+			}
+			
+		private:
+			template<typename T, typename Self, std::size_t... S>
+			constexpr static auto index_of(std::index_sequence<S...>) {
+				return ((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? S : 0) + ...);
+			}
+			
+			modules_t modules;
 		};
 	}
 	
@@ -90,7 +147,7 @@ namespace kangaru {
 		
 		explicit(sizeof...(Lambdas) == 0) constexpr modular_source(Source source, Lambdas... lambdas) : impl{detail::modular_source::use_source<Source>{std::move(source)}, std::move(lambdas)...} {}
 		
-		template<injectable T, forwarded<modular_source> Self> requires source_of<decltype(std::declval<Self>().impl.tail), T>
+		template<injectable T, forwarded<modular_source> Self> requires source_of<detail::utility::forward_like_t<Self, typename impl_t::tail_t>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			// Here we must skip first head of the incremental source. This is because we don't want to provide
 			// from source of other modules.
@@ -106,91 +163,86 @@ namespace kangaru {
 		return modular_source<Source, Lambdas...>{std::move(source), lambdas...};
 	}
 	
-	template<typename Function>
-	constexpr auto make_module(Function function) {
-		return [function](auto&&... args) -> with_source_reference_wrapping<reference_source<detail::type_traits::call_result_t<Function, decltype(args)...>>> requires callable<Function const&, decltype(args)...> {
-			using type = decltype(function(KANGARU5_FWD(args)...));
-			auto construct_source = in_place_construct{[&]() -> type { return function(KANGARU5_FWD(args)...); }};
-			return with_source_reference_wrapping{reference_source<type>{construct_source}};
-		};
+	template<source... Sources, source Source>
+	auto make_modular_source(Source source) {
+		return modular_source<Source, kangaru::constructor_function<Sources>...>{std::move(source), kangaru::constructor_function<Sources>{}...};
 	}
 	
-	template<auto function>
-	constexpr auto make_module() {
-		return [](auto&&... args) -> with_source_reference_wrapping<reference_source<kangaru::detail::type_traits::call_result_t<decltype(function), decltype(args)...>>> requires callable<decltype(function), decltype(args)...> {
-			using type = decltype(function(KANGARU5_FWD(args)...));
-			auto construct_source = in_place_construct{[&]() -> type { return function(KANGARU5_FWD(args)...); }};
-			return with_source_reference_wrapping{reference_source<type>{construct_source}};
-		};
+	template<source... Sources>
+	auto make_modular_source() {
+		return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...};
 	}
 	
-	template<typename... MakeModuleSources>
-		requires detail::modular_source::usable_as_head_v<std::tuple<>, decltype(make_module(std::declval<MakeModuleSources>()))...>
+	template<typename... Modules>
+		requires std::constructible_from<detail::modular_source::modular_container_impl<Modules...>, Modules...>
 	struct modular_container {
 	private:
-		using modules_t = detail::modular_source::modular_source_impl<decltype(make_module(std::declval<MakeModuleSources>()))...>;
+		using impl_type = detail::modular_source::modular_container_impl<Modules...>;
 		
 	public:
-		explicit constexpr modular_container(MakeModuleSources... modules) : modules{make_module(modules)...} {}
+		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) : impl{std::move(modules)...} {}
 		
-		template<injectable T, forwarded<modular_container> Self>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
-		requires (
-			((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? 1 : 0) + ...) == 1
-		) {
-			using source_t = std::tuple_element_t<index_of<T, decltype(source)>(std::index_sequence_for<MakeModuleSources...>{}), std::tuple<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>...>>;
-			return kangaru::provide<T>(
-				kangaru::provide<source_t>(KANGARU5_FWD(source).modules)
-			);
+		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<fwd_ref_result_t<detail::utility::forward_like_t<Self, impl_type>&&>, exhaustive_constructor>>, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			// Here we must skip first head of the incremental source. This is because we don't want to provide
+			// from source of other modules.
+			return kangaru::provide<T>(with_recursion{with_construction{fwd_ref(KANGARU5_FWD(source).impl), exhaustive_constructor{}}});
 		}
 		
 	private:
-		template<typename T, typename Self, std::size_t... S>
-		constexpr static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? S : 0) + ...);
-		}
-		
-		modules_t modules;
+		impl_type impl;
 	};
+	
+	template<typename... Modules>
+	using module_dependencies = tied_source<reflected_return_type<Modules, 8>...>;
 }
 
 struct service_1_a { int i; };
 struct service_1_b { service_1_a s1a; };
 
-struct service_2_a { service_1_a s1a; int i; };
+struct agg1 {
+	service_1_a a;
+	service_1_b& b;
+};
+
+struct service_2_a { service_1_a s1a; agg1 agg; };
 struct service_2_b { service_1_b& s1b; service_2_a& s2a; };
 
-auto module0() {
-	return kangaru::modular_source{};
-}
+struct agg2 {
+	agg1 agg1;
+	service_1_a s1a;
+	service_1_b& s1b;
+	service_2_a& s2a;
+};
 
-auto module1(kangaru::source_reference_wrapper<kangaru::reflected_return_type<decltype(module0), 8>> module0) {
+constexpr auto module0() {
 	return kangaru::modular_source{
-		module0,
-		[] {
-			fmt::println("call service_1_a");
-			return kangaru::reference_source{service_1_a{9}};
+		kangaru::none_source{},
+		[]{
+			return kangaru::object_source{int{9}};
 		},
-		[](service_1_a& s) { return kangaru::reference_source{service_1_b{s}}; },
 	};
 }
 
-auto module2(kangaru::source_reference_wrapper<kangaru::reflected_return_type<decltype(module1), 8>> module1) {
-	return kangaru::modular_source{
-		module1,
-		[](service_1_a& s1a) { return kangaru::reference_source{service_2_a{s1a, 8}}; },
-		[](service_1_b& s1b, service_2_a& s2a) {
-			fmt::println("call service_2_b");
-			return kangaru::reference_source{service_2_b{s1b, s2a}};
-		}
-	};
+constexpr auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) {
+	return kangaru::make_modular_source<
+		kangaru::object_source<service_1_a>,
+		kangaru::reference_source<service_1_b>
+	>(dependencies);
+}
+
+constexpr auto module2(kangaru::module_dependencies<decltype(module1), decltype(module0)> dependencies) {
+	return kangaru::make_modular_source<
+		kangaru::reference_source<service_2_a>,
+		kangaru::reference_source<service_2_b>
+	>(dependencies);
 }
 
 auto main() -> int {
 	auto source = kangaru::modular_container{module0, module1, module2};
 	auto injector = kangaru::make_spread_injector(kangaru::ref(source));
 	
-	injector([](service_2_b& s2b, service_1_a& s1a) {
-		fmt::println("patate {} {}", s2b.s1b.s1a.i, s1a.i);
+	injector([](service_2_b& s2b, service_1_a s1a, agg2 agg) {
+		fmt::println("patate {} {} {}", s2b.s1b.s1a.i, s1a.i, agg.s2a.agg.a.i);
 	});
 }

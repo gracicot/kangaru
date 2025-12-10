@@ -377,6 +377,9 @@ namespace kangaru {
 		return basic_wrapping_source<std::decay_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
+	template<source... Sources>
+	using tied_source = composed_source<source_reference_wrapper<Sources>...>;
+	
 	KANGARU5_EXPORT inline constexpr auto tie(source auto&... sources) {
 		return KANGARU5_NO_ADL(compose)(KANGARU5_NO_ADL(ref)(sources)...);
 	}

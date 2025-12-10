@@ -247,12 +247,12 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   windows-msvc:
-    runs-on: windows-latest
-    name: MSVC ${{ matrix.msvc-version }} Windows
+    runs-on: windows-${{ matrix.windows }}
+    name: MSVC ${{ matrix.msvc-version }} Windows ${{ matrix.windows }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        windows: [2022, 2025]
         arch: [x64]
 
     steps:

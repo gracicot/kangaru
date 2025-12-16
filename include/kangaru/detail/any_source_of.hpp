@@ -39,7 +39,7 @@ KANGARU5_EXPORT namespace kangaru {
 			source_vtable{get_vtable_for<std::remove_cvref_t<Source>>()} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
-		auto operator=(Source&& rhs) -> any_source_of& {
+		constexpr auto operator=(Source&& rhs) -> any_source_of& {
 			if (source) {
 				vtable().destroy(source);
 			}
@@ -52,15 +52,15 @@ KANGARU5_EXPORT namespace kangaru {
 		any_source_of(any_source_of const&) = delete;
 		auto operator=(any_source_of const&) -> any_source_of& = delete;
 		
-		any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, nullptr)} {}
+		constexpr any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, nullptr)} {}
 		
-		auto operator=(any_source_of&& rhs) -> any_source_of& {
+		constexpr auto operator=(any_source_of&& rhs) -> any_source_of& {
 			std::ranges::swap(source, rhs.source);
 			std::swap(source_vtable, rhs.source_vtable);
 			return *this;
 		}
 		
-		~any_source_of() noexcept {
+		constexpr ~any_source_of() noexcept {
 			if (source) {
 				 vtable().destroy(source);
 			}
@@ -87,7 +87,7 @@ KANGARU5_EXPORT namespace kangaru {
 							return kangaru::provide<Types>(*static_cast<Source*>(source));
 						}...
 					},
-					.destroy = [](void const* source) {
+					.destroy = [](void const* source) KANGARU5_CONSTEXPR_VOIDSTAR {
 						delete static_cast<Source const*>(source);
 					}
 				};

@@ -52,7 +52,7 @@ KANGARU5_EXPORT namespace kangaru {
 		any_source_of(any_source_of const&) = delete;
 		auto operator=(any_source_of const&) -> any_source_of& = delete;
 		
-		constexpr any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, nullptr)} {}
+		constexpr any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, {})} {}
 		
 		constexpr auto operator=(any_source_of&& rhs) -> any_source_of& {
 			std::ranges::swap(source, rhs.source);

@@ -75,7 +75,7 @@ TEST_CASE("any_source_of type erase sources", "[any_source_of]") {
 	}
 	
 	SECTION("Can be initialized using a lambda") {
-		auto source = kangaru::any_source_of<int>{[]{ return int_source{9}; }};
+		auto source = kangaru::any_source_of<int>{kangaru::in_place_construct{[]{ return int_source{9}; }}};
 		REQUIRE(kangaru::provide<int>(source) == 9);
 
 		SECTION("Can be used to initialize immovable sources") {

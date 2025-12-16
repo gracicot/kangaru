@@ -121,6 +121,20 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		F function;
 	};
+	
+	template<unqualified_object Type>
+	inline constexpr auto make_in_place(auto&&... args) requires constructor_callable<Type, decltype(args)...> {
+		return in_place_construct{[&] {
+			return KANGARU5_NO_ADL(constructor<Type>)(KANGARU5_FWD(args)...);
+		}};
+	}
+	
+	template<template<typename...> typename Type>
+	inline constexpr auto make_in_place(auto&&... args) requires constructor_callable<decltype(Type(KANGARU5_FWD(args)...)), decltype(args)...> {
+		return in_place_construct{[&] {
+			return KANGARU5_NO_ADL(constructor<decltype(Type(KANGARU5_FWD(args)...))>)(KANGARU5_FWD(args)...);
+		}};
+	}
 }
 
 #include "undef.hpp"

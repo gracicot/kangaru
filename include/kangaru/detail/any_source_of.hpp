@@ -4,6 +4,7 @@
 #include "source.hpp"
 #include "concepts.hpp"
 #include "type_traits.hpp"
+#include "constructor.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <utility>
@@ -23,14 +24,17 @@ KANGARU5_EXPORT namespace kangaru {
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
 	struct any_source_of {
-		// TODO: Should all sources have a function based init?
-		template<callable Function> requires(true and ... and source_of<detail::type_traits::call_result_t<Function>, Types>)
-		explicit any_source_of(Function function) :
-			source{new detail::type_traits::call_result_t<Function>(function())},
+		template<callable Function>
+			requires(
+				    not_self<detail::type_traits::call_result_t<Function>, any_source_of>
+				and ... and source_of<detail::type_traits::call_result_t<Function>, Types>
+			)
+		explicit(false) constexpr any_source_of(in_place_construct<Function> source) :
+			source{new detail::type_traits::call_result_t<Function>(source)},
 			source_vtable{get_vtable_for<detail::type_traits::call_result_t<Function>>()} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
-		explicit constexpr any_source_of(Source&& source) :
+		explicit(false) constexpr any_source_of(Source&& source) :
 			source{new Source{KANGARU5_FWD(source)}},
 			source_vtable{get_vtable_for<std::remove_cvref_t<Source>>()} {}
 		

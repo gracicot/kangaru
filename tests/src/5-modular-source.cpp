@@ -173,6 +173,21 @@ namespace kangaru {
 		return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...};
 	}
 	
+	template<source Source, typename... Lambdas>
+	inline constexpr auto make_modular_source_in_place(Source source, Lambdas... lambdas) {
+		return in_place_construct{[&]{ return modular_source<Source, Lambdas...>{std::move(source), lambdas...}; }};
+	}
+	
+	template<source... Sources, source Source>
+	inline constexpr auto make_modular_source_in_place(Source source) {
+		return in_place_construct{[&]{ return modular_source<Source, kangaru::constructor_function<Sources>...>{std::move(source), kangaru::constructor_function<Sources>{}...}; }};
+	}
+	
+	template<source... Sources>
+	inline constexpr auto make_modular_source_in_place() {
+		return in_place_construct{[&]{ return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...}; }};
+	}
+	
 	template<typename... Modules>
 		requires std::constructible_from<detail::modular_source::modular_container_impl<Modules...>, Modules...>
 	struct modular_container {
@@ -215,24 +230,24 @@ struct agg2 {
 	service_2_a& s2a;
 };
 
-constexpr auto module0() {
-	return kangaru::modular_source{
+constexpr auto module0() -> kangaru::any_source_of<int> {
+	return kangaru::make_in_place<kangaru::modular_source>(
 		kangaru::none_source{},
 		[]{
 			return kangaru::object_source{int{9}};
-		},
-	};
+		}
+	);
 }
 
-constexpr auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) {
-	return kangaru::make_modular_source<
+constexpr auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a, service_1_b&> {
+	return kangaru::make_modular_source_in_place<
 		kangaru::object_source<service_1_a>,
 		kangaru::reference_source<service_1_b>
 	>(dependencies);
 }
 
-constexpr auto module2(kangaru::module_dependencies<decltype(module1), decltype(module0)> dependencies) {
-	return kangaru::make_modular_source<
+constexpr auto module2(kangaru::module_dependencies<decltype(module1), decltype(module0)> dependencies) -> kangaru::any_source_of<service_2_a&, service_2_b&> {
+	return kangaru::make_modular_source_in_place<
 		kangaru::reference_source<service_2_a>,
 		kangaru::reference_source<service_2_b>
 	>(dependencies);

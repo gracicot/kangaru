@@ -20,15 +20,12 @@
           mkShell = pkgs.mkShell.override { inherit stdenv; };
         in mkShell {
             nativeBuildInputs = with pkgs; [
-              llvmPackages_21.llvm
               llvmPackages_21.clang-tools
-              llvmPackages_21.lldb
             ];
             buildInputs = with pkgs; [
               cmake
               ninja
               vcpkg
-              gdb
 
               # to make vcpkg work
               autoconf
@@ -43,7 +40,6 @@
               gzip
               openssh
               perl
-              pkg-config
               zip
               zstd
             ];

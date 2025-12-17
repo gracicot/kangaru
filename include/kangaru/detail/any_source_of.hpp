@@ -5,6 +5,7 @@
 #include "concepts.hpp"
 #include "type_traits.hpp"
 #include "constructor.hpp"
+#include <new>
 
 #ifndef KANGARU5_MODULES
 #include <utility>
@@ -30,13 +31,13 @@ KANGARU5_EXPORT namespace kangaru {
 				and ... and source_of<detail::type_traits::call_result_t<Function>, Types>
 			)
 		explicit(false) constexpr any_source_of(in_place_construct<Function> source) :
-			source{new detail::type_traits::call_result_t<Function>(source)},
-			source_vtable{get_vtable_for<detail::type_traits::call_result_t<Function>>()} {}
+			source_vtable{get_vtable_for<detail::type_traits::call_result_t<Function>>()},
+			source{new detail::type_traits::call_result_t<Function>(std::move(source))} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		explicit(false) constexpr any_source_of(Source&& source) :
-			source{new Source{KANGARU5_FWD(source)}},
-			source_vtable{get_vtable_for<std::remove_cvref_t<Source>>()} {}
+			source_vtable{get_vtable_for<std::remove_cvref_t<Source>>()},
+			source{new Source{KANGARU5_FWD(source)}} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		constexpr auto operator=(Source&& rhs) -> any_source_of& {
@@ -52,11 +53,14 @@ KANGARU5_EXPORT namespace kangaru {
 		any_source_of(any_source_of const&) = delete;
 		auto operator=(any_source_of const&) -> any_source_of& = delete;
 		
-		constexpr any_source_of(any_source_of&& other) noexcept : source{std::exchange(other.source, nullptr)}, source_vtable{std::exchange(other.source_vtable, {})} {}
+		constexpr any_source_of(any_source_of&& other) noexcept :
+			source_vtable{std::exchange(other.source_vtable, {})},
+			source{std::exchange(other.source, nullptr)} {}
 		
 		constexpr auto operator=(any_source_of&& rhs) -> any_source_of& {
-			std::ranges::swap(source, rhs.source);
+			if (this == &rhs) return *this;
 			std::swap(source_vtable, rhs.source_vtable);
+			std::swap(source, rhs.source);
 			return *this;
 		}
 		

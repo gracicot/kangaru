@@ -165,27 +165,51 @@ namespace kangaru {
 	
 	template<source... Sources, source Source>
 	inline constexpr auto make_modular_source(Source source) {
-		return modular_source<Source, kangaru::constructor_function<Sources>...>{std::move(source), kangaru::constructor_function<Sources>{}...};
+		return modular_source<Source, kangaru::constructor_function<Sources>...>{
+			std::move(source),
+			kangaru::constructor_function<Sources>{}...
+		};
 	}
 	
 	template<source... Sources>
 	inline constexpr auto make_modular_source() {
-		return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...};
+		return modular_source<none_source, kangaru::constructor_function<Sources>...>{
+			none_source{},
+			kangaru::constructor_function<Sources>{}...
+		};
 	}
 	
 	template<source Source, typename... Lambdas>
 	inline constexpr auto make_modular_source_in_place(Source source, Lambdas... lambdas) {
-		return in_place_construct{[&]{ return modular_source<Source, Lambdas...>{std::move(source), lambdas...}; }};
+		return in_place_construct{
+			[source = std::move(source), ...lambdas = std::move(lambdas)]() mutable {
+				return modular_source<Source, Lambdas...>{std::move(source), lambdas...};
+			},
+		};
 	}
 	
 	template<source... Sources, source Source>
 	inline constexpr auto make_modular_source_in_place(Source source) {
-		return in_place_construct{[&]{ return modular_source<Source, kangaru::constructor_function<Sources>...>{std::move(source), kangaru::constructor_function<Sources>{}...}; }};
+		return in_place_construct{
+			[source = std::move(source)]() mutable {
+				return modular_source<Source, kangaru::constructor_function<Sources>...>{
+					std::move(source),
+					kangaru::constructor_function<Sources>{}...
+				};
+			},
+		};
 	}
 	
 	template<source... Sources>
 	inline constexpr auto make_modular_source_in_place() {
-		return in_place_construct{[&]{ return modular_source<none_source, kangaru::constructor_function<Sources>...>{none_source{}, kangaru::constructor_function<Sources>{}...}; }};
+		return in_place_construct{
+			[] {
+				return modular_source<none_source, kangaru::constructor_function<Sources>...>{
+					none_source{},
+					kangaru::constructor_function<Sources>{}...
+				};
+			},
+		};
 	}
 	
 	template<typename... Modules>

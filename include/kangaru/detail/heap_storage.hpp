@@ -33,6 +33,7 @@ namespace kangaru {
 			ptr{std::exchange(other.ptr, nullptr)}, deleter{std::exchange(other.deleter, nullptr)} {}
 		
 		constexpr auto operator=(runtime_dynamic_storage&& rhs) noexcept -> runtime_dynamic_storage& {
+			if (this == &rhs) return *this;
 			std::ranges::swap(ptr, rhs.ptr);
 			std::ranges::swap(deleter, rhs.deleter);
 			return *this;
@@ -112,6 +113,7 @@ namespace kangaru {
 			allocator{std::move(other.allocator)}, container{std::move(other.container)} {}
 		
 		constexpr auto operator=(basic_heap_storage&& rhs) noexcept -> basic_heap_storage& {
+			if (this == &rhs) return *this;
 			std::ranges::swap(allocator, rhs.allocator);
 			std::ranges::swap(container, rhs.container);
 			return *this;

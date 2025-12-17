@@ -93,12 +93,12 @@ namespace kangaru {
 		}
 		
 		template<injectable T>
-		constexpr auto operator=(polymorphic_source<T> const& other) -> type_erased_source_reference& {
-			source = other.source;
+		constexpr auto operator=(polymorphic_source<T> const& rhs) -> type_erased_source_reference& {
+			source = rhs.source;
 			
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
-				other.provide_function
+				rhs.provide_function
 			);
 			
 			return *this;

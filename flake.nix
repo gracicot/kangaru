@@ -15,12 +15,12 @@
       # Nixpkgs instantiated for supported system types.
       nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
 
-      makeShell = { pkgs, stdenv }:
+      makeShell = { pkgs, stdenv, llvmPackages }:
         let
           mkShell = pkgs.mkShell.override { inherit stdenv; };
         in mkShell {
-            nativeBuildInputs = with pkgs; [
-              llvmPackages_21.clang-tools
+            nativeBuildInputs = if llvmPackages == null then [] else with pkgs; [
+              llvmPackages.clang-tools
             ];
             buildInputs = with pkgs; [
               cmake
@@ -54,15 +54,15 @@
         let
           pkgs = nixpkgsFor.${system};
         in {
-          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; };
-          ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; };
-          ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; };
-          ci-clang20 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; };
-          ci-clang21 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; };
-          ci-gcc13 = makeShell { inherit pkgs; stdenv = pkgs.gcc13Stdenv; };
-          ci-gcc14 = makeShell { inherit pkgs; stdenv = pkgs.gcc14Stdenv; };
-          ci-gcc15 = makeShell { inherit pkgs; stdenv = pkgs.gcc15Stdenv; };
-          ci-nocc = makeShell { inherit pkgs; stdenv = pkgs.stdenvNoCC; };
+          default = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; llvmPackages = pkgs.llvmPackages_21; };
+          ci-clang18 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_18.stdenv; llvmPackages = pkgs.llvmPackages_18; };
+          ci-clang19 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_19.stdenv; llvmPackages = pkgs.llvmPackages_19; };
+          ci-clang20 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_20.stdenv; llvmPackages = pkgs.llvmPackages_20; };
+          ci-clang21 = makeShell { inherit pkgs; stdenv = pkgs.llvmPackages_21.stdenv; llvmPackages = pkgs.llvmPackages_21; };
+          ci-gcc13 = makeShell { inherit pkgs; stdenv = pkgs.gcc13Stdenv; llvmPackages = null; };
+          ci-gcc14 = makeShell { inherit pkgs; stdenv = pkgs.gcc14Stdenv; llvmPackages = null; };
+          ci-gcc15 = makeShell { inherit pkgs; stdenv = pkgs.gcc15Stdenv; llvmPackages = null; };
+          ci-nocc = makeShell { inherit pkgs; stdenv = pkgs.stdenvNoCC; llvmPackages = null; };
         });
     };
 }

@@ -1,6 +1,7 @@
 #ifndef KANGARU_DETAIL_DEDUCER_HPP
 #define KANGARU_DETAIL_DEDUCER_HPP
 
+#include "attributes.hpp"
 #include "concepts.hpp"
 #include "source.hpp"
 #include "type_traits.hpp"
@@ -50,7 +51,10 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT template<typename T>
-	concept deducible = unqualified_object<T> and not deducer<T>;
+	concept deducible =
+		    unqualified_object<T>
+		and not deducer<T>
+		and allow_injection_using_v<T>;
 	
 	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_lvalue = deducible<T> and source_of<Source, T&>;
@@ -59,7 +63,10 @@ namespace kangaru {
 	concept deducible_rvalue = deducible<T> and source_of<Source, T&&>;
 	
 	KANGARU5_EXPORT template<typename T, typename Source>
-	concept deducible_rvalue_const = deducible<T> and (source_of<Source, T const&&> or deducible_rvalue<T, Source>);
+	concept deducible_rvalue_const = deducible<T> and (
+		   source_of<Source, T const&&>
+		or deducible_rvalue<T, Source>
+	);
 	
 	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_lvalue_const = deducible<T> and (
@@ -92,6 +99,9 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename T, typename Source>
 	concept deducible_strict_rvalue_const = deducible<T> and source_of<Source, T const&&>;
+	
+	template<deducer Deducer>
+	struct allow_injection_using<Deducer> : std::false_type {};
 	
 	KANGARU5_EXPORT struct ambiguous_prvalue_deducer {
 		using is_deducer = kangaru_deducer_tag;

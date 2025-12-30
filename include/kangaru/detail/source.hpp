@@ -3,6 +3,7 @@
 
 #include "concepts.hpp"
 #include "utility.hpp"
+#include "attributes.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <concepts>
@@ -14,7 +15,7 @@
 
 namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
-	concept injectable = unqualified_object<T> or reference<T>;
+	concept injectable = weak_injectable<T> and allow_injection_using_v<T>;
 	
 	// TODO: Should we have movable_source?
 	// TODO: Restore movable requirement

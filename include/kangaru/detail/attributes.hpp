@@ -1,10 +1,11 @@
 #ifndef KANGARU5_DETAIL_ATTRIBUTES_HPP
 #define KANGARU5_DETAIL_ATTRIBUTES_HPP
 
-#include "source.hpp"
+#include "concepts.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <type_traits>
+#include <tuple>
 #endif
 
 #include "define.hpp"
@@ -12,7 +13,7 @@
 namespace kangaru::detail::attribute {
 	auto attribute(auto&&) -> void requires false;
 	
-	template<template<typename> typename Attribute, injectable T, typename Default>
+	template<template<typename> typename Attribute, weak_injectable T, typename Default>
 	struct attribute_function {
 		template<typename A>
 		static constexpr auto lookup(int) -> decltype(attribute(std::declval<Attribute<A>>()));
@@ -23,46 +24,46 @@ namespace kangaru::detail::attribute {
 		using type = decltype(lookup<T>(0));
 	};
 	
-	template<template<typename> typename Attribute, injectable T, typename Default>
+	template<template<typename> typename Attribute, weak_injectable T, typename Default>
 	using attribute_function_t = typename attribute_function<Attribute, T, Default>::type;
 	
-	template<template<typename> typename Attribute, injectable T>
+	template<template<typename> typename Attribute, weak_injectable T>
 	struct evaluate_attribute {
 		using type = Attribute<T>;
 	};
 	
-	template<template<typename> typename Attribute, injectable T>
+	template<template<typename> typename Attribute, weak_injectable T>
 		requires requires{ typename Attribute<T>::template ttype<T>; }
 	struct evaluate_attribute<Attribute, T> {
 		using type = typename Attribute<T>::template ttype<T>;
 	};
 	
-	template<template<injectable> typename Trait, injectable T>
+	template<template<weak_injectable> typename Trait, weak_injectable T>
 	using evaluate_attribute_t = typename evaluate_attribute<Trait, T>::type;
 }
 
 KANGARU5_EXPORT namespace kangaru {
-	template<injectable T>
+	template<typename T>
 	struct allow_runtime_caching {
-		template<injectable A>
+		template<weak_injectable A> requires(std::same_as<T, A>)
 		using ttype = typename detail::attribute::attribute_function_t<allow_runtime_caching, A, std::false_type>;
 	};
 	
-	template<injectable T>
+	template<weak_injectable T>
 	inline constexpr auto allow_runtime_caching_v = detail::attribute::evaluate_attribute_t<allow_runtime_caching, T>::value;
 	
-	template<injectable T>
+	template<typename T>
 	struct allow_empty_injection {
-		template<injectable A>
+		template<weak_injectable A> requires(std::same_as<T, A>)
 		using ttype = typename detail::attribute::attribute_function_t<allow_empty_injection, A, std::false_type>;
 	};
 	
-	template<injectable T>
+	template<weak_injectable T>
 	inline constexpr auto allow_empty_injection_v = detail::attribute::evaluate_attribute_t<allow_empty_injection, T>::value;
 	
-	template<injectable T>
+	template<typename T>
 	struct overrides_types_in_cache {
-		template<injectable A>
+		template<weak_injectable A> requires(std::same_as<T, A>)
 		struct ttype {
 			using type = detail::attribute::attribute_function_t<overrides_types_in_cache, A, std::tuple<>>;
 		};
@@ -70,6 +71,15 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<typename T>
 	using overrides_types_in_cache_t = typename detail::attribute::evaluate_attribute_t<overrides_types_in_cache, T>::type;
+	
+	template<typename T>
+	struct allow_injection_using {
+		template<weak_injectable A> requires(std::same_as<T, A>)
+		using ttype = typename detail::attribute::attribute_function_t<allow_injection_using, A, std::true_type>;
+	};
+	
+	template<weak_injectable T>
+	inline constexpr auto allow_injection_using_v = detail::attribute::evaluate_attribute_t<allow_injection_using, T>::value;
 }
 
 #include "undef.hpp"

@@ -55,6 +55,9 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
 	concept pointer = object<T> and std::is_pointer_v<T>;
 	
+	template<typename T>
+	concept weak_injectable = unqualified_object<T> or reference<T>;
+	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
 	concept callable = requires(F&& f, Args&&... args) {

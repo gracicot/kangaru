@@ -6,6 +6,7 @@
 #include "kangaru/detail/type_traits.hpp"
 #include "kangaru/detail/utility.hpp"
 #include <concepts>
+#include <optional>
 #include <kangaru/kangaru.hpp>
 
 #include <kangaru/detail/define.hpp>

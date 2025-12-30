@@ -19,10 +19,32 @@
 
 #include "define.hpp"
 
+namespace kangaru::detail::source_types {
+	struct from_tuple_t { using is_deducer = kangaru_deducer_tag; } inline constexpr from_tuple{};
+}
+
 namespace kangaru {
+	template<>
+	struct allow_injection_using<detail::source_types::from_tuple_t> : std::false_type {};
+	
+	template<source... Sources>
+	struct composed_source;
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+	
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
-		explicit constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
+		explicit(sizeof...(Sources) == 1) constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
 		template<injectable T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<composed_source> auto&& source) -> T
@@ -39,7 +61,21 @@ namespace kangaru {
 			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ... + 0) > 1
 		) = delete;
 		
+		template<source... SourcesLhs, source... SourcesRhs>
+		friend auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+		
+		template<source... SourcesLhs, source... SourcesRhs>
+		friend auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+		
+		template<source... SourcesLhs, source... SourcesRhs>
+		friend auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+		
+		template<source... SourcesLhs, source... SourcesRhs>
+		friend auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...>;
+		
 	private:
+		explicit constexpr composed_source(detail::source_types::from_tuple_t, std::tuple<Sources...>&& sources) noexcept : sources{std::move(sources)} {}
+		
 		template<typename T, typename Self, std::size_t... S> requires(sizeof...(Sources) > 0)
 		consteval static auto index_of(std::index_sequence<S...>) {
 			return ((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? S : 0) + ...);
@@ -47,6 +83,29 @@ namespace kangaru {
 		
 		std::tuple<Sources...> sources;
 	};
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+		return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, rhs.sources)};
+	}
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+		return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, std::move(rhs).sources)};
+	}
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+		return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, rhs.sources)};
+	}
+	
+	template<source... SourcesLhs, source... SourcesRhs>
+	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+		return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, std::move(rhs).sources)};
+	}
+	
+	template<source Lhs, source Rhs>
+	using composed_source_cat_t = decltype(KANGARU5_NO_ADL(composed_source_cat)(std::declval<Lhs>(), std::declval<Rhs>()));
 	
 	KANGARU5_EXPORT inline constexpr auto compose(forwarded_source auto&&... sources) {
 		return composed_source<std::decay_t<decltype(sources)>...>{KANGARU5_FWD(sources)...};
@@ -179,15 +238,37 @@ namespace kangaru {
 	reference_source(T&&) -> reference_source<std::decay_t<T>>;
 	
 	KANGARU5_EXPORT template<object T>
-	struct external_rvalue_source {
-		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
+	struct shared_pointer_source {
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr shared_pointer_source(From&& object) noexcept :
+			object{
+				std::make_shared<T>(
+					KANGARU5_FWD(object)
+				)
+			} {}
 		
-		constexpr auto provide() const& -> T&& {
-			return std::move(*reference);
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr shared_pointer_source(Args... args) :
+			object{
+				std::make_shared<T>(
+					KANGARU5_NO_ADL(make_in_place<T>)(KANGARU5_FWD(args)...)
+				)
+			} {}
+		
+		constexpr auto provide() const& -> std::shared_ptr<T> {
+			return object;
+		}
+		
+		// TODO: Should we move the shared pointer?
+		constexpr auto provide() && -> std::shared_ptr<T> {
+			return object;
 		}
 		
 	private:
-		T* reference;
+		std::shared_ptr<T> object;
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_empty_injection<shared_pointer_source<U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<object T>
@@ -200,6 +281,98 @@ namespace kangaru {
 		
 	private:
 		T* reference;
+	};
+	
+	KANGARU5_EXPORT template<object T>
+	struct external_rvalue_source {
+		explicit constexpr external_rvalue_source(T&& reference) noexcept : reference{std::addressof(reference)} {}
+		
+		constexpr auto provide() const& -> T&& {
+			return std::move(*reference);
+		}
+		
+	private:
+		T* reference;
+	};
+	
+	KANGARU5_EXPORT template<object Base, std::derived_from<Base> T>
+	struct derived_reference_source {
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr derived_reference_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
+		
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr derived_reference_source(Args... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
+		
+		constexpr auto provide() & -> Base& {
+			return object;
+		}
+		
+		constexpr auto provide() && -> Base& {
+			return object;
+		}
+		
+	private:
+		T object;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_empty_injection<derived_reference_source<B, U>>) -> std::true_type;
+	};
+	
+	KANGARU5_EXPORT template<object Base, std::derived_from<Base> T>
+	struct derived_pointer_source {
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr derived_pointer_source(From&& object) noexcept : object(KANGARU5_FWD(object)) {}
+		
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr derived_pointer_source(Args... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
+		
+		constexpr auto provide() & -> Base* {
+			return object;
+		}
+		
+		constexpr auto provide() && -> Base* {
+			return object;
+		}
+		
+	private:
+		T object;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_empty_injection<derived_pointer_source<B, U>>) -> std::true_type;
+	};
+	
+	KANGARU5_EXPORT template<object Base, std::derived_from<Base> T>
+	struct derived_shared_pointer_source {
+		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr derived_shared_pointer_source(From&& object) noexcept :
+			object{
+				std::make_shared<T>(
+					KANGARU5_FWD(object)
+				)
+			} {}
+		
+		template<typename... Args> requires constructor_callable<T, Args...>
+		constexpr derived_shared_pointer_source(Args... args) :
+			object{
+				std::make_shared<T>(
+					KANGARU5_NO_ADL(make_in_place<T>)(KANGARU5_FWD(args)...)
+				)
+			} {}
+		
+		constexpr auto provide() const& -> std::shared_ptr<Base> {
+			return object;
+		}
+		
+		// TODO: Should we move the shared pointer?
+		constexpr auto provide() && -> std::shared_ptr<Base> {
+			return object;
+		}
+		
+	private:
+		std::shared_ptr<T> object;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_empty_injection<derived_shared_pointer_source<B, U>>) -> std::true_type;
 	};
 	
 	KANGARU5_EXPORT template<source Source, source Alternative>

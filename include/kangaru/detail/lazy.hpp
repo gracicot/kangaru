@@ -36,7 +36,7 @@ namespace kangaru {
 		}
 		
 	private:
-		constexpr auto ensure_initialized() -> void {
+		KANGARU5_INLINE constexpr auto ensure_initialized() -> void {
 			if (not object) {
 				object.emplace(kangaru::provide<T>(source));
 			}

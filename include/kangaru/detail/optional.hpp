@@ -20,7 +20,7 @@ namespace kangaru {
 	KANGARU5_EXPORT struct in_place_t{} inline constexpr in_place;
 	KANGARU5_EXPORT struct nullopt_t {} inline constexpr nullopt;
 	
-	KANGARU5_EXPORT template<injectable T>
+	KANGARU5_EXPORT template<weak_injectable T>
 	struct optional;
 }
 
@@ -38,9 +38,8 @@ namespace kangaru::detail::optional {
 namespace kangaru {
 	KANGARU5_EXPORT template<unqualified_object T>
 	struct optional<T> {
-		constexpr optional() = default;
-		
 		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional::empty{}} {}
+		constexpr optional() : optional{nullopt} {};
 		
 		constexpr optional(optional const& other)
 			requires(not std::is_trivially_copy_constructible_v<T>) : engaged{other.engaged}
@@ -357,10 +356,16 @@ namespace kangaru {
 		}
 		
 	private:
-		union {
-			detail::optional::empty empty{};
+		union storage_t {
+			explicit storage_t() : empty{} {}
+			explicit storage_t(detail::optional::empty) : empty{} {}
+			
+			~storage_t() requires(std::is_trivially_destructible_v<T>) = default;
+			~storage_t() {}
+			
+			detail::optional::empty empty;
 			T object;
-		} storage{.empty{}};
+		} storage;
 		
 		constexpr auto destroy() -> void {
 			if constexpr (not std::is_trivially_destructible_v<T>) {

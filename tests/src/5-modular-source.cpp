@@ -419,7 +419,7 @@ struct agg1 {
 struct service_2_a { service_1_a s1a; agg1 agg; };
 struct service_2_b { service_1_b& s1b; service_2_a& s2a; };
 struct service_2_c {
-	explicit constexpr service_2_c(service_2_b& s2b) : s2b{s2b} {
+	explicit service_2_c(service_2_b& s2b) : s2b{s2b} {
 		fmt::println("init service_2_c");
 	}
 	

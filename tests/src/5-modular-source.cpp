@@ -421,15 +421,19 @@ namespace kangaru {
 // Here's many classes, all have some relations with others
 
 struct service_1_a { int i; };
-struct service_1_b { service_1_a s1a; };
+struct service_1_b { service_1_a& s1a; int i; };
+
+// TODO: Investigate why an aggregate containing one dependency fails to be injected
+struct service_1_c { service_1_b s1b; service_1_a& s1a; };
 
 struct agg1 {
-	service_1_a a;
-	service_1_b& b;
+	service_1_a& a;
+	service_1_b b;
+	service_1_c c;
 };
 
-struct service_2_a { service_1_a s1a; agg1 agg; };
-struct service_2_b { service_1_b& s1b; service_2_a& s2a; };
+struct service_2_a { service_1_a& s1a; agg1 agg; };
+struct service_2_b { service_1_c& s1c; service_2_a& s2a; };
 struct service_2_c {
 	explicit service_2_c(service_2_b& s2b) : s2b{s2b} {
 		fmt::println("init service_2_c");
@@ -440,15 +444,16 @@ struct service_2_c {
 
 struct agg2 {
 	agg1 agg;
-	service_1_a s1a;
-	service_1_b& s1b;
+	service_1_a& s1a;
+	service_1_b s1b;
+	service_1_c& s1c;
 	service_2_a& s2a;
 };
 
 // TODO: Figure out how to properly inject aggregate bases.
-struct service_3_a_base { service_2_b& s2b; service_1_a s1a; };
+struct service_3_a_base { service_2_b& s2b; service_1_a& s1a; };
 struct service_3_a : service_3_a_base {
-	explicit constexpr service_3_a(service_2_b& s2b, service_1_a s1a) : service_3_a_base{.s2b = s2b, .s1a = s1a} {}
+	explicit constexpr service_3_a(service_2_b& s2b, service_1_a& s1a) : service_3_a_base{.s2b = s2b, .s1a = s1a} {}
 };
 
 struct service_3_b_base {};
@@ -507,14 +512,17 @@ constexpr auto module0() {
 // We also return the modular source in a type erased wrapper.
 // If you hover the module0 function and inspect the return type, you'll understand why.
 // Types containing lambdas can explode pretty quick.
-constexpr auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a, service_1_b&> {
+auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a&, service_1_b, service_1_c&> {
 	return kangaru::make_modular_source_in_place(dependencies,
 		// Can be lambdas just like we see in module0.
 		[](int i) { // int dependency, from module0. We can write them explicitly like this, but generally, you won't.
-			return kangaru::object_source<service_1_a>{i};
+			return kangaru::reference_source<service_1_a>{i};
 		},
-		// Let's use generic constructor functions, and let kangaru deduce the parameters!
-		kangaru::constructor_function<kangaru::reference_source<service_1_b>>{}
+		[](service_1_a& s1a, int i) { // service_1_a dependency from the source above and int dependency from module0.
+			return kangaru::object_source<service_1_b>{s1a, i};
+		},
+		// Instead of listing dependencies, let's use a generic constructor function, and let kangaru deduce the parameters!
+		kangaru::constructor_function<kangaru::reference_source<service_1_c>>{}
 	);
 }
 
@@ -531,10 +539,10 @@ auto module2(kangaru::module_dependencies<decltype(module1)> dependencies) {
 }
 
 // Let's declare the function then define it, just to show we can separate declaration and definition :D
-constexpr auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> dependencies)
+auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> dependencies)
 	-> kangaru::any_source_of<service_3_a_base&, std::shared_ptr<service_3_b_base>, service_3_c&>;
 
-constexpr auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> dependencies)
+auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> dependencies)
 	-> kangaru::any_source_of<service_3_a_base&, std::shared_ptr<service_3_b_base>, service_3_c&> {
 	// Here we use the generic make_in_place, that transforms move construction to RVO.
 	// Normally, for modular source, you should either just use make_modular_source[_in_place],
@@ -542,7 +550,7 @@ constexpr auto module3(kangaru::module_dependencies<decltype(module2), decltype(
 	return kangaru::make_in_place<kangaru::modular_source>(dependencies,
 		kangaru::constructor_function<kangaru::derived_reference_source<service_3_a_base, service_3_a>>{},
 		kangaru::constructor_function<kangaru::derived_shared_pointer_source<service_3_b_base, service_3_b>>{},
-		// We can hijack the injection process and just get the incremental source instead to create something
+		// We can hijack the injection process and just get the incremental source instead to create something.
 		// It is allowed to copy the incremental source, it only contains reference of things that will stay alive
 		// at least as long as the object we return from this function.
 		[](kangaru::source auto module) {
@@ -561,7 +569,7 @@ auto main() -> int {
 	kangaru::provide<std::shared_ptr<service_2_c>>(source);
 	fmt::println("after initializing service_2_c");
 	
-	injector([](service_2_b& s2b, service_1_a s1a, agg2 agg, service_3_c&) {
-		fmt::println("potato {} {} {}", s2b.s1b.s1a.i, s1a.i, agg.s2a.agg.a.i);
+	injector([](service_2_b& s2b, service_1_b s1b, agg2 agg, service_3_c&) {
+		fmt::println("potato {} {} {}", s2b.s1c.s1b.i, s1b.i, agg.s2a.agg.a.i);
 	});
 }

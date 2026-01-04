@@ -21,7 +21,7 @@
 
 namespace kangaru::detail::source_types {
 	struct from_tuple_t {
-		explicit from_tuple_t() = default;
+		explicit constexpr from_tuple_t() = default;
 	} inline constexpr from_tuple{};
 	
 	struct composed_source_access;
@@ -30,9 +30,6 @@ namespace kangaru::detail::source_types {
 namespace kangaru {
 	template<>
 	struct allow_injection_using<detail::source_types::from_tuple_t> : std::false_type {};
-	
-	template<source... Sources>
-	struct composed_source;
 	
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
@@ -70,48 +67,48 @@ namespace kangaru {
 	namespace detail::source_types {
 		struct composed_source_access {
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
-			static auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+			static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, rhs.sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
-			static auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+			static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, std::move(rhs).sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
-			static auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+			static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, rhs.sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
-			static auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+			static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, std::move(rhs).sources)};
 			}
 		};
 	}
 	
-	template<source... SourcesLhs, source... SourcesRhs>
-	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
+	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 		return detail::source_types::composed_source_access::composed_source_cat(lhs, rhs);
 	}
 	
-	template<source... SourcesLhs, source... SourcesRhs>
-	auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
+	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 		return detail::source_types::composed_source_access::composed_source_cat(lhs, std::move(rhs));
 	}
 	
-	template<source... SourcesLhs, source... SourcesRhs>
-	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
+	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 		return detail::source_types::composed_source_access::composed_source_cat(std::move(lhs), rhs);
 	}
 	
-	template<source... SourcesLhs, source... SourcesRhs>
-	auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
+	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
+	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 		return detail::source_types::composed_source_access::composed_source_cat(std::move(lhs), std::move(rhs));
 	}
 	
-	template<source Lhs, source Rhs>
+	KANGARU5_EXPORT template<source Lhs, source Rhs>
 	using composed_source_cat_t = decltype(KANGARU5_NO_ADL(composed_source_cat)(std::declval<Lhs>(), std::declval<Rhs>()));
 	
 	KANGARU5_EXPORT inline constexpr auto compose(forwarded_source auto&&... sources) {

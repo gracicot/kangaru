@@ -20,7 +20,7 @@ namespace kangaru {
 	// TODO: Should we have movable_source?
 	// TODO: Restore movable requirement
 	KANGARU5_EXPORT template<typename T>
-	concept source = object<T> and std::is_class_v<T>;
+	concept source = object<T> and std::is_class_v<T> and not pointer<T>;
 	
 	KANGARU5_EXPORT template<typename T>
 	concept source_ref = reference<T> and source<std::remove_cvref_t<T>>;

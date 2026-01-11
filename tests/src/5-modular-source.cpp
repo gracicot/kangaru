@@ -1,3 +1,4 @@
+#include "kangaru/detail/deducer.hpp"
 #include "kangaru/detail/injector.hpp"
 #include "kangaru/detail/recursive_source.hpp"
 #include "kangaru/detail/source.hpp"
@@ -419,12 +420,9 @@ namespace kangaru {
 }
 
 // Here's many classes, all have some relations with others
-
 struct service_1_a { int i; };
 struct service_1_b { service_1_a& s1a; int i; };
-
-// TODO: Investigate why an aggregate containing one dependency fails to be injected
-struct service_1_c { service_1_b s1b; service_1_a& s1a; };
+struct service_1_c { service_1_b s1b; };
 
 struct agg1 {
 	service_1_a& a;
@@ -450,11 +448,8 @@ struct agg2 {
 	service_2_a& s2a;
 };
 
-// TODO: Figure out how to properly inject aggregate bases.
 struct service_3_a_base { service_2_b& s2b; service_1_a& s1a; };
-struct service_3_a : service_3_a_base {
-	explicit constexpr service_3_a(service_2_b& s2b, service_1_a& s1a) : service_3_a_base{.s2b = s2b, .s1a = s1a} {}
-};
+struct service_3_a : service_3_a_base {};
 
 struct service_3_b_base {};
 struct service_3_b : service_3_b_base {

@@ -37,6 +37,7 @@
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 	#define KANGARU5_INLINE [[clang::always_inline]]
 	#define KANGARU5_RVALUE_AMBIGUOUS() false
+	#define KANGARU5_RVALUE_CONST_AMBIGUOUS() false
 	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() true
 	#define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 	
@@ -57,6 +58,7 @@
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 	#define KANGARU5_INLINE [[gnu::always_inline]]
 	#define KANGARU5_RVALUE_AMBIGUOUS() true
+	#define KANGARU5_RVALUE_CONST_AMBIGUOUS() true
 	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() false
 	#define KANGARU5_FUNCTION_SIGNATURE __PRETTY_FUNCTION__
 	#define KANGARU5_CONSTEXPR_VOIDSTAR_CAST_SUPPORTED() (__cpp_constexpr >= 202306L)
@@ -72,6 +74,7 @@
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[msvc::no_unique_address]]
 	#define KANGARU5_INLINE [[msvc::forceinline]]
 	#define KANGARU5_RVALUE_AMBIGUOUS() false
+	#define KANGARU5_RVALUE_CONST_AMBIGUOUS() false
 	#define KANGARU5_LVALUE_CONST_AMBIGUOUS() true
 	#define KANGARU5_FUNCTION_SIGNATURE __FUNCSIG__
 	

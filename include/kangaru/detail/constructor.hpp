@@ -15,11 +15,19 @@
 
 KANGARU5_EXPORT namespace kangaru {
 	template<typename T, typename... Args>
-	concept raw_constructor_callable = std::constructible_from<T, Args...> or brace_constructible<T, Args...>;
+	concept raw_constructor_callable =
+		   std::constructible_from<T, Args...>
+		or (
+			    brace_constructible<T, Args...>
+			and (
+				   not std::is_aggregate_v<T>
+				or sizeof...(Args) != 1
+			)
+		);
 	
 	template<unqualified_object Type>
 	struct raw_constructor_function {
-		constexpr auto operator()(auto&&... args) const& requires(
+		constexpr auto operator()(auto&&... args) const& -> Type requires(
 			raw_constructor_callable<Type, decltype(args)...>
 		) {
 			if constexpr (std::constructible_from<Type, decltype(args)...>) {

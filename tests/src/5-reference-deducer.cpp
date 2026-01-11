@@ -1,4 +1,3 @@
-#include "kangaru/detail/utility.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
@@ -249,256 +248,390 @@ struct type_1111 {
 	explicit type_1111(injected const&&);
 };
 
-template<kangaru::unqualified_object T>
-struct restricted_constructor_function {
-	constexpr auto operator()(kangaru::deducer auto deduce1, kangaru::deducer auto... deduce) const -> T
-	requires kangaru::raw_constructor_callable<
-		T,
-		kangaru::exclude_special_constructors_deducer<T, decltype(deduce1)>,
-		kangaru::exclude_deducer<T, decltype(deduce)>...
-	> {
-		return kangaru::raw_constructor<T>(
-			kangaru::exclude_special_constructors_for<T>(deduce1),
-			kangaru::exclude_deduction<T>(deduce)...
-		);
-	}
+struct agg_0000 {
+	injected i;
 };
 
-template<typename T>
-auto restricted_constructor() {
-	return restricted_constructor_function<T>{};
-}
+struct agg_0001 {
+	injected& i;
+};
+
+struct agg_0010 {
+	injected const& i;
+};
+
+struct agg_0100 {
+	injected&& i;
+};
+
+struct agg_1000 {
+	injected const&& i;
+};
+
+struct level2_type_0000 { type_0000 member; };
+struct level2_type_0001 { type_0001 member; };
+struct level2_type_0010 { type_0010 member; };
+struct level2_type_0100 { type_0100 member; };
+struct level2_type_1000 { type_1000 member; };
+
+struct level2_agg_0000 { agg_0000 member; };
+struct level2_agg_0001 { agg_0001 member; };
+struct level2_agg_0010 { agg_0010 member; };
+struct level2_agg_0100 { agg_0100 member; };
+struct level2_agg_1000 { agg_1000 member; };
 
 TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 	SECTION("Strict reference deducer") {
-		using constructor_0000_t = kangaru::constructor_function<type_0000>;
-		using constructor_0001_t = kangaru::constructor_function<type_0001>;
-		using constructor_0010_t = kangaru::constructor_function<type_0010>;
-		using constructor_0011_t = kangaru::constructor_function<type_0011>;
-		using constructor_0100_t = kangaru::constructor_function<type_0100>;
-		using constructor_0101_t = kangaru::constructor_function<type_0101>;
-		using constructor_0110_t = kangaru::constructor_function<type_0110>;
-		using constructor_0111_t = kangaru::constructor_function<type_0111>;
-		using constructor_1000_t = kangaru::constructor_function<type_1000>;
-		using constructor_1001_t = kangaru::constructor_function<type_1001>;
-		using constructor_1010_t = kangaru::constructor_function<type_1010>;
-		using constructor_1011_t = kangaru::constructor_function<type_1011>;
-		using constructor_1100_t = kangaru::constructor_function<type_1100>;
-		using constructor_1101_t = kangaru::constructor_function<type_1101>;
-		using constructor_1110_t = kangaru::constructor_function<type_1110>;
-		using constructor_1111_t = kangaru::constructor_function<type_1111>;
+		SECTION("Class type with constructors") {
+			using constructor_0000_t = kangaru::constructor_function<type_0000>;
+			using constructor_0001_t = kangaru::constructor_function<type_0001>;
+			using constructor_0010_t = kangaru::constructor_function<type_0010>;
+			using constructor_0011_t = kangaru::constructor_function<type_0011>;
+			using constructor_0100_t = kangaru::constructor_function<type_0100>;
+			using constructor_0101_t = kangaru::constructor_function<type_0101>;
+			using constructor_0110_t = kangaru::constructor_function<type_0110>;
+			using constructor_0111_t = kangaru::constructor_function<type_0111>;
+			using constructor_1000_t = kangaru::constructor_function<type_1000>;
+			using constructor_1001_t = kangaru::constructor_function<type_1001>;
+			using constructor_1010_t = kangaru::constructor_function<type_1010>;
+			using constructor_1011_t = kangaru::constructor_function<type_1011>;
+			using constructor_1100_t = kangaru::constructor_function<type_1100>;
+			using constructor_1101_t = kangaru::constructor_function<type_1101>;
+			using constructor_1110_t = kangaru::constructor_function<type_1110>;
+			using constructor_1111_t = kangaru::constructor_function<type_1111>;
+			
+			auto constructor_0000 = constructor_0000_t{};
+			auto constructor_0001 = constructor_0001_t{};
+			auto constructor_0010 = constructor_0010_t{};
+			auto constructor_0011 = constructor_0011_t{};
+			auto constructor_0100 = constructor_0100_t{};
+			auto constructor_0101 = constructor_0101_t{};
+			auto constructor_0110 = constructor_0110_t{};
+			auto constructor_0111 = constructor_0111_t{};
+			auto constructor_1000 = constructor_1000_t{};
+			auto constructor_1001 = constructor_1001_t{};
+			auto constructor_1010 = constructor_1010_t{};
+			auto constructor_1011 = constructor_1011_t{};
+			auto constructor_1100 = constructor_1100_t{};
+			auto constructor_1101 = constructor_1101_t{};
+			auto constructor_1110 = constructor_1110_t{};
+			auto constructor_1111 = constructor_1111_t{};
+			
+			CHECK((kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0000_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0001_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0010_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0011_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0100_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0101_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0110_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_0111_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1000_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1001_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1010_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1011_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1100_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1101_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1110_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_1111_t, 0, 1>));
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0001_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0010_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0011_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference_and_lvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0100_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0101_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference_and_rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0110_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0111_t, 0, 1>()
+			) == kangaru::reference_kind::all_except_rvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1000_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1001_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference_and_rvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1010_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1011_t, 0, 1>()
+			) == kangaru::reference_kind::all_except_rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1100_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_reference_and_rvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1101_t, 0, 1>()
+			) == kangaru::reference_kind::all_except_lvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1110_t, 0, 1>()
+			) == kangaru::reference_kind::all_except_lvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
+			) == kangaru::reference_kind::all_reference_kind);
+			
+			CHECK(kangaru::construction_tree_needs<type_0000, injected>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, injected&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0000, int>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, int&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, int const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, int&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0000, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0001, injected>);
+			CHECK(kangaru::construction_tree_needs<type_0001, injected&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0001, int>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, int&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, int const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, int&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0001, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0010, injected>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, injected&>);
+			CHECK(kangaru::construction_tree_needs<type_0010, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0010, int>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, int&>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, int const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, int&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0010, int const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0100, injected>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, injected&>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, injected const&>);
+			CHECK(kangaru::construction_tree_needs<type_0100, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_0100, int>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, int&>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, int const&>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, int&&>);
+			CHECK(not kangaru::construction_tree_needs<type_0100, int const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_0101, injected&&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&&>);
+			
+			////static_assert(not kangaru::construction_tree_needs<type_0110, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_0110, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_0110, injected&&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0110, injected const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_0111, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_0111, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
+			////static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_1000, injected>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, injected&>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, injected&&>);
+			CHECK(kangaru::construction_tree_needs<type_1000, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<type_1000, int>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, int&>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, int const&>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, int&&>);
+			CHECK(not kangaru::construction_tree_needs<type_1000, int const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1001, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1001, injected const&&>);
+			
+			////static_assert(not kangaru::construction_tree_needs<type_1010, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_1010, injected const&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1010, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1010, injected const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_1011, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_1011, injected const&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1011, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1011, injected const&&>);
+			
+			////static_assert(not kangaru::construction_tree_needs<type_1100, injected&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1100, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_1100, injected&&>);
+			////static_assert(kangaru::construction_tree_needs<type_1100, injected const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_1101, injected&>);
+			////static_assert(not kangaru::construction_tree_needs<type_1101, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_1101, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1101, injected const&&>);
+			
+			////static_assert(not kangaru::construction_tree_needs<type_1110, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_1110, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_1110, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1110, injected const&&>);
+			
+			//static_assert(kangaru::construction_tree_needs<type_1111, injected&>);
+			//static_assert(kangaru::construction_tree_needs<type_1111, injected const&>);
+			//static_assert(kangaru::construction_tree_needs<type_1111, injected&&>);
+			//static_assert(kangaru::construction_tree_needs<type_1111, injected const&&>);
+		}
 		
-		auto constructor_0000 = constructor_0000_t{};
-		auto constructor_0001 = constructor_0001_t{};
-		auto constructor_0010 = constructor_0010_t{};
-		auto constructor_0011 = constructor_0011_t{};
-		auto constructor_0100 = constructor_0100_t{};
-		auto constructor_0101 = constructor_0101_t{};
-		auto constructor_0110 = constructor_0110_t{};
-		auto constructor_0111 = constructor_0111_t{};
-		auto constructor_1000 = constructor_1000_t{};
-		auto constructor_1001 = constructor_1001_t{};
-		auto constructor_1010 = constructor_1010_t{};
-		auto constructor_1011 = constructor_1011_t{};
-		auto constructor_1100 = constructor_1100_t{};
-		auto constructor_1101 = constructor_1101_t{};
-		auto constructor_1110 = constructor_1110_t{};
-		auto constructor_1111 = constructor_1111_t{};
-		
-		CHECK((kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0000_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0001_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0010_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0011_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0100_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0101_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0110_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_0111_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1000_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1001_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1010_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1011_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1100_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1101_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1110_t, 0, 1>));
-		CHECK(not (kangaru::detail::deducer::is_nth_parameter_prvalue<constructor_1111_t, 0, 1>));
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()
-		) == kangaru::reference_kind::none);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0001_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0010_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0011_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_reference_and_lvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0100_t, 0, 1>()
-		) == kangaru::reference_kind::rvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0101_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_reference_and_rvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0110_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0111_t, 0, 1>()
-		) == kangaru::reference_kind::all_except_rvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1000_t, 0, 1>()
-		) == kangaru::reference_kind::rvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1001_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_reference_and_rvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1010_t, 0, 1>()
-		) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1011_t, 0, 1>()
-		) == kangaru::reference_kind::all_except_rvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1100_t, 0, 1>()
-		) == kangaru::reference_kind::rvalue_reference_and_rvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1101_t, 0, 1>()
-		) == kangaru::reference_kind::all_except_lvalue_const_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1110_t, 0, 1>()
-		) == kangaru::reference_kind::all_except_lvalue_reference);
-		
-		CHECK((
-			kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
-		) == kangaru::reference_kind::all_reference_kind);
-		
-		CHECK(kangaru::construction_tree_needs<type_0000, injected>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, injected&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, injected&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0000, int>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, int&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, int const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, int&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0000, int const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0001, injected>);
-		CHECK(kangaru::construction_tree_needs<type_0001, injected&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, injected&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0001, int>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, int&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, int const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, int&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0001, int const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0010, injected>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, injected&>);
-		CHECK(kangaru::construction_tree_needs<type_0010, injected const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, injected&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0010, int>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, int&>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, int const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, int&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0010, int const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_0011, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_0011, injected const&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0011, injected&&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0011, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0100, injected>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, injected&>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&>);
-		CHECK(kangaru::construction_tree_needs<type_0100, injected&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_0100, int>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, int&>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, int const&>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, int&&>);
-		CHECK(not kangaru::construction_tree_needs<type_0100, int const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_0101, injected&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_0101, injected&&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0101, injected const&&>);
-		
-		////static_assert(not kangaru::construction_tree_needs<type_0110, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_0110, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_0110, injected&&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0110, injected const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_0111, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_0111, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_0111, injected&&>);
-		////static_assert(not kangaru::construction_tree_needs<type_0111, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_1000, injected>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, injected&>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, injected const&>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, injected&&>);
-		CHECK(kangaru::construction_tree_needs<type_1000, injected const&&>);
-		
-		CHECK(not kangaru::construction_tree_needs<type_1000, int>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, int&>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, int const&>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, int&&>);
-		CHECK(not kangaru::construction_tree_needs<type_1000, int const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_1001, injected&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1001, injected const&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1001, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1001, injected const&&>);
-		
-		////static_assert(not kangaru::construction_tree_needs<type_1010, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_1010, injected const&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1010, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1010, injected const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_1011, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_1011, injected const&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1011, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1011, injected const&&>);
-		
-		////static_assert(not kangaru::construction_tree_needs<type_1100, injected&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1100, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_1100, injected&&>);
-		////static_assert(kangaru::construction_tree_needs<type_1100, injected const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_1101, injected&>);
-		////static_assert(not kangaru::construction_tree_needs<type_1101, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_1101, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1101, injected const&&>);
-		
-		////static_assert(not kangaru::construction_tree_needs<type_1110, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_1110, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_1110, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1110, injected const&&>);
-		
-		//static_assert(kangaru::construction_tree_needs<type_1111, injected&>);
-		//static_assert(kangaru::construction_tree_needs<type_1111, injected const&>);
-		//static_assert(kangaru::construction_tree_needs<type_1111, injected&&>);
-		//static_assert(kangaru::construction_tree_needs<type_1111, injected const&&>);
+		SECTION("Class type aggregate") {
+			using constructor_agg_0000_t = kangaru::constructor_function<agg_0000>;
+			using constructor_agg_0001_t = kangaru::constructor_function<agg_0001>;
+			using constructor_agg_0010_t = kangaru::constructor_function<agg_0010>;
+			using constructor_agg_0100_t = kangaru::constructor_function<agg_0100>;
+			using constructor_agg_1000_t = kangaru::constructor_function<agg_1000>;
+			
+			auto constructor_agg_0000 = constructor_agg_0000_t{};
+			auto constructor_agg_0001 = constructor_agg_0001_t{};
+			auto constructor_agg_0010 = constructor_agg_0010_t{};
+			auto constructor_agg_0100 = constructor_agg_0100_t{};
+			auto constructor_agg_1000 = constructor_agg_1000_t{};
+			
+			CHECK((kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_agg_0000_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_agg_0001_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_agg_0010_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_agg_0100_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_agg_1000_t, 0, 1>));
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_0000_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_0001_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_0100_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_0010_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_1000_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_const_reference);
+		}
+
+		SECTION("Wrapped class type aggregate") {
+			using constructor_source_agg_0000_t = kangaru::constructor_function<kangaru::reference_source<agg_0000>>;
+			using constructor_source_agg_0001_t = kangaru::constructor_function<kangaru::reference_source<agg_0001>>;
+			using constructor_source_agg_0010_t = kangaru::constructor_function<kangaru::reference_source<agg_0010>>;
+			using constructor_source_agg_0100_t = kangaru::constructor_function<kangaru::reference_source<agg_0100>>;
+			using constructor_source_agg_1000_t = kangaru::constructor_function<kangaru::reference_source<agg_1000>>;
+			
+			auto constructor_source_agg_0000 = constructor_source_agg_0000_t{};
+			auto constructor_source_agg_0001 = constructor_source_agg_0001_t{};
+			auto constructor_source_agg_0010 = constructor_source_agg_0010_t{};
+			auto constructor_source_agg_0100 = constructor_source_agg_0100_t{};
+			auto constructor_source_agg_1000 = constructor_source_agg_1000_t{};
+			
+			CHECK((kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_source_agg_0000_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_source_agg_0001_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_source_agg_0010_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_source_agg_0100_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_source_agg_1000_t, 0, 1>));
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_0000_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_0001_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_0100_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_0010_t, 0, 1>()
+			) == kangaru::reference_kind::lvalue_const_reference);
+			
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_1000_t, 0, 1>()
+			) == kangaru::reference_kind::rvalue_const_reference);
+		}
+
+		SECTION("Level 2 aggregate with aggregate member") {
+			using constructor_level2_agg_0000_t = kangaru::constructor_function<level2_agg_0000>;
+			using constructor_level2_agg_0001_t = kangaru::constructor_function<level2_agg_0001>;
+			using constructor_level2_agg_0010_t = kangaru::constructor_function<level2_agg_0010>;
+			using constructor_level2_agg_0100_t = kangaru::constructor_function<level2_agg_0100>;
+			using constructor_level2_agg_1000_t = kangaru::constructor_function<level2_agg_1000>;
+
+			auto constructor_level2_agg_0000 = constructor_level2_agg_0000_t{};
+			auto constructor_level2_agg_0001 = constructor_level2_agg_0001_t{};
+			auto constructor_level2_agg_0010 = constructor_level2_agg_0010_t{};
+			auto constructor_level2_agg_0100 = constructor_level2_agg_0100_t{};
+			auto constructor_level2_agg_1000 = constructor_level2_agg_1000_t{};
+
+			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0000_t, 0, 1>);
+			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0001_t, 0, 1>);
+			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0010_t, 0, 1>);
+			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0100_t, 0, 1>);
+			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_1000_t, 0, 1>);
+
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0000_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0001_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0100_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0010_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+
+			CHECK((
+				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_1000_t, 0, 1>()
+			) == kangaru::reference_kind::none);
+		}
 	}
 }

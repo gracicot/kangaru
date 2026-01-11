@@ -420,8 +420,8 @@ namespace kangaru {
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T requires(
 			source_of<
 				wrapped_source_rebind_result_t<
-					Self&,
-					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>&>>>
+					Self&&,
+					detail::recursive_source::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>
 				>,
 				T
 			>
@@ -429,8 +429,8 @@ namespace kangaru {
 			return kangaru::provide<T>(
 				kangaru::rebind(
 					source,
-					detail::recursive_source::leaf_as_alternative<with_recursion<ref_result_t<wrapped_source_t<Self>&>>>{
-						KANGARU5_NO_ADL(ref)(source.source)
+					detail::recursive_source::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
+						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
 					}
 				).source
 			);

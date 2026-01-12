@@ -553,7 +553,7 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_agg_1000_t, 0, 1>()
 			) == kangaru::reference_kind::rvalue_const_reference);
 		}
-
+		
 		SECTION("Wrapped class type aggregate") {
 			using constructor_source_agg_0000_t = kangaru::constructor_function<kangaru::reference_source<agg_0000>>;
 			using constructor_source_agg_0001_t = kangaru::constructor_function<kangaru::reference_source<agg_0001>>;
@@ -593,42 +593,42 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_source_agg_1000_t, 0, 1>()
 			) == kangaru::reference_kind::rvalue_const_reference);
 		}
-
+		
 		SECTION("Level 2 aggregate with aggregate member") {
 			using constructor_level2_agg_0000_t = kangaru::constructor_function<level2_agg_0000>;
 			using constructor_level2_agg_0001_t = kangaru::constructor_function<level2_agg_0001>;
 			using constructor_level2_agg_0010_t = kangaru::constructor_function<level2_agg_0010>;
 			using constructor_level2_agg_0100_t = kangaru::constructor_function<level2_agg_0100>;
 			using constructor_level2_agg_1000_t = kangaru::constructor_function<level2_agg_1000>;
-
+			
 			auto constructor_level2_agg_0000 = constructor_level2_agg_0000_t{};
 			auto constructor_level2_agg_0001 = constructor_level2_agg_0001_t{};
 			auto constructor_level2_agg_0010 = constructor_level2_agg_0010_t{};
 			auto constructor_level2_agg_0100 = constructor_level2_agg_0100_t{};
 			auto constructor_level2_agg_1000 = constructor_level2_agg_1000_t{};
-
+			
 			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0000_t, 0, 1>);
 			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0001_t, 0, 1>);
 			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0010_t, 0, 1>);
 			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_0100_t, 0, 1>);
 			CHECK(kangaru::detail::deducer::function_nth_parameter_prvalue<constructor_level2_agg_1000_t, 0, 1>);
-
+			
 			CHECK((
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0000_t, 0, 1>()
 			) == kangaru::reference_kind::none);
-
+			
 			CHECK((
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0001_t, 0, 1>()
 			) == kangaru::reference_kind::none);
-
+			
 			CHECK((
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0100_t, 0, 1>()
 			) == kangaru::reference_kind::none);
-
+			
 			CHECK((
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_0010_t, 0, 1>()
 			) == kangaru::reference_kind::none);
-
+			
 			CHECK((
 				kangaru::detail::deducer::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_level2_agg_1000_t, 0, 1>()
 			) == kangaru::reference_kind::none);

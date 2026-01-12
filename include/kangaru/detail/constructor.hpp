@@ -18,11 +18,14 @@ KANGARU5_EXPORT namespace kangaru {
 	concept raw_constructor_callable =
 		   std::constructible_from<T, Args...>
 		or (
-			    brace_constructible<T, Args...>
-			and (
-				   not std::is_aggregate_v<T>
-				or sizeof...(Args) != 1
-			)
+			brace_constructible<T, Args...>
+			// TODO: Remove this preprocessor conditional when visual studio feedback item 11026651 is fixed
+			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
+				and (
+					   not std::is_aggregate_v<T>
+					or sizeof...(Args) != 1
+				)
+			#endif
 		);
 	
 	template<unqualified_object Type>

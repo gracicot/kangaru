@@ -1,5 +1,5 @@
-#ifndef KANGARU_DETAIL_DEDUCER_HPP
-#define KANGARU_DETAIL_DEDUCER_HPP
+#ifndef KANGARU5_DETAIL_DEDUCER_HPP
+#define KANGARU5_DETAIL_DEDUCER_HPP
 
 #include "attributes.hpp"
 #include "concepts.hpp"
@@ -126,6 +126,25 @@ namespace kangaru {
 		template<typename T>
 		operator T&& () const;
 		#endif
+	};
+	
+	KANGARU5_EXPORT struct prvalue_detector_deducer {
+		using is_deducer = kangaru_deducer_tag;
+		
+		template<deducible T>
+		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
+		
+		template<deducible T>
+		operator T& () const = delete;
+		
+		template<typename T>
+		operator T&& () const = delete;
+		
+		template<deducible T>
+		operator T const& () const = delete;
+		
+		template<deducible T>
+		operator T const&& () const = delete;
 	};
 	
 	KANGARU5_EXPORT struct ambiguous_overloaded_reference_deducer {
@@ -280,12 +299,19 @@ namespace kangaru {
 		
 		explicit constexpr exclude_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
-			
+		
 		template<deducible T>
 			requires (different_from<Exclude, T> and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
 		constexpr operator T() {
 			return deducer.operator T();
 		}
+		
+		KANGARU5_VOLATILE_OVERLOAD(
+			// Volatile overloads are left undefined as they are only needed for overload resolution.
+			template<deducible T>
+				requires (different_from<Exclude, T> and deducer_for<Deducer, T volatile> and not deducer_for<Deducer const, T volatile>)
+			operator T volatile();
+		)
 		
 		template<deducible T>
 			requires (different_from<Exclude, T&> and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
@@ -316,6 +342,12 @@ namespace kangaru {
 		constexpr operator T() const {
 			return deducer.operator T();
 		}
+		
+		KANGARU5_VOLATILE_OVERLOAD(
+			template<deducible T>
+				requires (different_from<Exclude, T> and deducer_for<Deducer const, T volatile>)
+			operator T volatile() const;
+		)
 		
 		template<deducible T>
 			requires (different_from<Exclude, T&> and deducer_for<Deducer const, T&>)
@@ -363,6 +395,12 @@ namespace kangaru {
 			return deducer.operator T();
 		}
 		
+		KANGARU5_VOLATILE_OVERLOAD(
+			template<deducible T>
+				requires (different_from<Exclude, T> and deducer_for<Deducer, T volatile> and not deducer_for<Deducer const, T volatile>)
+			operator T volatile();
+		)
+		
 		template<deducible T>
 			requires (different_from<Exclude, T> and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
 		constexpr operator T&() {
@@ -392,6 +430,12 @@ namespace kangaru {
 		constexpr operator T() const {
 			return deducer.operator T();
 		}
+		
+		KANGARU5_VOLATILE_OVERLOAD(
+			template<deducible T>
+				requires (different_from<Exclude, T> and deducer_for<Deducer const, T volatile>)
+			operator T volatile() const;
+		)
 		
 		template<deducible T>
 			requires (different_from<Exclude, T> and deducer_for<Deducer const, T&>)
@@ -462,12 +506,18 @@ namespace kangaru {
 		
 		explicit constexpr filtered_value_category_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
-			
+		
 		template<deducible T>
 			requires (kind == reference_kind::none and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
 		constexpr operator T() {
 			return deducer.operator T();
 		}
+		
+		KANGARU5_VOLATILE_OVERLOAD(
+			template<deducible T>
+				requires (kind == reference_kind::none and deducer_for<Deducer, T volatile> and not deducer_for<Deducer const, T volatile>)
+			operator T volatile();
+		)
 		
 		template<deducible T>
 			requires (
@@ -514,6 +564,12 @@ namespace kangaru {
 		constexpr operator T() const {
 			return deducer.operator T();
 		}
+		
+		KANGARU5_VOLATILE_OVERLOAD(
+			template<deducible T>
+				requires (kind == reference_kind::none and deducer_for<Deducer const, T volatile>)
+			operator T volatile() const;
+		)
 		
 		template<deducible T>
 			requires ((kind & reference_kind::lvalue_reference) != reference_kind::none and deducer_for<Deducer const, T&>)
@@ -577,8 +633,13 @@ namespace kangaru {
 		
 		template<typename F, std::size_t nth, std::size_t max>
 		concept function_nth_parameter_prvalue =
-			    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
-			and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>;
+			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
+				    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
+				and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>
+			#else
+				callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
+			#endif
+		;
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
 		concept callable_with_lvalue_const_ref = callable_with_nth_parameter_being<
@@ -796,4 +857,4 @@ namespace kangaru {
 
 #include "undef.hpp"
 
-#endif // KANGARU_DETAIL_DEDUCER_HPP
+#endif // KANGARU5_DETAIL_DEDUCER_HPP

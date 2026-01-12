@@ -68,13 +68,21 @@ if(KANGARU_TEST)
 endif()
 
 target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fno-exceptions>
+	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
 	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
 )
 
 target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<OR:$<CXX_COMPILER_ID:GNU>,$<CXX_COMPILER_ID:Clang>,$<CXX_COMPILER_ID:AppleClang>>:-fno-exceptions>
+	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
 	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
+)
+
+target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+)
+
+target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
 )
 
 target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)

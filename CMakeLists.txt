@@ -97,6 +97,7 @@ if(KANGARU_HAS_CPP_MODULES)
 				src/kangaru.cpp
 	)
 	target_compile_features(kangaru PUBLIC cxx_std_20)
+	target_compile_options(kangaru PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 endif()
 
 target_compile_features(kangaru INTERFACE cxx_std_20)

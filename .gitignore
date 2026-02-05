@@ -11,3 +11,4 @@ build-*
 !.envrc
 CMakeSettings.json
 compile_commands.json
+install/

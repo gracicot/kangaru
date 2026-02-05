@@ -120,44 +120,40 @@ include(GNUInstallDirs)
 set(KANGARU_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/kangaru")
 mark_as_advanced(KANGARU_INSTALL_CMAKEDIR)
 
-write_basic_package_version_file(
-	"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
-	COMPATIBILITY SameMajorVersion
-	ARCH_INDEPENDENT
-)
-
-install(
-	FILES
-		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
-	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
-)
-
 if(KANGARU_HAS_CPP_MODULES)
+	write_basic_package_version_file(
+		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
+		COMPATIBILITY SameMajorVersion
+	)
+	
 	install(TARGETS kangaru
-		EXPORT kangaru-targets
+		EXPORT kangaru-config
 		FILE_SET HEADERS
 		FILE_SET CXX_MODULES
 			DESTINATION ${KANGARU_INSTALL_CMAKEDIR}/interfaces
 	)
 else()
+	write_basic_package_version_file(
+		"${CMAKE_CURRENT_BINARY_DIR}/kangaru-config-version.cmake"
+		COMPATIBILITY SameMajorVersion
+		ARCH_INDEPENDENT
+	)
+	
 	install(TARGETS kangaru
-		EXPORT kangaru-targets
+		EXPORT kangaru-config
 		FILE_SET HEADERS
 	)
 endif()
 
 install(
-	EXPORT kangaru-targets
+	EXPORT kangaru-config
 	NAMESPACE kangaru::
 	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
 )
 
 export(
-	EXPORT kangaru-targets
+	EXPORT kangaru-config
+	NAMESPACE kangaru::
 	FILE "${CMAKE_CURRENT_BINARY_DIR}/kangaru-config.cmake"
 )
 
-install(
-	EXPORT kangaru-targets FILE kangaru-config.cmake
-	DESTINATION ${KANGARU_INSTALL_CMAKEDIR}
-)

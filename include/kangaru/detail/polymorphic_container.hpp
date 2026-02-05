@@ -42,7 +42,7 @@ namespace kangaru {
 		template<source T, forwarded<container_provided_sources> Self> requires(((callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0) + ... + 0) == 1)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			constexpr auto index = index_for<T>(std::index_sequence_for<Functions...>{});
-			auto& function = std::get<index>(KANGARU5_FWD(source).functions);
+			auto& function = std::get<index>(source.functions);
 			return function(KANGARU5_NO_ADL(ref)(source.source));
 		}
 		

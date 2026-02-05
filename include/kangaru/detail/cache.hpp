@@ -179,12 +179,12 @@ namespace kangaru {
 		cache_type cache;
 	};
 	
-	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
+	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	KANGARU5_EXPORT template<template<source> typename CacheFrom, forwarded_source Source>
+	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
 		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
@@ -243,34 +243,17 @@ namespace kangaru {
 	static_assert(dereferenceable_cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
 	
-	KANGARU5_EXPORT template<template<unqualified_object> typename SourceType>
+	KANGARU5_EXPORT template<template<typename> typename SourceType>
 	struct cached_reference_to_source {
 		template<injectable T>
+			requires(
+				    allow_runtime_caching_v<T>
+				and requires { typename SourceType<std::remove_cvref_t<T>>; }
+			)
 		struct ttype {
 			using type = SourceType<std::remove_cvref_t<T>>&;
 		};
 	};
-	
-	KANGARU5_EXPORT template<source Source, template<typename> typename SourceFor>
-	struct with_cache_using_source {
-		template<injectable T, forwarded<with_cache_using_source> Self>
-			requires (
-				    allow_runtime_caching_v<T>
-				and not detail::utility::is_specialisation_of_v<SourceFor, T>
-				and wrapping_source_of<Self, SourceFor<T>>
-			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
-			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
-		}
-		
-		Source source;
-	};
-	
-	KANGARU5_EXPORT template<template<typename> typename SourceFor>
-	inline constexpr auto make_source_with_cache_using_source(forwarded_source auto&& source) {
-		return with_cache_using_source<std::decay_t<decltype(source)>, SourceFor>{KANGARU5_FWD(source)};
-	}
 }
 
 #include "undef.hpp"

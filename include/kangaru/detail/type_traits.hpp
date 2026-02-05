@@ -29,6 +29,9 @@ namespace kangaru::detail::type_traits {
 	
 	template<typename F, typename... Args>
 	using call_result_t = decltype(std::declval<F>()(std::declval<Args>()...));
+	
+	template<typename F, typename T, typename... Args>
+	using call_result_template_1t_t = decltype(std::declval<F>().template operator()<T>(std::declval<Args>()...));
 }
 
 #include "undef.hpp"

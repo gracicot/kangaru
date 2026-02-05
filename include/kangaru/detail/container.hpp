@@ -75,7 +75,7 @@ KANGARU5_EXPORT namespace kangaru {
 					KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 						with_alternative{
 							with_recursion{
-								KANGARU5_NO_ADL(make_source_with_cache_using_source<cached_reference_to_reference_source>)(
+								KANGARU5_NO_ADL(make_source_with_provide_using_source<cached_reference_to_reference_source>)(
 									with_dereference{
 										KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 									}

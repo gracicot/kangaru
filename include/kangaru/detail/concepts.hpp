@@ -64,7 +64,7 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_FWD(f)(KANGARU5_FWD(args)...);
 	};
 	
-	template<typename F, typename R, typename... Args>
+	template<typename R, typename F, typename... Args>
 	concept callable_returns =
 		    callable<F, Args...>
 		and requires(F&& f, Args&&... args) {
@@ -81,7 +81,7 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);
 	};
 	
-	template<typename F, typename R, typename T, typename...Args>
+	template<typename R, typename F, typename T, typename...Args>
 	concept callable_template_1t_returns =
 		    callable_template_1t<F, T, Args...>
 		and requires(F&& f, Args&&... args) {

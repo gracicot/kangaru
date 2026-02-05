@@ -43,8 +43,8 @@ namespace kangaru {
 			Function const& func;
 			constexpr auto operator()(deducer auto... deduce) const -> T
 			requires callable_returns<
-				Function const&,
 				T,
+				Function const&,
 				exclude_deducer<T, decltype(deduce)>...
 			> {
 				return func(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
@@ -60,7 +60,7 @@ namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable_returns<detail::type_traits::call_result_t<MakeInjector const&, Source>, T, call<T>>
+			requires callable_returns<T, detail::type_traits::call_result_t<MakeInjector const&, Source>, call<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(call<T>{func});
 		}
@@ -132,7 +132,7 @@ namespace kangaru {
 		using source_t = with_cache_2<
 			with_function_call<
 				Something,
-				overload<function<Functions, make_spread_injector_function>...>
+				overload<with_injector<Functions, make_spread_injector_function>...>
 			>,
 			type_based_cache<inject_result_t<Functions>...>
 		>;
@@ -147,7 +147,7 @@ namespace kangaru {
 					with_function_call{
 						std::move(something),
 						overload{
-							function{
+							with_injector{
 								std::move(functions),
 								make_spread_injector_function{}
 							}...
@@ -192,7 +192,7 @@ namespace kangaru {
 							with_function_call{
 								std::move(source),
 								overload{
-									function{
+									with_injector{
 										std::move(modules),
 										make_spread_injector_function{}
 									}...
@@ -209,7 +209,7 @@ namespace kangaru {
 				with_cache_2<
 					with_function_call<
 						Source,
-						overload<function<Modules, make_spread_injector_function>...>
+						overload<with_injector<Modules, make_spread_injector_function>...>
 					>,
 					type_based_cache<inject_result_t<Modules>...>
 			// 	>

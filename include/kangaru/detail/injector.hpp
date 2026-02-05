@@ -5,6 +5,8 @@
 #include "deducer.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"
+#include "source_reference_wrapper.hpp"
+#include <concepts>
 
 #ifndef KANGARU5_MODULES
 #include <type_traits>
@@ -382,6 +384,97 @@ namespace kangaru {
 			return first(inner_injector(function));
 		};
 	} */
+	
+	template<function_object Function, function_object MakeInjector>
+	struct with_injector {
+	private:
+		template<injectable T, forwarded<Function> F>
+		struct template_call {
+			KANGARU5_NO_UNIQUE_ADDRESS
+			F func;
+			
+			// TODO: Can we just ingnore the template parameter T and not enforce the return type?
+			constexpr auto operator()(deducer auto... deduce) const -> T
+			requires callable_returns<
+				T,
+				F&&,
+				exclude_deducer<T, decltype(deduce)>...
+			> {
+				return KANGARU5_FWD(func)(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+			}
+			
+			constexpr auto operator()(deducer auto... deduce) const -> decltype(auto)
+			requires callable_template_1t<
+				F&&,
+				T,
+				exclude_deducer<T, decltype(deduce)>...
+			> {
+				return KANGARU5_FWD(func).template operator()<T>(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+			}
+		};
+		
+	public:
+		constexpr with_injector()
+			requires(std::default_initializable<Function> and std::default_initializable<MakeInjector>) :
+			function{},
+			make_injector{} {}
+		
+		explicit constexpr with_injector(Function function)
+			requires(std::default_initializable<MakeInjector>) :
+			function{std::move(function)},
+			make_injector{} {}
+		
+		constexpr with_injector(Function function, MakeInjector make_injector) :
+			function{std::move(function)},
+			make_injector{std::move(make_injector)} {}
+		
+		template<forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, Function&>)
+		constexpr auto operator()(Source&& source) & -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(function);
+		}
+		
+		template<forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, Function&&>)
+		constexpr auto operator()(Source&& source) && -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(std::move(function));
+		}
+		
+		template<forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, Function const&>)
+		constexpr auto operator()(Source&& source) const& -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(function);
+		}
+		
+		template<forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, Function const&&>)
+		constexpr auto operator()(Source&& source) const&& -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(std::move(function));
+		}
+		
+		template<injectable T, forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, template_call<T, Function&>>)
+		constexpr auto operator()(Source&& source) & -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(template_call<T, Function&>{function});
+		}
+		
+		template<injectable T, forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, template_call<T, Function&&>>)
+		constexpr auto operator()(Source&& source) && -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(template_call<T, Function&&>{std::move(function)});
+		}
+		
+		template<injectable T, forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, template_call<T, Function const&>>)
+		constexpr auto operator()(Source&& source) const& -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(template_call<T, Function const&>{function});
+		}
+		
+		template<injectable T, forwarded_source Source> requires(callable<detail::type_traits::call_result_t<MakeInjector const&, fwd_ref_result_t<Source&&>>, template_call<T, Function const&&>>)
+		constexpr auto operator()(Source&& source) const&& -> decltype(auto) {
+			return std::as_const(make_injector)(KANGARU5_FWD(source))(template_call<T, Function const&&>{std::move(function)});
+		}
+		
+	private:
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Function function;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		MakeInjector make_injector;
+	};
 }
 
 #include "undef.hpp"

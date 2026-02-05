@@ -104,6 +104,20 @@ namespace kangaru {
 		or detail::source::adl_nonmember_source_of<Source, T>
 		or detail::source::adl_nonmember_template_source_of<Source, T>;
 	
+	template<typename T, typename F, typename... Args>
+	concept callable_returns_source_of =
+		    callable<F, Args...>
+		and requires(F&& f, Args&&... args) {
+			{ KANGARU5_FWD(f)(KANGARU5_FWD(args)...) } -> source_of<T>;
+		};
+	
+	template<typename T, typename F, typename TParam, typename... Args>
+	concept callable_template_1t_returns_source_of =
+		    callable_template_1t<F, TParam, Args...>
+		and requires(F&& f, Args&&... args) {
+			{ KANGARU5_FWD(f).template operator()<TParam>(KANGARU5_FWD(args)...) } -> source_of<T>;
+		};
+	
 	KANGARU5_EXPORT template<typename Source>
 	concept weak_wrapping_source =
 		    source<std::remove_reference_t<Source>>

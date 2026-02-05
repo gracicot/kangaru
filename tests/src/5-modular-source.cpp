@@ -27,47 +27,47 @@ namespace kangaru {
 		using constructed_head_source_t = detail::type_traits::call_result_t<MakeHeadSource, Constructed>;
 		
 		template<kangaru::source Constructed, function_object... Modules>
-		inline constexpr auto usable_as_head_v = false;
+		inline constexpr auto incremental_source_complete_v = false;
 		
 		template<kangaru::source Constructed, function_object Head, function_object... Tail>
 			requires callable_module_member_initializer<Head, Constructed>
-		inline constexpr auto usable_as_head_v<Constructed, Head, Tail...> =
+		inline constexpr auto incremental_source_complete_v<Constructed, Head, Tail...> =
 			    callable_module_member_initializer<Head, Constructed>
-			and usable_as_head_v<composed_source_cat_t<Constructed, tied_source<constructed_head_source_t<Head, Constructed>>>, Tail...>;
+			and incremental_source_complete_v<composed_source_cat_t<Constructed, tied_source<constructed_head_source_t<Head, Constructed>>>, Tail...>;
 		
 		template<kangaru::source Constructed>
-		inline constexpr auto usable_as_head_v<Constructed> = true;
+		inline constexpr auto incremental_source_complete_v<Constructed> = true;
 		
 		template<kangaru::source Constructed, function_object... Functions>
-		struct modular_source_impl;
+		struct incremental_source_impl;
 		
 		template<kangaru::source Constructed, function_object Head, function_object... Tail>
-		struct modular_source_impl<Constructed, Head, Tail...> {
+		struct incremental_source_impl<Constructed, Head, Tail...> {
 			using head_t = constructed_head_source_t<Head, Constructed>;
 			using tail_constructed_t = composed_source_cat_t<Constructed, tied_source<head_t>>;
-			using tail_t = modular_source_impl<tail_constructed_t, Tail...>;
+			using tail_t = incremental_source_impl<tail_constructed_t, Tail...>;
 			
-			modular_source_impl(modular_source_impl const&) = delete;
-			auto operator=(modular_source_impl const&) -> modular_source_impl& = delete;
-			modular_source_impl(modular_source_impl&&) = delete;
-			auto operator=(modular_source_impl&&) -> modular_source_impl& = delete;
-			~modular_source_impl() = default;
+			incremental_source_impl(incremental_source_impl const&) = delete;
+			auto operator=(incremental_source_impl const&) -> incremental_source_impl& = delete;
+			incremental_source_impl(incremental_source_impl&&) = delete;
+			auto operator=(incremental_source_impl&&) -> incremental_source_impl& = delete;
+			~incremental_source_impl() = default;
 			
-			constexpr modular_source_impl(Head make_head, Tail... tail) requires std::same_as<composed_source<>, Constructed> :
+			constexpr incremental_source_impl(Head make_head, Tail... tail) requires std::same_as<composed_source<>, Constructed> :
 				head{std::move(make_head)(tie())},
 				tail{KANGARU5_NO_ADL(tie)(head), tail...} {}
 			
-			constexpr modular_source_impl(Constructed accumulated, Head make_head, Tail... tail) :
+			constexpr incremental_source_impl(Constructed accumulated, Head make_head, Tail... tail) :
 				head{std::move(make_head)(accumulated)},
 				tail{KANGARU5_NO_ADL(composed_source_cat)(accumulated, KANGARU5_NO_ADL(tie)(head)), tail...} {}
 			
 			
-			template<injectable T, forwarded<modular_source_impl> Self> requires source_of<head_t, T>
+			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<head_t, T>
 			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 				return kangaru::provide<T>(KANGARU5_FWD(source).head);
 			}
 			
-			template<injectable T, forwarded<modular_source_impl> Self> requires source_of<tail_t, T>
+			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<tail_t, T>
 			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 				return kangaru::provide<T>(KANGARU5_FWD(source).tail);
 			}
@@ -77,16 +77,16 @@ namespace kangaru {
 		};
 		
 		template<kangaru::source Constructed, function_object Head>
-		struct modular_source_impl<Constructed, Head> {
-			constexpr modular_source_impl(Constructed accumulated, Head make_head) :
+		struct incremental_source_impl<Constructed, Head> {
+			constexpr incremental_source_impl(Constructed accumulated, Head make_head) :
 				head{std::move(make_head)(accumulated)} {}
 			
-			explicit constexpr modular_source_impl(Head make_head) requires(std::same_as<composed_source<>, Constructed>) :
+			explicit constexpr incremental_source_impl(Head make_head) requires(std::same_as<composed_source<>, Constructed>) :
 				head{std::move(make_head)(tie())} {}
 			
 			using head_t = constructed_head_source_t<Head, Constructed>;
 			
-			template<injectable T, forwarded<modular_source_impl> Self> requires source_of<head_t, T>
+			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<head_t, T>
 			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 				return kangaru::provide<T>(KANGARU5_FWD(source).head);
 			}
@@ -95,9 +95,9 @@ namespace kangaru {
 		};
 		
 		template<kangaru::source Constructed>
-		struct modular_source_impl<Constructed> {
-			modular_source_impl() = default;
-			explicit constexpr modular_source_impl(Constructed) {}
+		struct incremental_source_impl<Constructed> {
+			incremental_source_impl() = default;
+			explicit constexpr incremental_source_impl(Constructed) {}
 		};
 		
 		template<kangaru::source Source>
@@ -123,17 +123,17 @@ namespace kangaru {
 				auto injector = KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source));
 				using type = decltype(std::move(injector)(std::move(function)));
 				auto construct_source = in_place_construct{[&]() -> type { return std::move(injector)(std::move(function)); }};
-				return with_source_reference_wrapping{reference_source<type>{construct_source}};
+				return with_source_reference_wrapping{reference_source<type>{std::move(construct_source)}};
 			};
 			
 			Function function;
 		};
 		
 		template<function_object... MakeModuleSources>
-			requires detail::modular_source::usable_as_head_v<composed_source<>, modular_module_initializer<MakeModuleSources>...>
+			requires detail::modular_source::incremental_source_complete_v<composed_source<>, modular_module_initializer<MakeModuleSources>...>
 		struct modular_container_impl {
 		private:
-			using modules_t = detail::modular_source::modular_source_impl<composed_source<>, modular_module_initializer<MakeModuleSources>...>;
+			using modules_t = detail::modular_source::incremental_source_impl<composed_source<>, modular_module_initializer<MakeModuleSources>...>;
 			
 		public:
 			explicit constexpr modular_container_impl(MakeModuleSources... modules) :
@@ -253,16 +253,24 @@ namespace kangaru {
 	}
 	
 	template<source Source = none_source, function_object... Lambdas>
-		requires detail::modular_source::usable_as_head_v<composed_source<>, detail::modular_source::use_source<Source>, detail::modular_source::modular_source_initializer<Lambdas>...>
+		requires detail::modular_source::incremental_source_complete_v<composed_source<>, detail::modular_source::use_source<Source>, detail::modular_source::modular_source_initializer<Lambdas>...>
 	struct modular_source {
 	private:
-		using impl_t = detail::modular_source::modular_source_impl<composed_source<>, detail::modular_source::use_source<Source>, detail::modular_source::modular_source_initializer<Lambdas>...>;
+		using impl_t = detail::modular_source::incremental_source_impl<composed_source<>, detail::modular_source::use_source<Source>, detail::modular_source::modular_source_initializer<Lambdas>...>;
 		
 	public:
+		explicit(sizeof...(Lambdas) == 1)
+		constexpr modular_source(Lambdas... lambdas) requires(std::same_as<none_source, Source>) :
+			impl{
+				detail::modular_source::use_source<Source>{Source{}},
+				detail::modular_source::modular_source_initializer<Lambdas>{std::move(lambdas)}...
+			} {}
+		
 		constexpr modular_source() requires(sizeof...(Lambdas) == 0 and std::default_initializable<Source>) :
 			impl{detail::modular_source::use_source<Source>{Source{}}} {}
 		
-		explicit(sizeof...(Lambdas) == 0) constexpr modular_source(Source source, Lambdas... lambdas) :
+		explicit(sizeof...(Lambdas) == 0)
+		constexpr modular_source(Source source, Lambdas... lambdas) :
 			impl{
 				detail::modular_source::use_source<Source>{std::move(source)},
 				detail::modular_source::modular_source_initializer<Lambdas>{std::move(lambdas)}...
@@ -278,6 +286,12 @@ namespace kangaru {
 	private:
 		impl_t impl;
 	};
+	
+	template<callable First, typename... Rest>
+	modular_source(First, Rest...) -> modular_source<none_source, First, Rest...>;
+	
+	template<source Source, typename... Rest> requires(not callable<Source>)
+	modular_source(Source, Rest...) -> modular_source<Source, Rest...>;
 	
 	template<source Source, function_object... Lambdas>
 		requires std::constructible_from<modular_source<Source, Lambdas...>, Source&&, Lambdas&...>
@@ -495,8 +509,6 @@ constexpr auto module0() {
 	// Modular sources are immovable, but we can still return them because of RVO.
 	return kangaru::modular_source{
 		// We start this modular source from nothing.
-		// TODO: Figure out if we can omit this parameter.
-		kangaru::none_source{},
 		[]{
 			return kangaru::object_source{int{9}};
 		}

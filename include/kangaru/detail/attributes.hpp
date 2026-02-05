@@ -80,6 +80,15 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<weak_injectable T>
 	inline constexpr auto allow_injection_using_v = detail::attribute::evaluate_attribute_t<allow_injection_using, T>::value;
+	
+	template<typename T>
+	struct assume_runtime_cached {
+		template<weak_injectable A> requires(std::same_as<T, A>)
+		using ttype = typename detail::attribute::attribute_function_t<assume_runtime_cached, A, std::false_type>;
+	};
+	
+	template<weak_injectable T>
+	inline constexpr auto assume_runtime_cached_v = detail::attribute::evaluate_attribute_t<assume_runtime_cached, T>::value;
 }
 
 #include "undef.hpp"

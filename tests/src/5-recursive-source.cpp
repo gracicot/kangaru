@@ -115,7 +115,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 	
 	SECTION("Support the service idiom and cache and construction alternative") {
 		auto source = kangaru::with_recursion{
-			kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_reference_source>(
+			kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_reference_source>(
 				kangaru::make_source_with_dereference(
 					kangaru::make_source_with_cache(
 						kangaru::make_source_with_heap_storage(
@@ -141,7 +141,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_passthrough(
 				kangaru::make_source_with_exhaustive_construction(
 					kangaru::make_source_with_recursion(
-						kangaru::make_source_with_cache_using_source<kangaru::cached_reference_to_reference_source>(
+						kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_reference_source>(
 							kangaru::make_source_with_dereference(
 								kangaru::make_source_with_cache(
 									kangaru::make_source_with_heap_storage(
@@ -230,13 +230,13 @@ TEST_CASE("Recursive source", "[recursive]") {
 					kangaru::reference_source{type2{.id = 3}}
 				),
 				kangaru::overload{
-					kangaru::function{
+					kangaru::with_injector{
 						[](type1 t1, type2& t2) {
 							return aggregate{.t1 = t1, .t2 = t2};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::function{
+					kangaru::with_injector{
 						[](aggregate agg) {
 							return type3{.agg = agg};
 						},
@@ -263,19 +263,19 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::with_function_call{
 				kangaru::object_source{type1{.id = 2}},
 				kangaru::overload{
-					kangaru::function{
+					kangaru::with_injector{
 						[](type1 t1, type2& t2) {
 							return aggregate{.t1 = t1, .t2 = t2};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::function{
+					kangaru::with_injector{
 						[](aggregate agg) {
 							return type3{.agg = agg};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::function{
+					kangaru::with_injector{
 						[&obj]() -> type2& {
 							return obj;
 						},

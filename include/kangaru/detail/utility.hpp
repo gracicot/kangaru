@@ -65,14 +65,6 @@ namespace kangaru::detail::utility {
 	template<typename Tuple>
 	using sequence_tuple_for_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<std::tuple_size_v<Tuple>>>::type;
 	
-	template<template<typename...> typename Template>
-	struct template_type_identity {
-		template<typename... Args>
-		struct ttype {
-			using type = Template<Args...>;
-		};
-	};
-	
 	template<template<typename...> typename, typename>
 	inline constexpr auto is_specialisation_of_v = false;
 	

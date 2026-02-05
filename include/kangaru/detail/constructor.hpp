@@ -125,10 +125,6 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::move(function)();
 		}
 		
-		constexpr operator detail::type_traits::call_result_t<F>() const& {
-			return function();
-		}
-		
 	private:
 		F function;
 	};

@@ -138,8 +138,8 @@ namespace kangaru {
 		struct override_polymorphic {};
 		
 		template<typename... Types>
-		struct override_polymorphic<std::tuple<Types&...>> {
-			 using type = std::tuple<kangaru::polymorphic_source<Types&>...>;
+		struct override_polymorphic<std::tuple<Types...>> {
+			 using type = std::tuple<kangaru::polymorphic_source<Types>...>;
 		};
 		
 		template<typename Tuple>

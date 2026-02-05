@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_SOURCE_TYPES_HPP
 
 #include "deducer.hpp"
+#include "exceptions.hpp"
 #include "source.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"
@@ -139,6 +140,30 @@ namespace kangaru {
 		}
 		
 		std::tuple<Sources...> sources;
+	};
+	
+	KANGARU5_EXPORT template<injectable T>
+	struct throwing_source {
+		[[noreturn]]
+		constexpr auto provide() -> T {
+			throw throwing_source_exception{};
+		}
+	};
+	
+	KANGARU5_EXPORT template<injectable T>
+	struct aborting_source {
+		[[noreturn]]
+		constexpr auto provide() -> T {
+			std::abort();
+		}
+	};
+	
+	KANGARU5_EXPORT template<injectable T>
+	struct terminating_source {
+		[[noreturn]]
+		constexpr auto provide() -> T {
+			std::terminate();
+		}
 	};
 	
 	KANGARU5_EXPORT template<object... Ts>
@@ -528,15 +553,41 @@ namespace kangaru {
 	struct with_source_wrapping {
 		Source source;
 		
-		template<wrapping_source T, forwarded<with_source_wrapping> Self> requires wrapping_source_of<Self, wrapped_source_t<T>>
+		template<wrapping_source T, forwarded<with_source_wrapping> Self>
+			requires(
+				    wrapping_source_of<Self, wrapped_source_t<T>>
+				and constructor_callable<T, wrapped_source_t<T>>
+			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return T{kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source)};
+			return KANGARU5_NO_ADL(constructor<T>)(kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source));
 		}
 	};
 	
 	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_source_wrapping(Source&& source) {
 		return with_source_wrapping<std::decay_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	KANGARU5_EXPORT template<source Source, template<typename> typename SourceFor>
+	struct with_provide_using_source {
+		template<injectable T, forwarded<with_provide_using_source> Self>
+			requires (
+				    requires { typename SourceFor<T>; }
+				// TODO: Do we need this particular constraint?
+				and not detail::utility::is_specialisation_of_v<SourceFor, T>
+				and wrapping_source_of<Self, SourceFor<T>>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
+			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
+		}
+		
+		Source source;
+	};
+	
+	KANGARU5_EXPORT template<template<typename> typename SourceFor>
+	inline constexpr auto make_source_with_provide_using_source(forwarded_source auto&& source) {
+		return with_provide_using_source<std::decay_t<decltype(source)>, SourceFor>{KANGARU5_FWD(source)};
 	}
 	
 	KANGARU5_EXPORT template<source Source>

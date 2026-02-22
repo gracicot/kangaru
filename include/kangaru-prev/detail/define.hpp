@@ -90,8 +90,6 @@
 #endif
 #endif // KGR_KANGARU_HASH_EXTENDED_CONSTEXPR
 
-// Default config
-#define KGR_KANGARU_REVERSE_DESTRUCTION
-#define KGR_KANGARU_HASH_TYPE_ID
+#include "config.hpp"
 
 #endif // KGR_KANGARU_INCLUDE_KANGARU_DETAIL_DEFINE

@@ -229,20 +229,18 @@ TEST_CASE("Recursive source", "[recursive]") {
 					kangaru::object_source{type1{.id = 2}},
 					kangaru::reference_source{type2{.id = 3}}
 				),
-				kangaru::overload{
-					kangaru::with_injector{
+					kangaru::call_with_injector{
 						[](type1 t1, type2& t2) {
 							return aggregate{.t1 = t1, .t2 = t2};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::with_injector{
+					kangaru::call_with_injector{
 						[](aggregate agg) {
 							return type3{.agg = agg};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-				},
 			},
 		};
 		
@@ -262,26 +260,24 @@ TEST_CASE("Recursive source", "[recursive]") {
 		auto source = kangaru::with_recursion{
 			kangaru::with_function_call{
 				kangaru::object_source{type1{.id = 2}},
-				kangaru::overload{
-					kangaru::with_injector{
+					kangaru::call_with_injector{
 						[](type1 t1, type2& t2) {
 							return aggregate{.t1 = t1, .t2 = t2};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::with_injector{
+					kangaru::call_with_injector{
 						[](aggregate agg) {
 							return type3{.agg = agg};
 						},
 						kangaru::make_spread_injector_function{},
 					},
-					kangaru::with_injector{
+					kangaru::call_with_injector{
 						[&obj]() -> type2& {
 							return obj;
 						},
 						kangaru::make_spread_injector_function{},
 					},
-				},
 			},
 		};
 		

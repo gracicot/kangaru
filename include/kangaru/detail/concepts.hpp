@@ -49,6 +49,9 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
 	concept function_object = object<T> and std::move_constructible<T>;
 	
+	template<typename T>
+	concept forwarded_function_object = function_object<std::remove_cvref_t<T>>;
+	
 	template<typename T, typename Self>
 	concept not_self = unqualified_object<T> and different_from<T, std::decay_t<Self>>;
 	

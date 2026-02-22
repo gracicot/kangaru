@@ -386,45 +386,51 @@ namespace kangaru {
 	} */
 	
 	template<function_object Function, function_object MakeInjector>
-	struct with_injector {
+	struct call_with_injector {
 	private:
 		template<injectable T, forwarded<Function> F>
 		struct template_call {
 			KANGARU5_NO_UNIQUE_ADDRESS
-			F func;
+			F&& func;
 			
-			// TODO: Can we just ingnore the template parameter T and not enforce the return type?
-			constexpr auto operator()(deducer auto... deduce) const -> T
-			requires callable_returns<
-				T,
-				F&&,
-				exclude_deducer<T, decltype(deduce)>...
-			> {
+			constexpr auto operator()(deducer auto... deduce) const
+				-> detail::type_traits::call_result_t<F&&, exclude_deducer<T, decltype(deduce)>...>
+			// TODO: It seems we need to check the return type here and I can't understand why.
+			//       Skipping this check or putting this check anywhere else completely fails.
+			requires(
+				callable_returns<
+					T,
+					F&&,
+					exclude_deducer<T, decltype(deduce)>...
+				>
+			) {
 				return KANGARU5_FWD(func)(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
 			}
 			
-			constexpr auto operator()(deducer auto... deduce) const -> decltype(auto)
-			requires callable_template_1t<
-				F&&,
-				T,
-				exclude_deducer<T, decltype(deduce)>...
-			> {
-				return KANGARU5_FWD(func).template operator()<T>(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
-			}
+			// TODO: We can't enforce exclude deducer properly if we want to generally call the template
+			//
+			// constexpr auto operator()(deducer auto... deduce) const -> decltype(auto)
+			// requires callable_template_1t<
+			// 	F&&,
+			// 	T,
+			// 	exclude_deducer<T, decltype(deduce)>...
+			// > {
+			// 	return KANGARU5_FWD(func).template operator()<T>(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
+			// }
 		};
 		
 	public:
-		constexpr with_injector()
+		constexpr call_with_injector()
 			requires(std::default_initializable<Function> and std::default_initializable<MakeInjector>) :
 			function{},
 			make_injector{} {}
 		
-		explicit constexpr with_injector(Function function)
+		explicit constexpr call_with_injector(Function function)
 			requires(std::default_initializable<MakeInjector>) :
 			function{std::move(function)},
 			make_injector{} {}
 		
-		constexpr with_injector(Function function, MakeInjector make_injector) :
+		constexpr call_with_injector(Function function, MakeInjector make_injector) :
 			function{std::move(function)},
 			make_injector{std::move(make_injector)} {}
 		

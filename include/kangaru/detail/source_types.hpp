@@ -3,6 +3,7 @@
 
 #include "deducer.hpp"
 #include "exceptions.hpp"
+#include "source_traits.hpp"
 #include "source.hpp"
 #include "concepts.hpp"
 #include "utility.hpp"
@@ -36,31 +37,26 @@ namespace kangaru {
 	struct composed_source {
 		explicit(sizeof...(Sources) == 1) constexpr composed_source(Sources... sources) noexcept : sources{std::move(sources)...} {}
 		
-		template<injectable T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<composed_source> auto&& source) -> T
+		template<injectable T, forwarded<composed_source> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
 		requires (
-			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ... + 0) == 1
+			((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) == 1
 		) {
-			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
+			constexpr auto index = select_source_of_index<T, detail::utility::forward_like_t<Self, Sources>...>;
 			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
-		template<injectable T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<composed_source> auto&& source) -> T
+		template<injectable T, forwarded<composed_source> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
 		requires ("Ambiguous source resolution: One or more source can provide type T",
-			((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> ? 1 : 0) + ... + 0) > 1
+			((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) > 1
 		) = delete;
 		
 	private:
-		explicit constexpr composed_source(detail::source_types::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
-			sources{std::move(sources)} {}
-		
 		friend detail::source_types::composed_source_access;
 		
-		template<typename T, typename Self, std::size_t... S> requires(sizeof...(Sources) > 0)
-		consteval static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? S : 0) + ...);
-		}
+		explicit constexpr composed_source(detail::source_types::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
+			sources{std::move(sources)} {}
 		
 		std::tuple<Sources...> sources;
 	};
@@ -142,26 +138,26 @@ namespace kangaru {
 		std::tuple<Sources...> sources;
 	};
 	
-	KANGARU5_EXPORT template<injectable T>
+	KANGARU5_EXPORT
 	struct throwing_source {
-		[[noreturn]]
-		constexpr auto provide() -> T {
+		template<injectable T> [[noreturn]]
+		constexpr auto provide() const -> T {
 			throw throwing_source_exception{};
 		}
 	};
 	
-	KANGARU5_EXPORT template<injectable T>
+	KANGARU5_EXPORT
 	struct aborting_source {
-		[[noreturn]]
-		constexpr auto provide() -> T {
+		template<injectable T> [[noreturn]]
+		constexpr auto provide() const -> T {
 			std::abort();
 		}
 	};
 	
-	KANGARU5_EXPORT template<injectable T>
+	KANGARU5_EXPORT
 	struct terminating_source {
-		[[noreturn]]
-		constexpr auto provide() -> T {
+		template<injectable T> [[noreturn]]
+		constexpr auto provide() const -> T {
 			std::terminate();
 		}
 	};
@@ -440,10 +436,10 @@ namespace kangaru {
 	struct filter_source {
 		constexpr filter_source(Source source) noexcept : source{std::move(source)} {}
 		
-	private:
-		template<different_from<Type> T> requires injectable<T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<filter_source> auto const& source) -> T {
-			return kangaru::provide<T>(source.source);
+		template<injectable T, forwarded<filter_source> Self>
+			requires(different_from<Type, T> and wrapping_source_of<Self, T>)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
 		Source source;
@@ -454,23 +450,19 @@ namespace kangaru {
 		explicit constexpr filter_if_source(Source source) noexcept : source{std::move(source)} {}
 		constexpr filter_if_source(Source source, Filter) noexcept : source{std::move(source)} {}
 		
-	private:
-		template<injectable T> requires(Filter{}.template operator()<T>())
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<filter_if_source> auto const& source) -> T {
-			return kangaru::provide<T>(source.source);
+		template<injectable T, forwarded<filter_if_source> Self>
+			requires(Filter{}.template operator()<T>() and source_of<detail::utility::forward_like_t<Self, Source>, T>)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
+	private:
 		Source source;
 	};
 	
-	KANGARU5_EXPORT template<std::default_initializable Filter, forwarded_source Source>
+	KANGARU5_EXPORT template<source Filter, forwarded_source Source>
 	inline constexpr auto filter(Source&& source) {
 		return filter_source<std::decay_t<Source>, Filter>{KANGARU5_FWD(source)};
-	}
-	
-	KANGARU5_EXPORT template<forwarded_source Source>
-	inline constexpr auto filter(Source&& source, std::default_initializable auto filter) {
-		return filter_source<std::decay_t<Source>, decltype(filter)>{KANGARU5_FWD(source), filter};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source, std::default_initializable Filter>

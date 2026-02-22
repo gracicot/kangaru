@@ -55,7 +55,7 @@ namespace kangaru {
 			
 			constexpr incremental_source_impl(Head make_head, Tail... tail) requires std::same_as<composed_source<>, Constructed> :
 				head{std::move(make_head)(tie())},
-				tail{KANGARU5_NO_ADL(tie)(head), tail...} {}
+				tail{KANGARU5_NO_ADL(tie)(head), std::move(tail)...} {}
 			
 			constexpr incremental_source_impl(Constructed accumulated, Head make_head, Tail... tail) :
 				head{std::move(make_head)(accumulated)},
@@ -109,7 +109,7 @@ namespace kangaru {
 		};
 		
 		template<kangaru::source Source>
-		using injection_source = with_recursion<with_construction<Source, exhaustive_constructor>>;
+		using injection_source = with_recursion<with_construction<Source, exhaustive_construction>>;
 		
 		template<function_object Function>
 		struct modular_module_initializer {
@@ -119,7 +119,7 @@ namespace kangaru {
 			requires(
 				callable<detail::type_traits::call_result_t<make_strict_spread_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>
 			) {
-				auto const injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_constructor{}}};
+				auto const injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}};
 				auto injector = KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source));
 				using type = decltype(std::move(injector)(std::move(function)));
 				auto construct_source = in_place_construct{[&]() -> type { return std::move(injector)(std::move(function)); }};
@@ -234,7 +234,7 @@ namespace kangaru {
 					>
 				)
 			constexpr auto operator()(Source&& source) && {
-				auto injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_constructor{}}};
+				auto injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}};
 				return KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source))(std::move(function));
 			}
 			
@@ -244,7 +244,7 @@ namespace kangaru {
 					injection_source<std::remove_reference_t<Source>>
 				>
 			constexpr auto operator()(Source&& source) && {
-				return std::move(function)(with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_constructor{}}});
+				return std::move(function)(with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}});
 			}
 			
 		private:
@@ -378,9 +378,9 @@ namespace kangaru {
 	public:
 		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) : impl{std::move(modules)...} {}
 		
-		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<fwd_ref_result_t<detail::utility::forward_like_t<Self, impl_type>&&>, exhaustive_constructor>>, T>
+		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<fwd_ref_result_t<detail::utility::forward_like_t<Self, impl_type>&&>, exhaustive_construction>>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(with_recursion{with_construction{KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl), exhaustive_constructor{}}});
+			return kangaru::provide<T>(with_recursion{with_construction{KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl), exhaustive_construction{}}});
 		}
 		
 	private:
@@ -411,7 +411,7 @@ namespace kangaru {
 	private:
 		constexpr auto ensure_initialized() -> void {
 			if (not source) {
-				auto const injection_source = with_recursion{with_construction{KANGARU5_NO_ADL(ref)(from), exhaustive_constructor{}}};
+				auto const injection_source = with_recursion{with_construction{KANGARU5_NO_ADL(ref)(from), exhaustive_construction{}}};
 				source.emplace(KANGARU5_NO_ADL(make_strict_spread_injector)(injection_source)(constructor_function<Source>{}));
 			}
 		}

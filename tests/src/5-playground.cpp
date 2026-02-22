@@ -132,26 +132,24 @@ namespace kangaru {
 		using source_t = with_cache_2<
 			with_function_call<
 				Something,
-				overload<with_injector<Functions, make_spread_injector_function>...>
+				call_with_injector<Functions, make_spread_injector_function>...
 			>,
 			type_based_cache<inject_result_t<Functions>...>
 		>;
 		
 	public:
 		constexpr modular_source() requires(sizeof...(Functions) == 0 and std::default_initializable<Something>) :
-			source{{with_function_call{Something{}, overload{}}}} {}
+			source{{with_function_call{Something{}}}} {}
 		
 		explicit(sizeof...(Functions) == 0) constexpr modular_source(Something something, Functions... functions) noexcept :
 			source{
 				KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Functions>...>)(
 					with_function_call{
 						std::move(something),
-						overload{
-							with_injector{
+							call_with_injector{
 								std::move(functions),
 								make_spread_injector_function{}
 							}...
-						}
 					}
 				)
 			} {}
@@ -182,7 +180,7 @@ namespace kangaru {
 	template<source Source, typename... Modules>
 	struct modular_container {
 		constexpr modular_container() requires(sizeof...(Modules) == 0 and std::default_initializable<Source>) :
-			source{{with_function_call{Source{}, overload{}}}} {}
+			source{{with_function_call{Source{}}}} {}
 		
 		explicit(sizeof...(Modules) == 0) constexpr modular_container(Source source, Modules... modules) noexcept :
 			source{
@@ -191,12 +189,10 @@ namespace kangaru {
 						KANGARU5_NO_ADL(make_source_with_cache_many<inject_result_t<Modules>...>)(
 							with_function_call{
 								std::move(source),
-								overload{
-									with_injector{
+									call_with_injector{
 										std::move(modules),
 										make_spread_injector_function{}
 									}...
-								},
 							}
 						),
 					}
@@ -209,7 +205,7 @@ namespace kangaru {
 				with_cache_2<
 					with_function_call<
 						Source,
-						overload<with_injector<Modules, make_spread_injector_function>...>
+						call_with_injector<Modules, make_spread_injector_function>...
 					>,
 					type_based_cache<inject_result_t<Modules>...>
 			// 	>

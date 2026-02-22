@@ -2,35 +2,12 @@ cmake_minimum_required(VERSION 3.31)
 
 project(kangaru VERSION 5.0.0 LANGUAGES CXX)
 
-option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" false)
-option(KANGARU_REVERSE_DESTRUCTION "Reverse destruction order in the container mimicking a stack" ON)
-option(KANGARU_HASH_TYPE_ID "Generate the type IDs using the hashed type names" ON)
-option(KANGARU_NO_EXCEPTION "Disable exceptions by replacing throws by asserts" false)
+option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" OFF)
 option(KANGARU_TEST "Build test binaries" ON)
-
-set(KGR_KANGARU_NOEXCEPTION ${KANGARU_NO_EXCEPTION})
-set(KGR_KANGARU_REVERSE_DESTRUCTION ${KANGARU_REVERSE_DESTRUCTION})
-set(KGR_KANGARU_HASH_TYPE_ID ${KANGARU_HASH_TYPE_ID})
-
-if(NOT KGR_KANGARU_REVERSE_DESTRUCTION)
-	message(WARNING
-		"The recommended behavior is to enable reverse destruction. This option will the the "
-		"default behavior for kangaru 5.x.y. Not enabling this option is considered deprecated."
-	)
-endif()
-
-configure_file(
-	cmake/config/config.hpp.in
-	${CMAKE_CURRENT_BINARY_DIR}/generated/include/kangaru/detail/config_prev.hpp
-	@ONLY
-)
-
-if(KANGARU_TEST_CXX14 OR KANGARU_TEST_CXX17 OR KANGARU_TEST)
-	set(KANGARU_ENABLE_TESTS true)
-endif()
 
 # Variable to track module support
 set(KANGARU_HAS_CPP_MODULES OFF)
+mark_as_advanced(KANGARU_HAS_CPP_MODULES)
 
 # Check compiler and version
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -109,7 +86,7 @@ if(KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)
 endif()
 
-if(KANGARU_ENABLE_TESTS)
+if(KANGARU_TEST)
 	enable_testing()
 	add_subdirectory(tests)
 endif()
@@ -130,7 +107,7 @@ if(KANGARU_HAS_CPP_MODULES)
 		EXPORT kangaru-config
 		FILE_SET HEADERS
 		FILE_SET CXX_MODULES
-			DESTINATION ${KANGARU_INSTALL_CMAKEDIR}/interfaces
+			DESTINATION ${KANGARU_INSTALL_CMAKEDIR}/cxx-modules
 	)
 else()
 	write_basic_package_version_file(

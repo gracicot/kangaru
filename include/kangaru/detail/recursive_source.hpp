@@ -206,7 +206,7 @@ namespace kangaru {
 		
 	public:
 		explicit constexpr with_function_call(Source source) noexcept requires(
-			(... and std::default_initializable<Functions>)
+			sizeof...(Functions) > 0 and (true and ... and std::default_initializable<Functions>)
 		) :
 			source{std::move(source)} {}
 		

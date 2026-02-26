@@ -7,14 +7,14 @@
 
 namespace kangaru {
 	struct kangaru_exception : std::exception {
-		virtual ~kangaru_exception() = 0;
+		inline virtual ~kangaru_exception() = 0;
 	};
 	
-	kangaru_exception::~kangaru_exception() = default;
+	inline kangaru_exception::~kangaru_exception() = default;
 	
-	struct throwing_source_exception : kangaru_exception {
+	struct not_found_exception : kangaru_exception {
 		auto what() const noexcept -> char const* override {
-			return "Throwing source called";
+			return "Assume cached object not found";
 		}
 	};
 }

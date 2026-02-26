@@ -3,6 +3,7 @@ module;
 #include <exception>
 #include <type_traits>
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <limits>
 #include <concepts>

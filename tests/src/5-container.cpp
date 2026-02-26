@@ -284,7 +284,11 @@ TEST_CASE("Container can have a base source", "[container]") {
 	}
 	
 	SECTION("container base") {
-		auto base = kangaru::container_provided_sources{
+		// TODO: Simpler syntax
+		auto base = kangaru::enumerate_source<
+			kangaru::reference_source<dependent_on_provided>,
+			kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>
+		>(kangaru::with_function_call{
 			kangaru::none_source{},
 			kangaru::call_with_injector{
 				kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
@@ -296,7 +300,7 @@ TEST_CASE("Container can have a base source", "[container]") {
 				},
 				kangaru::make_strict_spread_injector_function{},
 			},
-		};
+		});
 		
 		auto container = kangaru::polymorphic_container{base};
 		auto provided = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);
@@ -306,14 +310,11 @@ TEST_CASE("Container can have a base source", "[container]") {
 	}
 	
 	SECTION("container provided") {
-		// TODO: Better interface please?
-		auto base = kangaru::with_fallback_provided_sources<kangaru::none_source, kangaru::throwing_source>{
-			kangaru::none_source{},
-		};
+		auto base = kangaru::enumerate_source(kangaru::object_source{kangaru::throw_if_not_found{}});
 		
 		auto container = kangaru::polymorphic_container{base};
 		
-		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::throwing_source_exception);
+		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::not_found_exception);
 		
 		SECTION("Can provide the instance dynamically using replace") {
 			auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
@@ -324,6 +325,35 @@ TEST_CASE("Container can have a base source", "[container]") {
 			CHECK(from_container == provided);
 			CHECK(from_container->value == 15);
 		}
+	}
+	
+	SECTION("container provided") {
+		auto base = kangaru::enumerate_source<
+			kangaru::reference_source<dependent_on_provided>,
+			kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>,
+			kangaru::throw_if_not_found
+		>(kangaru::compose(
+				kangaru::object_source{kangaru::throw_if_not_found{}},
+				kangaru::with_function_call{
+					kangaru::call_with_injector{
+						kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
+						kangaru::make_strict_spread_injector_function{},
+					},
+					kangaru::call_with_injector{
+						[]() -> kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>> {
+							return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{std::make_shared<dynamic_provided_concrete>(3)};
+						},
+						kangaru::make_strict_spread_injector_function{},
+					},
+				}
+			)
+		);
+		
+		auto container = kangaru::polymorphic_container{base};
+		auto provided = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);
+		
+		CHECK(provided->value == 3);
+		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
 	}
 }
 

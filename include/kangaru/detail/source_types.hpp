@@ -21,7 +21,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::source_types {
+namespace kangaru::detail::source_types::file_private {
 	struct from_tuple_t {
 		explicit constexpr from_tuple_t() = default;
 	} inline constexpr from_tuple{};
@@ -31,7 +31,7 @@ namespace kangaru::detail::source_types {
 
 namespace kangaru {
 	template<>
-	struct allow_injection_using<detail::source_types::from_tuple_t> : std::false_type {};
+	struct allow_injection_using<detail::source_types::file_private::from_tuple_t> : std::false_type {};
 	
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
@@ -53,56 +53,56 @@ namespace kangaru {
 		) = delete;
 		
 	private:
-		friend detail::source_types::composed_source_access;
+		friend detail::source_types::file_private::composed_source_access;
 		
-		explicit constexpr composed_source(detail::source_types::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
+		explicit constexpr composed_source(detail::source_types::file_private::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
 			sources{std::move(sources)} {}
 		
 		std::tuple<Sources...> sources;
 	};
 	
-	namespace detail::source_types {
+	namespace detail::source_types::file_private {
 		struct composed_source_access {
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
 			static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, rhs.sources)};
+				return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(lhs.sources, rhs.sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
 			static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(lhs.sources, std::move(rhs).sources)};
+				return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(lhs.sources, std::move(rhs).sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
 			static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, rhs.sources)};
+				return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(std::move(lhs).sources, rhs.sources)};
 			}
 			
 			template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
 			static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-				return composed_source<SourcesLhs..., SourcesRhs...>{detail::source_types::from_tuple, std::tuple_cat(std::move(lhs).sources, std::move(rhs).sources)};
+				return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(std::move(lhs).sources, std::move(rhs).sources)};
 			}
 		};
 	}
 	
 	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::composed_source_access::composed_source_cat(lhs, rhs);
+		return detail::source_types::file_private::composed_source_access::composed_source_cat(lhs, rhs);
 	}
 	
 	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::composed_source_access::composed_source_cat(lhs, std::move(rhs));
+		return detail::source_types::file_private::composed_source_access::composed_source_cat(lhs, std::move(rhs));
 	}
 	
 	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::composed_source_access::composed_source_cat(std::move(lhs), rhs);
+		return detail::source_types::file_private::composed_source_access::composed_source_cat(std::move(lhs), rhs);
 	}
 	
 	KANGARU5_EXPORT template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::composed_source_access::composed_source_cat(std::move(lhs), std::move(rhs));
+		return detail::source_types::file_private::composed_source_access::composed_source_cat(std::move(lhs), std::move(rhs));
 	}
 	
 	KANGARU5_EXPORT template<source Lhs, source Rhs>
@@ -111,56 +111,6 @@ namespace kangaru {
 	KANGARU5_EXPORT inline constexpr auto compose(forwarded_source auto&&... sources) {
 		return composed_source<std::decay_t<decltype(sources)>...>{KANGARU5_FWD(sources)...};
 	}
-	
-	KANGARU5_EXPORT template<source... Sources>
-	struct select_first_source {
-		explicit constexpr select_first_source(std::tuple<Sources...> sources) noexcept : sources{std::move(sources)} {}
-		
-		template<injectable T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<select_first_source> auto&& source) -> T
-		requires ((source_of<detail::utility::forward_like_t<decltype(source), Sources>, T> or ...)) {
-			constexpr auto index = index_of<T, decltype(source)>(std::index_sequence_for<Sources...>{});
-			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
-		}
-		
-	private:
-		template<typename T, typename Self, std::size_t... S>
-		consteval static auto index_of(std::index_sequence<S...>) {
-			auto const source_handles = std::array{std::pair{S, source_of<detail::utility::forward_like_t<Self, Sources>, T>}...};
-			
-			auto const it = std::find_if(source_handles.begin(), source_handles.end(), [](std::pair<std::size_t, bool> source) {
-				return source.second;
-			});
-			
-			return std::distance(source_handles.begin(), it);
-		}
-		
-		std::tuple<Sources...> sources;
-	};
-	
-	KANGARU5_EXPORT
-	struct throwing_source {
-		template<injectable T> [[noreturn]]
-		constexpr auto provide() const -> T {
-			throw throwing_source_exception{};
-		}
-	};
-	
-	KANGARU5_EXPORT
-	struct aborting_source {
-		template<injectable T> [[noreturn]]
-		constexpr auto provide() const -> T {
-			std::abort();
-		}
-	};
-	
-	KANGARU5_EXPORT
-	struct terminating_source {
-		template<injectable T> [[noreturn]]
-		constexpr auto provide() const -> T {
-			std::terminate();
-		}
-	};
 	
 	KANGARU5_EXPORT template<object... Ts>
 	struct tuple_source {
@@ -584,7 +534,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source Source>
 	struct basic_wrapping_source {
-		template<injectable T, forwarded<basic_wrapping_source> Self> requires source_of<wrapped_source_t<Self>, T>
+		template<injectable T, forwarded<basic_wrapping_source> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
@@ -595,6 +545,159 @@ namespace kangaru {
 	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto wrap_source(Source&& source) {
 		return basic_wrapping_source<std::decay_t<Source>>{KANGARU5_FWD(source)};
+	}
+
+	/**
+	 * Wrapping source that enable other source to select which types can be provided by a particular source.
+	 */
+	KANGARU5_EXPORT template<source Source, injectable... Types>
+	struct enumerated_source_of {
+		template<injectable T, forwarded<enumerated_source_of> Self> requires wrapping_source_of<Self, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<forwarded<enumerated_source_of> Original, forwarded_source NewLeaf>
+			requires(
+				std::constructible_from<
+					Source,
+					detail::utility::forward_like_t<Original, Source>
+				>
+			)
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
+			enumerated_source_of<wrapped_source_rebind_result_t<Original, NewLeaf>, Types...>
+		{
+			return enumerated_source_of<wrapped_source_rebind_result_t<Original, NewLeaf>, Types...> {
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			};
+		}
+		
+		Source source;
+	};
+	
+	template<typename Source> requires(false)
+	enumerated_source_of(Source const&) -> enumerated_source_of<Source>;
+	
+	template<typename T>
+	enumerated_source_of(object_source<T> const&) -> enumerated_source_of<object_source<T>, T>;
+	
+	template<typename T>
+	enumerated_source_of(reference_source<T> const&) -> enumerated_source_of<reference_source<T>, T&>;
+	
+	template<typename T>
+	enumerated_source_of(external_reference_source<T> const&) -> enumerated_source_of<external_reference_source<T>, T&>;
+	
+	template<typename Base, typename T>
+	enumerated_source_of(derived_reference_source<Base, T> const&) -> enumerated_source_of<derived_reference_source<Base, T>, T&>;
+	
+	template<typename T>
+	enumerated_source_of(rvalue_source<T> const&) -> enumerated_source_of<rvalue_source<T>, T&&>;
+	
+	template<typename T>
+	enumerated_source_of(external_rvalue_source<T> const&) -> enumerated_source_of<external_rvalue_source<T>, T&&>;
+	
+	template<typename Base, typename T>
+	enumerated_source_of(derived_shared_pointer_source<Base, T> const&) -> enumerated_source_of<derived_shared_pointer_source<Base, T>, std::shared_ptr<T>>;
+	
+	template<typename T>
+	enumerated_source_of(shared_pointer_source<T> const&) -> enumerated_source_of<shared_pointer_source<T>, std::shared_ptr<T>>;
+	
+	template<typename Base, typename T>
+	enumerated_source_of(derived_pointer_source<Base, T> const&) -> enumerated_source_of<derived_pointer_source<Base, T>, T*>;
+	
+	KANGARU5_EXPORT template<injectable... Types, forwarded_source Source>
+	inline constexpr auto enumerate_source(Source&& source) {
+		return enumerated_source_of<std::decay_t<Source>, Types...>{KANGARU5_FWD(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(object_source<T> const& source) -> enumerated_source_of<object_source<T>, T> {
+		return enumerated_source_of<object_source<T>, T>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(reference_source<T> const& source) -> enumerated_source_of<reference_source<T>, T&> {
+		return enumerated_source_of<reference_source<T>, T&>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(external_reference_source<T> const& source) -> enumerated_source_of<external_reference_source<T>, T&> {
+		return enumerated_source_of<external_reference_source<T>, T&>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_reference_source<Base, T> const& source) -> enumerated_source_of<derived_reference_source<Base, T>, T&> {
+		return enumerated_source_of<derived_reference_source<Base, T>, T&>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(rvalue_source<T> const& source) -> enumerated_source_of<rvalue_source<T>, T&&> {
+		return enumerated_source_of<rvalue_source<T>, T&&>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(external_rvalue_source<T> const& source) -> enumerated_source_of<external_rvalue_source<T>, T&&> {
+		return enumerated_source_of<external_rvalue_source<T>, T&&>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_shared_pointer_source<Base, T> const& source) -> enumerated_source_of<derived_shared_pointer_source<Base, T>, std::shared_ptr<T>> {
+		return enumerated_source_of<derived_shared_pointer_source<Base, T>, std::shared_ptr<T>>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(shared_pointer_source<T> const& source) -> enumerated_source_of<shared_pointer_source<T>, std::shared_ptr<T>> {
+		return enumerated_source_of<shared_pointer_source<T>, std::shared_ptr<T>>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_pointer_source<Base, T> const& source) -> enumerated_source_of<derived_pointer_source<Base, T>, T*> {
+		return enumerated_source_of<derived_pointer_source<Base, T>, T*>{source};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(object_source<T>&& source) -> enumerated_source_of<object_source<T>, T> {
+		return enumerated_source_of<object_source<T>, T>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(reference_source<T>&& source) -> enumerated_source_of<reference_source<T>, T&> {
+		return enumerated_source_of<reference_source<T>, T&>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(external_reference_source<T>&& source) -> enumerated_source_of<external_reference_source<T>, T&> {
+		return enumerated_source_of<external_reference_source<T>, T&>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_reference_source<Base, T>&& source) -> enumerated_source_of<derived_reference_source<Base, T>, T&> {
+		return enumerated_source_of<derived_reference_source<Base, T>, T&>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(rvalue_source<T>&& source) -> enumerated_source_of<rvalue_source<T>, T&&> {
+		return enumerated_source_of<rvalue_source<T>, T&&>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(external_rvalue_source<T>&& source) -> enumerated_source_of<external_rvalue_source<T>, T&&> {
+		return enumerated_source_of<external_rvalue_source<T>, T&&>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_shared_pointer_source<Base, T>&& source) -> enumerated_source_of<derived_shared_pointer_source<Base, T>, std::shared_ptr<T>> {
+		return enumerated_source_of<derived_shared_pointer_source<Base, T>, std::shared_ptr<T>>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename T>
+	inline constexpr auto enumerate_source(shared_pointer_source<T>&& source) -> enumerated_source_of<shared_pointer_source<T>, std::shared_ptr<T>> {
+		return enumerated_source_of<shared_pointer_source<T>, std::shared_ptr<T>>{std::move(source)};
+	}
+	
+	KANGARU5_EXPORT template<typename Base, typename T>
+	inline constexpr auto enumerate_source(derived_pointer_source<Base, T>&& source) -> enumerated_source_of<derived_pointer_source<Base, T>, T*> {
+		return enumerated_source_of<derived_pointer_source<Base, T>, T*>{std::move(source)};
 	}
 	
 	template<source... Sources>

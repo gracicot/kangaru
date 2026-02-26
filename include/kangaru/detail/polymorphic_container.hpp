@@ -11,6 +11,7 @@
 #include "polymorphic_source.hpp"
 #include "cache.hpp"
 #include "heap_storage.hpp"
+#include "container_common.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <unordered_map>
@@ -22,19 +23,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	namespace detail::polymorphic_container {
-		template<injectable, kangaru::source>
-		struct composed_select_source_of {};
-		
-		template<injectable T, kangaru::source... Sources>
-			requires(requires { typename select_source_of<T, Sources...>; })
-		struct composed_select_source_of<T, composed_source<Sources...>> {
-			using type = select_source_of<T, Sources...>;
-		};
-		
-		template<injectable T, kangaru::source ComposedSource>
-		using composed_select_source_of_t = typename composed_select_source_of<T, ComposedSource>::type;
-		
+	namespace detail::polymorphic_container::file_private {
 		template<source_ref Source>
 		struct polymorphic_to_concrete {
 			template<kangaru::source>
@@ -52,170 +41,20 @@ namespace kangaru {
 				using type = with_polymorphic_cast<with_cast_from<shared_pointer_source<T>, std::shared_ptr<T>>, std::shared_ptr<T>>&;
 			};
 			
-			template<object T>
-				requires requires(Source s){ KANGARU5_FWD(s).resolve(); typename composed_select_source_of_t<T, decltype(std::declval<Source>().resolve())>; }
+			template<injectable T>
+				requires(
+					    requires{ typename container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>; }
+					and source_of<Source, container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>>
+				)
 			struct ttype<kangaru::polymorphic_source<T>> {
-				using selected_source = composed_select_source_of_t<T, decltype(std::declval<Source>().resolve())>;
-				using type = with_polymorphic_cast<with_cast_from<selected_source, T>, T>&;
-			};
-			
-			template<object T>
-				requires requires(Source s){ typename composed_select_source_of_t<T, std::remove_cvref_t<Source>>; }
-			struct ttype<kangaru::polymorphic_source<T>> {
-				using selected_source = composed_select_source_of_t<T, std::remove_cvref_t<Source>>;
+				using selected_source = container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>;
 				using type = with_polymorphic_cast<with_cast_from<selected_source, T>, T>&;
 			};
 			
 			template<kangaru::source T>
 			using type = typename ttype<T>::type;
 		};
-		
-		struct only_if_assumed_cached {
-			template<injectable T>
-			constexpr auto operator()() const {
-				return assume_runtime_cached_v<T>;
-			}
-		};
 	}
-	
-	// TODO: Replace entirely in favour of with_function_call
-	template<kangaru::source Source, kangaru::function_object... Functions>
-	struct container_provided_sources {
-		explicit(sizeof...(Functions) == 0) constexpr container_provided_sources(Source source, Functions... functions) :
-			source{std::move(source)}, functions{std::move(functions)...} {}
-		
-		template<source T, forwarded<container_provided_sources> Self> requires((... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0)) == 1)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			constexpr auto index = index_for<T>(std::index_sequence_for<Functions...>{});
-			auto& function = std::get<index>(source.functions);
-			return function(KANGARU5_NO_ADL(ref)(source.source));
-		}
-		
-		template<source T, forwarded<container_provided_sources> Self> requires("Ambiguous source resolution: One or more callable returns source T",
-			(... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0)) > 1
-		)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T = delete;
-		
-		template<forwarded<container_provided_sources> Original, forwarded_source NewLeaf>
-			requires(
-				std::constructible_from<
-					std::tuple<Functions...>,
-					detail::utility::forward_like_t<Original, std::tuple<Functions...>>
-				>
-			)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
-			container_provided_sources<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...>
-		{
-			return std::apply(
-				[&](auto&&... functions) {
-					return container_provided_sources<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...> {
-						kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
-						KANGARU5_FWD(functions)...
-					};
-				},
-				KANGARU5_FWD(original).functions
-			);
-		}
-		
-		Source source;
-		
-		// TODO: Replace by template partial specialization? We special case everything?
-		template<typename Self = container_provided_sources&>
-		auto resolve() & -> composed_source<detail::type_traits::call_result_t<detail::utility::forward_like_t<Self, Functions>, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>...> {
-			return std::apply([&](auto... functions) {
-				return KANGARU5_NO_ADL(compose)(functions(KANGARU5_NO_ADL(fwd_ref)(source))...);
-			}, functions);
-		}
-		
-		template<typename Self = container_provided_sources&&>
-		auto resolve() && -> composed_source<detail::type_traits::call_result_t<detail::utility::forward_like_t<Self, Functions>, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>...> {
-			return std::apply([&](auto... functions) {
-				return KANGARU5_NO_ADL(compose)(functions(KANGARU5_NO_ADL(fwd_ref)(std::move(source)))...);
-			}, functions);
-		}
-		
-		template<typename Self = container_provided_sources const&>
-		auto resolve() const& -> composed_source<detail::type_traits::call_result_t<detail::utility::forward_like_t<Self, Functions>, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>...> {
-			return std::apply([&](auto... functions) {
-				return KANGARU5_NO_ADL(compose)(functions(KANGARU5_NO_ADL(fwd_ref)(source))...);
-			}, functions);
-		}
-		
-		template<typename Self = container_provided_sources const&&>
-		auto resolve() const&& -> composed_source<detail::type_traits::call_result_t<detail::utility::forward_like_t<Self, Functions>, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>...> {
-			return std::apply([&](auto... functions) {
-				return KANGARU5_NO_ADL(compose)(functions(KANGARU5_NO_ADL(fwd_ref)(std::move(source)))...);
-			}, functions);
-		}
-		
-	private:
-		template<kangaru::source T, std::size_t... S>
-		static constexpr auto index_for(std::index_sequence<S...>) -> std::size_t {
-			return (... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? S : 0));
-		}
-		
-		std::tuple<Functions...> functions;
-	};
-	
-	// TODO: Replace entirely in favour of with_alternative
-	template<source Source, source FallbackSource>
-	struct with_fallback_provided_sources {
-	private:
-		using Fallback = filter_if_source<FallbackSource, detail::polymorphic_container::only_if_assumed_cached>;
-		Fallback fallback;
-		
-		constexpr with_fallback_provided_sources(Source source, Fallback fallback) :
-			source{std::move(source)}, fallback{std::move(fallback)} {}
-		
-		template<source, source>
-		friend struct with_fallback_provided_sources;
-		
-	public:
-		explicit constexpr with_fallback_provided_sources(Source source)
-			requires(std::default_initializable<FallbackSource>) : source{std::move(source)}, fallback{FallbackSource{}} {}
-		
-		constexpr with_fallback_provided_sources(Source source, FallbackSource fallback) :
-			source{std::move(source)}, fallback{std::move(fallback)} {}
-		
-		Source source;
-		
-		template<injectable T, forwarded<with_fallback_provided_sources> Self> requires wrapping_source_of<Self, T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
-		}
-		
-		template<std::same_as<Fallback> T, forwarded<with_fallback_provided_sources> Self>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return KANGARU5_FWD(source).fallback;
-		}
-		
-		template<forwarded<with_fallback_provided_sources> Original, forwarded_source NewLeaf>
-			requires(std::constructible_from<Fallback, detail::utility::forward_like_t<Original, Fallback>>)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
-			with_fallback_provided_sources<wrapped_source_rebind_result_t<Original, NewLeaf>, FallbackSource>
-		{
-			return with_fallback_provided_sources<wrapped_source_rebind_result_t<Original, NewLeaf>, FallbackSource>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
-				KANGARU5_FWD(original).fallback
-			};
-		}
-		
-		auto resolve() & -> composed_source<Fallback> {
-			return KANGARU5_NO_ADL(compose)(fallback);
-		}
-		
-		auto resolve() && -> composed_source<Fallback> {
-			return KANGARU5_NO_ADL(compose)(fallback);
-		}
-		
-		auto resolve() const& -> composed_source<Fallback> {
-			return KANGARU5_NO_ADL(compose)(fallback);
-		}
-		
-		auto resolve() const&& -> composed_source<Fallback> {
-			return KANGARU5_NO_ADL(compose)(fallback);
-		}
-	};
 	
 	KANGARU5_EXPORT template<
 		rebindable_source Source,
@@ -284,7 +123,7 @@ namespace kangaru {
 			auto rebound_state = with_cache_asymmetric<
 				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
 				ref_result_t<S&>,
-				detail::polymorphic_container::polymorphic_to_concrete<detail::utility::forward_like_t<Self, Source>>::template type
+				detail::polymorphic_container::file_private::polymorphic_to_concrete<detail::utility::forward_like_t<Self, Source>>::template type
 			>{
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
 			};

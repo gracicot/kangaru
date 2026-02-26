@@ -35,8 +35,8 @@ namespace kangaru::detail::optional {
 		and std::constructible_from<T, Arg&&>;
 }
 
-namespace kangaru {
-	KANGARU5_EXPORT template<unqualified_object T>
+KANGARU5_EXPORT namespace kangaru {
+	template<unqualified_object T>
 	struct optional<T> {
 		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional::empty{}} {}
 		constexpr optional() : optional{nullopt} {};
@@ -384,7 +384,7 @@ namespace kangaru {
 		bool engaged = false;
 	};
 	
-	KANGARU5_EXPORT template<reference T>
+	template<reference T>
 	struct optional<T> {
 	private:
 		using object_type = std::remove_reference_t<T>;

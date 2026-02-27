@@ -283,7 +283,7 @@ TEST_CASE("Container can have a base source", "[container]") {
 		}
 	}
 	
-	SECTION("container base") {
+	SECTION("container base source") {
 		// TODO: Simpler syntax
 		auto base = kangaru::enumerate_source<
 			kangaru::reference_source<dependent_on_provided>,
@@ -309,7 +309,7 @@ TEST_CASE("Container can have a base source", "[container]") {
 		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
 	}
 	
-	SECTION("container provided") {
+	SECTION("container base source supplied instances") {
 		auto base = kangaru::enumerate_source(kangaru::object_source{kangaru::throw_if_not_found{}});
 		
 		auto container = kangaru::polymorphic_container{base};
@@ -327,13 +327,13 @@ TEST_CASE("Container can have a base source", "[container]") {
 		}
 	}
 	
-	SECTION("container provided") {
+	SECTION("container base source with supplied instances") {
 		auto base = kangaru::enumerate_source<
 			kangaru::reference_source<dependent_on_provided>,
 			kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>,
 			kangaru::throw_if_not_found
-		>(kangaru::compose(
-				kangaru::object_source{kangaru::throw_if_not_found{}},
+		>(
+			kangaru::with_alternative{
 				kangaru::with_function_call{
 					kangaru::call_with_injector{
 						kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
@@ -341,12 +341,15 @@ TEST_CASE("Container can have a base source", "[container]") {
 					},
 					kangaru::call_with_injector{
 						[]() -> kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>> {
-							return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{std::make_shared<dynamic_provided_concrete>(3)};
+							return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{
+								std::make_shared<dynamic_provided_concrete>(3)
+							};
 						},
 						kangaru::make_strict_spread_injector_function{},
 					},
-				}
-			)
+				},
+				kangaru::object_source{kangaru::throw_if_not_found{}},
+			}
 		);
 		
 		auto container = kangaru::polymorphic_container{base};

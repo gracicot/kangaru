@@ -123,7 +123,9 @@ namespace kangaru {
 			auto rebound_state = with_cache_asymmetric<
 				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
 				ref_result_t<S&>,
-				detail::polymorphic_container::file_private::polymorphic_to_concrete<detail::utility::forward_like_t<Self, Source>>::template type
+				detail::polymorphic_container::file_private::polymorphic_to_concrete<
+					detail::utility::forward_like_t<Self, Source>
+				>::template type
 			>{
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
 			};

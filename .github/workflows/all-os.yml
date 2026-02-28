@@ -246,21 +246,58 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
-  windows-msvc:
+  windows-msvc-2022:
     runs-on: windows-${{ matrix.windows }}
     name: MSVC ${{ matrix.windows }} Windows
     strategy:
       fail-fast: false
       matrix:
-        windows: [2022, 2025]
-        arch: [x64]
+        windows: [2022]
 
     steps:
       - uses: actions/checkout@v5
 
       - uses: egor-tensin/vs-shell@v2
         with:
-          arch: ${{ matrix.arch }}
+          arch: x64
+
+      - name: get-cmake
+        uses: lukka/get-cmake@v4.1.2
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: 'Run CMake C++20'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+
+      - name: 'Run CMake C++23'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
+
+  windows-msvc-2026:
+    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
+    name: MSVC ${{ matrix.vs }} Windows
+    strategy:
+      fail-fast: false
+      matrix:
+        vs: [2026]
+        windows: [2025]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
 
       - name: get-cmake
         uses: lukka/get-cmake@v4.1.2

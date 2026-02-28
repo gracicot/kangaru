@@ -393,7 +393,8 @@ namespace kangaru {
 			KANGARU5_NO_UNIQUE_ADDRESS
 			F&& func;
 			
-			constexpr auto operator()(deducer auto... deduce) const
+			template<deducer... Deducers>
+			constexpr auto operator()(Deducers... deduce) const
 				-> detail::type_traits::call_result_t<F&&, exclude_deducer<T, decltype(deduce)>...>
 			// TODO: It seems we need to check the return type here and I can't understand why.
 			//       Skipping this check or putting this check anywhere else completely fails.

@@ -46,6 +46,8 @@ namespace kangaru {
 		);
 	
 	namespace detail::deducer::file_private {
+		// TODO: Remove this workaround when this feedback item is fixed
+		//       https://developercommunity.visualstudio.com/t/1950-regression-Requires-fail-to-chec/11052128
 		template<typename Deducer, typename T>
 		consteval auto deducer_for_msvc_workaround() -> bool {
 			return requires(Deducer deducer) {
@@ -54,7 +56,7 @@ namespace kangaru {
 		}
 		
 		template<typename Deducer, typename T>
-		concept deducer_for_impl = deducer_for_msvc_workaround<Deducer, T>;
+		concept deducer_for_impl = deducer_for_msvc_workaround<Deducer, T>();
 	}
 	
 	KANGARU5_EXPORT template<typename Deducer, typename T>

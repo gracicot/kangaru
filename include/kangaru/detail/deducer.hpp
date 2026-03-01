@@ -45,10 +45,22 @@ namespace kangaru {
 			or deducer_strict<Deducer>
 		);
 	
+	namespace detail::deducer::file_private {
+		template<typename Deducer, typename T>
+		consteval auto deducer_for_msvc_workaround() -> bool {
+			return requires(Deducer deducer) {
+				{ deducer.operator T() } -> std::same_as<T>;
+			};
+		}
+		
+		template<typename Deducer, typename T>
+		concept deducer_for_impl = deducer_for_msvc_workaround<Deducer, T>;
+	}
+	
 	KANGARU5_EXPORT template<typename Deducer, typename T>
-	concept deducer_for = deducer<Deducer> and requires(Deducer deducer) {
-		{ deducer.operator T() } -> std::same_as<T>;
-	};
+	concept deducer_for =
+		    deducer<Deducer>
+		and detail::deducer::file_private::deducer_for_impl<Deducer, T>;
 	
 	KANGARU5_EXPORT template<typename T>
 	concept deducible =

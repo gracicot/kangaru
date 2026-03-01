@@ -1,5 +1,6 @@
-import kangaru;
 #include <fmt/core.h>
+
+import kangaru;
 
 auto main() -> int {
 	auto source = kangaru::object_source{8};

@@ -4,7 +4,7 @@
 #include "source.hpp"
 
 #ifndef KANGARU5_MODULES
-
+#include <cstddef>
 #endif
 
 #include "define.hpp"

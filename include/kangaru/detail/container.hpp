@@ -2,7 +2,7 @@
 #define KANGARU5_DETAIL_CONTAINER_HPP
 
 #include "cache_types.hpp"
-#include "kangaru/detail/type_traits.hpp"
+#include "type_traits.hpp"
 #include "recursive_source.hpp"
 #include "cache.hpp"
 #include "heap_storage.hpp"

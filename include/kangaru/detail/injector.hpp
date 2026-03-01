@@ -6,11 +6,11 @@
 #include "concepts.hpp"
 #include "utility.hpp"
 #include "source_reference_wrapper.hpp"
-#include <concepts>
 
 #ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <utility>
+#include <concepts>
 #endif
 
 #include "define.hpp"

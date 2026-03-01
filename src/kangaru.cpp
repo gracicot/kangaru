@@ -14,6 +14,7 @@ module;
 #include <string_view>
 #include <vector>
 #include <span>
+#include <new>
 #include <cstdint>
 #include <functional>
 #include <compare>

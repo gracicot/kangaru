@@ -5,9 +5,9 @@
 #include "concepts.hpp"
 #include "type_traits.hpp"
 #include "constructor.hpp"
-#include <new>
 
 #ifndef KANGARU5_MODULES
+#include <new>
 #include <utility>
 #include <memory>
 #include <tuple>

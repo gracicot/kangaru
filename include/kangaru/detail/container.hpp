@@ -20,7 +20,7 @@ KANGARU5_EXPORT namespace kangaru {
 		detail::utility::ttype_t<cached_reference_to_source<reference_source>, T>;
 	
 	template<
-		rebindable_source Source,
+		rebindable_source Source = none_source,
 		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, void*>,
 		dereferenceable_heap_storage Storage = default_heap_storage
 	>

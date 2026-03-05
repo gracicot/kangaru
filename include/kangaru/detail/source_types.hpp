@@ -17,6 +17,7 @@
 #include <concepts>
 #include <algorithm>
 #include <type_traits>
+#include <functional>
 #endif
 
 #include "define.hpp"
@@ -127,6 +128,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<callable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<detail::type_traits::call_result_t<F>>)
 	struct function_source {
+		constexpr function_source() noexcept requires(std::default_initializable<F>) : function{} {}
 		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
 		
 		template<forwarded<function_source> Self>
@@ -137,6 +139,9 @@ namespace kangaru {
 	private:
 		F function;
 	};
+	
+	KANGARU5_EXPORT template<injectable T>
+	using dynamic_function_source = function_source<std::function<T()>>;
 	
 	KANGARU5_EXPORT template<unqualified_object T>
 	struct object_source {

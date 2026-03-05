@@ -86,6 +86,9 @@ namespace kangaru {
 		typename detail::injector::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
 	};
 	
+	KANGARU5_EXPORT template<typename F, std::size_t max>
+	concept forwarded_reflectable_function = reflectable_function<std::remove_cvref_t<F>, max>;
+	
 	KANGARU5_EXPORT template<typename F, std::size_t max> requires reflectable_function<F, max>
 	using reflected_return_type = typename detail::injector::parameter_sequence_impl<F, std::make_index_sequence<max>>::return_type;
 	
@@ -225,33 +228,32 @@ namespace kangaru {
 	KANGARU5_EXPORT template<source Source>
 	using optional_injector = basic_spread_injector<Source, basic_deducer, 1>;
 	
-	KANGARU5_EXPORT struct make_fast_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
+	KANGARU5_EXPORT
+	template<template<typename> typename Deducer, std::size_t max>
+	struct make_basic_spread_injector_function {
+		template<forwarded_source Source>
 		inline constexpr auto operator()(Source&& source) const {
-			return fast_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
+			return basic_spread_injector<std::decay_t<Source>, Deducer, max>{
+				KANGARU5_FWD(source)
+			};
 		}
 	};
 	
-	KANGARU5_EXPORT struct make_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
-		inline constexpr auto operator()(Source&& source) const {
-			return spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	template<template<typename> typename Deducer, std::size_t max>
+	inline constexpr auto make_basic_spread_injector = make_basic_spread_injector_function<Deducer, max>{};
 	
-	KANGARU5_EXPORT struct make_slow_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
-		inline constexpr auto operator()(Source&& source) const {
-			return slow_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_fast_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 4>;
 	
-	KANGARU5_EXPORT struct make_optional_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
-		inline constexpr auto operator()(Source&& source) const {
-			return optional_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 8>;
+	
+	KANGARU5_EXPORT
+	using make_slow_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 16>;
+	
+	KANGARU5_EXPORT
+	using make_optional_injector_function = make_basic_spread_injector_function<basic_deducer, 1>;
 	
 	KANGARU5_EXPORT inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
 	KANGARU5_EXPORT inline constexpr auto make_spread_injector = make_spread_injector_function{};
@@ -270,36 +272,20 @@ namespace kangaru {
 	KANGARU5_EXPORT template<source Source>
 	using strict_optional_injector = basic_spread_injector<Source, strict_deducer, 1>;
 	
-	KANGARU5_EXPORT struct make_strict_fast_spread_injector_function {
-		template<typename Source> requires kangaru::source<std::remove_cvref_t<Source>>
-		inline constexpr auto operator()(Source&& source) const {
-			return strict_fast_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_strict_fast_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 4>;
 	
-	KANGARU5_EXPORT struct make_strict_spread_injector_function {
-		template<forwarded_source Source>
-		inline constexpr auto operator()(Source&& source) const {
-			return strict_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_strict_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 8>;
 	
-	KANGARU5_EXPORT struct make_strict_slow_spread_injector_function {
-		template<forwarded_source Source>
-		inline constexpr auto operator()(Source&& source) const {
-			return strict_slow_spread_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_strict_slow_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 16>;
 	
-	KANGARU5_EXPORT struct make_strict_optional_injector_function {
-		template<forwarded_source Source>
-		inline constexpr auto operator()(Source&& source) const {
-			return strict_optional_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
-		}
-	};
+	KANGARU5_EXPORT
+	using make_strict_optional_injector_function = make_basic_spread_injector_function<strict_deducer, 1>;
 	
 	KANGARU5_EXPORT inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_stict_slow_spread_injector = make_strict_slow_spread_injector_function{};
+	KANGARU5_EXPORT inline constexpr auto make_strict_slow_spread_injector = make_strict_slow_spread_injector_function{};
 	KANGARU5_EXPORT inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
 	KANGARU5_EXPORT inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
 	

@@ -819,15 +819,6 @@ namespace kangaru {
 			return KANGARU5_FWD(function)(filtered_deducer_for<F, Deducers, S, sizeof...(S)>{deduce}...);
 		}
 		
-		template<std::size_t... S>
-		inline constexpr auto call_with_deducer_sequence(
-			std::index_sequence<S...>, auto&& function, kangaru::deducer auto deduce
-		) -> decltype(
-			KANGARU5_NO_ADL(call_with_deducers_impl)(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...)
-		) {
-			return KANGARU5_NO_ADL(call_with_deducers_impl)(KANGARU5_FWD(function), std::index_sequence<S...>{}, (void(S), deduce)...);
-		}
-		
 		template<typename F, typename, kangaru::deducer... Deducers>
 		inline constexpr auto callable_with_deducers_impl_v = false;
 		

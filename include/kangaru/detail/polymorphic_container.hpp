@@ -57,7 +57,7 @@ namespace kangaru {
 	}
 	
 	KANGARU5_EXPORT template<
-		rebindable_source Source,
+		rebindable_source Source = none_source,
 		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>,
 		dereferenceable_heap_storage Storage = default_heap_storage
 	>

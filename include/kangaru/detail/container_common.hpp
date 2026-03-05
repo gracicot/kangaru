@@ -67,7 +67,7 @@ KANGARU5_EXPORT namespace kangaru {
 		forwarded_reflectable_function<max>... Lambdas
 	>
 	inline constexpr auto make_container_base_source(Source&& source, Lambdas&&... lambdas) {
-		return enumerate_source<reflected_return_type<Lambdas, max>...>(
+		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
 			with_function_call{
 				KANGARU5_FWD(source),
 				call_with_injector{
@@ -84,7 +84,7 @@ KANGARU5_EXPORT namespace kangaru {
 		forwarded_reflectable_function<max>... Lambdas
 	>
 	inline constexpr auto make_container_base_source(Lambdas&&... lambdas) {
-		return enumerate_source<reflected_return_type<Lambdas, max>...>(
+		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
 			with_function_call{
 				none_source{},
 				call_with_injector{
@@ -108,10 +108,10 @@ KANGARU5_EXPORT namespace kangaru {
 		Source&& source,
 		Lambdas&&... lambdas
 	) {
-		return enumerate_source<
+		return KANGARU5_NO_ADL(enumerate_source<
 			reflected_return_type<Lambdas, max>...,
 			std::decay_t<IfNotFound>
-		>(
+		>)(
 			with_alternative{
 				with_function_call{
 					KANGARU5_FWD(source),
@@ -137,12 +137,12 @@ KANGARU5_EXPORT namespace kangaru {
 		Lambdas&&... lambdas
 	) {
 		if constexpr (sizeof...(Lambdas) == 0) {
-			return enumerate_source(kangaru::object_source{KANGARU5_FWD(source_if_not_found)});
+			return KANGARU5_NO_ADL(enumerate_source)(kangaru::object_source{KANGARU5_FWD(source_if_not_found)});
 		} else {
-			return enumerate_source<
+			return KANGARU5_NO_ADL(enumerate_source<
 				reflected_return_type<Lambdas, max>...,
 				std::decay_t<IfNotFound>
-			>(
+			>)(
 				with_alternative{
 					with_function_call{
 						none_source{},
@@ -158,7 +158,7 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	inline constexpr auto make_container_base_source(allow_assume_cached_t) {
-		return enumerate_source(
+		return KANGARU5_NO_ADL(enumerate_source)(
 			kangaru::object_source{throw_if_not_found{}}
 		);
 	}

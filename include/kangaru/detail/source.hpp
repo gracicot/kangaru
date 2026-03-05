@@ -17,13 +17,12 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept injectable = weak_injectable<T> and allow_injection_using_v<T>;
 	
-	// TODO: Should we have movable_source?
-	// TODO: Restore movable requirement
+	// TODO: Add std::move_constructible at every point of use
 	KANGARU5_EXPORT template<typename T>
 	concept source = object<T> and std::is_class_v<T> and not pointer<T>;
 	
 	KANGARU5_EXPORT template<typename T>
-	concept source_ref = reference<T> and source<std::remove_cvref_t<T>>;
+	concept source_ref = reference<T> and source<std::remove_reference_t<T>>;
 	
 	KANGARU5_EXPORT template<typename T>
 	concept forwarded_source = source<std::remove_reference_t<T>>;
@@ -99,10 +98,14 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename Source, typename T>
 	concept source_of =
-		   detail::source::member_source_of<Source, T>
-		or detail::source::member_template_source_of<Source, T>
-		or detail::source::adl_nonmember_source_of<Source, T>
-		or detail::source::adl_nonmember_template_source_of<Source, T>;
+		    forwarded_source<Source>
+		and injectable<T>
+		and (
+			   detail::source::member_source_of<Source, T>
+			or detail::source::member_template_source_of<Source, T>
+			or detail::source::adl_nonmember_source_of<Source, T>
+			or detail::source::adl_nonmember_template_source_of<Source, T>
+		);
 	
 	template<typename T, typename F, typename... Args>
 	concept callable_returns_source_of =
@@ -157,19 +160,19 @@ namespace kangaru {
 	struct provide_using {
 		explicit constexpr provide_using(Source source) noexcept : source{std::move(source)} {}
 		
-		constexpr auto operator()() & -> T {
+		constexpr auto operator()() & -> T requires source_of<Source&, T> {
 			return kangaru::provide<T>(source);
 		}
 		
-		constexpr auto operator()() const& -> T {
+		constexpr auto operator()() const& -> T requires source_of<Source const&, T> {
 			return kangaru::provide<T>(source);
 		}
 		
-		constexpr auto operator()() && -> T {
+		constexpr auto operator()() && -> T requires source_of<Source&&, T> {
 			return kangaru::provide<T>(std::move(source));
 		}
 		
-		constexpr auto operator()() const&& -> T {
+		constexpr auto operator()() const&& -> T requires source_of<Source const&&, T> {
 			return kangaru::provide<T>(std::move(source));
 		}
 		

@@ -208,8 +208,8 @@ namespace kangaru {
 		
 		template<injectable T, source_of<T> S>
 			requires(source_of<polymorphic_container&, T>)
-		constexpr auto replace(S source) -> T {
-			using contained_type = with_polymorphic_cast<with_cast_from<S, T>, T>;
+		constexpr auto replace(S&& source) -> T {
+			using contained_type = with_polymorphic_cast<with_cast_from<std::remove_cvref_t<S>, T>, T>;
 			constexpr auto id = detail::ctti::type_id_for<polymorphic_source<T>>();
 			
 			auto& heap_storage = state.source.source;
@@ -217,8 +217,8 @@ namespace kangaru {
 			
 			auto const ptr = heap_storage.emplace_from([&] {
 				return contained_type{
-					with_cast_from<S, T>{
-						std::move(source)
+					with_cast_from<std::remove_cvref_t<S>, T>{
+						KANGARU5_FWD(source)
 					},
 				};
 			});

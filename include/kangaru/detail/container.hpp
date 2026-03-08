@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_CONTAINER_HPP
 
 #include "cache_types.hpp"
+#include "container_common.hpp"
 #include "type_traits.hpp"
 #include "recursive_source.hpp"
 #include "cache.hpp"
@@ -15,10 +16,6 @@
 #include "define.hpp"
 
 KANGARU5_EXPORT namespace kangaru {
-	template<injectable T>
-	using cached_reference_to_reference_source =
-		detail::utility::ttype_t<cached_reference_to_source<reference_source>, T>;
-	
 	template<
 		rebindable_source Source = none_source,
 		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, void*>,
@@ -75,14 +72,18 @@ KANGARU5_EXPORT namespace kangaru {
 					KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
 						with_alternative{
 							with_recursion{
-								KANGARU5_NO_ADL(make_source_with_provide_using_source<cached_reference_to_reference_source>)(
+								KANGARU5_NO_ADL(make_source_with_provide_using_source<
+									cached_reference_to_source_mapping_using<
+										detail::utility::forward_like_t<Self, Source>
+									>::template source_for
+								>)(
 									with_dereference{
 										KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
 									}
 								)
 							},
 							KANGARU5_NO_ADL(compose)(
-								external_reference_source{self}, 
+								external_reference_source{self},
 								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source)
 							)
 						}
@@ -128,28 +129,46 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T> requires(source_of<container&, T>)
 		constexpr auto has_in_cache() -> bool {
-			if constexpr (reference<T>) {
-				return state.contains(detail::ctti::type_id_for<reference_source<std::remove_reference_t<T>>*>());
-			} else {
-				return false;
-			}
+			return state.contains(detail::ctti::type_id_for<typename mapping_with_base_source<Source>::template source_for<T>*>());
 		}
 		
-		template<callable F>
-			requires(
-				    std::move_constructible<F>
-				and object<detail::type_traits::call_result_t<F>>
-				and source_of<container&, detail::type_traits::call_result_t<F>&>
-			)
-		constexpr auto replace(F function) -> detail::type_traits::call_result_t<F>& {
-			using result_type = detail::type_traits::call_result_t<F>;
+		template<injectable T, source_of<T> S>
+			requires(source_of<container&, T> and std::same_as<std::remove_cvref_t<S>, typename mapping_with_base_source<Source>::template source_for<T>>)
+		constexpr auto replace(S&& source) -> T {
+			using contained_type = std::remove_cvref_t<S>;
+			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
 			
-			auto const ptr = state.source.emplace_from([&] {
-				return reference_source<result_type>{in_place_construct{std::move(function)}};
+			auto& heap_storage = state.source;
+			auto& cache = state;
+			
+			auto const ptr = heap_storage.emplace_from([&] {
+				return contained_type{
+					KANGARU5_FWD(source)
+				};
 			});
 			
-			state.insert_or_assign(detail::ctti::type_id_for<reference_source<result_type>*>(), ptr);
-			return kangaru::provide<result_type&>(*ptr);
+			cache.insert_or_assign(id, ptr);
+			return kangaru::provide<T>(*ptr);
+		}
+		
+		template<injectable T, callable F>
+			requires(
+				source_of<container&, T>
+				and std::same_as<detail::type_traits::call_result_t<F>, typename mapping_with_base_source<Source>::template source_for<T>>
+			)
+		constexpr auto replace(in_place_construct<F> in_place) -> T {
+			using contained_type = detail::type_traits::call_result_t<F>;
+			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
+			
+			auto& heap_storage = state.source;
+			auto& cache = state;
+			
+			auto const ptr = heap_storage.emplace_from([&] {
+				return contained_type{std::move(in_place)};
+			});
+			
+			cache.insert_or_assign(id, ptr);
+			return kangaru::provide<T>(*ptr);
 		}
 	};
 }

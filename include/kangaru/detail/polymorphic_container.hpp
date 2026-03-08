@@ -25,34 +25,23 @@
 namespace kangaru {
 	namespace detail::polymorphic_container::file_private {
 		template<source_ref Source>
-		struct polymorphic_to_concrete {
-			template<kangaru::source>
-			struct ttype {};
+		struct cached_source {
+			template<injectable T>
+			struct mapping {};
 			
-			template<object T>
-				requires(allow_runtime_caching_v<T&> or source_of<Source, reference_source<T>>)
-			struct ttype<kangaru::polymorphic_source<T&>> {
-				using type = with_polymorphic_cast<with_cast_from<reference_source<T>, T&>, T&>&;
-			};
-			
-			template<object T>
-				requires(allow_runtime_caching_v<std::shared_ptr<T>> or source_of<Source, shared_pointer_source<T>>)
-			struct ttype<kangaru::polymorphic_source<std::shared_ptr<T>>> {
-				using type = with_polymorphic_cast<with_cast_from<shared_pointer_source<T>, std::shared_ptr<T>>, std::shared_ptr<T>>&;
+			template<injectable T> requires (requires{ typename cached_source_mapping_using_t<Source, T>; })
+			struct mapping<kangaru::polymorphic_source<T>> {
+				using type = with_polymorphic_cast<
+					with_cast_from<
+						cached_source_mapping_using_t<Source, T>,
+						T
+					>,
+					T
+				>&;
 			};
 			
 			template<injectable T>
-				requires(
-					    requires{ typename container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>; }
-					and source_of<Source, container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>>
-				)
-			struct ttype<kangaru::polymorphic_source<T>> {
-				using selected_source = container_common::enumerated_select_source_of_t<T, std::remove_cvref_t<Source>>;
-				using type = with_polymorphic_cast<with_cast_from<selected_source, T>, T>&;
-			};
-			
-			template<kangaru::source T>
-			using type = typename ttype<T>::type;
+			using source_for = typename mapping<T>::type;
 		};
 	}
 	
@@ -123,9 +112,9 @@ namespace kangaru {
 			auto rebound_state = with_cache_asymmetric<
 				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
 				ref_result_t<S&>,
-				detail::polymorphic_container::file_private::polymorphic_to_concrete<
+				detail::polymorphic_container::file_private::cached_source<
 					detail::utility::forward_like_t<Self, Source>
-				>::template type
+				>::template source_for
 			>{
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
 			};
@@ -230,8 +219,8 @@ namespace kangaru {
 		template<injectable T, callable F>
 			requires(source_of<polymorphic_container&, T> and source_of<detail::type_traits::call_result_t<F>, T>)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
-			using S = detail::type_traits::call_result_t<F>;
-			using contained_type = with_polymorphic_cast<with_cast_from<S, T>, T>;
+			using source = detail::type_traits::call_result_t<F>;
+			using contained_type = with_polymorphic_cast<with_cast_from<source, T>, T>;
 			constexpr auto id = detail::ctti::type_id_for<polymorphic_source<T>>();
 			
 			auto& heap_storage = state.source.source;
@@ -239,7 +228,7 @@ namespace kangaru {
 			
 			auto const ptr = heap_storage.emplace_from([&] {
 				return contained_type{
-					with_cast_from<S, T>{
+					with_cast_from<source, T>{
 						std::move(in_place)
 					},
 				};

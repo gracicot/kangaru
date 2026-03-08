@@ -17,7 +17,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::container_common {
+namespace kangaru::detail::container_common::file_private {
 	// TODO: Prevent duplicate?
 	template<injectable, kangaru::source>
 	struct enumerated_select_source_of {};
@@ -30,9 +30,102 @@ namespace kangaru::detail::container_common {
 	
 	template<injectable T, kangaru::source EnumeratedSource>
 	using enumerated_select_source_of_t = typename enumerated_select_source_of<T, EnumeratedSource>::type;
+	
+	template<injectable T>
+	struct default_type_to_source_mapping {};
+	
+	template<object T>
+	struct default_type_to_source_mapping<T&> {
+		using type = reference_source<T>;
+	};
+	
+	template<object T>
+	struct default_type_to_source_mapping<T&&> {
+		using type = rvalue_source<T>;
+	};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<std::shared_ptr<T>> {
+		using type = shared_pointer_source<T>;
+	};
+	
+	template<injectable T>
+		requires(unqualified_object<T>)
+	struct default_type_to_source_mapping<T> {
+		using type = object_source<T>;
+	};
+	
+	// Banned types. References to shared pointer are not allowed in the default mapping.
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<std::shared_ptr<T>&> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<std::shared_ptr<T> const&> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<std::shared_ptr<T>&&> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<std::shared_ptr<T> const&&> {};
 }
 
 KANGARU5_EXPORT namespace kangaru {
+	template<kangaru::source Source> requires(unqualified_object<Source>)
+	struct mapping_with_base_source {
+	private:
+		template<injectable T>
+		struct mapping : detail::container_common::file_private::default_type_to_source_mapping<T> {};
+		
+		// Allow for a source to provide alternative mappings.
+		template<injectable T>
+			requires(
+				requires{ typename detail::container_common::file_private::enumerated_select_source_of_t<T, Source>; }
+			)
+		struct mapping<T> {
+			using type = detail::container_common::file_private::enumerated_select_source_of_t<T, Source>;
+		};
+		
+	public:
+		template<injectable T>
+		using source_for = typename mapping<T>::type;
+	};
+	
+	template<injectable T> requires(allow_runtime_caching_v<T>)
+	using cached_source_mapping = typename detail::container_common::file_private::default_type_to_source_mapping<T>::type;
+	
+	template<injectable T> requires(allow_runtime_caching_v<T>)
+	using cached_reference_to_source_mapping = cached_source_mapping<T>&;
+	
+	template<source_ref Source>
+	struct cached_source_mapping_using {
+	private:
+		template<injectable T>
+		using unconstrained =
+			typename mapping_with_base_source<
+				std::remove_cvref_t<Source>
+			>::template source_for<T>;
+		
+	public:
+		template<injectable T>
+			requires(
+				   allow_runtime_caching_v<T>
+				or source_of<Source, unconstrained<T>>
+			)
+		using source_for = unconstrained<T>;
+	};
+	
+	template<source_ref Source, injectable T>
+	using cached_source_mapping_using_t = typename cached_source_mapping_using<Source>::template source_for<T>;
+	
+	template<source_ref Source>
+	struct cached_reference_to_source_mapping_using {
+		template<injectable T>
+		using source_for = cached_source_mapping_using_t<Source, T>&;
+	};
+	
+	template<source_ref Source, injectable T>
+	using cached_reference_to_source_mapping_using_t = cached_source_mapping_using_t<Source, T>&;
+	
 	struct throw_if_not_found {
 		template<injectable T> requires(assume_runtime_cached_v<T>)
 		[[noreturn]]

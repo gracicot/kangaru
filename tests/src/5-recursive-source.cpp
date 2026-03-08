@@ -115,7 +115,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 	
 	SECTION("Support the service idiom and cache and construction alternative") {
 		auto source = kangaru::with_recursion{
-			kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_reference_source>(
+			kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_source_mapping>(
 				kangaru::make_source_with_dereference(
 					kangaru::make_source_with_cache(
 						kangaru::make_source_with_heap_storage(
@@ -141,7 +141,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 			kangaru::make_source_with_passthrough(
 				kangaru::make_source_with_exhaustive_construction(
 					kangaru::make_source_with_recursion(
-						kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_reference_source>(
+						kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_source_mapping>(
 							kangaru::make_source_with_dereference(
 								kangaru::make_source_with_cache(
 									kangaru::make_source_with_heap_storage(

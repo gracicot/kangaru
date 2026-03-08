@@ -67,7 +67,13 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(begin, end);
 		}
 		
-		constexpr auto insert_or_assign(auto&& key, auto&& value) requires requires(unwrapped_cache_type c) { c.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); } {
+		template<typename Key, typename Value>
+			requires(
+				    std::constructible_from<key_type, Key&&>
+				and std::constructible_from<mapped_type, Value&&>
+				and requires(unwrapped_cache_type c, Key&& key, Value&& value) { c.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }
+			)
+		constexpr auto insert_or_assign(Key&& key, Value&& value)  {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}
 		
@@ -149,7 +155,11 @@ namespace kangaru {
 		}
 		
 		template<object T, forwarded<with_cache_asymmetric> Self>
-			requires source_of<detail::utility::forward_like_t<Self, source_type>, CacheFrom<T>>
+			requires(
+				    requires{ typename CacheFrom<T>; }
+				and std::constructible_from<mapped_type, CacheFrom<T>>
+				and source_of<detail::utility::forward_like_t<Self, source_type>, CacheFrom<T>>
+			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();
 			auto const it = KANGARU5_NO_ADL(maybe_unwrap)(source.cache).find(id);
@@ -242,18 +252,6 @@ namespace kangaru {
 	static_assert(cache_map<with_cache<none_source>>);
 	static_assert(dereferenceable_cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
 	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
-	
-	KANGARU5_EXPORT template<template<typename> typename SourceType>
-	struct cached_reference_to_source {
-		template<injectable T>
-			requires(
-				    allow_runtime_caching_v<T>
-				and requires { typename SourceType<std::remove_cvref_t<T>>; }
-			)
-		struct ttype {
-			using type = SourceType<std::remove_cvref_t<T>>&;
-		};
-	};
 }
 
 #include "undef.hpp"

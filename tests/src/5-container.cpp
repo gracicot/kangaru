@@ -26,130 +26,13 @@ struct service_c {
 	friend auto attribute(kangaru::allow_runtime_caching<service_c&>) -> std::true_type;
 };
 
-TEST_CASE("Container act a bit like kangaru 4", "[container]") {
-	auto container = kangaru::container{};
+struct service_d {
+	explicit service_d(service_c& c, service_aggregate services) noexcept : sc{c}, services{services} {}
+	service_c& sc;
+	service_aggregate services;
 	
-	SECTION("Allow replacing") {
-		auto& a1 = container.provide<service_a&>();
-		CHECK(container.has_in_cache<service_a&>());
-		auto& a2 = container.replace([]{ return service_a{}; });
-		auto& a3 = container.provide<service_a&>();
-		
-		CHECK(std::addressof(a1) != std::addressof(a2));
-		CHECK(std::addressof(a2) == std::addressof(a3));
-	}
-	
-	SECTION("Can create scoped instances") {
-		auto& a1 = container.provide<service_a&>();
-		{
-			auto c = container.scoped();
-			auto& a2 = container.provide<service_a&>();
-			CHECK(std::addressof(a1) == std::addressof(a2));
-			
-			auto& b1 = container.provide<service_b&>();
-			auto& b2 = c.provide<service_b&>();
-			
-			CHECK(std::addressof(b1) != std::addressof(b2));
-			c.provide<service_c&>();
-			CHECK(c.has_in_cache<service_c&>());
-		}
-		CHECK(not container.has_in_cache<service_c&>());
-	}
-	
-	SECTION("Reuses instances") {
-		auto& a = container.provide<service_a&>();
-		auto& b = container.provide<service_b&>();
-		CHECK(std::addressof(a) == std::addressof(b.a));
-		
-		auto& c = container.provide<service_c&>();
-		
-		CHECK(std::addressof(c.services.sa) == std::addressof(a));
-	}
-	
-	SECTION("Works with injectors") {
-		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
-		
-		injector([](service_a& a, service_c& c) {
-			CHECK(std::addressof(c.services.sa) == std::addressof(a));
-			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
-		});
-	}
-}
-
-struct service_a_child_1 : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<service_d>>) -> std::true_type;
 };
-
-struct service_a_child_2 : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
-};
-
-TEST_CASE("Container act a bit like kangaru 4 with polymorphic services", "[container]") {
-	auto container = kangaru::polymorphic_container{};
-	
-	SECTION("Allow replacing instances that overrides") {
-		auto& ac1 = container.provide<service_a_child_1&>();
-		CHECK(container.has_in_cache<service_a_child_1&>());
-		CHECK(container.has_in_cache<service_a&>());
-		ac1.i = 9;
-		
-		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
-		auto& ac2 = container.replace<service_a_child_2&>(kangaru::in_place_construct{[&]{
-			return injector([](service_a& previous) {
-				return kangaru::reference_source{service_a_child_2{service_a{.i = previous.i - 1}}};
-			});
-		}});
-		
-		auto& a = container.provide<service_a&>();
-		CHECK(a.i == 8);
-		CHECK(std::addressof(static_cast<service_a&>(ac2)) == std::addressof(a));
-	}
-	
-	SECTION("Can create scoped instances") {
-		auto& a1 = container.provide<service_a_child_1&>();
-		{
-			auto c = container.scoped();
-			auto& a = container.provide<service_a&>();
-			CHECK(std::addressof(a1) == std::addressof(a));
-			
-			{
-				container.replace<service_a_child_2&>(kangaru::in_place_construct{[]{ return kangaru::reference_source{service_a_child_2{}}; }});
-				auto& a1 = container.provide<service_a_child_1&>();
-				auto& a = container.provide<service_a&>();
-				CHECK(std::addressof(a1) != std::addressof(a));
-			}
-		}
-	}
-	
-	SECTION("Reuse instances that can override each other") {
-		auto& a1 = container.provide<service_a_child_1&>();
-		a1.i = 9;
-		
-		auto& a = container.provide<service_a&>();
-		auto& b = container.provide<service_b&>();
-		
-		CHECK(a.i == 9);
-		CHECK(std::addressof(a) == std::addressof(b.a));
-		CHECK(std::addressof(a1) == std::addressof(static_cast<service_a_child_1&>(b.a)));
-		
-		auto& c = container.provide<service_c&>();
-		
-		CHECK(std::addressof(c.services.sa) == std::addressof(static_cast<service_a_child_1&>(a)));
-	}
-	
-	SECTION("Can use injectors") {
-		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
-		
-		auto& a1 = container.provide<service_a_child_1&>();
-		injector([&](service_a& a, service_c& c) {
-			CHECK(std::addressof(c.services.sa) == std::addressof(a));
-			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
-			CHECK(std::addressof(a1) == std::addressof(static_cast<service_a_child_1&>(a)));
-		});
-	}
-}
 
 struct int_source {
 	auto provide() const& -> int {
@@ -207,8 +90,149 @@ struct dependent_on_provided {
 	std::shared_ptr<dynamic_provided_abstract> ptr;
 };
 
-TEST_CASE("Container can have a base source", "[container]") {
-	SECTION("Normal") {
+TEST_CASE("Container act a bit like kangaru 4", "[container]") {
+	auto container = kangaru::container{};
+	
+	SECTION("Allow replacing") {
+		auto& a1 = container.provide<service_a&>();
+		CHECK(container.has_in_cache<service_a&>());
+		auto& a2 = container.replace<service_a&>(kangaru::reference_source<service_a>{});
+		auto& a3 = container.provide<service_a&>();
+		
+		CHECK(std::addressof(a1) != std::addressof(a2));
+		CHECK(std::addressof(a2) == std::addressof(a3));
+	}
+	
+	SECTION("Can create scoped instances") {
+		auto& a1 = container.provide<service_a&>();
+		{
+			auto c = container.scoped();
+			auto& a2 = container.provide<service_a&>();
+			CHECK(std::addressof(a1) == std::addressof(a2));
+			
+			auto& b1 = container.provide<service_b&>();
+			auto& b2 = c.provide<service_b&>();
+			
+			CHECK(std::addressof(b1) != std::addressof(b2));
+			c.provide<service_c&>();
+			CHECK(c.has_in_cache<service_c&>());
+		}
+		CHECK(not container.has_in_cache<service_c&>());
+	}
+	
+	SECTION("Reuses instances") {
+		auto& a = container.provide<service_a&>();
+		auto& b = container.provide<service_b&>();
+		CHECK(std::addressof(a) == std::addressof(b.a));
+		
+		auto& c = container.provide<service_c&>();
+		
+		CHECK(std::addressof(c.services.sa) == std::addressof(a));
+	}
+	
+	SECTION("Works with injectors") {
+		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
+		
+		injector([](service_a& a, service_c& c) {
+			CHECK(std::addressof(c.services.sa) == std::addressof(a));
+			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
+		});
+	}
+
+	SECTION("Supports provided services") {
+		auto base = kangaru::object_source{kangaru::reference_source{concrete{8.5f}}};
+		auto container = kangaru::container{base};
+		auto& c = kangaru::provide<concrete&>(container);
+		CHECK(c.value == 8.5f);
+	}
+	
+	SECTION("Allow injection using shared pointers") {
+		auto container = kangaru::container{};
+		
+		SECTION("Simple caching of shared pointers") {
+			auto s = kangaru::provide<std::shared_ptr<shared_abstract>>(container);
+			CHECK(s == kangaru::provide<std::shared_ptr<shared_abstract>>(container));
+		}
+	}
+}
+
+struct service_a_child_1 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
+};
+
+struct service_a_child_2 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
+};
+
+TEST_CASE("Polymorphic container act a bit like kangaru 4 with polymorphic services", "[container]") {
+	auto container = kangaru::polymorphic_container{};
+	
+	SECTION("Allow replacing instances that overrides") {
+		auto& ac1 = container.provide<service_a_child_1&>();
+		CHECK(container.has_in_cache<service_a_child_1&>());
+		CHECK(container.has_in_cache<service_a&>());
+		ac1.i = 9;
+		
+		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
+		auto& ac2 = container.replace<service_a_child_2&>(kangaru::in_place_construct{[&]{
+			return injector([](service_a& previous) {
+				return kangaru::reference_source{service_a_child_2{service_a{.i = previous.i - 1}}};
+			});
+		}});
+		
+		auto& a = container.provide<service_a&>();
+		CHECK(a.i == 8);
+		CHECK(std::addressof(static_cast<service_a&>(ac2)) == std::addressof(a));
+	}
+	
+	SECTION("Can create scoped instances") {
+		auto& a1 = container.provide<service_a_child_1&>();
+		{
+			auto c = container.scoped();
+			auto& a = container.provide<service_a&>();
+			CHECK(std::addressof(a1) == std::addressof(a));
+			
+			{
+				container.replace<service_a_child_2&>(kangaru::reference_source{service_a_child_2{}});
+				auto& a1 = container.provide<service_a_child_1&>();
+				auto& a = container.provide<service_a&>();
+				CHECK(std::addressof(a1) != std::addressof(a));
+			}
+		}
+	}
+	
+	SECTION("Reuse instances that can override each other") {
+		auto& a1 = container.provide<service_a_child_1&>();
+		a1.i = 9;
+		
+		auto& a = container.provide<service_a&>();
+		auto& b = container.provide<service_b&>();
+		
+		CHECK(a.i == 9);
+		CHECK(std::addressof(a) == std::addressof(b.a));
+		CHECK(std::addressof(a1) == std::addressof(static_cast<service_a_child_1&>(b.a)));
+		
+		auto& c = container.provide<service_c&>();
+		
+		CHECK(std::addressof(c.services.sa) == std::addressof(static_cast<service_a_child_1&>(a)));
+	}
+	
+	SECTION("Can use injectors") {
+		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
+		
+		auto& a1 = container.provide<service_a_child_1&>();
+		injector([&](service_a& a, service_c& c) {
+			CHECK(std::addressof(c.services.sa) == std::addressof(a));
+			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
+			CHECK(std::addressof(a1) == std::addressof(static_cast<service_a_child_1&>(a)));
+		});
+	}
+}
+
+TEST_CASE("Container uses the base source") {
+	SECTION("Forwards") {
 		auto container = kangaru::container{int_source{}};
 		
 		auto const i = container.provide<int>();
@@ -234,8 +258,70 @@ TEST_CASE("Container can have a base source", "[container]") {
 			CHECK(c.services.sa.i == 4);
 		}
 	}
+
+	SECTION("container base source with factory functions") {
+		auto base = kangaru::make_container_base_source(
+			kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
+			[]() -> kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>> {
+				return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{std::make_shared<dynamic_provided_concrete>(3)};
+			}
+		);
+		
+		auto container = kangaru::container{base};
+		auto provided = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);
+		
+		CHECK(provided->value == 3);
+		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
+	}
 	
-	SECTION("Polymorphic") {
+	SECTION("container base source with dynamic supplied instances") {
+		auto container = kangaru::container{
+			kangaru::make_container_base_source(kangaru::allow_assume_cached)
+		};
+		
+		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::not_found_exception);
+		
+		SECTION("Can provide the instance dynamically using replace") {
+			// TODO: Allow assume cached types to be insertable to the container.
+			//       Make the base source actually provide a reference_source but throws when providing it?
+			//
+			// auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
+			// 	kangaru::make_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
+			// );
+			// 
+			// auto from_container = kangaru::provide<std::shared_ptr<dynamic_provided_concrete>>(container);
+			// CHECK(from_container == provided);
+			// CHECK(from_container->value == 15);
+		}
+	}
+	
+	SECTION("container base source with dynamic supplied instances and factory functions") {
+		auto base = kangaru::make_container_base_source(
+			kangaru::allow_assume_cached,
+			kangaru::throw_if_not_found{},
+			kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
+			[]() -> kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>> {
+				return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{std::make_shared<dynamic_provided_concrete>(3)};
+			}
+		);
+		
+		auto container = kangaru::polymorphic_container{base};
+		auto provided = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);
+		
+		CHECK(provided->value == 3);
+		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
+	}
+	
+	SECTION("Simple caching of shared pointers") {
+		auto container = kangaru::container{};
+		auto s = kangaru::provide<std::shared_ptr<service_d>>(container);
+		CHECK(s == kangaru::provide<std::shared_ptr<service_d>>(container));
+		CHECK(container.has_in_cache<std::shared_ptr<service_d>>());
+	}
+}
+
+TEST_CASE("Polymorphic container uses the base source", "[container]") {
+	SECTION("Forwards") {
 		auto container = kangaru::polymorphic_container{int_source{}};
 		
 		auto const i = container.provide<int>();

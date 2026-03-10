@@ -35,13 +35,31 @@ struct service_d {
 };
 
 struct int_source {
-	auto provide() const& -> int {
+	auto provide() & -> int {
 		return 3;
 	}
 	
 	auto provide() && -> int {
 		return 4;
 	}
+	
+	auto provide() const& -> int {
+		return 5;
+	}
+	
+	auto provide() const&& -> int {
+		return 6;
+	}
+};
+
+struct service_a_child_1 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
+};
+
+struct service_a_child_2 : service_a {
+	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
 };
 
 struct abstract {
@@ -155,16 +173,6 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 		}
 	}
 }
-
-struct service_a_child_1 : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
-};
-
-struct service_a_child_2 : service_a {
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
-};
 
 TEST_CASE("Polymorphic container act a bit like kangaru 4 with polymorphic services", "[container]") {
 	auto container = kangaru::polymorphic_container{};

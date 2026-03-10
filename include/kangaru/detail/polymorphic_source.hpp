@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_POLYMORPHIC_SOURCE_HPP
 #define KANGARU5_DETAIL_POLYMORPHIC_SOURCE_HPP
 
+#include "any_source_of.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source.hpp"
 #include "utility.hpp"
@@ -14,66 +15,9 @@
 #include "define.hpp"
 
 namespace kangaru {
-	struct type_erased_source_reference;
-	
-	// TODO: Review constructors/conversions
+	// TODO: Check if we need that alias. We now have a more generic any_source_of_ref
 	KANGARU5_EXPORT template<injectable T>
-	struct polymorphic_source {
-		template<not_self<polymorphic_source> Source> requires source_of<Source, T>
-		explicit constexpr polymorphic_source(Source& source) noexcept :
-			// This const_cast is safe. The only way this pointer can be used is
-			// through the 'provide_function' function pointer. This function in turn
-			// adds back the const
-			source{std::addressof(const_cast<std::remove_cvref_t<Source>&>(source))},
-			provide_function{provide_function_for<std::remove_reference_t<decltype(source)>>()} {}
-		
-		template<not_self<polymorphic_source> Source> requires reference_wrapper<Source>
-		explicit constexpr polymorphic_source(Source&& source) noexcept
-			requires (
-				    source_of<Source, T>
-				and not std::is_rvalue_reference_v<decltype(source.unwrap())>
-			) :
-				// This const_cast is safe. The only way this pointer can be used is
-				// through the 'provide_function' function pointer. This function in turn
-				// adds back the const
-				source{const_cast<std::remove_cvref_t<decltype(source.unwrap())>&>(std::addressof(source.unwrap()))},
-				provide_function{provide_function_for<source_reference_wrapped_type<Source>>()} {}
-		
-		/**
-		 * Unsafe constructor that allows construction from a type erased source and a function pointer to call
-		 * provide on.
-		 * 
-		 * The reason why this function is unsafe is that there is no way to verify at this point if calling
-		 * the function pointer with the source void pointer parameter will result in undefined behavior or not. It it
-		 * meant to be called only if the source is known to be the type the provide function expects.
-		 * 
-		 * @warning Unsafe
-		 */
-		KANGARU5_UNSAFE
-		constexpr polymorphic_source(
-			void* source,
-			detail::utility::function_pointer_t<auto(void*) -> T> provide_function
-		) noexcept :
-			source{source},
-			provide_function{provide_function} {}
-		
-		KANGARU5_CONSTEXPR_VOIDSTAR auto provide() const& -> T {
-			return provide_function(source);
-		}
-		
-		friend struct type_erased_source_reference;
-		
-	private:
-		template<source Source>
-		static constexpr auto provide_function_for() -> std::invocable<void*> auto {
-			return [](void* s) KANGARU5_CONSTEXPR_VOIDSTAR -> T {
-				return kangaru::provide<T>(*static_cast<Source*>(s));
-			};
-		}
-		
-		void* source;
-		detail::utility::function_pointer_t<auto(void*) -> T> provide_function;
-	};
+	using polymorphic_source = any_source_of_ref<T>;
 	
 	/**
 	 * @brief A type erased source which completely hides the source type and provide type.
@@ -88,7 +32,7 @@ namespace kangaru {
 			
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
-				source.provide_function
+				std::get<0>(source.source_vtable.provide)
 			);
 		}
 		
@@ -98,7 +42,7 @@ namespace kangaru {
 			
 			std::construct_at(
 				static_cast<function_container<T>*>(static_cast<void*>(function_container_type_erased)),
-				rhs.provide_function
+				std::get<0>(rhs.source_vtable.provide)
 			);
 			
 			return *this;

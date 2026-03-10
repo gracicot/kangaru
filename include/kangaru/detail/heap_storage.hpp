@@ -138,7 +138,7 @@ namespace kangaru {
 		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
 			KANGARU5_UNSAFE_BLOCK {
 				using object_type = detail::type_traits::call_result_t<F>;
-				auto const ptr = std::unique_ptr<object_type, destroy>{
+				auto ptr = std::unique_ptr<object_type, destroy>{
 					basic_heap_storage::construct(allocator, std::move(function)),
 					destroy{std::addressof(allocator)},
 				};
@@ -157,8 +157,8 @@ namespace kangaru {
 			Allocator* allocator;
 			
 			template<typename ObjectType>
-			constexpr auto operator()(ObjectType* ptr) const {
-				basic_heap_storage::template destroyer<ObjectType>()(ptr, std::addressof(allocator));
+			constexpr auto operator()(ObjectType* ptr) const noexcept -> void {
+				basic_heap_storage::template destroyer<ObjectType>()(ptr, allocator);
 			}
 		};
 		Container container;

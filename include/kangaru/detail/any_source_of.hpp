@@ -94,7 +94,7 @@ KANGARU5_EXPORT namespace kangaru {
 							return kangaru::provide<Types>(*static_cast<Source*>(source));
 						}...
 					},
-					.destroy = [](void const* source) noexcept KANGARU5_CONSTEXPR_VOIDSTAR {
+					.destroy = [](void const* source) KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
 						delete static_cast<Source const*>(source);
 					}
 				};

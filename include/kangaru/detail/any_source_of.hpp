@@ -153,10 +153,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	/**
-	 * Wraps any sources that can provide Types and type erase it.
-	 *
-	 * It uses raw new and delete instead of unique pointers with a custom deleter because
-	 * we need to place the deleter in the vtable which is held separately from the pointer.
+	 * Wraps a reference to any sources that can provide `Types` and type erase it.
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
 	struct any_source_of_ref : detail::any_source_of::file_private::any_source_of_base<Types...> {

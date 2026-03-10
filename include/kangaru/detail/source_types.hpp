@@ -160,6 +160,12 @@ namespace kangaru {
 		
 		template<unqualified_object U>
 		friend auto attribute(allow_empty_injection<object_source<U>>) -> std::true_type;
+		
+		template<unqualified_object U>
+		friend auto attribute(allow_runtime_caching<object_source<U>>) -> std::bool_constant<allow_runtime_caching_v<U>>;
+		
+		template<unqualified_object U>
+		friend auto attribute(assume_runtime_cached<object_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -186,6 +192,12 @@ namespace kangaru {
 		
 		template<kangaru::object U>
 		friend auto attribute(allow_empty_injection<rvalue_source<U>>) -> std::true_type;
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_runtime_caching<rvalue_source<U>>) -> std::bool_constant<allow_runtime_caching_v<U&&>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(assume_runtime_cached<rvalue_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U&&>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -212,6 +224,12 @@ namespace kangaru {
 		
 		template<kangaru::object U>
 		friend auto attribute(allow_empty_injection<reference_source<U>>) -> std::true_type;
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_runtime_caching<reference_source<U>>) -> std::bool_constant<allow_runtime_caching_v<U&>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(assume_runtime_cached<reference_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U&>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -249,6 +267,12 @@ namespace kangaru {
 		
 		template<kangaru::object U>
 		friend auto attribute(allow_empty_injection<shared_pointer_source<U>>) -> std::true_type;
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_runtime_caching<shared_pointer_source<U>>) -> std::bool_constant<allow_runtime_caching_v<std::shared_ptr<U>>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(assume_runtime_cached<shared_pointer_source<U>>) -> std::bool_constant<assume_runtime_cached_v<std::shared_ptr<U>>>;
 	};
 	
 	KANGARU5_EXPORT template<object T>

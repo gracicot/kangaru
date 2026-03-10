@@ -235,9 +235,6 @@ TEST_CASE("Container uses the base source") {
 	SECTION("Forwards") {
 		auto container = kangaru::container{int_source{}};
 		
-		auto const i = container.provide<int>();
-		CHECK(i == 3);
-		
 		SECTION("lvalues") {
 			auto& a = container.provide<service_a&>();
 			CHECK(a.i == 3);
@@ -282,16 +279,13 @@ TEST_CASE("Container uses the base source") {
 		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::not_found_exception);
 		
 		SECTION("Can provide the instance dynamically using replace") {
-			// TODO: Allow assume cached types to be insertable to the container.
-			//       Make the base source actually provide a reference_source but throws when providing it?
-			//
-			// auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
-			// 	kangaru::make_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
-			// );
-			// 
-			// auto from_container = kangaru::provide<std::shared_ptr<dynamic_provided_concrete>>(container);
-			// CHECK(from_container == provided);
-			// CHECK(from_container->value == 15);
+			auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
+				kangaru::make_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
+			);
+			
+			auto from_container = kangaru::provide<std::shared_ptr<dynamic_provided_concrete>>(container);
+			CHECK(from_container == provided);
+			CHECK(from_container->value == 15);
 		}
 	}
 	
@@ -323,9 +317,6 @@ TEST_CASE("Container uses the base source") {
 TEST_CASE("Polymorphic container uses the base source", "[container]") {
 	SECTION("Forwards") {
 		auto container = kangaru::polymorphic_container{int_source{}};
-		
-		auto const i = container.provide<int>();
-		CHECK(i == 3);
 		
 		SECTION("lvalues") {
 			auto& a = container.provide<service_a&>();

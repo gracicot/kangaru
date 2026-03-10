@@ -130,10 +130,7 @@ namespace kangaru {
 									std::move(rebound_state)
 								)
 							},
-							KANGARU5_NO_ADL(compose)(
-								external_reference_source{self},
-								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.source.source)
-							)
+							external_reference_source{self},
 						}
 					)
 				}
@@ -157,21 +154,6 @@ namespace kangaru {
 		constexpr auto provide() && -> T requires source_of<container_source_t<polymorphic_container&&>, T> {
 			return kangaru::provide<T>(
 				container_source(std::move(*this), std::move(state))
-			);
-		}
-		
-		// TODO: Support dynamic provided in const overloads
-		template<injectable T>
-		constexpr auto provide() const& -> T requires source_of<Source const&, T> {
-			return kangaru::provide<T>(
-				state.source.source.source.source.source.source
-			);
-		}
-		
-		template<injectable T>
-		constexpr auto provide() const&& -> T requires source_of<Source const&&, T> {
-			return kangaru::provide<T>(
-				state.source.source.source.source.source.source
 			);
 		}
 		

@@ -202,8 +202,7 @@ KANGARU5_EXPORT namespace kangaru {
 		Lambdas&&... lambdas
 	) {
 		return KANGARU5_NO_ADL(enumerate_source<
-			reflected_return_type<Lambdas, max>...,
-			std::decay_t<IfNotFound>
+			reflected_return_type<Lambdas, max>...
 		>)(
 			with_alternative{
 				with_function_call{
@@ -213,7 +212,7 @@ KANGARU5_EXPORT namespace kangaru {
 						make_basic_spread_injector<Deducer, max>,
 					}...,
 				},
-				kangaru::object_source{KANGARU5_FWD(source_if_not_found)},
+				KANGARU5_FWD(source_if_not_found),
 			}
 		);
 	}
@@ -230,11 +229,10 @@ KANGARU5_EXPORT namespace kangaru {
 		Lambdas&&... lambdas
 	) {
 		if constexpr (sizeof...(Lambdas) == 0) {
-			return KANGARU5_NO_ADL(enumerate_source)(kangaru::object_source{KANGARU5_FWD(source_if_not_found)});
+			return KANGARU5_FWD(source_if_not_found);
 		} else {
 			return KANGARU5_NO_ADL(enumerate_source<
-				reflected_return_type<Lambdas, max>...,
-				std::decay_t<IfNotFound>
+				reflected_return_type<Lambdas, max>...
 			>)(
 				with_alternative{
 					with_function_call{
@@ -251,9 +249,7 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	inline constexpr auto make_container_base_source(allow_assume_cached_t) {
-		return KANGARU5_NO_ADL(enumerate_source)(
-			kangaru::object_source{throw_if_not_found{}}
-		);
+		return throw_if_not_found{};
 	}
 }
 

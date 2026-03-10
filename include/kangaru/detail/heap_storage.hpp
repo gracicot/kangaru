@@ -80,17 +80,24 @@ namespace kangaru {
 			constexpr auto construct(Allocator& allocator, F function) -> type_traits::call_result_t<F>* {
 				using object_type = type_traits::call_result_t<F>;
 				
-				auto const ptr = allocator.template allocate_object<object_type>();
+				auto ptr = std::unique_ptr<object_type, deallocate_uninitialized>{
+					allocator.template allocate_object<object_type>(),
+					deallocate_uninitialized{std::addressof(allocator)}
+				};
 				
-				auto provide_as_function_source = function_source{function};
-				
-				std::construct_at(
-					ptr,
-					strict_deducer<decltype(provide_as_function_source)&>{provide_as_function_source}
-				);
-				
-				return ptr;
+				std::construct_at(ptr.get(), in_place_construct{std::move(function)});
+				return ptr.release();
 			}
+			
+		private:
+			struct deallocate_uninitialized {
+				Allocator* allocator;
+				
+				template<typename ObjectType>
+				auto operator()(ObjectType* ptr) {
+					allocator->template deallocate_object<ObjectType>(ptr);
+				}
+			};
 		};
 	} // namespace detail::heap_storage
 	

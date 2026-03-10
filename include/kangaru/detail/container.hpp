@@ -82,10 +82,7 @@ KANGARU5_EXPORT namespace kangaru {
 									}
 								)
 							},
-							KANGARU5_NO_ADL(compose)(
-								external_reference_source{self},
-								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source)
-							)
+							external_reference_source{self},
 						}
 					)
 				}

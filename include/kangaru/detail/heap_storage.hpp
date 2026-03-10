@@ -94,7 +94,7 @@ namespace kangaru {
 				Allocator* allocator;
 				
 				template<typename ObjectType>
-				auto operator()(ObjectType* ptr) {
+				constexpr auto operator()(ObjectType* ptr) const {
 					allocator->template deallocate_object<ObjectType>(ptr);
 				}
 			};
@@ -129,7 +129,7 @@ namespace kangaru {
 		KANGARU5_CONSTEXPR_VOIDSTAR ~basic_heap_storage() {
 			KANGARU5_UNSAFE_BLOCK {
 				for (auto it = container.rbegin(); it < container.rend(); ++it) {
-					it->deleter(it->ptr, &allocator);
+					it->deleter(it->ptr, std::addressof(allocator));
 				}
 			}
 		}
@@ -137,19 +137,30 @@ namespace kangaru {
 		template<std::copy_constructible F>
 		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
 			KANGARU5_UNSAFE_BLOCK {
-				auto const ptr = basic_heap_storage::construct(allocator, std::move(function));
-				
 				using object_type = detail::type_traits::call_result_t<F>;
+				auto const ptr = std::unique_ptr<object_type, destroy>{
+					basic_heap_storage::construct(allocator, std::move(function)),
+					destroy{std::addressof(allocator)},
+				};
+				
 				container.push_back(runtime_dynamic_storage{
-					ptr,
+					ptr.get(),
 					basic_heap_storage::template destroyer<object_type>(),
 				});
 				
-				return ptr;
+				return ptr.release();
 			}
 		}
 		
 	private:
+		struct destroy {
+			Allocator* allocator;
+			
+			template<typename ObjectType>
+			constexpr auto operator()(ObjectType* ptr) const {
+				basic_heap_storage::template destroyer<ObjectType>()(ptr, std::addressof(allocator));
+			}
+		};
 		Container container;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS

@@ -87,7 +87,7 @@ namespace kangaru::detail::any_source_of::file_private {
 }
 
 KANGARU5_EXPORT namespace kangaru {
-	struct type_erased_source_reference;
+	struct any_source_of_one_ref;
 	/**
 	 * Wraps any sources that can provide Types and type erase it.
 	 *
@@ -161,7 +161,7 @@ KANGARU5_EXPORT namespace kangaru {
 		using base = detail::any_source_of::file_private::any_source_of_base<Types...>;
 		
 		// TODO: Ensure the friend is still needed
-		friend struct type_erased_source_reference;
+		friend struct any_source_of_one_ref;
 		
 		constexpr any_source_of_ref(
 			void* source,

@@ -3,6 +3,7 @@
 
 #include "deducer.hpp"
 #include "exceptions.hpp"
+#include "two_step_init.hpp"
 #include "source_traits.hpp"
 #include "source.hpp"
 #include "concepts.hpp"
@@ -230,6 +231,21 @@ namespace kangaru {
 		
 		template<kangaru::object U>
 		friend auto attribute(assume_runtime_cached<reference_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U&>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(second_step_init<reference_source<U>>) -> call_second_step_from_attribute_on_member<&reference_source<U>::object, U&>;
+		
+		template<kangaru::object U>
+		friend auto attribute(second_step_init<reference_source<U>&>) -> call_second_step_from_attribute_on_member<&reference_source<U>::object, U&>;
+		
+		template<kangaru::object U>
+		friend auto attribute(second_step_init<reference_source<U>&&>) -> call_second_step_from_attribute_on_member<&reference_source<U>::object, U&>;
+		
+		template<kangaru::object U> requires(std::is_const_v<U>)
+		friend auto attribute(second_step_init<reference_source<U> const&>) -> call_second_step_from_attribute_on_member<&reference_source<U>::object, U&>;
+		
+		template<kangaru::object U> requires(std::is_const_v<U>)
+		friend auto attribute(second_step_init<reference_source<U> const&&>) -> call_second_step_from_attribute_on_member<&reference_source<U>::object, U&>;
 	};
 	
 	KANGARU5_EXPORT template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -475,6 +491,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source Source>
 	struct with_dereference {
+		// Add a const& and && + conversion constructor?
 		explicit constexpr with_dereference(Source source) noexcept : source{std::move(source)} {}
 		
 		Source source;
@@ -513,6 +530,21 @@ namespace kangaru {
 		
 		template<kangaru::source S, injectable F>
 		friend auto attribute(overrides_types_in_cache<with_cast_from<S, F>>) -> overrides_types_in_cache<S>;
+		
+		template<kangaru::source S, injectable F>
+		friend auto attribute(second_step_init<with_cast_from<S, F>>) -> call_second_step_from_attribute_on_wrapped_source;
+		
+		template<kangaru::source S, injectable F>
+		friend auto attribute(second_step_init<with_cast_from<S, F>&>) -> call_second_step_from_attribute_on_wrapped_source;
+		
+		template<kangaru::source S, injectable F>
+		friend auto attribute(second_step_init<with_cast_from<S, F> const&>) -> call_second_step_from_attribute_on_wrapped_source;
+		
+		template<kangaru::source S, injectable F>
+		friend auto attribute(second_step_init<with_cast_from<S, F>&&>) -> call_second_step_from_attribute_on_wrapped_source;
+		
+		template<kangaru::source S, injectable F>
+		friend auto attribute(second_step_init<with_cast_from<S, F> const&&>) -> call_second_step_from_attribute_on_wrapped_source;
 	};
 	
 	KANGARU5_EXPORT template<injectable From>
@@ -551,6 +583,22 @@ namespace kangaru {
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
 			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
+		}
+
+		// TODO: Report clang issue. We shouldn't need to define this function. detail::source_rebind::rebind_wrapper is broken?
+		template<forwarded<with_provide_using_source> Original, forwarded_source NewLeaf>
+			requires(
+				std::constructible_from<
+					Source,
+					detail::utility::forward_like_t<Original, Source>
+				>
+			)
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
+			with_provide_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, SourceFor>
+		{
+			return with_provide_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, SourceFor> {
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			};
 		}
 		
 		Source source;

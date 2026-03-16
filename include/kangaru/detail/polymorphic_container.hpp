@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_POLYMORPHIC_CONTAINER_HPP
 
 #include "concepts.hpp"
+#include "two_step_init.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_traits.hpp"
 #include "utility.hpp"
@@ -30,7 +31,7 @@ namespace kangaru {
 			struct mapping {};
 			
 			template<injectable T> requires (requires{ typename cached_source_mapping_using_t<Source, T>; })
-			struct mapping<kangaru::polymorphic_source<T>> {
+			struct mapping<kangaru::any_source_of_ref<T>> {
 				using type = with_polymorphic_cast<
 					with_cast_from<
 						cached_source_mapping_using_t<Source, T>,
@@ -47,7 +48,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<
 		rebindable_source Source = none_source,
-		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, type_erased_source_reference>>,
+		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, any_source_of_one_ref>>,
 		dereferenceable_heap_storage Storage = default_heap_storage
 	>
 	struct polymorphic_container {
@@ -66,10 +67,10 @@ namespace kangaru {
 								)
 							),
 							std::move(storage),
-						}
+						},
 					},
 					std::move(cache)
-				)
+				),
 			} {}
 		
 		constexpr polymorphic_container(Source source, Cache cache) noexcept
@@ -121,13 +122,16 @@ namespace kangaru {
 			
 			return with_recursion{
 				with_passthrough{
-					KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
+					KANGARU5_NO_ADL(make_source_with_exhaustive_two_step_construction)(
 						with_alternative{
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
-									kangaru::polymorphic_source
+									kangaru::any_source_of_ref
 								>)(
-									std::move(rebound_state)
+									cache_with_two_step_init_on_insert{
+										std::move(rebound_state),
+										second_step_from_attribute{},
+									}
 								)
 							},
 							external_reference_source{self},
@@ -174,14 +178,14 @@ namespace kangaru {
 		
 		template<injectable T> requires(source_of<polymorphic_container&, T>)
 		constexpr auto has_in_cache() -> bool {
-			return state.contains(detail::ctti::type_id_for<polymorphic_source<T>>());
+			return state.contains(detail::ctti::type_id_for<any_source_of_ref<T>>());
 		}
 		
 		template<injectable T, source_of<T> S>
 			requires(source_of<polymorphic_container&, T>)
 		constexpr auto replace(S&& source) -> T {
 			using contained_type = with_polymorphic_cast<with_cast_from<std::remove_cvref_t<S>, T>, T>;
-			constexpr auto id = detail::ctti::type_id_for<polymorphic_source<T>>();
+			constexpr auto id = detail::ctti::type_id_for<any_source_of_ref<T>>();
 			
 			auto& heap_storage = state.source.source;
 			auto& cache = state;
@@ -203,7 +207,7 @@ namespace kangaru {
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
 			using source = detail::type_traits::call_result_t<F>;
 			using contained_type = with_polymorphic_cast<with_cast_from<source, T>, T>;
-			constexpr auto id = detail::ctti::type_id_for<polymorphic_source<T>>();
+			constexpr auto id = detail::ctti::type_id_for<any_source_of_ref<T>>();
 			
 			auto& heap_storage = state.source.source;
 			auto& cache = state;

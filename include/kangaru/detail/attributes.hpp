@@ -10,7 +10,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::attribute {
+namespace kangaru::detail::attribute::file_private {
 	auto attribute(auto&&) -> void requires false;
 	
 	template<template<typename> typename Attribute, weak_injectable T, typename Default>
@@ -46,49 +46,63 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
 	struct allow_runtime_caching {
 		template<weak_injectable A> requires(std::same_as<T, A>)
-		using ttype = typename detail::attribute::attribute_function_t<allow_runtime_caching, A, std::false_type>;
+		using ttype = typename detail::attribute::file_private::attribute_function_t<allow_runtime_caching, A, std::false_type>;
 	};
 	
 	template<weak_injectable T>
-	inline constexpr auto allow_runtime_caching_v = detail::attribute::evaluate_attribute_t<allow_runtime_caching, T>::value;
+	inline constexpr auto allow_runtime_caching_v = detail::attribute::file_private::evaluate_attribute_t<allow_runtime_caching, T>::value;
 	
 	template<typename T>
 	struct allow_empty_injection {
 		template<weak_injectable A> requires(std::same_as<T, A>)
-		using ttype = typename detail::attribute::attribute_function_t<allow_empty_injection, A, std::false_type>;
+		using ttype = typename detail::attribute::file_private::attribute_function_t<allow_empty_injection, A, std::false_type>;
 	};
 	
 	template<weak_injectable T>
-	inline constexpr auto allow_empty_injection_v = detail::attribute::evaluate_attribute_t<allow_empty_injection, T>::value;
+	inline constexpr auto allow_empty_injection_v = detail::attribute::file_private::evaluate_attribute_t<allow_empty_injection, T>::value;
 	
 	template<typename T>
 	struct overrides_types_in_cache {
 		template<weak_injectable A> requires(std::same_as<T, A>)
 		struct ttype {
-			using type = detail::attribute::attribute_function_t<overrides_types_in_cache, A, std::tuple<>>;
+			using type = detail::attribute::file_private::attribute_function_t<overrides_types_in_cache, A, std::tuple<>>;
 		};
 	};
 	
 	template<typename T>
-	using overrides_types_in_cache_t = typename detail::attribute::evaluate_attribute_t<overrides_types_in_cache, T>::type;
+	using overrides_types_in_cache_t = typename detail::attribute::file_private::evaluate_attribute_t<overrides_types_in_cache, T>::type;
 	
 	template<typename T>
 	struct allow_injection_using {
 		template<weak_injectable A> requires(std::same_as<T, A>)
-		using ttype = typename detail::attribute::attribute_function_t<allow_injection_using, A, std::true_type>;
+		using ttype = typename detail::attribute::file_private::attribute_function_t<allow_injection_using, A, std::true_type>;
 	};
 	
 	template<weak_injectable T>
-	inline constexpr auto allow_injection_using_v = detail::attribute::evaluate_attribute_t<allow_injection_using, T>::value;
+	inline constexpr auto allow_injection_using_v = detail::attribute::file_private::evaluate_attribute_t<allow_injection_using, T>::value;
 	
 	template<typename T>
 	struct assume_runtime_cached {
 		template<weak_injectable A> requires(std::same_as<T, A>)
-		using ttype = typename detail::attribute::attribute_function_t<assume_runtime_cached, A, std::false_type>;
+		using ttype = typename detail::attribute::file_private::attribute_function_t<assume_runtime_cached, A, std::false_type>;
 	};
 	
 	template<weak_injectable T>
-	inline constexpr auto assume_runtime_cached_v = detail::attribute::evaluate_attribute_t<assume_runtime_cached, T>::value;
+	inline constexpr auto assume_runtime_cached_v = detail::attribute::file_private::evaluate_attribute_t<assume_runtime_cached, T>::value;
+	
+	// forward declaration to avoid circular dependency
+	struct noop_second_step;
+	
+	template<typename T>
+	struct second_step_init {
+		template<weak_injectable A> requires(std::same_as<T, A>)
+		struct ttype {
+			using type = typename detail::attribute::file_private::attribute_function_t<second_step_init, A, noop_second_step>;
+		};
+	};
+	
+	template<weak_injectable T>
+	using second_step_init_t = detail::attribute::file_private::evaluate_attribute_t<second_step_init, T>::type;
 }
 
 #include "undef.hpp"

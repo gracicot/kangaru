@@ -108,6 +108,37 @@ struct dependent_on_provided {
 	std::shared_ptr<dynamic_provided_abstract> ptr;
 };
 
+struct has_second_step {
+	int a = 0;
+	
+	static auto init(has_second_step& instance) -> void {
+		instance.a = 9;
+	}
+	
+	friend auto attribute(kangaru::allow_runtime_caching<has_second_step&>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<has_second_step&>) -> kangaru::call_function<
+		[](has_second_step& instance, kangaru::forwarded_source auto&& source) {
+			has_second_step::init(instance);
+		}
+	>;
+};
+
+struct non_cached_with_second_step {
+	explicit constexpr non_cached_with_second_step(has_second_step first) : first{first} {}
+	has_second_step first;
+	int a = 0;
+	
+	static auto init(non_cached_with_second_step& instance) -> void {
+		instance.a = 9;
+	}
+	
+	friend auto attribute(kangaru::second_step_init<non_cached_with_second_step>) -> kangaru::call_function<
+		[](non_cached_with_second_step& instance, kangaru::forwarded_source auto&& source) {
+			non_cached_with_second_step::init(instance);
+		}
+	>;
+};
+
 TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 	auto container = kangaru::container{};
 	
@@ -416,6 +447,14 @@ TEST_CASE("Polymorphic container uses the base source", "[container]") {
 		
 		CHECK(provided->value == 3);
 		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
+	}
+	
+	SECTION("Supports second step for cached types") {
+		auto container = kangaru::polymorphic_container{};
+		auto& a = kangaru::provide<has_second_step&>(container);
+		CHECK(a.a == 9);
+		auto b = kangaru::provide<non_cached_with_second_step>(container);
+		CHECK(b.a == 9);
 	}
 }
 

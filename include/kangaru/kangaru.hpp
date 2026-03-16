@@ -26,6 +26,7 @@
 #include "detail/source_reference_wrapper.hpp"
 #include "detail/source_traits.hpp"
 #include "detail/source_types.hpp"
+#include "detail/two_step_init.hpp"
 #include "detail/type_traits.hpp"
 #include "detail/utility.hpp"
 

@@ -135,7 +135,6 @@ namespace kangaru {
 			
 			std::tuple<Functions...> functions;
 		};
-	
 	}
 	
 	KANGARU5_EXPORT template<copiable_object MakeInjector>
@@ -147,7 +146,7 @@ namespace kangaru {
 		
 		template<unqualified_object T, forwarded_source Source>
 			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, non_default_constructor_function<T>>
-		constexpr auto operator()(Source&& source) const {
+		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(non_default_constructor_function<T>{});
 		}
 		
@@ -167,7 +166,7 @@ namespace kangaru {
 		
 		template<unqualified_object T, forwarded_source Source>
 			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
-		constexpr auto operator()(Source&& source) const {
+		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(constructor_function<T>{});
 		}
 		
@@ -177,6 +176,40 @@ namespace kangaru {
 	};
 	
 	KANGARU5_EXPORT using unsafe_exhaustive_construction = basic_unsafe_exhaustive_construction<make_spread_injector_function>;
+	
+	KANGARU5_EXPORT template<copiable_object Construction, second_step_function SecondStep>
+	struct construction_with_two_step_init {
+		constexpr construction_with_two_step_init()
+			requires(std::default_initializable<Construction> and std::default_initializable<SecondStep>) = default;
+		
+		explicit constexpr construction_with_two_step_init(Construction construction) noexcept
+			requires(std::default_initializable<SecondStep>) :
+			construction{std::move(construction)} {}
+		
+		constexpr construction_with_two_step_init(Construction construction, SecondStep second_step) noexcept :
+			construction{std::move(construction)},
+			second_step{std::move(second_step)} {}
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				    callable_template_1t_returns<T, Construction, T, Source&&>
+				and callable_template_1t<SecondStep, T, T&, Source&&>
+			)
+		constexpr auto operator()(Source&& source) const -> T {
+			decltype(auto) result = construction.template operator()<T>(KANGARU5_FWD(source));
+			void(second_step.template operator()<T>(result, KANGARU5_FWD(source)));
+			return result;
+		}
+		
+	private:
+		Construction construction;
+		SecondStep second_step;
+	};
+	
+	KANGARU5_EXPORT template<copiable_object Construction, second_step_function SecondStep = noop_second_step>
+	inline constexpr auto make_construction_with_two_step_init(Construction const& construction, SecondStep const& second_step) {
+		return construction_with_two_step_init<Construction, SecondStep>{KANGARU5_FWD(construction), second_step};
+	}
 	
 	KANGARU5_EXPORT template<copiable_object MakeInjector>
 	struct basic_exhaustive_construction {
@@ -196,7 +229,7 @@ namespace kangaru {
 		
 		template<unqualified_object T, forwarded_source Source>
 			requires callable<detail::type_traits::call_result_t<MakeInjector const&, Source&&>, constructor_type<T>>
-		constexpr auto operator()(Source&& source) const {
+		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(constructor_type<T>{});
 		}
 		
@@ -411,6 +444,30 @@ namespace kangaru {
 	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {
 		return with_construction<std::decay_t<Source>, unsafe_exhaustive_construction>{KANGARU5_FWD(source), unsafe_exhaustive_construction{}};
+	}
+
+	KANGARU5_EXPORT template<source Source>
+	using with_non_empty_two_step_construction = with_construction<Source, construction_with_two_step_init<non_empty_construction, second_step_from_attribute>>;
+	
+	KANGARU5_EXPORT template<forwarded_source Source>
+	inline constexpr auto make_source_with_non_empty_two_step_construction(Source&& source) {
+		return with_construction<std::decay_t<Source>, construction_with_two_step_init<non_empty_construction, second_step_from_attribute>>{KANGARU5_FWD(source), construction_with_two_step_init{non_empty_construction{}, second_step_from_attribute{}}};
+	}
+	
+	KANGARU5_EXPORT template<source Source>
+	using with_exhaustive_two_step_construction = with_construction<Source, construction_with_two_step_init<exhaustive_construction, second_step_from_attribute>>;
+	
+	KANGARU5_EXPORT template<forwarded_source Source>
+	inline constexpr auto make_source_with_exhaustive_two_step_construction(Source&& source) {
+		return with_construction<std::decay_t<Source>, construction_with_two_step_init<exhaustive_construction, second_step_from_attribute>>{KANGARU5_FWD(source), construction_with_two_step_init{exhaustive_construction{}, second_step_from_attribute{}}};
+	}
+	
+	KANGARU5_EXPORT template<source Source>
+	using with_unsafe_exhaustive_two_step_construction = with_construction<Source, construction_with_two_step_init<unsafe_exhaustive_construction, second_step_from_attribute>>;
+	
+	KANGARU5_EXPORT template<forwarded_source Source>
+	inline constexpr auto make_source_with_unsafe_exhaustive_two_step_construction(Source&& source) {
+		return with_construction<std::decay_t<Source>, construction_with_two_step_init<unsafe_exhaustive_construction, second_step_from_attribute>>{KANGARU5_FWD(source), construction_with_two_step_init{unsafe_exhaustive_construction{}, second_step_from_attribute{}}};
 	}
 	
 	namespace detail::recursive_source {

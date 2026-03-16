@@ -133,6 +133,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename Source>
 	concept rebindable_source = source<Source> and detail::source_rebind::is_rebindable_v<Source>;
 	
+	// TODO: Forwarding?
 	KANGARU5_EXPORT template<rebindable_source Source, forwarded_source Leaf>
 	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
 	

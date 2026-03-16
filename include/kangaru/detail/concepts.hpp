@@ -44,7 +44,16 @@ KANGARU5_EXPORT namespace kangaru {
 	concept movable_object = unqualified_object<T> and std::move_constructible<T>;
 	
 	template<typename T>
-	concept copiable_object = unqualified_object<T> and std::copy_constructible<T>;
+	concept forwarded_movable_object = movable_object<std::remove_cvref_t<T>>;
+	
+	template<typename T>
+	concept copiable_object =
+		    movable_object<T>
+		and unqualified_object<T>
+		and std::copy_constructible<T>;
+	
+	template<typename T>
+	concept forwarded_copiable_object = copiable_object<std::remove_cvref_t<T>>;
 	
 	template<typename T>
 	concept function_object = object<T> and std::move_constructible<T>;
@@ -57,6 +66,12 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<typename T>
 	concept pointer = object<T> and std::is_pointer_v<T>;
+	
+	template<typename T>
+	concept pointer_to_member = std::is_member_pointer_v<T>;
+	
+	template<typename T>
+	concept pointer_to_member_function = pointer_to_member<T> and std::is_member_function_pointer_v<T>;
 	
 	template<typename T>
 	concept weak_injectable = unqualified_object<T> or reference<T>;

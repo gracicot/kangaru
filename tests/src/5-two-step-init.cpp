@@ -43,7 +43,7 @@ struct type4 {
 	
 	friend auto attribute(kangaru::second_step_init<type4&>) -> kangaru::noop_second_step;
 	friend auto attribute(kangaru::second_step_init<type4>) -> kangaru::call_injected_member_functions<
-		&type4::call
+		static_cast<void(type4::*)(injected1)>(&type4::call)
 	>;
 };
 

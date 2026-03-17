@@ -108,6 +108,9 @@ namespace kangaru {
 			detail::utility::never_type_identity
 		> state;
 		
+		template<injectable T>
+		using polymorphic_source = kangaru::any_source_of_ref<T>;
+		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
 			auto rebound_state = with_cache_asymmetric<
@@ -126,7 +129,7 @@ namespace kangaru {
 						with_alternative{
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
-									kangaru::any_source_of_ref
+									polymorphic_source
 								>)(
 									cache_with_two_step_init_on_insert{
 										std::move(rebound_state),

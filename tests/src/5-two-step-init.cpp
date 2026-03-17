@@ -60,7 +60,7 @@ struct type5 {
 };
 
 template<>
-struct kangaru::second_step_init<type5> {
+struct kangaru::second_step_init<type5&&> {
 	using type = kangaru::call_injected_member_functions<
 		&type5::call1,
 		&type5::call2
@@ -73,7 +73,7 @@ struct type6 {
 };
 
 template<>
-struct kangaru::second_step_init<type6> {
+struct kangaru::second_step_init<type6&> {
 	using type = kangaru::call_injected_member_functions<
 		&type6::call
 	>;

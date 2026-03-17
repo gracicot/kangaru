@@ -268,6 +268,13 @@ TEST_CASE("Polymorphic container act a bit like kangaru 4 with polymorphic servi
 			CHECK(std::addressof(a1) == std::addressof(static_cast<service_a_child_1&>(a)));
 		});
 	}
+	
+	SECTION("Supports second step for cached types") {
+		auto& a = kangaru::provide<has_second_step&>(container);
+		CHECK(a.a == 9);
+		auto b = kangaru::provide<non_cached_with_second_step>(container);
+		CHECK(b.a == 9);
+	}
 }
 
 TEST_CASE("Container uses the base source") {

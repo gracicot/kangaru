@@ -261,7 +261,7 @@ namespace kangaru {
 		constexpr auto run_second_step(Value&& value) -> void {
 			using injected_type = detail::type_traits::conditional_t<reference<T>,
 				detail::utility::forward_like_t<T, Value>&&,
-				std::remove_cvref_t<Value>
+				Value
 			>;
 			void(std::as_const(second_step).template operator()<injected_type>(value, Cache::source));
 		}

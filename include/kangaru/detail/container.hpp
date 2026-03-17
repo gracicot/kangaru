@@ -55,13 +55,15 @@ KANGARU5_EXPORT namespace kangaru {
 			container{Source{}, Cache{}, Storage{}} {}
 		
 	private:
-		// TODO: Implement two step
-		using state_type = with_cache<
-			with_heap_storage<
-				with_exhaustive_construction<Source>,
-				Storage
+		using state_type = cache_with_two_step_init_on_insert<
+			with_cache<
+				with_heap_storage<
+					with_exhaustive_construction<Source>,
+					Storage
+				>,
+				Cache
 			>,
-			Cache
+			second_step_from_attribute
 		>;
 		
 		state_type state;

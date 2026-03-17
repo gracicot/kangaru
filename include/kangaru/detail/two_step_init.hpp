@@ -70,7 +70,12 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			T result = kangaru::provide<T>(KANGARU5_FWD(source).source);
 			void(std::as_const(source).second_step.template operator()<T>(result, KANGARU5_FWD(source).source));
-			return result;
+			
+			if constexpr (reference<T>) {
+				return static_cast<T>(result);
+			} else {
+				return result;
+			}
 		}
 		
 		template<forwarded<with_two_step_init> Original, forwarded_source NewSource>

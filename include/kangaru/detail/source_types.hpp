@@ -496,12 +496,12 @@ namespace kangaru {
 		
 		Source source;
 		
-		template<reference T> requires source_of<Source, std::remove_reference_t<T>*>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_dereference> auto&& source) -> T {
+		template<reference T, forwarded<with_dereference> Self> requires wrapping_source_of<Self, std::remove_reference_t<T>*>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return *kangaru::provide<std::remove_reference_t<T>*>(KANGARU5_FWD(source).source);
 		}
 		
-		template<object T> requires (not std::is_pointer_v<T> and source_of<Source, T>)
+		template<object T, forwarded<with_dereference> Self> requires (not pointer<T> and wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_dereference> auto&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}

@@ -24,7 +24,7 @@ namespace kangaru {
 	 */
 	KANGARU5_EXPORT struct any_source_of_one_ref {
 		template<injectable T>
-		explicit any_source_of_one_ref(any_source_of_ref<T> const& source) : source{source.source} {
+		constexpr explicit any_source_of_one_ref(any_source_of_ref<T> const& source) : source{source.source} {
 			static_assert(
 				sizeof(dummy_function_container) == sizeof(function_container<T>),
 				"function container has a different size for type T"

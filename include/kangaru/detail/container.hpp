@@ -55,21 +55,25 @@ KANGARU5_EXPORT namespace kangaru {
 			container{Source{}, Cache{}, Storage{}} {}
 		
 	private:
-		using state_type = cache_with_two_step_init_on_insert<
-			with_cache<
-				with_heap_storage<
-					with_exhaustive_construction<Source>,
-					Storage
-				>,
-				Cache
+		using state_type = with_cache<
+			with_heap_storage<
+				with_exhaustive_construction<Source>,
+				Storage
 			>,
-			second_step_from_attribute
+			Cache
 		>;
 		
 		state_type state;
 		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
+			auto rebound_state = with_cache<
+				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
+				ref_result_t<S&>
+			>{
+				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
+			};
+			
 			return with_recursion{
 				with_passthrough{
 					KANGARU5_NO_ADL(make_source_with_exhaustive_two_step_construction)(
@@ -81,14 +85,17 @@ KANGARU5_EXPORT namespace kangaru {
 									>::template source_for
 								>)(
 									with_dereference{
-										KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source))
+										cache_with_two_step_init_on_insert{
+											std::move(rebound_state),
+											second_step_from_attribute{},
+										},
 									}
-								)
+								),
 							},
 							external_reference_source{self},
 						}
-					)
-				}
+					),
+				},
 			};
 		}
 		

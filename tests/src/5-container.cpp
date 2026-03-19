@@ -187,7 +187,7 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
 		});
 	}
-
+	
 	SECTION("Supports provided services") {
 		auto base = kangaru::object_source{kangaru::reference_source{concrete{8.5f}}};
 		auto container = kangaru::container{base};
@@ -202,6 +202,19 @@ TEST_CASE("Container act a bit like kangaru 4", "[container]") {
 			auto s = kangaru::provide<std::shared_ptr<shared_abstract>>(container);
 			CHECK(s == kangaru::provide<std::shared_ptr<shared_abstract>>(container));
 		}
+	}
+	
+	SECTION("Simple caching of shared pointers") {
+		auto s = kangaru::provide<std::shared_ptr<service_d>>(container);
+		CHECK(s == kangaru::provide<std::shared_ptr<service_d>>(container));
+		CHECK(container.has_in_cache<std::shared_ptr<service_d>>());
+	}
+	
+	SECTION("Supports second step for cached types") {
+		auto& a = kangaru::provide<has_second_step&>(container);
+		CHECK(a.a == 9);
+		auto b = kangaru::provide<non_cached_with_second_step>(container);
+		CHECK(b.a == 9);
 	}
 }
 
@@ -274,6 +287,12 @@ TEST_CASE("Polymorphic container act a bit like kangaru 4 with polymorphic servi
 		CHECK(a.a == 9);
 		auto b = kangaru::provide<non_cached_with_second_step>(container);
 		CHECK(b.a == 9);
+	}
+	
+	SECTION("Simple caching of shared pointers") {
+		auto s = kangaru::provide<std::shared_ptr<service_d>>(container);
+		CHECK(s == kangaru::provide<std::shared_ptr<service_d>>(container));
+		CHECK(container.has_in_cache<std::shared_ptr<service_d>>());
 	}
 }
 
@@ -350,13 +369,6 @@ TEST_CASE("Container uses the base source") {
 		
 		CHECK(provided->value == 3);
 		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
-	}
-	
-	SECTION("Simple caching of shared pointers") {
-		auto container = kangaru::container{};
-		auto s = kangaru::provide<std::shared_ptr<service_d>>(container);
-		CHECK(s == kangaru::provide<std::shared_ptr<service_d>>(container));
-		CHECK(container.has_in_cache<std::shared_ptr<service_d>>());
 	}
 }
 
@@ -454,14 +466,6 @@ TEST_CASE("Polymorphic container uses the base source", "[container]") {
 		
 		CHECK(provided->value == 3);
 		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
-	}
-	
-	SECTION("Supports second step for cached types") {
-		auto container = kangaru::polymorphic_container{};
-		auto& a = kangaru::provide<has_second_step&>(container);
-		CHECK(a.a == 9);
-		auto b = kangaru::provide<non_cached_with_second_step>(container);
-		CHECK(b.a == 9);
 	}
 }
 

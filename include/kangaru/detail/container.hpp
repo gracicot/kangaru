@@ -87,7 +87,7 @@ KANGARU5_EXPORT namespace kangaru {
 									with_dereference{
 										cache_with_two_step_init_on_insert{
 											std::move(rebound_state),
-											second_step_from_attribute{},
+											call_second_step_from_attribute_on_dereference{},
 										},
 									}
 								),

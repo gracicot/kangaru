@@ -68,7 +68,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, forwarded<with_two_step_init> Self>
 			requires(wrapping_source_of<Self, T> and callable_template_1t<SecondStep const&, T, T&, forwarded_wrapped_source_t<Self>>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			T result = kangaru::provide<T>(KANGARU5_FWD(source).source);
+			decltype(auto) result = kangaru::provide<T>(KANGARU5_FWD(source).source);
 			void(std::as_const(source).second_step.template operator()<T>(result, KANGARU5_FWD(source).source));
 			
 			if constexpr (reference<T>) {
@@ -198,6 +198,33 @@ KANGARU5_EXPORT namespace kangaru {
 				std::remove_cv_t<wrapped_source_t<T>>
 			>;
 			void(second_step_from_attribute{}.template operator()<injected_type>(object.source, KANGARU5_FWD(source)));
+		}
+	};
+
+	template<second_step_function SecondStep>
+	struct call_second_step_on_dereference {
+		template<injectable T, forwarded_source Source>
+			requires(
+				    requires(T& ptr) { { *ptr } -> reference; }
+				and callable_template_1t<SecondStep const&, decltype(*std::declval<T>()), decltype(*std::declval<T>()), Source&&>
+			)
+		constexpr auto operator()(T& object, Source&& source) const -> void {
+			auto& ref = *object;
+			void(std::as_const(second_step).template operator()<decltype(ref)>(ref, KANGARU5_FWD(source)));
+		}
+		
+		SecondStep second_step;
+	};
+
+	struct call_second_step_from_attribute_on_dereference {
+		template<injectable T, forwarded_source Source>
+			requires(
+				    requires(T& ptr) { { *ptr } -> reference; }
+				and callable_template_1t<second_step_from_attribute, decltype(*std::declval<T>()), decltype(*std::declval<T>()), Source&&>
+			)
+		constexpr auto operator()(T& object, Source&& source) const -> void {
+			auto& ref = *object;
+			void(second_step_from_attribute{}.template operator()<decltype(ref)>(ref, KANGARU5_FWD(source)));
 		}
 	};
 	

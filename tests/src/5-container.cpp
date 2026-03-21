@@ -320,7 +320,7 @@ TEST_CASE("Container uses the base source") {
 			CHECK(c.services.sa.i == 4);
 		}
 	}
-
+	
 	SECTION("container base source with factory functions") {
 		auto base = kangaru::make_container_base_source(
 			kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},

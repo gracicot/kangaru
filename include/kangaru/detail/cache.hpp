@@ -261,7 +261,7 @@ namespace kangaru {
 		constexpr auto run_second_step(Value&& value) -> void {
 			using injected_type = detail::type_traits::conditional_t<reference<T>,
 				detail::utility::forward_like_t<T, Value>&&,
-				Value
+				std::remove_reference_t<Value>
 			>;
 			void(std::as_const(second_step).template operator()<injected_type>(value, Cache::source));
 		}
@@ -308,6 +308,11 @@ namespace kangaru {
 			return Cache::insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}
 	};
+	
+	// NOTE: Implement a cache with dynamic callbacks to fill it using the source. But the source is a template parameter? Is it possible to
+	//       even have dynamic callbacks for it? I think it is technically possible, because we could compute the type in advance for a given
+	//       source. How? Technically, we know it might be used in a context of a container or a polymorphic container. Given that knowledge,
+	//       we can target a specific rebind for the callback parameter.
 	
 	static_assert(cache_map<with_cache<none_source>>);
 	static_assert(dereferenceable_cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);

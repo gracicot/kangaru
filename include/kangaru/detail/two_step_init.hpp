@@ -178,55 +178,46 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	struct call_second_step_from_attribute_on_wrapped_source {
-	private:
-		template<typename T>
-		using injected_type = detail::type_traits::conditional_t<reference<T>,
-			detail::utility::forward_like_t<T, std::remove_cv_t<wrapped_source_t<T>>>&&,
-			std::remove_cv_t<wrapped_source_t<T>>
-		>;
-		
-	public:
-		template<injectable T, forwarded_source Source>
-			requires(
-				    wrapping_source<std::remove_cvref_t<T>>
-				and callable_template_1t<second_step_from_attribute, injected_type<T>, forwarded_wrapped_source_t<T&>, Source&&>
-			)
-		constexpr auto operator()(T& object, Source&& source) const -> void {
-			using injected_type = detail::type_traits::conditional_t<reference<T>,
-				detail::utility::forward_like_t<T, std::remove_cv_t<wrapped_source_t<T>>>&&,
-				std::remove_cv_t<wrapped_source_t<T>>
-			>;
-			void(second_step_from_attribute{}.template operator()<injected_type>(object.source, KANGARU5_FWD(source)));
-		}
-	};
-
 	template<second_step_function SecondStep>
 	struct call_second_step_on_dereference {
+		constexpr call_second_step_on_dereference() = default;
+		explicit constexpr call_second_step_on_dereference(SecondStep second_step) : second_step{std::move(second_step)} {}
+		
 		template<injectable T, forwarded_source Source>
 			requires(
-				    requires(T& ptr) { { *ptr } -> reference; }
-				and callable_template_1t<SecondStep const&, decltype(*std::declval<T>()), decltype(*std::declval<T>()), Source&&>
+				    requires(T const& ptr) { { *ptr } -> reference; }
+				and callable_template_1t<SecondStep const&, decltype(*std::declval<T const&>()), decltype(*std::declval<T const&>()), Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
-			auto& ref = *object;
+			auto& ref = *std::as_const(object);
 			void(std::as_const(second_step).template operator()<decltype(ref)>(ref, KANGARU5_FWD(source)));
 		}
 		
+	private:
 		SecondStep second_step;
 	};
-
-	struct call_second_step_from_attribute_on_dereference {
+	
+	using call_second_step_from_attribute_on_dereference = call_second_step_on_dereference<second_step_from_attribute>;
+	
+	template<second_step_function SecondStep>
+	struct call_second_step_on_prvalue {
+		constexpr call_second_step_on_prvalue() = default;
+		explicit constexpr call_second_step_on_prvalue(SecondStep second_step) : second_step{std::move(second_step)} {}
+		
 		template<injectable T, forwarded_source Source>
 			requires(
-				    requires(T& ptr) { { *ptr } -> reference; }
-				and callable_template_1t<second_step_from_attribute, decltype(*std::declval<T>()), decltype(*std::declval<T>()), Source&&>
+				    not std::is_const_v<std::remove_reference_t<T>>
+				and callable_template_1t<SecondStep const&, std::remove_cvref_t<T>, T&, Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
-			auto& ref = *object;
-			void(second_step_from_attribute{}.template operator()<decltype(ref)>(ref, KANGARU5_FWD(source)));
+			void(std::as_const(second_step).template operator()<std::remove_cvref_t<T>>(object, KANGARU5_FWD(source)));
 		}
+		
+	private:
+		SecondStep second_step;
 	};
+	
+	using call_second_step_from_attribute_on_prvalue = call_second_step_on_prvalue<second_step_from_attribute>;
 	
 	template<second_step_function SecondStep>
 	struct call_second_step_on_wrapped_source {
@@ -237,25 +228,34 @@ KANGARU5_EXPORT namespace kangaru {
 			std::remove_cv_t<wrapped_source_t<T>>
 		>;
 		
+		SecondStep second_step;
+		
 	public:
+		constexpr call_second_step_on_wrapped_source() = default;
+		explicit constexpr call_second_step_on_wrapped_source(SecondStep second_step) : second_step{std::move(second_step)} {}
+		
 		template<injectable T, forwarded_source Source>
 			requires(
 				    wrapping_source<std::remove_cvref_t<T>>
 				and callable_template_1t<SecondStep const&, injected_type<T>, forwarded_wrapped_source_t<T&>, Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
-			void(std::as_const(second_step).template operator()<injected_type>(object.source, KANGARU5_FWD(source)));
+			void(std::as_const(second_step).template operator()<injected_type<T>>(object.source, KANGARU5_FWD(source)));
 		}
-		
-		SecondStep second_step;
 	};
 	
-	template<auto mem, second_step_function SecondStep, injectable As = detail::two_step_init::file_private::member_type<decltype(mem)>>
-		requires(pointer_to_member<decltype(mem)>)
+	using call_second_step_from_attribute_on_wrapped_source = call_second_step_on_wrapped_source<second_step_from_attribute>;
+	
+	template<auto mem, second_step_function SecondStep, injectable As = typename detail::two_step_init::file_private::member_type<decltype(mem)>::type>
+		requires(
+			    pointer_to_member<decltype(mem)>
+			and std::convertible_to<typename detail::two_step_init::file_private::member_type<decltype(mem)>::type&, As&>
+		)
 	struct call_second_step_on_member {
 		template<injectable T, forwarded_source Source>
 			requires(
-				callable_template_1t<SecondStep const&, As, As&, Source&&>
+				    requires(T& object) { { object.*mem } -> std::convertible_to<As&>; }
+				and callable_template_1t<SecondStep const&, As, As&, Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			void(std::as_const(second_step).template operator()<As>(object.*mem, KANGARU5_FWD(source)));
@@ -265,16 +265,11 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<auto mem, injectable As = detail::two_step_init::file_private::member_type<decltype(mem)>>
-		requires(pointer_to_member<decltype(mem)>)
-	struct call_second_step_from_attribute_on_member {
-		template<injectable T, forwarded_source Source>
-			requires(
-				callable_template_1t<second_step_from_attribute, As, As&, Source&&>
-			)
-		constexpr auto operator()(T& object, Source&& source) const -> void {
-			void(second_step_from_attribute{}.template operator()<As>(object.*mem, KANGARU5_FWD(source)));
-		}
-	};
+		requires(
+			    pointer_to_member<decltype(mem)>
+			and std::convertible_to<typename detail::two_step_init::file_private::member_type<decltype(mem)>::type&, As&>
+		)
+	using call_second_step_from_attribute_on_member = call_second_step_on_member<mem, second_step_from_attribute, As>;
 }
 
 #include "undef.hpp"

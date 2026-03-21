@@ -42,6 +42,9 @@ namespace kangaru::detail::two_step_init::file_private {
 	struct member_type<Type Class::*> {
 		using type = Type;
 	};
+	
+	template<auto mptr>
+	using member_type_for = typename member_type<decltype(mptr)>::type;
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -246,30 +249,30 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	using call_second_step_from_attribute_on_wrapped_source = call_second_step_on_wrapped_source<second_step_from_attribute>;
 	
-	template<auto mem, second_step_function SecondStep, injectable As = typename detail::two_step_init::file_private::member_type<decltype(mem)>::type>
+	template<auto mptr, second_step_function SecondStep, injectable As = detail::two_step_init::file_private::member_type_for<mptr>>
 		requires(
-			    pointer_to_member<decltype(mem)>
-			and std::convertible_to<typename detail::two_step_init::file_private::member_type<decltype(mem)>::type&, As&>
+			    pointer_to_member<decltype(mptr)>
+			and std::convertible_to<detail::two_step_init::file_private::member_type_for<mptr>&, As&>
 		)
 	struct call_second_step_on_member {
 		template<injectable T, forwarded_source Source>
 			requires(
-				    requires(T& object) { { object.*mem } -> std::convertible_to<As&>; }
+				    requires(T& object) { { object.*mptr } -> std::convertible_to<As&>; }
 				and callable_template_1t<SecondStep const&, As, As&, Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
-			void(std::as_const(second_step).template operator()<As>(object.*mem, KANGARU5_FWD(source)));
+			void(std::as_const(second_step).template operator()<As>(object.*mptr, KANGARU5_FWD(source)));
 		}
 		
 		SecondStep second_step;
 	};
 	
-	template<auto mem, injectable As = typename detail::two_step_init::file_private::member_type<decltype(mem)>::type>
+	template<auto mptr, injectable As = detail::two_step_init::file_private::member_type_for<mptr>>
 		requires(
-			    pointer_to_member<decltype(mem)>
-			and std::convertible_to<typename detail::two_step_init::file_private::member_type<decltype(mem)>::type&, As&>
+			    pointer_to_member<decltype(mptr)>
+			and std::convertible_to<detail::two_step_init::file_private::member_type_for<mptr>&, As&>
 		)
-	using call_second_step_from_attribute_on_member = call_second_step_on_member<mem, second_step_from_attribute, As>;
+	using call_second_step_from_attribute_on_member = call_second_step_on_member<mptr, second_step_from_attribute, As>;
 }
 
 #include "undef.hpp"

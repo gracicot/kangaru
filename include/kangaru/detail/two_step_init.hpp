@@ -264,7 +264,7 @@ KANGARU5_EXPORT namespace kangaru {
 		SecondStep second_step;
 	};
 	
-	template<auto mem, injectable As = detail::two_step_init::file_private::member_type<decltype(mem)>>
+	template<auto mem, injectable As = typename detail::two_step_init::file_private::member_type<decltype(mem)>::type>
 		requires(
 			    pointer_to_member<decltype(mem)>
 			and std::convertible_to<typename detail::two_step_init::file_private::member_type<decltype(mem)>::type&, As&>

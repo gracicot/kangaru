@@ -224,7 +224,7 @@ namespace kangaru {
 					map.insert(std::pair{id, static_cast<override>(value)});
 				};
 				(for_each(s, value), ...);
-			}, detail::utility::sequence_tuple_for_tuple<overrides>{});
+			}, detail::sequence_tuple_for_tuple<overrides>{});
 		}
 		
 		template<different_from<void> T>
@@ -237,7 +237,7 @@ namespace kangaru {
 					map.insert_or_assign(id, static_cast<override>(value));
 				};
 				(for_each(s, value), ...);
-			}, detail::utility::sequence_tuple_for_tuple<overrides>{});
+			}, detail::sequence_tuple_for_tuple<overrides>{});
 		}
 		
 		template<different_from<void> T>
@@ -251,7 +251,7 @@ namespace kangaru {
 					n += map.erase(id);
 				};
 				(for_each(s), ...);
-			}, detail::utility::sequence_tuple_for_tuple<overrides>{});
+			}, detail::sequence_tuple_for_tuple<overrides>{});
 			return n;
 		}
 		

@@ -27,43 +27,43 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept forwarded_source = source<std::remove_reference_t<T>>;
 	
-	namespace detail::source {
+	namespace detail::source_private {
 		template<typename = void>
 		auto provide(auto&&) requires false = delete;
 		
 		template<typename Source, typename T>
 		concept adl_nonmember_source_of =
-			    kangaru::source<std::remove_cvref_t<Source>>
-			and kangaru::injectable<T>
+			    source<std::remove_cvref_t<Source>>
+			and injectable<T>
 			and requires(Source&& source) {
 				{ provide(KANGARU5_FWD(source)) } -> std::same_as<T>;
 			};
 		
 		template<typename Source, typename T>
 		concept adl_nonmember_template_source_of =
-			    kangaru::source<std::remove_cvref_t<Source>>
-			and kangaru::injectable<T>
+			    source<std::remove_cvref_t<Source>>
+			and injectable<T>
 			and requires(Source&& source) {
 				{ provide<T>(KANGARU5_FWD(source)) } -> std::same_as<T>;
 			};
 		
 		template<typename Source, typename T>
 		concept member_template_source_of =
-			    kangaru::source<std::remove_cvref_t<Source>>
-			and kangaru::injectable<T>
+			    source<std::remove_cvref_t<Source>>
+			and injectable<T>
 			and requires(Source&& source) {
 				{ KANGARU5_FWD(source).template provide<T>() } -> std::same_as<T>;
 			};
 		
 		template<typename Source, typename T>
 		concept member_source_of =
-			    kangaru::source<std::remove_cvref_t<Source>>
-			and kangaru::injectable<T>
+			    source<std::remove_cvref_t<Source>>
+			and injectable<T>
 			and requires(Source&& source) {
 				{ KANGARU5_FWD(source).provide() } -> std::same_as<T>;
 			};
 		
-		template<kangaru::injectable T>
+		template<injectable T>
 		struct provide_function {
 			template<typename Source> requires adl_nonmember_template_source_of<Source, T>
 			KANGARU5_INLINE constexpr auto operator()(Source&& source) const -> T {
@@ -87,13 +87,13 @@ namespace kangaru {
 		};
 		
 		namespace niebloid {
-			template<kangaru::injectable T>
-			inline constexpr auto provide = detail::source::provide_function<T>{};
+			template<injectable T>
+			inline constexpr auto provide = detail::source_private::provide_function<T>{};
 		}
 	}
 	
 	KANGARU5_EXPORT inline namespace niebloid {
-		using namespace detail::source::niebloid;
+		using namespace detail::source_private::niebloid;
 	}
 	
 	KANGARU5_EXPORT template<typename Source, typename T>
@@ -101,10 +101,10 @@ namespace kangaru {
 		    forwarded_source<Source>
 		and injectable<T>
 		and (
-			   detail::source::member_source_of<Source, T>
-			or detail::source::member_template_source_of<Source, T>
-			or detail::source::adl_nonmember_source_of<Source, T>
-			or detail::source::adl_nonmember_template_source_of<Source, T>
+			   detail::source_private::member_source_of<Source, T>
+			or detail::source_private::member_template_source_of<Source, T>
+			or detail::source_private::adl_nonmember_source_of<Source, T>
+			or detail::source_private::adl_nonmember_template_source_of<Source, T>
 		);
 	
 	template<typename T, typename F, typename... Args>
@@ -143,7 +143,7 @@ namespace kangaru {
 	static_assert(source<none_source>);
 	
 	KANGARU5_EXPORT template<wrapping_source Source>
-	using forwarded_wrapped_source_t = detail::utility::forward_like_t<Source, wrapped_source_t<Source>>;
+	using forwarded_wrapped_source_t = detail::forward_like_t<Source, wrapped_source_t<Source>>;
 	
 	KANGARU5_EXPORT template<typename Source, typename T>
 	concept wrapping_source_of =

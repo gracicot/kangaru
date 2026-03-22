@@ -13,7 +13,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::two_step_init::file_private {
+namespace kangaru::detail::two_step_init_private {
 	template<auto memfn, forwarded_object T>
 		requires(pointer_to_member_function<decltype(memfn)>)
 	struct bound_memfn {
@@ -30,7 +30,7 @@ namespace kangaru::detail::two_step_init::file_private {
 		T&& object;
 		
 		template<typename... Args> requires(std::invocable<decltype(fn), T&&, Args&&...>)
-		auto operator()(Args&&... args) const -> detail::type_traits::call_result_t<decltype(fn), T&&, Args&&...> {
+		auto operator()(Args&&... args) const -> detail::call_result_t<decltype(fn), T&&, Args&&...> {
 			return fn(KANGARU5_FWD(object), KANGARU5_FWD(args)...);
 		}
 	};
@@ -82,7 +82,7 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<forwarded<with_two_step_init> Original, forwarded_source NewSource>
-			requires(std::constructible_from<SecondStep, detail::utility::forward_like_t<Original, SecondStep>>)
+			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_two_step_init<wrapped_source_rebind_result_t<Original, NewSource>, SecondStep> {
 			return with_two_step_init<wrapped_source_rebind_result_t<Original, NewSource>, SecondStep>{
 				kangaru::rebind(KANGARU5_FWD(original).source, new_leaf),
@@ -113,12 +113,12 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				callable<
 					spread_injector<fwd_ref_result_t<Source&&>>,
-					detail::two_step_init::file_private::bound_fn<fn, T&>
+					detail::two_step_init_private::bound_fn<fn, T&>
 				>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			make_spread_injector(KANGARU5_FWD(source))(
-				detail::two_step_init::file_private::bound_fn<fn, T&>{object}
+				detail::two_step_init_private::bound_fn<fn, T&>{object}
 			);
 		}
 	};
@@ -128,13 +128,13 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, forwarded_source Source>
 			requires(
 				callable<
-					detail::type_traits::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
-					detail::two_step_init::file_private::bound_fn<fn, T&>
+					detail::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
+					detail::two_step_init_private::bound_fn<fn, T&>
 				>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			MakeInjector{}(KANGARU5_FWD(source))(
-				detail::two_step_init::file_private::bound_fn<fn, T&>{object}
+				detail::two_step_init_private::bound_fn<fn, T&>{object}
 			);
 		}
 	};
@@ -145,12 +145,12 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				(... and callable<
 					spread_injector<fwd_ref_result_t<Source&&>>,
-					detail::two_step_init::file_private::bound_memfn<memfn, T&>
+					detail::two_step_init_private::bound_memfn<memfn, T&>
 				>)
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			auto injector = make_spread_injector(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
-			(injector(detail::two_step_init::file_private::bound_memfn<memfn, T&>{object}), ...);
+			(injector(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
 		}
 	};
 	
@@ -163,13 +163,13 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, forwarded_source Source>
 			requires(
 				(... and callable<
-					detail::type_traits::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
-					detail::two_step_init::file_private::bound_memfn<memfn, T&>
+					detail::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
+					detail::two_step_init_private::bound_memfn<memfn, T&>
 				>)
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			auto injector = MakeInjector{}(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
-			(injector(detail::two_step_init::file_private::bound_memfn<memfn, T&>{object}), ...);
+			(injector(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
 		}
 	};
 	
@@ -226,8 +226,8 @@ KANGARU5_EXPORT namespace kangaru {
 	struct call_second_step_on_wrapped_source {
 	private:
 		template<typename T>
-		using injected_type = detail::type_traits::conditional_t<reference<T>,
-			detail::utility::forward_like_t<T, std::remove_cv_t<wrapped_source_t<T>>>&&,
+		using injected_type = detail::conditional_t<reference<T>,
+			detail::forward_like_t<T, std::remove_cv_t<wrapped_source_t<T>>>&&,
 			std::remove_cv_t<wrapped_source_t<T>>
 		>;
 		
@@ -249,10 +249,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	using call_second_step_from_attribute_on_wrapped_source = call_second_step_on_wrapped_source<second_step_from_attribute>;
 	
-	template<auto mptr, second_step_function SecondStep, injectable As = detail::two_step_init::file_private::member_type_for<mptr>>
+	template<auto mptr, second_step_function SecondStep, injectable As = detail::two_step_init_private::member_type_for<mptr>>
 		requires(
 			    pointer_to_member<decltype(mptr)>
-			and std::convertible_to<detail::two_step_init::file_private::member_type_for<mptr>&, As&>
+			and std::convertible_to<detail::two_step_init_private::member_type_for<mptr>&, As&>
 		)
 	struct call_second_step_on_member {
 		template<injectable T, forwarded_source Source>
@@ -267,10 +267,10 @@ KANGARU5_EXPORT namespace kangaru {
 		SecondStep second_step;
 	};
 	
-	template<auto mptr, injectable As = detail::two_step_init::file_private::member_type_for<mptr>>
+	template<auto mptr, injectable As = detail::two_step_init_private::member_type_for<mptr>>
 		requires(
 			    pointer_to_member<decltype(mptr)>
-			and std::convertible_to<detail::two_step_init::file_private::member_type_for<mptr>&, As&>
+			and std::convertible_to<detail::two_step_init_private::member_type_for<mptr>&, As&>
 		)
 	using call_second_step_from_attribute_on_member = call_second_step_on_member<mptr, second_step_from_attribute, As>;
 }

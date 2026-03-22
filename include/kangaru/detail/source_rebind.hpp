@@ -13,50 +13,50 @@
 #include "define.hpp"
 
 namespace kangaru {
-	namespace detail::source_rebind {
+	namespace detail::source_rebind_private {
 		template<wrapping_source>
 		struct rebind_wrapper {};
 		
-		template<template<typename> typename Branch, kangaru::source Source>
+		template<template<typename> typename Branch, source Source>
 			requires std::constructible_from<Branch<Source>, Source&&>
 		struct rebind_wrapper<Branch<Source>> {
-			template<kangaru::source NewSource> requires requires { typename Branch<NewSource>; }
+			template<source NewSource> requires requires { typename Branch<NewSource>; }
 			struct ttype {
 				using type = Branch<NewSource>;
 			};
 		};
 		
-		template<template<typename, typename> typename Branch, kangaru::source Source, typename Param>
+		template<template<typename, typename> typename Branch, source Source, typename Param>
 			requires (
 				    std::constructible_from<Branch<Source, Param>, Source&&>
 				and not std::constructible_from<Branch<Source, Param>, Source&&, Param>
 			)
 		struct rebind_wrapper<Branch<Source, Param>> {
-			template<kangaru::source NewSource> requires requires { typename Branch<NewSource, Param>; }
+			template<source NewSource> requires requires { typename Branch<NewSource, Param>; }
 			struct ttype {
 				using type = Branch<NewSource, Param>;
 			};
 		};
 		
-		template<template<typename, template<typename> typename> typename Branch, kangaru::source Source, template<typename> typename Param>
+		template<template<typename, template<typename> typename> typename Branch, source Source, template<typename> typename Param>
 			requires (
 				std::constructible_from<Branch<Source, Param>, Source&&>
 			)
 		struct rebind_wrapper<Branch<Source, Param>> {
-			template<kangaru::source NewSource> requires requires { typename Branch<NewSource, Param>; }
+			template<source NewSource> requires requires { typename Branch<NewSource, Param>; }
 			struct ttype {
 				using type = Branch<NewSource, Param>;
 			};
 		};
-	} // namespace detail::source_rebind
+	} // namespace detail::source_rebind::private
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept transparent_rebindable_wrapping_source =
 		    wrapping_source<Source>
 		and requires(Source source) {
 			// Here we need to used ttype_t instead of directly using ::ttype<...>::type because GCC 12 has issues with it.
-			typename detail::utility::ttype_t<
-				detail::source_rebind::rebind_wrapper<std::remove_cv_t<Source>>,
+			typename detail::ttype_t<
+				detail::source_rebind_private::rebind_wrapper<std::remove_cv_t<Source>>,
 				std::decay_t<decltype(source.source)>
 			>;
 		};
@@ -73,15 +73,15 @@ namespace kangaru {
 		   transparent_rebindable_wrapping_source<Source>
 		or stateful_rebindable_wrapping_source<Source>;
 	
-	namespace detail::source_rebind {
+	namespace detail::source_rebind_private {
 		struct rebind_function {
 			template<forwarded_source Wrapper> requires (rebindable_wrapping_source<std::remove_reference_t<Wrapper>> and not forwarded_reference_wrapper<Wrapper>)
 			constexpr auto operator()(Wrapper&& source, forwarded_object auto&& new_leaf) const noexcept {
 				if constexpr (stateful_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
 					return std::decay_t<Wrapper>::rebind(source, new_leaf);
 				} else if constexpr (transparent_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
-					using rebound = typename detail::utility::ttype_t<
-						detail::source_rebind::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
+					using rebound = typename detail::ttype_t<
+						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
 						decltype(operator()(source.source, KANGARU5_FWD(new_leaf)))
 					>;
 					return rebound{
@@ -109,29 +109,29 @@ namespace kangaru {
 			}
 		};
 		
-		template<kangaru::source Source>
+		template<source Source>
 		inline constexpr auto is_rebindable_v = false;
 		
-		template<kangaru::source Wrapper> requires reference_wrapper<Wrapper>
+		template<source Wrapper> requires reference_wrapper<Wrapper>
 		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<source_reference_wrapped_type<Wrapper>>;
 		
-		template<kangaru::source Wrapper> requires (rebindable_wrapping_source<Wrapper> and not reference_wrapper<Wrapper>)
+		template<source Wrapper> requires (rebindable_wrapping_source<Wrapper> and not reference_wrapper<Wrapper>)
 		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<wrapped_source_t<Wrapper>>;
 		
-		template<kangaru::source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf> and not wrapping_source<Leaf>)
+		template<source Leaf> requires (not reference_wrapper<Leaf> and not rebindable_wrapping_source<Leaf> and not wrapping_source<Leaf>)
 		inline constexpr auto is_rebindable_v<Leaf> = true;
 		
 		namespace niebloid {
-			inline constexpr auto rebind = detail::source_rebind::rebind_function{};
+			inline constexpr auto rebind = detail::source_rebind_private::rebind_function{};
 		}
-	} // namespace detail::source_rebind
+	} // namespace detail::source_rebind_private
 	
 	KANGARU5_EXPORT inline namespace niebloid {
-		using namespace detail::source_rebind::niebloid;
+		using namespace detail::source_rebind_private::niebloid;
 	}
 	
 	KANGARU5_EXPORT template<typename Source>
-	concept rebindable_source = source<Source> and detail::source_rebind::is_rebindable_v<Source>;
+	concept rebindable_source = source<Source> and detail::source_rebind_private::is_rebindable_v<Source>;
 	
 	// TODO: Forwarding?
 	KANGARU5_EXPORT template<rebindable_source Source, forwarded_source Leaf>

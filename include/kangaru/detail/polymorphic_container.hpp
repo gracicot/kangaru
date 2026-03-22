@@ -24,7 +24,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	namespace detail::polymorphic_container::file_private {
+	namespace detail::polymorphic_container_private {
 		template<source_ref Source>
 		struct cached_source {
 			template<injectable T>
@@ -55,7 +55,7 @@ namespace kangaru {
 		constexpr polymorphic_container(Source source, Cache cache, Storage storage)  :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<
-					detail::utility::never_type_identity
+					detail::never_type_identity
 				>)(
 					with_dereference{
 						with_heap_storage{
@@ -105,19 +105,19 @@ namespace kangaru {
 			Cache,
 			// Since we want to always properly support forwarding from the providing source,
 			// we pass a template type alias that never exists by default and change it in container_source.
-			detail::utility::never_type_identity
+			detail::never_type_identity
 		> state;
 		
 		template<injectable T>
-		using polymorphic_source = kangaru::any_source_of_ref<T>;
+		using polymorphic_source = any_source_of_ref<T>;
 		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
 			auto rebound_state = with_cache_asymmetric<
 				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
 				ref_result_t<S&>,
-				detail::polymorphic_container::file_private::cached_source<
-					detail::utility::forward_like_t<Self, Source>
+				detail::polymorphic_container_private::cached_source<
+					detail::forward_like_t<Self, Source>
 				>::template source_for
 			>{
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
@@ -206,9 +206,9 @@ namespace kangaru {
 		}
 		
 		template<injectable T, callable F>
-			requires(source_of<polymorphic_container&, T> and source_of<detail::type_traits::call_result_t<F>, T>)
+			requires(source_of<polymorphic_container&, T> and source_of<detail::call_result_t<F>, T>)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
-			using source = detail::type_traits::call_result_t<F>;
+			using source = detail::call_result_t<F>;
 			using contained_type = with_polymorphic_cast<with_cast_from<source, T>, T>;
 			constexpr auto id = detail::ctti::type_id_for<any_source_of_ref<T>>();
 			

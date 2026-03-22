@@ -81,7 +81,7 @@ KANGARU5_EXPORT namespace kangaru {
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
 									cached_reference_to_source_mapping_using<
-										detail::utility::forward_like_t<Self, Source>
+										detail::forward_like_t<Self, Source>
 									>::template source_for
 								>)(
 									with_dereference{
@@ -163,10 +163,10 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, callable F>
 			requires(
 				source_of<container&, T>
-				and std::same_as<detail::type_traits::call_result_t<F>, typename mapping_with_base_source<Source>::template source_for<T>>
+				and std::same_as<detail::call_result_t<F>, typename mapping_with_base_source<Source>::template source_for<T>>
 			)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
-			using contained_type = detail::type_traits::call_result_t<F>;
+			using contained_type = detail::call_result_t<F>;
 			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
 			
 			auto& heap_storage = state.source;

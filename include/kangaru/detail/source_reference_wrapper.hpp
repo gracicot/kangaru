@@ -45,12 +45,12 @@ namespace kangaru {
 		
 		template<injectable T> requires source_of<Source, T>
 		constexpr auto provide() const& -> T {
-			return kangaru::provide<T>(detail::utility::forward_like<Source>(*source));
+			return kangaru::provide<T>(detail::forward_like<Source>(*source));
 		}
 		
 		[[nodiscard]]
 		constexpr auto unwrap() const& noexcept -> Source {
-			return detail::utility::forward_like<Source>(*source);
+			return detail::forward_like<Source>(*source);
 		}
 		
 	private:

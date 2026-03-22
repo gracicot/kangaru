@@ -8,7 +8,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::concepts {
+namespace kangaru::detail::concepts_private {
 	template<typename Type, typename... Pack>
 	consteval auto count_type_in_pack() -> std::size_t {
 		return ((std::same_as<Type, Pack> ? std::size_t{1} : std::size_t{0}) + ... + std::size_t{0});
@@ -121,7 +121,7 @@ KANGARU5_EXPORT namespace kangaru {
 		and (reference<From> or unqualified_object<To>);
 	
 	template<typename... Pack>
-	concept pack_distinct = (... and (detail::concepts::count_type_in_pack<Pack, Pack...>() == 1));
+	concept pack_distinct = (... and (detail::concepts_private::count_type_in_pack<Pack, Pack...>() == 1));
 }
 
 #include "undef.hpp"

@@ -17,18 +17,18 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::container_common::file_private {
+namespace kangaru::detail::container_common_private {
 	// TODO: Prevent duplicate?
-	template<injectable, kangaru::source>
+	template<injectable, source>
 	struct enumerated_select_source_of {};
 	
-	template<injectable T, kangaru::source Source, kangaru::source... Sources>
+	template<injectable T, source Source, source... Sources>
 		requires(requires { typename select_source_of<T, Sources...>; })
 	struct enumerated_select_source_of<T, enumerated_source_of<Source, Sources...>> {
 		using type = select_source_of<T, Sources...>;
 	};
 	
-	template<injectable T, kangaru::source EnumeratedSource>
+	template<injectable T, source EnumeratedSource>
 	using enumerated_select_source_of_t = typename enumerated_select_source_of<T, EnumeratedSource>::type;
 	
 	template<injectable T>
@@ -70,19 +70,19 @@ namespace kangaru::detail::container_common::file_private {
 }
 
 KANGARU5_EXPORT namespace kangaru {
-	template<kangaru::source Source> requires(unqualified_object<Source>)
+	template<source Source> requires(unqualified_object<Source>)
 	struct mapping_with_base_source {
 	private:
 		template<injectable T>
-		struct mapping : detail::container_common::file_private::default_type_to_source_mapping<T> {};
+		struct mapping : detail::container_common_private::default_type_to_source_mapping<T> {};
 		
 		// Allow for a source to provide alternative mappings.
 		template<injectable T>
 			requires(
-				requires{ typename detail::container_common::file_private::enumerated_select_source_of_t<T, Source>; }
+				requires{ typename detail::container_common_private::enumerated_select_source_of_t<T, Source>; }
 			)
 		struct mapping<T> {
-			using type = detail::container_common::file_private::enumerated_select_source_of_t<T, Source>;
+			using type = detail::container_common_private::enumerated_select_source_of_t<T, Source>;
 		};
 		
 	public:
@@ -91,7 +91,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<injectable T> requires(allow_runtime_caching_v<T>)
-	using cached_source_mapping = typename detail::container_common::file_private::default_type_to_source_mapping<T>::type;
+	using cached_source_mapping = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
 	
 	template<injectable T> requires(allow_runtime_caching_v<T>)
 	using cached_reference_to_source_mapping = cached_source_mapping<T>&;

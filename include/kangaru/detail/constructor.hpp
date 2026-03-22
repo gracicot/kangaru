@@ -121,7 +121,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct in_place_construct {
 		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
 		
-		constexpr operator detail::type_traits::call_result_t<F>() && {
+		constexpr operator detail::call_result_t<F>() && {
 			return std::move(function)();
 		}
 		

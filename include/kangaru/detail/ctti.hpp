@@ -11,6 +11,7 @@
 
 #include "define.hpp"
 
+// TODO: Is this a public api or a private one?
 namespace kangaru::detail::ctti {
 	template<typename T>
 	inline consteval auto raw_typed_signature() -> std::string_view {

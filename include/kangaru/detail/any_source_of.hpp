@@ -17,7 +17,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::any_source_of::file_private {
+namespace kangaru::detail::any_source_of_private {
 	template<injectable... Types>
 	struct any_source_of_base {
 		template<injectable T, forwarded<any_source_of_base> Self> requires(... || std::same_as<Types, T>)
@@ -27,7 +27,7 @@ namespace kangaru::detail::any_source_of::file_private {
 		
 	protected:
 		template<injectable T>
-		using provide_function_ptr = detail::utility::function_pointer_t<auto(void*) -> T>;
+		using provide_function_ptr = detail::function_pointer_t<auto(void*) -> T>;
 		
 		struct vtable_t {
 			std::tuple<provide_function_ptr<Types>...> provide;
@@ -49,7 +49,7 @@ namespace kangaru::detail::any_source_of::file_private {
 		};
 		
 		static constexpr auto should_inline_vtable = sizeof...(Types) < 4;
-		using vtable_type = detail::type_traits::conditional_t<should_inline_vtable, vtable_t, vtable_t const*>;
+		using vtable_type = detail::conditional_t<should_inline_vtable, vtable_t, vtable_t const*>;
 		
 		template<kangaru::source Source>
 		constexpr any_source_of_base(Source* source) noexcept :
@@ -95,9 +95,9 @@ KANGARU5_EXPORT namespace kangaru {
 	 * we need to place the deleter in the vtable which is held separately from the pointer.
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
-	struct any_source_of : detail::any_source_of::file_private::any_source_of_base<Types...> {
+	struct any_source_of : detail::any_source_of_private::any_source_of_base<Types...> {
 	private:
-		using base = detail::any_source_of::file_private::any_source_of_base<Types...>;
+		using base = detail::any_source_of_private::any_source_of_base<Types...>;
 		using base::vtable;
 		using base::source;
 		using base::source_vtable;
@@ -105,11 +105,11 @@ KANGARU5_EXPORT namespace kangaru {
 	public:
 		template<callable Function>
 			requires(
-				    not_self<detail::type_traits::call_result_t<Function>, any_source_of>
-				and ... and source_of<detail::type_traits::call_result_t<Function>, Types>
+				    not_self<detail::call_result_t<Function>, any_source_of>
+				and ... and source_of<detail::call_result_t<Function>, Types>
 			)
 		explicit(false) constexpr any_source_of(in_place_construct<Function> source) noexcept :
-			base{new detail::type_traits::call_result_t<Function>(std::move(source))} {}
+			base{new detail::call_result_t<Function>(std::move(source))} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		explicit(false) constexpr any_source_of(Source&& source) :
@@ -148,7 +148,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, forwarded<any_source_of> Self> requires(... || std::same_as<Types, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(static_cast<detail::utility::forward_like_t<Self, base>>(source));
+			return kangaru::provide<T>(static_cast<detail::forward_like_t<Self, base>>(source));
 		}
 	};
 	
@@ -156,21 +156,21 @@ KANGARU5_EXPORT namespace kangaru {
 	 * Wraps a reference to any sources that can provide `Types` and type erase it.
 	 */
 	template<injectable... Types> requires pack_distinct<Types...>
-	struct any_source_of_ref : detail::any_source_of::file_private::any_source_of_base<Types...> {
+	struct any_source_of_ref : detail::any_source_of_private::any_source_of_base<Types...> {
 	private:
-		using base = detail::any_source_of::file_private::any_source_of_base<Types...>;
+		using base = detail::any_source_of_private::any_source_of_base<Types...>;
 		
 		// TODO: Ensure the friend is still needed
 		friend struct any_source_of_one_ref;
 		
 		constexpr any_source_of_ref(
 			void* source,
-			detail::utility::function_pointer_t<auto(void*) -> Types>... provide_function
+			detail::function_pointer_t<auto(void*) -> Types>... provide_function
 		) noexcept :
 			base{{.provide = {provide_function...}}, source} {}
 		
 	public:
-		template<kangaru::source Source> requires(... and source_of<Source&, Types>)
+		template<source Source> requires(... and source_of<Source&, Types>)
 		explicit(false) constexpr any_source_of_ref(Source& source) :
 			base{std::addressof(source)} {}
 		
@@ -184,7 +184,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, forwarded<any_source_of_ref> Self> requires(... || std::same_as<Types, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(static_cast<detail::utility::forward_like_t<Self, base>>(source));
+			return kangaru::provide<T>(static_cast<detail::forward_like_t<Self, base>>(source));
 		}
 	};
 }

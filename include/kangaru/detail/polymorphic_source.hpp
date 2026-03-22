@@ -67,7 +67,7 @@ namespace kangaru {
 	private:
 		template<injectable T>
 		struct function_container {
-			detail::utility::function_pointer_t<auto(void*) -> T> provide_function;
+			detail::function_pointer_t<auto(void*) -> T> provide_function;
 		};
 		
 		using dummy_function_container = function_container<int>;
@@ -77,7 +77,7 @@ namespace kangaru {
 		std::byte function_container_type_erased[sizeof(dummy_function_container)];
 	};
 	
-	namespace detail::polymorphic_source {
+	namespace detail::polymorphic_source_private {
 		template<typename>
 		struct override_polymorphic {};
 		
@@ -115,26 +115,10 @@ namespace kangaru {
 		
 		template<kangaru::source S, injectable P>
 		friend auto attribute(overrides_types_in_cache<with_polymorphic_cast<S, P>>)
-			-> detail::polymorphic_source::override_polymorphic_t<overrides_types_in_cache_t<P>>;
+			-> detail::polymorphic_source_private::override_polymorphic_t<overrides_types_in_cache_t<P>>;
 		
 		template<kangaru::source S, injectable P>
 		friend auto attribute(second_step_init<with_polymorphic_cast<S, P>>)
-			-> call_second_step_from_attribute_on_wrapped_source;
-		
-		template<kangaru::source S, injectable P>
-		friend auto attribute(second_step_init<with_polymorphic_cast<S, P>&>)
-			-> call_second_step_from_attribute_on_wrapped_source;
-		
-		template<kangaru::source S, injectable P>
-		friend auto attribute(second_step_init<with_polymorphic_cast<S, P> const&>)
-			-> call_second_step_from_attribute_on_wrapped_source;
-		
-		template<kangaru::source S, injectable P>
-		friend auto attribute(second_step_init<with_polymorphic_cast<S, P>&&>)
-			-> call_second_step_from_attribute_on_wrapped_source;
-		
-		template<kangaru::source S, injectable P>
-		friend auto attribute(second_step_init<with_polymorphic_cast<S, P> const&&>)
 			-> call_second_step_from_attribute_on_wrapped_source;
 	};
 }

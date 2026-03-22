@@ -7,7 +7,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::type_traits {
+namespace kangaru::detail {
 	// Faster conditional implementation
 	template<bool b>
 	struct conditional;

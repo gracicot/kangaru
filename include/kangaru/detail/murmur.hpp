@@ -12,6 +12,7 @@
 
 #include "define.hpp"
 
+// TODO: Do we really need this for type id? Can we avoid compile time hashing?
 namespace kangaru::detail::murmur {
 	KANGARU5_EXPORT using hash_t = std::uint64_t;
 	

@@ -24,7 +24,7 @@ namespace kangaru {
 	struct optional;
 }
 
-namespace kangaru::detail::optional {
+namespace kangaru::detail::optional_private {
 	struct empty {};
 	
 	template<typename T, typename Arg>
@@ -36,9 +36,10 @@ namespace kangaru::detail::optional {
 }
 
 KANGARU5_EXPORT namespace kangaru {
+	// TODO: Just make it a standard compliant C++26 optional
 	template<unqualified_object T>
 	struct optional<T> {
-		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional::empty{}} {}
+		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional_private::empty{}} {}
 		constexpr optional() : optional{nullopt} {};
 		
 		constexpr optional(optional const& other)
@@ -82,7 +83,7 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args) : engaged{true}, storage{.object{KANGARU5_FWD(args)...}} {}
 		
 		template<typename U>
-			requires detail::optional::optional_forwarded_construction_object<T, U>
+			requires detail::optional_private::optional_forwarded_construction_object<T, U>
 			explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(U&& value) noexcept(std::is_nothrow_constructible_v<T, U&&>) :
 			engaged{true}, storage{.object{KANGARU5_FWD(value)}} {}
@@ -358,12 +359,12 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		union storage_t {
 			explicit storage_t() : empty{} {}
-			explicit storage_t(detail::optional::empty) : empty{} {}
+			explicit storage_t(detail::optional_private::empty) : empty{} {}
 			
 			~storage_t() requires(std::is_trivially_destructible_v<T>) = default;
 			~storage_t() {}
 			
-			detail::optional::empty empty;
+			detail::optional_private::empty empty;
 			T object;
 		} storage;
 		
@@ -401,7 +402,7 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				    std::is_lvalue_reference_v<T>
 				and std::convertible_to<U*, T*>
-				and not detail::utility::is_specialisation_of_v<optional, std::remove_cv_t<U>>
+				and not detail::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
 		explicit(false) constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
 		
@@ -409,7 +410,7 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				    std::is_rvalue_reference_v<T>
 				and std::convertible_to<U*, T*>
-				and not detail::utility::is_specialisation_of_v<optional, std::remove_cv_t<U>>
+				and not detail::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
 		explicit(false) constexpr optional(U&& ref) noexcept : pointer{std::addressof(ref)} {}
 		

@@ -9,7 +9,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::utility {
+namespace kangaru::detail {
 	template<typename T, typename U> [[nodiscard]]
 	constexpr auto forward_like(U&& x) noexcept -> auto&& {
 		constexpr bool is_const = std::is_const_v<std::remove_reference_t<T>>;
@@ -43,7 +43,7 @@ namespace kangaru::detail::utility {
 	using function_pointer_t = T*;
 	
 	template<typename T, typename U>
-	using forward_like_t = decltype(::kangaru::detail::utility::forward_like<T>(std::declval<U&>()));
+	using forward_like_t = decltype(::kangaru::detail::forward_like<T>(std::declval<U&>()));
 	
 	template<typename T, std::size_t>
 	using expand = T;

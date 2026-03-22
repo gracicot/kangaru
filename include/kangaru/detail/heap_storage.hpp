@@ -64,7 +64,7 @@ namespace kangaru {
 			{ container.erase(std::as_const(container).begin()) } -> std::same_as<typename T::iterator>;
 		};
 	
-	namespace detail::heap_storage {
+	namespace detail::heap_storage_private {
 		template<object_allocator Allocator>
 		struct basic_heap_storage_base {
 			template<typename ObjectType>
@@ -77,8 +77,8 @@ namespace kangaru {
 			}
 			
 			template<std::copy_constructible F> KANGARU5_UNSAFE
-			constexpr auto construct(Allocator& allocator, F function) -> type_traits::call_result_t<F>* {
-				using object_type = type_traits::call_result_t<F>;
+			constexpr auto construct(Allocator& allocator, F function) -> call_result_t<F>* {
+				using object_type = call_result_t<F>;
 				
 				auto ptr = std::unique_ptr<object_type, deallocate_uninitialized>{
 					allocator.template allocate_object<object_type>(),
@@ -99,10 +99,10 @@ namespace kangaru {
 				}
 			};
 		};
-	} // namespace detail::heap_storage
+	} // namespace detail::heap_storage_private
 	
 	KANGARU5_EXPORT template<heap_storage_container Container, object_allocator Allocator = default_allocator>
-	struct basic_heap_storage : private detail::heap_storage::basic_heap_storage_base<Allocator> {
+	struct basic_heap_storage : private detail::heap_storage_private::basic_heap_storage_base<Allocator> {
 		constexpr basic_heap_storage() = default;
 		
 		constexpr basic_heap_storage(Container container) noexcept
@@ -135,9 +135,9 @@ namespace kangaru {
 		}
 		
 		template<std::copy_constructible F>
-		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
+		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
 			KANGARU5_UNSAFE_BLOCK {
-				using object_type = detail::type_traits::call_result_t<F>;
+				using object_type = detail::call_result_t<F>;
 				auto ptr = std::unique_ptr<object_type, destroy>{
 					basic_heap_storage::construct(allocator, std::move(function)),
 					destroy{std::addressof(allocator)},
@@ -172,7 +172,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept heap_storage =
 		    std::move_constructible<T>
-		and requires(T storage, detail::utility::function_pointer_t<auto() -> int> function) {
+		and requires(T storage, detail::function_pointer_t<auto() -> int> function) {
 			{ storage.emplace_from(function) } -> std::same_as<int*>;
 		};
 	
@@ -201,13 +201,13 @@ namespace kangaru {
 		source_type source;
 		
 		template<std::copy_constructible F>
-		constexpr auto emplace_from(F function) -> detail::type_traits::call_result_t<F>* {
+		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(function);
 		}
 		
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::utility::forward_like_t<Original, Storage>&>> {
-			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::utility::forward_like_t<Original, Storage>&>>{
+		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>> {
+			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
 				kangaru::rebind(KANGARU5_FWD(original).source, new_leaf),
 				KANGARU5_NO_ADL(ref)(original.storage)
 			};

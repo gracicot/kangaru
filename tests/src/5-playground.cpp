@@ -60,7 +60,7 @@ namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable_returns<T, detail::type_traits::call_result_t<MakeInjector const&, Source>, call<T>>
+			requires callable_returns<T, detail::call_result_t<MakeInjector const&, Source>, call<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(call<T>{func});
 		}
@@ -155,7 +155,7 @@ namespace kangaru {
 			} {}
 		
 		template<injectable T, forwarded<modular_source> Self>
-			requires source_of<with_recursion<fwd_ref_result_t<detail::utility::forward_like_t<Self, source_t>>>, T>
+			requires source_of<with_recursion<fwd_ref_result_t<detail::forward_like_t<Self, source_t>>>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(with_recursion{KANGARU5_NO_ADL(fwd_ref)(source.source)});
 		}

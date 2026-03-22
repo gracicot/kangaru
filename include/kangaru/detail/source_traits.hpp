@@ -10,7 +10,7 @@
 #include "define.hpp"
 
 namespace kangaru {
-	namespace detail::source_traits {
+	namespace detail::source_traits_private {
 		template<std::size_t index, injectable T, forwarded_source... Sources>
 		struct select_source_of_impl {};
 		
@@ -30,10 +30,10 @@ namespace kangaru {
 	}
 	
 	template<injectable T, forwarded_source... Sources>
-	using select_source_of = typename detail::source_traits::select_source_of_impl<0, T, Sources...>::type;
+	using select_source_of = typename detail::source_traits_private::select_source_of_impl<0, T, Sources...>::type;
 	
 	template<injectable T, forwarded_source... Sources>
-	inline constexpr auto select_source_of_index = detail::source_traits::select_source_of_impl<0, T, Sources...>::index;
+	inline constexpr auto select_source_of_index = detail::source_traits_private::select_source_of_impl<0, T, Sources...>::index;
 }
 
 #include "undef.hpp"

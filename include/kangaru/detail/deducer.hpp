@@ -45,7 +45,7 @@ namespace kangaru {
 			or deducer_strict<Deducer>
 		);
 	
-	namespace detail::deducer::file_private {
+	namespace detail::deducer_private {
 		// TODO: Remove this workaround when this feedback item is fixed
 		//       https://developercommunity.visualstudio.com/t/1950-regression-Requires-fail-to-chec/11052128
 		template<typename Deducer, typename T>
@@ -62,7 +62,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename Deducer, typename T>
 	concept deducer_for =
 		    deducer<Deducer>
-		and detail::deducer::file_private::deducer_for_impl<Deducer, T>;
+		and detail::deducer_private::deducer_for_impl<Deducer, T>;
 	
 	KANGARU5_EXPORT template<typename T>
 	concept deducible =
@@ -628,7 +628,7 @@ namespace kangaru {
 		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
 	}
 	
-	namespace detail::deducer {
+	namespace detail::deducer_private {
 		template<typename T, typename F, typename, typename>
 		inline constexpr auto callable_with_nth_parameter_being_expand = false;
 		
@@ -636,9 +636,9 @@ namespace kangaru {
 		inline constexpr auto callable_with_nth_parameter_being_expand<T, F, std::index_sequence<before...>, std::index_sequence<after...>> =
 			callable<
 				F,
-				detail::utility::expand<placeholder_deducer, before>...,
+				detail::expand<placeholder_deducer, before>...,
 				T,
-				detail::utility::expand<placeholder_deducer, after>...
+				detail::expand<placeholder_deducer, after>...
 			>;
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
@@ -795,7 +795,7 @@ namespace kangaru {
 		>;
 		
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
-		using prvalue_filtered_deducer_for = detail::type_traits::conditional_t<
+		using prvalue_filtered_deducer_for = detail::conditional_t<
 			    not function_nth_parameter_prvalue<F, nth, arity>
 			and callable_with_nth_parameter_being<exclude_prvalue_deducer<Deducer>, F, nth, arity>,
 			exclude_prvalue_deducer<Deducer>,
@@ -803,7 +803,7 @@ namespace kangaru {
 		>;
 		
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
-		using filtered_deducer_for = detail::type_traits::conditional_t<
+		using filtered_deducer_for = detail::conditional_t<
 			deducer_strict<Deducer>,
 			filtered_value_category_deducer_for<F, Deducer, nth, arity>,
 			prvalue_filtered_deducer_for<F, Deducer, nth, arity>
@@ -825,28 +825,21 @@ namespace kangaru {
 		template<typename F, std::size_t... S, kangaru::deducer... Deducers>
 		inline constexpr auto callable_with_deducers_impl_v<F, std::index_sequence<S...>, Deducers...> =
 			callable<F, filtered_deducer_for<F, Deducers, S, sizeof...(S)>...>;
-		
-		template<typename F, kangaru::deducer Deducer, typename>
-		inline constexpr auto callable_with_deducer_sequence_v = false;
-		
-		template<typename F, std::size_t... S, kangaru::deducer Deducer>
-		inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
-			callable_with_deducers_impl_v<F, std::index_sequence<S...>, detail::utility::expand<Deducer, S>...>;
 	}
 	
 	KANGARU5_EXPORT template<deducer... Deducers>
 	inline constexpr auto call_with_deducers(
 		callable<Deducers...> auto&& function, Deducers... deduce
 	) -> decltype(
-		detail::deducer::call_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)
+		detail::deducer_private::call_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...)
 	) {
-		return detail::deducer::call_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
+		return detail::deducer_private::call_with_deducers_impl(KANGARU5_FWD(function), std::index_sequence_for<Deducers...>{}, deduce...);
 	}
 	
 	KANGARU5_EXPORT template<typename F, typename... Deducers>
 	concept callable_with_deducers =
 		    (... and deducer<Deducers>)
-		and detail::deducer::callable_with_deducers_impl_v<F, std::index_sequence_for<Deducers...>, Deducers...>;
+		and detail::deducer_private::callable_with_deducers_impl_v<F, std::index_sequence_for<Deducers...>, Deducers...>;
 	
 	KANGARU5_EXPORT template<typename F, typename R, typename... Deducers>
 	concept callable_with_deducers_returns =

@@ -23,7 +23,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::source_types::file_private {
+namespace kangaru::detail::source_types_private {
 	struct from_tuple_t {
 		explicit constexpr from_tuple_t() = default;
 	} inline constexpr from_tuple{};
@@ -33,7 +33,7 @@ namespace kangaru::detail::source_types::file_private {
 
 namespace kangaru {
 	template<>
-	struct allow_injection_using<detail::source_types::file_private::from_tuple_t> : std::false_type {};
+	struct allow_injection_using<detail::source_types_private::from_tuple_t> : std::false_type {};
 	
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
@@ -42,46 +42,46 @@ namespace kangaru {
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
 		requires (
-			((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) == 1
+			((source_of<detail::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) == 1
 		) {
-			constexpr auto index = select_source_of_index<T, detail::utility::forward_like_t<Self, Sources>...>;
+			constexpr auto index = select_source_of_index<T, detail::forward_like_t<Self, Sources>...>;
 			return kangaru::provide<T>(std::get<index>(KANGARU5_FWD(source).sources));
 		}
 		
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
 		requires ("Ambiguous source resolution: One or more source can provide type T",
-			((source_of<detail::utility::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) > 1
+			((source_of<detail::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) > 1
 		) = delete;
 		
 	private:
-		friend detail::source_types::file_private::composed_source_access;
+		friend detail::source_types_private::composed_source_access;
 		
-		explicit constexpr composed_source(detail::source_types::file_private::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
+		explicit constexpr composed_source(detail::source_types_private::from_tuple_t, std::tuple<Sources...>&& sources) noexcept :
 			sources{std::move(sources)} {}
 		
 		std::tuple<Sources...> sources;
 	};
 }
 
-namespace kangaru::detail::source_types::file_private {
+namespace kangaru::detail::source_types_private {
 	struct composed_source_access {
-		template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
+		template<source... SourcesLhs, source... SourcesRhs>
 		static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 			return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(lhs.sources, rhs.sources)};
 		}
 		
-		template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
+		template<source... SourcesLhs, source... SourcesRhs>
 		static constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 			return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(lhs.sources, std::move(rhs).sources)};
 		}
 		
-		template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
+		template<source... SourcesLhs, source... SourcesRhs>
 		static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 			return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(std::move(lhs).sources, rhs.sources)};
 		}
 		
-		template<kangaru::source... SourcesLhs, kangaru::source... SourcesRhs>
+		template<source... SourcesLhs, source... SourcesRhs>
 		static constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
 			return composed_source<SourcesLhs..., SourcesRhs...>{from_tuple, std::tuple_cat(std::move(lhs).sources, std::move(rhs).sources)};
 		}
@@ -91,22 +91,22 @@ namespace kangaru::detail::source_types::file_private {
 KANGARU5_EXPORT namespace kangaru {
 	template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::file_private::composed_source_access::composed_source_cat(lhs, rhs);
+		return detail::source_types_private::composed_source_access::composed_source_cat(lhs, rhs);
 	}
 	
 	template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...> const& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::file_private::composed_source_access::composed_source_cat(lhs, std::move(rhs));
+		return detail::source_types_private::composed_source_access::composed_source_cat(lhs, std::move(rhs));
 	}
 	
 	template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...> const& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::file_private::composed_source_access::composed_source_cat(std::move(lhs), rhs);
+		return detail::source_types_private::composed_source_access::composed_source_cat(std::move(lhs), rhs);
 	}
 	
 	template<source... SourcesLhs, source... SourcesRhs>
 	inline constexpr auto composed_source_cat(composed_source<SourcesLhs...>&& lhs, composed_source<SourcesRhs...>&& rhs) -> composed_source<SourcesLhs..., SourcesRhs...> {
-		return detail::source_types::file_private::composed_source_access::composed_source_cat(std::move(lhs), std::move(rhs));
+		return detail::source_types_private::composed_source_access::composed_source_cat(std::move(lhs), std::move(rhs));
 	}
 	
 	template<source Lhs, source Rhs>
@@ -129,13 +129,13 @@ KANGARU5_EXPORT namespace kangaru {
 		std::tuple<Ts...> objects;
 	};
 	
-	template<callable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<detail::type_traits::call_result_t<F>>)
+	template<callable F> requires (unqualified_object<F> and std::move_constructible<F> and injectable<detail::call_result_t<F>>)
 	struct function_source {
 		constexpr function_source() noexcept requires(std::default_initializable<F>) : function{} {}
 		explicit constexpr function_source(F function) noexcept : function{std::move(function)} {}
 		
 		template<forwarded<function_source> Self>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> detail::type_traits::call_result_t<detail::utility::forward_like_t<Self, F>> {
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> detail::call_result_t<detail::forward_like_t<Self, F>> {
 			return KANGARU5_FWD(source).function();
 		}
 		
@@ -431,7 +431,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		Source source;
 		
-		template<injectable T, forwarded<with_alternative> Self> requires (not wrapping_source_of<Self, T> and source_of<detail::utility::forward_like_t<Self, Alternative&&>, T>)
+		template<injectable T, forwarded<with_alternative> Self> requires (not wrapping_source_of<Self, T> and source_of<detail::forward_like_t<Self, Alternative&&>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).alternative);
 		}
@@ -442,8 +442,8 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<forwarded<with_alternative> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::utility::forward_like_t<Original, Alternative>>> {
-			return with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::utility::forward_like_t<Original, Alternative>>>{
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>> {
+			return with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative))
 			};
@@ -476,7 +476,7 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr filter_if_source(Source source, Filter) noexcept : source{std::move(source)} {}
 		
 		template<injectable T, forwarded<filter_if_source> Self>
-			requires(Filter{}.template operator()<T>() and source_of<detail::utility::forward_like_t<Self, Source>, T>)
+			requires(Filter{}.template operator()<T>() and source_of<detail::forward_like_t<Self, Source>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
@@ -595,7 +595,7 @@ KANGARU5_EXPORT namespace kangaru {
 			requires (
 				    requires { typename SourceFor<T>; }
 				// TODO: Do we need this particular constraint?
-				and not detail::utility::is_specialisation_of_v<SourceFor, T>
+				and not detail::is_specialisation_of_v<SourceFor, T>
 				and wrapping_source_of<Self, SourceFor<T>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -608,7 +608,7 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				std::constructible_from<
 					Source,
-					detail::utility::forward_like_t<Original, Source>
+					detail::forward_like_t<Original, Source>
 				>
 			)
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
@@ -656,7 +656,7 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				std::constructible_from<
 					Source,
-					detail::utility::forward_like_t<Original, Source>
+					detail::forward_like_t<Original, Source>
 				>
 			)
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->

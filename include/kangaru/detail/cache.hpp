@@ -275,9 +275,9 @@ namespace kangaru {
 		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_source NewLeaf>
 			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>> and not std::is_const_v<std::remove_reference_t<Original>>)
 		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> cache_with_two_step_init_on_insert<rebind_result_t<Cache, NewLeaf>, SecondStep>
+			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, NewLeaf>, SecondStep>
 		{
-			return cache_with_two_step_init_on_insert<rebind_result_t<Cache, NewLeaf>, SecondStep>{
+			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, NewLeaf>, SecondStep>{
 				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(new_leaf)),
 				KANGARU5_FWD(original).second_step,
 			};

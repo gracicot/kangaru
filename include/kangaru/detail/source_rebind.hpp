@@ -48,7 +48,7 @@ namespace kangaru {
 				using type = Branch<NewSource, Param>;
 			};
 		};
-	} // namespace detail::source_rebind::private
+	} // namespace detail::source_rebind_private
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept transparent_rebindable_wrapping_source =
@@ -133,8 +133,10 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename Source>
 	concept rebindable_source = source<Source> and detail::source_rebind_private::is_rebindable_v<Source>;
 	
-	// TODO: Forwarding?
-	KANGARU5_EXPORT template<rebindable_source Source, forwarded_source Leaf>
+	KANGARU5_EXPORT template<typename Source>
+	concept forwarded_rebindable_source = forwarded_source<Source> and rebindable_source<std::remove_reference_t<Source>>;
+	
+	KANGARU5_EXPORT template<forwarded_rebindable_source Source, forwarded_source Leaf>
 	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
 	
 	KANGARU5_EXPORT template<forwarded_wrapping_source Source, forwarded_source Leaf>

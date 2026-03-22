@@ -602,7 +602,7 @@ KANGARU5_EXPORT namespace kangaru {
 			decltype(auto) source_for_t = kangaru::provide<SourceFor<T>>(KANGARU5_FWD(source).source);
 			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
 		}
-
+		
 		// TODO: Report clang issue. We shouldn't need to define this function. detail::source_rebind::rebind_wrapper is broken?
 		template<forwarded<with_provide_using_source> Original, forwarded_source NewLeaf>
 			requires(

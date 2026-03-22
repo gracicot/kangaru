@@ -10,6 +10,19 @@
 #include "define.hpp"
 
 namespace kangaru::detail {
+	namespace utility_private {
+		template<typename>
+		struct make_sequence_tuple_impl;
+		
+		template<std::size_t... S>
+		struct make_sequence_tuple_impl<std::index_sequence<S...>> {
+			using type = std::tuple<std::integral_constant<std::size_t, S>...>;
+		};
+		
+		[[noreturn]]
+		extern auto nonconsteval() -> void; // Left unimplemented
+	}
+	
 	template<typename T, typename U> [[nodiscard]]
 	constexpr auto forward_like(U&& x) noexcept -> auto&& {
 		constexpr bool is_const = std::is_const_v<std::remove_reference_t<T>>;
@@ -28,11 +41,8 @@ namespace kangaru::detail {
 		}
 	}
 	
-	[[noreturn]]
-	extern auto nonconsteval() -> void; // Left unimplemented
-	
 	template<typename T = void> [[noreturn]]
-	consteval inline auto noreturn() -> T { nonconsteval(); }
+	consteval inline auto noreturn() -> T { utility_private::nonconsteval(); }
 	
 	template<typename T>
 	auto decay_copy(T&& v) -> std::decay_t<T> {
@@ -48,22 +58,14 @@ namespace kangaru::detail {
 	template<typename T, std::size_t>
 	using expand = T;
 	
-	template<typename>
-	struct make_sequence_tuple_impl;
-	
-	template<std::size_t... S>
-	struct make_sequence_tuple_impl<std::index_sequence<S...>> {
-		using type = std::tuple<std::integral_constant<std::size_t, S>...>;
-	};
-	
 	template<std::size_t Size>
-	using make_sequence_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<Size>>::type;
+	using make_sequence_tuple = typename utility_private::make_sequence_tuple_impl<std::make_index_sequence<Size>>::type;
 	
 	template<typename... Ts>
-	using sequence_tuple_for = typename make_sequence_tuple_impl<std::index_sequence_for<Ts...>>::type;
+	using sequence_tuple_for = typename utility_private::make_sequence_tuple_impl<std::index_sequence_for<Ts...>>::type;
 	
 	template<typename Tuple>
-	using sequence_tuple_for_tuple = typename make_sequence_tuple_impl<std::make_index_sequence<std::tuple_size_v<Tuple>>>::type;
+	using sequence_tuple_for_tuple = typename utility_private::make_sequence_tuple_impl<std::make_index_sequence<std::tuple_size_v<Tuple>>>::type;
 	
 	template<template<typename...> typename, typename>
 	inline constexpr auto is_specialisation_of_v = false;

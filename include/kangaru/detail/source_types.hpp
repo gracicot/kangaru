@@ -335,6 +335,15 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<kangaru::object B, std::derived_from<B> U>
 		friend auto attribute(allow_empty_injection<derived_reference_source<B, U>>) -> std::true_type;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_runtime_caching<derived_reference_source<B, U>>) -> std::bool_constant<allow_runtime_caching_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(assume_runtime_cached<derived_reference_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(second_step_init<derived_reference_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_reference_source<B, U>::object>;
 	};
 	
 	template<object Base, std::derived_from<Base> T>
@@ -346,18 +355,31 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr derived_pointer_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> Base* {
-			return object;
+			return pointer();
 		}
 		
 		constexpr auto provide() && -> Base* {
-			return object;
+			return pointer();
 		}
 		
 	private:
 		T object;
 		
+		constexpr auto pointer() -> Base* {
+			return std::addressof(object);
+		}
+		
 		template<kangaru::object B, std::derived_from<B> U>
 		friend auto attribute(allow_empty_injection<derived_pointer_source<B, U>>) -> std::true_type;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_runtime_caching<derived_pointer_source<B, U>>) -> std::bool_constant<allow_runtime_caching_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(assume_runtime_cached<derived_pointer_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(second_step_init<derived_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_pointer_source<B, U>::pointer>;
 	};
 	
 	template<object Base, std::derived_from<Base> T>
@@ -392,6 +414,15 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<kangaru::object B, std::derived_from<B> U>
 		friend auto attribute(allow_empty_injection<derived_shared_pointer_source<B, U>>) -> std::true_type;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(allow_runtime_caching<derived_shared_pointer_source<B, U>>) -> std::bool_constant<allow_runtime_caching_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(assume_runtime_cached<derived_shared_pointer_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
+		
+		template<kangaru::object B, std::derived_from<B> U>
+		friend auto attribute(second_step_init<derived_shared_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_shared_pointer_source<B, U>::object>;
 	};
 	
 	template<source Source, source Alternative>
@@ -490,7 +521,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source Source>
 	struct with_dereference {
-		// Add a const& and && + conversion constructor?
+		// TODO: Add a const& and && + conversion constructor?
 		explicit constexpr with_dereference(Source source) noexcept : source{std::move(source)} {}
 		
 		Source source;
@@ -511,7 +542,7 @@ KANGARU5_EXPORT namespace kangaru {
 		return with_dereference<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	// TODO: Create singular source to deduce the from?
+	// TODO: Allow enumerated source and variadic From
 	template<source Source, injectable From> requires source_of<Source, From>
 	struct with_cast_from {
 		Source source;

@@ -40,7 +40,7 @@ namespace kangaru::detail::two_step_init::file_private {
 	
 	template<typename Type, typename Class>
 	struct member_type<Type Class::*> {
-		using type = Type;
+		using type = std::invoke_result_t<Type Class::*, Class&>;
 	};
 	
 	template<auto mptr>
@@ -257,11 +257,11 @@ KANGARU5_EXPORT namespace kangaru {
 	struct call_second_step_on_member {
 		template<injectable T, forwarded_source Source>
 			requires(
-				    requires(T& object) { { object.*mptr } -> std::convertible_to<As&>; }
+				    std::convertible_to<std::invoke_result_t<decltype(mptr), T&>, As&>
 				and callable_template_1t<SecondStep const&, As, As&, Source&&>
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
-			void(std::as_const(second_step).template operator()<As>(object.*mptr, KANGARU5_FWD(source)));
+			void(std::as_const(second_step).template operator()<As>(std::invoke(mptr, object), KANGARU5_FWD(source)));
 		}
 		
 		SecondStep second_step;

@@ -82,6 +82,8 @@ if(KANGARU_HAS_CPP_MODULES)
 	target_compile_options(kangaru PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/utf-8>)
 endif()
 
+set_target_properties(kangaru PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
+
 target_compile_features(kangaru INTERFACE cxx_std_20)
 target_include_directories(kangaru INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/include>

@@ -647,11 +647,7 @@ namespace kangaru {
 		
 		template<typename F, std::size_t nth, std::size_t max>
 		concept function_nth_parameter_prvalue =
-			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
-				not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
-			#else
-				callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
-			#endif
+			not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
 		;
 		
 		template<typename F, std::size_t nth, std::size_t max>

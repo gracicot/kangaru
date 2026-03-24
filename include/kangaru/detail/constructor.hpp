@@ -130,17 +130,14 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<unqualified_object Type>
-	inline constexpr auto make_in_place(auto&&... args) requires(
-		constructor_callable<Type, decltype(args)...>
-	) {
+	inline constexpr auto make_in_place(auto&&... args) requires constructor_callable<Type, decltype(args)...> {
 		return in_place_construct{[&] {
 			return KANGARU5_NO_ADL(constructor<Type>)(KANGARU5_FWD(args)...);
 		}};
 	}
 	
-	template<template<typename...> typename Type, typename... Args>
-		requires(constructor_callable<decltype(Type(std::declval<Args>()...)), Args&&...>)
-	inline constexpr auto make_in_place(Args&&... args) {
+	template<template<typename...> typename Type>
+	inline constexpr auto make_in_place(auto&&... args) requires constructor_callable<decltype(Type(KANGARU5_FWD(args)...)), decltype(args)...> {
 		return in_place_construct{[&] {
 			return KANGARU5_NO_ADL(constructor<decltype(Type(KANGARU5_FWD(args)...))>)(KANGARU5_FWD(args)...);
 		}};

@@ -813,15 +813,15 @@ namespace kangaru {
 				>) {
 					return reference_kind::lvalue_reference;
 				} else if constexpr (callable_with_nth_parameter_being<
-					filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+					filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
 					F,
 					nth,
 					max
 				>) {
-					return reference_kind::rvalue_reference;
+					return reference_kind::rvalue_const_reference;
 				}
 				
-				return reference_kind::rvalue_const_reference;
+				return reference_kind::rvalue_reference;
 			}
 		}
 		

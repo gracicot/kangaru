@@ -353,7 +353,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr derived_pointer_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires(constructible_in_place<T, Args&&...>)
+		template<typename... Args> requires(constructor_callable<T, Args&&...>)
 		constexpr derived_pointer_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> Base* {
@@ -394,7 +394,7 @@ KANGARU5_EXPORT namespace kangaru {
 				)
 			} {}
 		
-		template<typename... Args> requires(constructible_in_place<T, Args&&...>)
+		template<typename... Args> requires(constructor_callable<T, Args&&...>)
 		constexpr derived_shared_pointer_source(Args&&... args) :
 			object{
 				std::make_shared<T>(

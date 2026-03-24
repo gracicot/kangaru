@@ -119,7 +119,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<callable F> requires(unqualified_object<detail::call_result_t<F>>)
 	struct in_place_construct {
-		explicit constexpr in_place_construct(F function) requires(std::constructible_from<detail::call_result_t<F>, in_place_construct<F>>) : function(std::move(function)) {}
+		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
 		
 		constexpr operator detail::call_result_t<F>() && {
 			return std::move(function)();
@@ -129,31 +129,22 @@ KANGARU5_EXPORT namespace kangaru {
 		F function;
 	};
 	
-	template<typename Type>
-	concept in_place_constructible =
-		    unqualified_object<Type>
-		and std::constructible_from<Type, in_place_construct<auto(*)() -> Type>>;
-	
-	template<in_place_constructible Type>
-	inline constexpr auto make_in_place(auto&&... args) requires constructor_callable<Type, decltype(args)...> {
+	template<unqualified_object Type>
+	inline constexpr auto make_in_place(auto&&... args) requires(
+		constructor_callable<Type, decltype(args)...>
+	) {
 		return in_place_construct{[&] {
 			return KANGARU5_NO_ADL(constructor<Type>)(KANGARU5_FWD(args)...);
 		}};
 	}
 	
 	template<template<typename...> typename Type, typename... Args>
-		requires(
-			    in_place_constructible<decltype(Type(std::declval<Args>()...))>
-			and constructor_callable<decltype(Type(std::declval<Args>()...)), Args&&...>
-		)
+		requires(constructor_callable<decltype(Type(std::declval<Args>()...)), Args&&...>)
 	inline constexpr auto make_in_place(Args&&... args) {
 		return in_place_construct{[&] {
 			return KANGARU5_NO_ADL(constructor<decltype(Type(KANGARU5_FWD(args)...))>)(KANGARU5_FWD(args)...);
 		}};
 	}
-	
-	template<typename Type, typename... Args>
-	concept constructible_in_place = in_place_constructible<Type> and constructor_callable<Type, Args&&...>;
 }
 
 #include "undef.hpp"

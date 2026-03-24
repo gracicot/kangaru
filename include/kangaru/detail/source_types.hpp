@@ -38,7 +38,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
 		// TODO: Allow immovable sources
-		explicit(sizeof...(Sources) == 1) constexpr composed_source(Sources... sources) requires(... and std::move_constructible<Sources>) : sources{std::move(sources)...} {}
+		explicit(sizeof...(Sources) == 1) constexpr composed_source(Sources... sources) : sources{std::move(sources)...} {}
 		
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T

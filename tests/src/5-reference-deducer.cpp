@@ -320,19 +320,19 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			CHECK((kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0000_t, 0, 1>));
 			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0001_t, 0, 1>));
 			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0010_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0011_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_0011_t, 0, 1>));
 			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0100_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0101_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0110_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_0111_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_0101_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_0110_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_0111_t, 0, 1>));
 			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1000_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1001_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1010_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1011_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1100_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1101_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1110_t, 0, 1>));
-			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<constructor_1111_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1001_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1010_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1011_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1100_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1101_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1110_t, 0, 1>));
+			CHECK(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue_overloaded<constructor_1111_t, 0, 1>));
 			
 			CHECK((
 				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0000_t, 0, 1>()
@@ -347,7 +347,7 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			) == kangaru::reference_kind::lvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0011_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_0011_t, 0, 1>()
 			) == kangaru::reference_kind::lvalue_reference_and_lvalue_const_reference);
 			
 			CHECK((
@@ -355,15 +355,15 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			) == kangaru::reference_kind::rvalue_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0101_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_0101_t, 0, 1>()
 			) == kangaru::reference_kind::lvalue_reference_and_rvalue_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0110_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_0110_t, 0, 1>()
 			) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_0111_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_0111_t, 0, 1>()
 			) == kangaru::reference_kind::all_except_rvalue_const_reference);
 			
 			CHECK((
@@ -371,31 +371,31 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			) == kangaru::reference_kind::rvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1001_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1001_t, 0, 1>()
 			) == kangaru::reference_kind::lvalue_reference_and_rvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1010_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1010_t, 0, 1>()
 			) == kangaru::reference_kind::lvalue_const_reference_and_rvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1011_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1011_t, 0, 1>()
 			) == kangaru::reference_kind::all_except_rvalue_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1100_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1100_t, 0, 1>()
 			) == kangaru::reference_kind::rvalue_reference_and_rvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1101_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1101_t, 0, 1>()
 			) == kangaru::reference_kind::all_except_lvalue_const_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1110_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1110_t, 0, 1>()
 			) == kangaru::reference_kind::all_except_lvalue_reference);
 			
 			CHECK((
-				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter_overloaded<kangaru::placeholder_deducer, constructor_1111_t, 0, 1>()
 			) == kangaru::reference_kind::all_reference_kind);
 			
 			CHECK(kangaru::construction_tree_needs<type_0000, injected>);

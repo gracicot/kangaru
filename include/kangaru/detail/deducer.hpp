@@ -648,6 +648,15 @@ namespace kangaru {
 		template<typename F, std::size_t nth, std::size_t max>
 		concept function_nth_parameter_prvalue =
 			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
+				not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
+			#else
+				callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
+			#endif
+		;
+		
+		template<typename F, std::size_t nth, std::size_t max>
+		concept function_nth_parameter_prvalue_overloaded =
+			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
 				    not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
 				and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>
 			#else
@@ -735,8 +744,8 @@ namespace kangaru {
 				>;
 		
 		template<typename T, typename F, std::size_t nth, std::size_t max>
-		inline consteval auto reference_kind_for_nth_parameter() -> reference_kind {
-			if constexpr (function_nth_parameter_prvalue<F, nth, max>) {
+		inline consteval auto reference_kind_for_nth_parameter_overloaded() -> reference_kind {
+			if constexpr (function_nth_parameter_prvalue_overloaded<F, nth, max>) {
 				return reference_kind::none;
 			} else {
 				// Welcome to insanity
@@ -787,6 +796,39 @@ namespace kangaru {
 				);
 			}
 		}
+		
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		inline consteval auto reference_kind_for_nth_parameter() -> reference_kind {
+			if constexpr (function_nth_parameter_prvalue<F, nth, max>) {
+				return reference_kind::none;
+			} else {
+				if constexpr (callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_const_reference>,
+					F,
+					nth,
+					max
+				>) {
+					return reference_kind::lvalue_const_reference;
+				} else if constexpr (callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
+					F,
+					nth,
+					max
+				>) {
+					return reference_kind::lvalue_reference;
+				} else if constexpr (callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+					F,
+					nth,
+					max
+				>) {
+					return reference_kind::rvalue_reference;
+				}
+				
+				return reference_kind::rvalue_const_reference;
+			}
+		}
+		
 		
 		template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
 		using filtered_value_category_deducer_for = filtered_value_category_deducer<

@@ -117,7 +117,7 @@ KANGARU5_EXPORT namespace kangaru {
 		return non_default_constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
 	
-	template<callable F> requires(unqualified_object<detail::call_result_t<F>>)
+	template<callable F>
 	struct in_place_construct {
 		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
 		

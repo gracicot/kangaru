@@ -1,6 +1,9 @@
 #ifndef KANGARU5_DETAIL_UTILITY_HPP
 #define KANGARU5_DETAIL_UTILITY_HPP
 
+#include "concepts.hpp"
+#include "type_traits.hpp"
+
 #ifndef KANGARU5_MODULES
 #include <type_traits>
 #include <utility>
@@ -17,6 +20,11 @@ namespace kangaru::detail {
 		template<std::size_t... S>
 		struct make_sequence_tuple_impl<std::index_sequence<S...>> {
 			using type = std::tuple<std::integral_constant<std::size_t, S>...>;
+		};
+		
+		template<unqualified_object T>
+		struct function_returning_type {
+			auto operator()() const -> T;
 		};
 		
 		[[noreturn]]
@@ -76,11 +84,39 @@ namespace kangaru::detail {
 	template<typename T>
 	using type_identity = T;
 	
+	template<typename T>
+	struct always_type {
+		template<typename>
+		using type = T;
+	};
+	
 	template<typename T> requires false
 	using never_type_identity = T;
 	
 	template<typename TType, typename... Ts>
 	using ttype_t = typename TType::template ttype<Ts...>::type;
+}
+
+KANGARU5_EXPORT namespace kangaru {
+	template<callable F> requires(unqualified_object<detail::call_result_t<F>>)
+	struct in_place_construct {
+		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
+		
+		constexpr operator detail::call_result_t<F>() && {
+			return std::move(function)();
+		}
+		
+	private:
+		F function;
+	};
+	
+	template<typename T>
+	concept in_place_constructible =
+		    unqualified_object<T>
+		and std::constructible_from<
+			T,
+			in_place_construct<detail::utility_private::function_returning_type<T>>
+		>;
 }
 
 #include "undef.hpp"

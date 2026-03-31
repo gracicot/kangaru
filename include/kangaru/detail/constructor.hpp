@@ -117,20 +117,8 @@ KANGARU5_EXPORT namespace kangaru {
 		return non_default_constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
 	
-	template<callable F> requires(unqualified_object<detail::call_result_t<F>>)
-	struct in_place_construct {
-		explicit constexpr in_place_construct(F function) : function(std::move(function)) {}
-		
-		constexpr operator detail::call_result_t<F>() && {
-			return std::move(function)();
-		}
-		
-	private:
-		F function;
-	};
-	
-	template<unqualified_object Type>
-	inline constexpr auto make_in_place(auto&&... args) requires(
+	template<in_place_constructible Type>
+	inline constexpr auto construct_in_place(auto&&... args) requires(
 		constructor_callable<Type, decltype(args)...>
 	) {
 		return in_place_construct{[&] {
@@ -139,8 +127,11 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	template<template<typename...> typename Type, typename... Args>
-		requires(constructor_callable<decltype(Type(std::declval<Args>()...)), Args&&...>)
-	inline constexpr auto make_in_place(Args&&... args) {
+		requires(
+			    in_place_constructible<decltype(Type(std::declval<Args>()...))>
+			and constructor_callable<decltype(Type(std::declval<Args>()...)), Args&&...>
+		)
+	inline constexpr auto construct_in_place(Args&&... args) {
 		return in_place_construct{[&] {
 			return KANGARU5_NO_ADL(constructor<decltype(Type(KANGARU5_FWD(args)...))>)(KANGARU5_FWD(args)...);
 		}};

@@ -345,7 +345,7 @@ TEST_CASE("Container uses the base source") {
 		
 		SECTION("Can provide the instance dynamically using replace") {
 			auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
-				kangaru::make_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
+				kangaru::construct_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
 			);
 			
 			auto from_container = kangaru::provide<std::shared_ptr<dynamic_provided_concrete>>(container);
@@ -442,7 +442,7 @@ TEST_CASE("Polymorphic container uses the base source", "[container]") {
 		
 		SECTION("Can provide the instance dynamically using replace") {
 			auto provided = container.replace<std::shared_ptr<dynamic_provided_concrete>>(
-				kangaru::make_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
+				kangaru::construct_in_place<kangaru::shared_pointer_source<dynamic_provided_concrete>>(15)
 			);
 			
 			auto from_container = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);

@@ -129,6 +129,7 @@ namespace kangaru {
 			Function function;
 		};
 		
+		// TODO: Attempt to remove
 		template<function_object... MakeModuleSources>
 			requires detail::modular_source_private::incremental_source_complete_v<composed_source<>, modular_module_initializer<MakeModuleSources>...>
 		struct modular_container_impl {
@@ -159,7 +160,7 @@ namespace kangaru {
 			modules_t modules;
 		};
 		
-		// TODO: Do we actually need a constrait for that?
+		// TODO: Do we actually need a constrain for that?
 		template<typename SourceOrFunction>
 		concept make_modular_source_parameter =
 			   source<SourceOrFunction>
@@ -389,49 +390,19 @@ namespace kangaru {
 	
 	template<typename... Modules> requires((... and (std::is_function_v<Modules> or function_object<Modules>)))
 	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 8>...>;
-
-	// TODO: Completely rework
-	template<source Source, source FromSource>
-		requires callable<detail::call_result_t<make_strict_spread_injector_function, detail::modular_source_private::injection_source<ref_result_t<FromSource&>>>, constructor_function<Source>>
-	struct lazy2 {
-		explicit constexpr lazy2(FromSource from) : from{std::move(from)} {}
-		
-		template<injectable T> requires source_of<Source&, T>
-		constexpr auto provide() & -> T {
-			ensure_initialized();
-			return kangaru::provide<T>(*source);
-		}
-		
-		template<injectable T> requires source_of<Source&&, T>
-		constexpr auto provide() && -> T {
-			ensure_initialized();
-			return kangaru::provide<T>(std::move(*source));
-		}
-		
-	private:
-		constexpr auto ensure_initialized() -> void {
-			if (not source) {
-				auto const injection_source = with_recursion{with_construction{KANGARU5_NO_ADL(ref)(from), exhaustive_construction{}}};
-				source.emplace(KANGARU5_NO_ADL(make_strict_spread_injector)(injection_source)(constructor_function<Source>{}));
-			}
-		}
-		
-		FromSource from;
-		std::optional<Source> source;
-	};
 	
-	// TODO: Completely rework
 	template<source Source>
 	struct lazy_init {
 		constexpr auto operator()(forwarded_source auto&& from)
-			-> lazy2<Source, std::decay_t<decltype(from)>>
 		requires(
 			callable<strict_spread_injector<ref_result_t<decltype(from)&>>, constructor_function<Source>>
 		) {
-			return lazy2<Source, std::decay_t<decltype(from)>>{KANGARU5_FWD(from)};
+			auto injection_source = with_construction{with_recursion{with_construction{KANGARU5_FWD(from), exhaustive_construction{}}}, basic_exhaustive_construction{make_strict_spread_injector_function{}}};
+			// TODO: Is there anything better than compose to prevent rebinding?
+			return KANGARU5_NO_ADL(compose)(with_provide_using_source<with_lazy_evaluation_of<decltype(injection_source), Source>, detail::always_type<Source>::template type>{with_lazy_evaluation_of<decltype(injection_source), Source>{std::move(injection_source)}});
 		}
 	};
-}
+} // namespace kangaru
 
 // Here's many classes, all have some relations with others
 struct service_1_a { int i; };
@@ -551,10 +522,10 @@ auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> 
 
 auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> dependencies)
 	-> kangaru::any_source_of<service_3_a_base&, std::shared_ptr<service_3_b_base>, service_3_c&> {
-	// Here we use the generic make_in_place, that transforms move construction to RVO.
+	// Here we use the generic construct_in_place, that transforms move construction to RVO.
 	// Normally, for modular source, you should either just use make_modular_source[_in_place],
 	// using the in place version if returning a any_source_of
-	return kangaru::make_in_place<kangaru::modular_source>(dependencies,
+	return kangaru::construct_in_place<kangaru::modular_source>(dependencies,
 		kangaru::constructor_function<kangaru::derived_reference_source<service_3_a_base, service_3_a>>{},
 		kangaru::constructor_function<kangaru::derived_shared_pointer_source<service_3_b_base, service_3_b>>{},
 		// We can hijack the injection process and just get the incremental source instead to create something.

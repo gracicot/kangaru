@@ -631,6 +631,37 @@ KANGARU5_EXPORT namespace kangaru {
 		return with_provide_using_source<std::decay_t<decltype(source)>, SourceFor>{KANGARU5_FWD(source)};
 	}
 	
+	template<source Source, source ProvideUsing, injectable Type>
+		requires(
+			    source_of<Source, ProvideUsing>
+			and source_of<ProvideUsing, Type>
+		)
+	struct with_provide_type_using_source {
+		template<injectable T, forwarded<with_provide_type_using_source> Self>
+			requires(wrapping_source_of<Self, Source>)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			decltype(auto) source_for_t = kangaru::provide<ProvideUsing>(KANGARU5_FWD(source).source);
+			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
+		}
+		
+		template<forwarded<with_provide_type_using_source> Original, forwarded_source NewLeaf>
+			requires(
+				std::constructible_from<
+					Source,
+					detail::forward_like_t<Original, Source>
+				>
+			)
+		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) ->
+			with_provide_type_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, ProvideUsing, Source>
+		{
+			return with_provide_type_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, ProvideUsing, Source> {
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			};
+		}
+		
+		Source source;
+	};
+	
 	template<source Source>
 	struct basic_wrapping_source {
 		template<injectable T, forwarded<basic_wrapping_source> Self> requires wrapping_source_of<Self, T>

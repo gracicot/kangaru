@@ -20,7 +20,10 @@ namespace kangaru {
 	KANGARU5_EXPORT struct in_place_t{} inline constexpr in_place;
 	KANGARU5_EXPORT struct nullopt_t {} inline constexpr nullopt;
 	
-	KANGARU5_EXPORT template<weak_injectable T>
+	template<typename T>
+	concept optional_suitable = object<T> or lvalue_reference<T>;
+	
+	KANGARU5_EXPORT template<optional_suitable T>
 	struct optional;
 }
 
@@ -36,8 +39,7 @@ namespace kangaru::detail::optional_private {
 }
 
 KANGARU5_EXPORT namespace kangaru {
-	// TODO: Just make it a standard compliant C++26 optional
-	template<unqualified_object T>
+	template<object T>
 	struct optional<T> {
 		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional_private::empty{}} {}
 		constexpr optional() : optional{nullopt} {};
@@ -385,7 +387,7 @@ KANGARU5_EXPORT namespace kangaru {
 		bool engaged = false;
 	};
 	
-	template<reference T>
+	template<lvalue_reference T>
 	struct optional<T> {
 	private:
 		using object_type = std::remove_reference_t<T>;
@@ -400,21 +402,12 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<object U>
 			requires(
-				    std::is_lvalue_reference_v<T>
-				and std::convertible_to<U*, T*>
+				    std::convertible_to<U*, T*>
 				and not detail::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
 		explicit(false) constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
 		
-		template<object U>
-			requires(
-				    std::is_rvalue_reference_v<T>
-				and std::convertible_to<U*, T*>
-				and not detail::is_specialisation_of_v<optional, std::remove_cv_t<U>>
-			)
-		explicit(false) constexpr optional(U&& ref) noexcept : pointer{std::addressof(ref)} {}
-		
-		template<reference U> requires std::convertible_to<U*, T*>
+		template<lvalue_reference U> requires std::convertible_to<U*, T*>
 		constexpr optional(optional<U> const& opt) noexcept : pointer{opt ? std::addressof(*opt) : nullptr} {}
 		
 		explicit(false) constexpr optional(nullopt_t) noexcept : pointer{nullptr} {}

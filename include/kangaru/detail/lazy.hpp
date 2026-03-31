@@ -17,12 +17,12 @@ namespace kangaru {
 		
 		constexpr auto operator*() & -> T {
 			ensure_initialized();
-			return *object;
+			return static_cast<T>(*object);
 		}
 		
 		constexpr auto operator*() && -> T {
 			ensure_initialized();
-			return *std::move(object);
+			return static_cast<T>(*std::move(object));
 		}
 		
 		constexpr auto operator->() -> std::remove_reference_t<T>* {
@@ -32,7 +32,7 @@ namespace kangaru {
 		
 		template<typename U> requires std::convertible_to<U&&, T&>
 		constexpr auto object_or(U&& default_value) const noexcept -> T& {
-			return object.has_value() ? *object : KANGARU5_FWD(default_value);
+			return object.has_value() ? static_cast<T>(*object) : KANGARU5_FWD(default_value);
 		}
 		
 	private:
@@ -42,8 +42,23 @@ namespace kangaru {
 			}
 		}
 		
+		using as_contained = detail::conditional_t<std::is_rvalue_reference_v<T>, T&, T>;
+		
 		Source source;
-		optional<T> object;
+		optional<as_contained> object;
+	};
+	
+	template<source Source, injectable Type>
+	struct with_lazy_evaluation_of {
+		explicit constexpr with_lazy_evaluation_of(Source source) noexcept : source{std::move(source)} {}
+		
+		template<forwarded<with_lazy_evaluation_of> Self>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> Type {
+			return *KANGARU5_FWD(source).source;
+		}
+		
+	private:
+		lazy<Type, Source> source;
 	};
 }
 

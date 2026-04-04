@@ -84,12 +84,6 @@ namespace kangaru::detail {
 	template<typename T>
 	using type_identity = T;
 	
-	template<typename T>
-	struct always_type {
-		template<typename>
-		using type = T;
-	};
-	
 	template<typename T> requires false
 	using never_type_identity = T;
 	

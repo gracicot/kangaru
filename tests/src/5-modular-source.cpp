@@ -20,89 +20,24 @@ namespace kangaru {
 		concept callable_module_member_initializer =
 			    source<Context>
 			and function_object<Function>
-			and callable<Function&&, Context>;
-		
-		template<typename MakeHeadSource, source Constructed>
-			requires callable_module_member_initializer<MakeHeadSource, Constructed>
-		using constructed_head_source_t = detail::call_result_t<MakeHeadSource, Constructed>;
+			and callable<Function&&, Context>
+			and source<detail::call_result_t<Function&&, Context>>;
 		
 		template<source Constructed, function_object... Modules>
 		inline constexpr auto incremental_source_complete_v = false;
 		
-		template<source Constructed, function_object Head, function_object... Tail>
-			requires callable_module_member_initializer<Head, Constructed>
-		inline constexpr auto incremental_source_complete_v<Constructed, Head, Tail...> =
-			    callable_module_member_initializer<Head, Constructed>
-			and incremental_source_complete_v<composed_source_cat_t<Constructed, tied_source<constructed_head_source_t<Head, Constructed>>>, Tail...>;
+		template<source... Constructed, function_object Head, function_object... Tail>
+			requires callable_module_member_initializer<Head, composed_source<Constructed...>>
+		inline constexpr auto incremental_source_complete_v<composed_source<Constructed...>, Head, Tail...> =
+			    callable_module_member_initializer<Head, composed_source<Constructed...>>
+			and incremental_source_complete_v<composed_source<Constructed..., source_reference_wrapper<detail::call_result_t<Head, composed_source<Constructed...>>>>, Tail...>;
 		
-		template<source Constructed>
-		inline constexpr auto incremental_source_complete_v<Constructed> = true;
-		
-		template<source Constructed, function_object... Functions>
-		struct incremental_source_impl;
-		
-		template<source Constructed, function_object Head, function_object... Tail>
-		struct incremental_source_impl<Constructed, Head, Tail...> {
-			using head_t = constructed_head_source_t<Head, Constructed>;
-			using tail_constructed_t = composed_source_cat_t<Constructed, tied_source<head_t>>;
-			using tail_t = incremental_source_impl<tail_constructed_t, Tail...>;
-			
-			incremental_source_impl(incremental_source_impl const&) = delete;
-			auto operator=(incremental_source_impl const&) -> incremental_source_impl& = delete;
-			incremental_source_impl(incremental_source_impl&&) = delete;
-			auto operator=(incremental_source_impl&&) -> incremental_source_impl& = delete;
-			~incremental_source_impl() = default;
-			
-			constexpr incremental_source_impl(Head make_head, Tail... tail) requires std::same_as<composed_source<>, Constructed> :
-				head{std::move(make_head)(tie())},
-				tail{KANGARU5_NO_ADL(tie)(head), std::move(tail)...} {}
-			
-			constexpr incremental_source_impl(Constructed accumulated, Head make_head, Tail... tail) :
-				head{std::move(make_head)(accumulated)},
-				tail{KANGARU5_NO_ADL(composed_source_cat)(accumulated, KANGARU5_NO_ADL(tie)(head)), tail...} {}
-			
-			
-			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<head_t, T>
-			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-				return kangaru::provide<T>(KANGARU5_FWD(source).head);
-			}
-			
-			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<tail_t, T>
-			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-				return kangaru::provide<T>(KANGARU5_FWD(source).tail);
-			}
-			
-			head_t head;
-			tail_t tail;
-		};
-		
-		template<source Constructed, function_object Head>
-		struct incremental_source_impl<Constructed, Head> {
-			constexpr incremental_source_impl(Constructed accumulated, Head make_head) :
-				head{std::move(make_head)(accumulated)} {}
-			
-			explicit constexpr incremental_source_impl(Head make_head) requires(std::same_as<composed_source<>, Constructed>) :
-				head{std::move(make_head)(tie())} {}
-			
-			using head_t = constructed_head_source_t<Head, Constructed>;
-			
-			template<injectable T, forwarded<incremental_source_impl> Self> requires source_of<head_t, T>
-			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-				return kangaru::provide<T>(KANGARU5_FWD(source).head);
-			}
-			
-			head_t head;
-		};
-		
-		template<source Constructed>
-		struct incremental_source_impl<Constructed> {
-			incremental_source_impl() = default;
-			explicit constexpr incremental_source_impl(Constructed) {}
-		};
+		template<source... Constructed>
+		inline constexpr auto incremental_source_complete_v<composed_source<Constructed...>> = true;
 		
 		template<source Source>
 		struct use_source {
-			Source source;
+			Source&& source;
 			
 			// We ignore the source since we have one already constructed
 			constexpr auto operator()(forwarded_source auto&&) && { return std::move(source); }
@@ -114,7 +49,7 @@ namespace kangaru {
 		template<function_object Function>
 		struct modular_module_initializer {
 			template<forwarded_source Source>
-			constexpr auto operator()(Source&& source) ->
+			constexpr auto operator()(Source&& source) && ->
 				with_source_reference_wrapping<reference_source<detail::call_result_t<detail::call_result_t<make_strict_spread_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>>>
 			requires(
 				callable<detail::call_result_t<make_strict_spread_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>
@@ -127,93 +62,6 @@ namespace kangaru {
 			};
 			
 			Function function;
-		};
-		
-		// TODO: Attempt to remove
-		template<function_object... MakeModuleSources>
-			requires detail::modular_source_private::incremental_source_complete_v<composed_source<>, modular_module_initializer<MakeModuleSources>...>
-		struct modular_container_impl {
-		private:
-			using modules_t = detail::modular_source_private::incremental_source_impl<composed_source<>, modular_module_initializer<MakeModuleSources>...>;
-			
-		public:
-			explicit constexpr modular_container_impl(MakeModuleSources... modules) :
-				modules{modular_module_initializer<MakeModuleSources>{modules}...} {}
-			
-			template<injectable T, forwarded<modular_container_impl> Self>
-			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
-			requires (
-				((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? 1 : 0) + ...) == 1
-			) {
-				using source_t = std::tuple_element_t<index_of<T, decltype(source)>(std::index_sequence_for<MakeModuleSources...>{}), std::tuple<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>...>>;
-				return kangaru::provide<T>(
-					kangaru::provide<source_t>(KANGARU5_FWD(source).modules)
-				);
-			}
-			
-		private:
-			template<typename T, typename Self, std::size_t... S>
-			constexpr static auto index_of(std::index_sequence<S...>) {
-				return ((source_of<source_reference_wrapper<reflected_return_type<MakeModuleSources, 8>>, T> ? S : 0) + ...);
-			}
-			
-			modules_t modules;
-		};
-		
-		// TODO: Do we actually need a constrain for that?
-		template<typename SourceOrFunction>
-		concept make_modular_source_parameter =
-			   source<SourceOrFunction>
-			or (
-				    std::default_initializable<SourceOrFunction>
-				and not pointer<SourceOrFunction>
-			);
-		
-		// TODO: We already wrap calling the function, and the function itself is now wrapped.
-		//       Can we remove a level? Can we go back to a simple `constructor_function` or
-		//       lazy strictly requires having two paths for everything?
-		//
-		// TODO: It seems like if a module initializer is a function taking a source but is not callable,
-		//       we end up with the function in the modular source, which is not what we intended.
-		template<make_modular_source_parameter SourceOrFunction>
-		struct module_initializer {
-			template<forwarded_source Source>
-				requires (
-					    std::default_initializable<SourceOrFunction>
-					and not pointer<SourceOrFunction>
-					and callable<
-						detail::call_result_t<make_strict_spread_injector_function, fwd_ref_result_t<Source&&>>,
-						SourceOrFunction
-					>
-				)
-			constexpr auto operator()(Source&& source) const -> decltype(auto) {
-				return KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)))(SourceOrFunction{});
-			}
-			
-			template<forwarded_source Source>
-				requires (
-					    std::default_initializable<SourceOrFunction>
-					and not pointer<SourceOrFunction>
-					and callable<SourceOrFunction, Source&&>
-				)
-			constexpr auto operator()(Source&& source) const -> decltype(auto) {
-				return SourceOrFunction{}(KANGARU5_FWD(source));
-			}
-			
-			template<forwarded_source Source>
-			constexpr auto operator()(Source&& source) const requires(
-				callable<
-					detail::call_result_t<make_strict_spread_injector_function, fwd_ref_result_t<Source&&>>,
-					constructor_function<SourceOrFunction>
-				>
-				and kangaru::source<SourceOrFunction>
-				and (
-					   not std::default_initializable<SourceOrFunction>
-					or not callable<SourceOrFunction, Source&&>
-				)
-			) {
-				return KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)))(constructor_function<SourceOrFunction>{});
-			}
 		};
 		
 		template<function_object Function>
@@ -251,13 +99,142 @@ namespace kangaru {
 		private:
 			Function function;
 		};
-	}
+	} // namespace detail::modular_source_private
+	
+	template<typename... Functions>
+		requires(
+			   detail::modular_source_private::incremental_source_complete_v<Functions...>
+			or detail::modular_source_private::incremental_source_complete_v<composed_source<>, Functions...>
+		)
+	struct incremental_source;
+	
+	template<source... Constructed, function_object MakeSource, function_object... Next>
+		requires detail::modular_source_private::incremental_source_complete_v<composed_source<Constructed...>, MakeSource, Next...>
+	struct incremental_source<composed_source<Constructed...>, MakeSource, Next...> {
+	private:
+		using source_t = detail::call_result_t<MakeSource, composed_source<Constructed...>>;
+		using constructed_t = composed_source<Constructed..., source_reference_wrapper<source_t>>;
+		using next_t = incremental_source<constructed_t, Next...>;
+		
+	public:
+		incremental_source(incremental_source const&) = delete;
+		auto operator=(incremental_source const&) -> incremental_source& = delete;
+		incremental_source(incremental_source&&) = delete;
+		auto operator=(incremental_source&&) -> incremental_source& = delete;
+		~incremental_source() = default;
+		
+		constexpr incremental_source(composed_source<Constructed...> accumulated, MakeSource make_source, Next... next) :
+			source{std::move(make_source)(accumulated)},
+			next{KANGARU5_NO_ADL(composed_source_cat)(accumulated, KANGARU5_NO_ADL(tie)(source)), next...} {}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires source_of<detail::forward_like_t<Self, next_t>, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).next);
+		}
+		
+		source_t source;
+		next_t next;
+	};
+	
+	template<function_object MakeSource, function_object... Next>
+		requires detail::modular_source_private::incremental_source_complete_v<composed_source<>, MakeSource, Next...>
+	struct incremental_source<MakeSource, Next...> {
+	private:
+		using source_t = detail::call_result_t<MakeSource, composed_source<>>;
+		using constructed_t = tied_source<source_t>;
+		using next_t = incremental_source<constructed_t, Next...>;
+		
+	public:
+		incremental_source(incremental_source const&) = delete;
+		auto operator=(incremental_source const&) -> incremental_source& = delete;
+		incremental_source(incremental_source&&) = delete;
+		auto operator=(incremental_source&&) -> incremental_source& = delete;
+		~incremental_source() = default;
+		
+		constexpr incremental_source(MakeSource make_source, Next... next) :
+			source{std::move(make_source)(tie())},
+			next{KANGARU5_NO_ADL(tie)(source), std::move(next)...} {}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires source_of<detail::forward_like_t<Self, next_t>, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).next);
+		}
+		
+		source_t source;
+		next_t next;
+	};
+	
+	template<source... Constructed, function_object MakeSource>
+		requires detail::modular_source_private::incremental_source_complete_v<composed_source<Constructed...>, MakeSource>
+	struct incremental_source<composed_source<Constructed...>, MakeSource> {
+	private:
+		using source_t = detail::call_result_t<MakeSource, composed_source<Constructed...>>;
+		
+	public:
+		constexpr incremental_source(composed_source<Constructed...> accumulated, MakeSource make_head) :
+			source{std::move(make_head)(accumulated)} {}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		source_t source;
+	};
+	
+	template<function_object Head>
+		requires detail::modular_source_private::incremental_source_complete_v<composed_source<>, Head>
+	struct incremental_source<Head> {
+	private:
+		using source_t = detail::call_result_t<Head, composed_source<>>;
+		
+	public:
+		explicit constexpr incremental_source(Head make_head) :
+			source{std::move(make_head)(tie())} {}
+		
+		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		source_t source;
+	};
+	
+	template<source... Constructed>
+	struct incremental_source<composed_source<Constructed...>> {
+		explicit constexpr incremental_source(composed_source<Constructed...>) {}
+	};
+	
+	template<>
+	struct incremental_source<> {};
+	
+	template<typename... Functions>
+	incremental_source(Functions...) -> incremental_source<Functions...>;
 	
 	template<source Source = none_source, function_object... Lambdas>
-		requires detail::modular_source_private::incremental_source_complete_v<composed_source<>, detail::modular_source_private::use_source<Source>, detail::modular_source_private::modular_source_initializer<Lambdas>...>
+		requires(
+			std::constructible_from<
+				incremental_source<
+					detail::modular_source_private::use_source<Source>,
+					detail::modular_source_private::modular_source_initializer<Lambdas>...
+				>,
+				detail::modular_source_private::use_source<Source>,
+				detail::modular_source_private::modular_source_initializer<Lambdas>...
+			>
+		)
 	struct modular_source {
 	private:
-		using impl_t = detail::modular_source_private::incremental_source_impl<composed_source<>, detail::modular_source_private::use_source<Source>, detail::modular_source_private::modular_source_initializer<Lambdas>...>;
+		using impl_t = incremental_source<detail::modular_source_private::use_source<Source>, detail::modular_source_private::modular_source_initializer<Lambdas>...>;
 		
 	public:
 		explicit(sizeof...(Lambdas) == 1)
@@ -277,11 +254,11 @@ namespace kangaru {
 				detail::modular_source_private::modular_source_initializer<Lambdas>{std::move(lambdas)}...
 			} {}
 		
-		template<injectable T, forwarded<modular_source> Self> requires source_of<detail::forward_like_t<Self, typename impl_t::tail_t>, T>
+		template<injectable T, forwarded<modular_source> Self> requires source_of<detail::forward_like_t<Self, decltype(std::declval<impl_t>().next)>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			// Here we must skip first head of the incremental source. This is because we don't want to provide
 			// from source of other modules.
-			return kangaru::provide<T>(KANGARU5_FWD(source).impl.tail);
+			return kangaru::provide<T>(KANGARU5_FWD(source).impl.next);
 		}
 		
 	private:
@@ -302,31 +279,31 @@ namespace kangaru {
 	
 	template<source... Sources, source Source>
 		requires std::constructible_from<
-			modular_source<Source, detail::modular_source_private::module_initializer<Sources>...>,
+			modular_source<Source, constructor_function<Sources>...>,
 			Source&&,
-			detail::modular_source_private::module_initializer<Sources>...
+			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source(Source source) {
-		return modular_source<Source, detail::modular_source_private::module_initializer<Sources>...>{
+		return modular_source<Source, constructor_function<Sources>...>{
 			std::move(source),
-			detail::modular_source_private::module_initializer<Sources>{}...
+			constructor_function<Sources>{}...
 		};
 	}
 	
 	template<source... Sources>
 		requires std::constructible_from<
-			modular_source<none_source, detail::modular_source_private::module_initializer<Sources>...>,
+			modular_source<none_source, constructor_function<Sources>...>,
 			none_source,
-			detail::modular_source_private::module_initializer<Sources>...
+			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source() {
-		return modular_source<none_source, detail::modular_source_private::module_initializer<Sources>...>{
+		return modular_source<none_source, constructor_function<Sources>...>{
 			none_source{},
-			detail::modular_source_private::module_initializer<Sources>{}...
+			constructor_function<Sources>{}...
 		};
 	}
 	
-	template<detail::modular_source_private::make_modular_source_parameter Source, function_object... Lambdas>
+	template<source Source, function_object... Lambdas>
 		requires std::constructible_from<modular_source<Source, Lambdas...>, Source&&, Lambdas&...>
 	inline constexpr auto make_modular_source_in_place(Source source, Lambdas... lambdas) {
 		return in_place_construct{
@@ -336,52 +313,74 @@ namespace kangaru {
 		};
 	}
 	
-	template<detail::modular_source_private::make_modular_source_parameter... Sources, source Source>
+	template<source... Sources, source Source>
 		requires std::constructible_from<
-			modular_source<Source, detail::modular_source_private::module_initializer<Sources>...>,
+			modular_source<Source, constructor_function<Sources>...>,
 			Source&&,
-			detail::modular_source_private::module_initializer<Sources>...
+			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source_in_place(Source source) {
 		return in_place_construct{
 			[source = std::move(source)]() mutable {
-				return modular_source<Source, detail::modular_source_private::module_initializer<Sources>...>{
+				return modular_source<Source, constructor_function<Sources>...>{
 					std::move(source),
-					detail::modular_source_private::module_initializer<Sources>{}...
+					constructor_function<Sources>{}...
 				};
 			},
 		};
 	}
 	
-	template<detail::modular_source_private::make_modular_source_parameter... Sources>
+	template<source... Sources>
 		requires std::constructible_from<
-			modular_source<none_source, detail::modular_source_private::module_initializer<Sources>...>,
+			modular_source<none_source, constructor_function<Sources>...>,
 			none_source,
-			detail::modular_source_private::module_initializer<Sources>...
+			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source_in_place() {
 		return in_place_construct{
 			[] {
-				return modular_source<none_source, detail::modular_source_private::module_initializer<Sources>...>{
+				return modular_source<none_source, constructor_function<Sources>...>{
 					none_source{},
-					detail::modular_source_private::module_initializer<Sources>{}...
+					constructor_function<Sources>{}...
 				};
 			},
 		};
 	}
 	
 	template<function_object... Modules>
-		requires std::constructible_from<detail::modular_source_private::modular_container_impl<Modules...>, Modules...>
+		requires(
+			std::constructible_from<
+				incremental_source<
+					detail::modular_source_private::modular_module_initializer<Modules>...
+				>,
+				detail::modular_source_private::modular_module_initializer<Modules>...
+			>
+		)
 	struct modular_container {
 	private:
-		using impl_type = detail::modular_source_private::modular_container_impl<Modules...>;
+		using impl_type = incremental_source<detail::modular_source_private::modular_module_initializer<Modules>...>;
+		
+		template<typename T, typename Self, std::size_t... S>
+		consteval static auto index_of(std::index_sequence<S...>) {
+			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 8>>, T> ? S : 0) + ...);
+		}
+		
+		template<forwarded<modular_container> Self>
+		struct module_for_type {
+			template<injectable T>
+			using type = std::tuple_element_t<
+				index_of<T, Self>(std::index_sequence_for<Modules...>{}),
+				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 8>>...>
+			>;
+		};
 		
 	public:
-		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) : impl{std::move(modules)...} {}
+		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) :
+			impl{detail::modular_source_private::modular_module_initializer<Modules>{std::move(modules)}...} {}
 		
-		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<fwd_ref_result_t<detail::forward_like_t<Self, impl_type>&&>, exhaustive_construction>>, T>
+		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<sealed_source<with_provide_using_source<fwd_ref_result_t<detail::forward_like_t<Self, impl_type>&&>, module_for_type<Self>::template type>>, exhaustive_construction>>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(with_recursion{with_construction{KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl), exhaustive_construction{}}});
+			return kangaru::provide<T>(with_recursion{with_construction{sealed_source{make_source_with_provide_using_source<module_for_type<Self>::template type>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl))}, exhaustive_construction{}}});
 		}
 		
 	private:
@@ -392,22 +391,46 @@ namespace kangaru {
 	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 8>...>;
 	
 	template<source Source>
-	struct lazy_init {
+	struct make_lazy_initialized_source_function {
+	private:
+		template<typename>
+		using pick_source = Source;
+		
+	public:
 		constexpr auto operator()(forwarded_source auto&& from)
 		requires(
 			callable<strict_spread_injector<ref_result_t<decltype(from)&>>, constructor_function<Source>>
 		) {
-			auto injection_source = with_construction{with_recursion{with_construction{KANGARU5_FWD(from), exhaustive_construction{}}}, basic_exhaustive_construction{make_strict_spread_injector_function{}}};
-			// TODO: Is there anything better than compose to prevent rebinding?
-			return KANGARU5_NO_ADL(compose)(with_provide_using_source<with_lazy_evaluation_of<decltype(injection_source), Source>, detail::always_type<Source>::template type>{with_lazy_evaluation_of<decltype(injection_source), Source>{std::move(injection_source)}});
+			return sealed_source{
+				make_source_with_provide_using_source<pick_source>(
+					make_source_with_lazy_evaluation_of<Source>(
+						with_construction{
+							KANGARU5_FWD(from),
+							basic_exhaustive_construction{make_strict_spread_injector_function{}},
+						}
+					)
+				),
+			};
 		}
 	};
+	
+	template<source Source>
+	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from) {
+		return make_lazy_initialized_source_function<Source>{}(KANGARU5_FWD(from));
+	}
 } // namespace kangaru
 
 // Here's many classes, all have some relations with others
 struct service_1_a { int i; };
 struct service_1_b { service_1_a& s1a; int i; };
 struct service_1_c { service_1_b s1b; };
+struct service_1_d {
+	explicit service_1_d(service_1_c& s1c) : s1c{s1c} {
+		fmt::println("init service_1_d");
+	}
+	
+	service_1_c& s1c;
+};
 
 struct agg1 {
 	service_1_a& a;
@@ -417,13 +440,6 @@ struct agg1 {
 
 struct service_2_a { service_1_a& s1a; agg1 agg; };
 struct service_2_b { service_1_c& s1c; service_2_a& s2a; };
-struct service_2_c {
-	explicit service_2_c(service_2_b& s2b) : s2b{s2b} {
-		fmt::println("init service_2_c");
-	}
-	
-	service_2_b& s2b;
-};
 
 struct agg2 {
 	agg1 agg;
@@ -490,7 +506,7 @@ constexpr auto module0() {
 // We also return the modular source in a type erased wrapper.
 // If you hover the module0 function and inspect the return type, you'll understand why.
 // Types containing lambdas can explode pretty quick.
-auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a&, service_1_b, service_1_c&> {
+auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a&, service_1_b, service_1_c&, std::shared_ptr<service_1_d>> {
 	return kangaru::make_modular_source_in_place(dependencies,
 		// Can be lambdas just like we see in module0.
 		[](int i) { // int dependency, from module0. We can write them explicitly like this, but generally, you won't.
@@ -500,7 +516,8 @@ auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> ka
 			return kangaru::object_source<service_1_b>{s1a, i};
 		},
 		// Instead of listing dependencies, let's use a generic constructor function, and let kangaru deduce the parameters!
-		kangaru::constructor_function<kangaru::reference_source<service_1_c>>{}
+		kangaru::constructor_function<kangaru::reference_source<service_1_c>>{},
+		kangaru::make_lazy_initialized_source_function<kangaru::shared_pointer_source<service_1_d>>{}
 	);
 }
 
@@ -511,8 +528,7 @@ auto module2(kangaru::module_dependencies<decltype(module1)> dependencies) {
 	// We can simply make a list of all the sources the module should be composed of, and let kangaru autowire everything.
 	return kangaru::make_modular_source<
 		kangaru::reference_source<service_2_a>,
-		kangaru::reference_source<service_2_b>,
-		kangaru::lazy_init<kangaru::shared_pointer_source<service_2_c>>
+		kangaru::reference_source<service_2_b>
 	>(dependencies);
 }
 
@@ -534,7 +550,7 @@ auto module3(kangaru::module_dependencies<decltype(module2), decltype(module1)> 
 		[](kangaru::source auto module) {
 			auto injector = kangaru::make_strict_spread_injector(module);
 			auto constructor = kangaru::constructor_function<kangaru::reference_source<service_3_c>>{};
-			return injector(constructor); // Returns a kangaru::reference_source<service_3_c>
+			return std::move(injector)(constructor); // Returns a kangaru::reference_source<service_3_c>
 		}
 	);
 }
@@ -543,9 +559,9 @@ auto main() -> int {
 	auto source = kangaru::modular_container{module0, module1, module2, module3};
 	auto injector = kangaru::make_spread_injector(kangaru::ref(source));
 	
-	fmt::println("before initializing service_2_c");
-	kangaru::provide<std::shared_ptr<service_2_c>>(source);
-	fmt::println("after initializing service_2_c");
+	fmt::println("before initializing service_1_d");
+	kangaru::provide<std::shared_ptr<service_1_d>>(source);
+	fmt::println("after initializing service_1_d");
 	
 	injector([](service_2_b& s2b, service_1_b s1b, agg2 agg, service_3_c&) {
 		fmt::println("potato {} {} {}", s2b.s1c.s1b.i, s1b.i, agg.s2a.agg.a.i);

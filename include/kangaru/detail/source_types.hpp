@@ -663,6 +663,24 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<source Source>
+	struct sealed_source {
+		explicit constexpr sealed_source(Source source) : source{std::move(source)} {}
+		
+		template<injectable T, forwarded<sealed_source> Self> requires source_of<detail::forward_like_t<Self, Source&&>, T>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+	private:
+		Source source;
+	};
+	
+	template<forwarded_source Source>
+	inline constexpr auto seal_source(Source&& source) {
+		return sealed_source<std::decay_t<Source>>{KANGARU5_FWD(source)};
+	}
+	
+	template<source Source>
 	struct basic_wrapping_source {
 		template<injectable T, forwarded<basic_wrapping_source> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {

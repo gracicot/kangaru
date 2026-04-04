@@ -10,8 +10,8 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<injectable T, source_of<T> Source>
+KANGARU5_EXPORT namespace kangaru {
+	template<injectable T, source_of<T> Source>
 	struct lazy {
 		explicit constexpr lazy(Source source) noexcept : source{std::move(source)} {}
 		
@@ -60,6 +60,11 @@ namespace kangaru {
 	private:
 		lazy<Type, Source> source;
 	};
+	
+	template<injectable Type, forwarded_source Source>
+	inline constexpr auto make_source_with_lazy_evaluation_of(Source&& source) {
+		return with_lazy_evaluation_of<std::decay_t<Source>, Type>{KANGARU5_FWD(source)};
+	}
 }
 
 #include "undef.hpp"

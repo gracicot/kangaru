@@ -150,7 +150,7 @@ KANGARU5_EXPORT namespace kangaru {
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			auto injector = make_spread_injector(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
-			(injector(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
+			(std::move(injector)(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
 		}
 	};
 	
@@ -169,7 +169,7 @@ KANGARU5_EXPORT namespace kangaru {
 			)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			auto injector = MakeInjector{}(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
-			(injector(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
+			(std::move(injector)(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
 		}
 	};
 	

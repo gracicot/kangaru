@@ -99,6 +99,24 @@ namespace kangaru {
 		private:
 			Function function;
 		};
+		
+		// This type is to workaround clang 18 and older. If those entities are defined in the private scope of a class,
+		// clang will reject this code.
+		template<typename...  Modules>
+		struct modular_container_base {
+			template<typename T, std::size_t... S>
+			consteval static auto index_of(std::index_sequence<S...>) {
+				return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 8>>, T> ? S : 0) + ...);
+			}
+			
+			struct module_for_type {
+				template<injectable T>
+				using type = std::tuple_element_t<
+					index_of<T>(std::index_sequence_for<Modules...>{}),
+					std::tuple<source_reference_wrapper<reflected_return_type<Modules, 8>>...>
+				>;
+			};
+		};
 	} // namespace detail::modular_source_private
 	
 	template<typename... Functions>
@@ -360,27 +378,38 @@ namespace kangaru {
 	private:
 		using impl_type = incremental_source<detail::modular_source_private::modular_module_initializer<Modules>...>;
 		
-		template<typename T, typename Self, std::size_t... S>
-		consteval static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 8>>, T> ? S : 0) + ...);
-		}
-		
-		template<forwarded<modular_container> Self>
-		struct module_for_type {
-			template<injectable T>
-			using type = std::tuple_element_t<
-				index_of<T, Self>(std::index_sequence_for<Modules...>{}),
-				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 8>>...>
-			>;
-		};
-		
 	public:
 		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) :
 			impl{detail::modular_source_private::modular_module_initializer<Modules>{std::move(modules)}...} {}
 		
-		template<injectable T, forwarded<modular_container> Self> requires source_of<with_recursion<with_construction<sealed_source<with_provide_using_source<fwd_ref_result_t<detail::forward_like_t<Self, impl_type>&&>, module_for_type<Self>::template type>>, exhaustive_construction>>, T>
+		template<injectable T, forwarded<modular_container> Self> requires(
+			source_of<
+				with_recursion<
+					with_construction<
+						sealed_source<
+							with_provide_using_source<
+								fwd_ref_result_t<detail::forward_like_t<Self, impl_type>&&>,
+								detail::modular_source_private::modular_container_base<Modules...>::module_for_type::template type
+							>
+						>,
+						exhaustive_construction
+					>
+				>,
+				T
+			>
+		)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(with_recursion{with_construction{sealed_source{make_source_with_provide_using_source<module_for_type<Self>::template type>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl))}, exhaustive_construction{}}});
+			return kangaru::provide<T>(
+				with_recursion{
+					with_construction{
+						sealed_source{
+							make_source_with_provide_using_source<detail::modular_source_private::modular_container_base<Modules...>::module_for_type::template type>(
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl)
+							)
+						}, exhaustive_construction{}
+					}
+				}
+			);
 		}
 		
 	private:

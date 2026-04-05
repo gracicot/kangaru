@@ -55,8 +55,11 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/define.hpp
 		include/kangaru/detail/exceptions.hpp
 		include/kangaru/detail/heap_storage.hpp
+		include/kangaru/detail/incremental_source.hpp
 		include/kangaru/detail/injector.hpp
 		include/kangaru/detail/lazy.hpp
+		include/kangaru/detail/modular_container.hpp
+		include/kangaru/detail/modular_source.hpp
 		include/kangaru/detail/murmur.hpp
 		include/kangaru/detail/optional.hpp
 		include/kangaru/detail/polymorphic_container.hpp

@@ -197,6 +197,13 @@ KANGARU5_EXPORT namespace kangaru {
 			cache.insert_or_assign(id, ptr);
 			return kangaru::provide<T>(*ptr);
 		}
+		
+		template<injectable T>
+		constexpr void erase() {
+			using contained_type = std::remove_cvref_t<T>;
+			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
+			state.erase(id);
+		}
 	};
 }
 

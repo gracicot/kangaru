@@ -217,7 +217,10 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 	private:
+		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
 		SecondStep second_step;
 	};
 	
@@ -393,6 +396,8 @@ KANGARU5_EXPORT namespace kangaru {
 		
 	private:
 		Passthrough passthrough;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
 	};
 	
@@ -434,6 +439,7 @@ KANGARU5_EXPORT namespace kangaru {
 		Source source;
 		
 	private:
+		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
 	};
 

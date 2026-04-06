@@ -246,6 +246,12 @@ namespace kangaru {
 			cache.insert_or_assign(id, *ptr);
 			return kangaru::provide<T>(*ptr);
 		}
+		
+		template<injectable T>
+		constexpr void erase() {
+			constexpr auto id = detail::ctti::type_id_for<any_source_of_ref<T>>();
+			state.erase(id);
+		}
 	};
 }
 

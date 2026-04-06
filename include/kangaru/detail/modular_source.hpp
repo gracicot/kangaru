@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_MODULAR_SOURCE_HPP
 #define KANGARU5_DETAIL_MODULAR_SOURCE_HPP
 
+#include "concepts.hpp"
 #include "source.hpp"
 #include "source_types.hpp"
 #include "utility.hpp"
@@ -81,7 +82,10 @@ KANGARU5_EXPORT namespace kangaru {
 		)
 	struct modular_source {
 	private:
-		using impl_t = incremental_source<detail::modular_source_private::use_source<Source>, detail::modular_source_private::modular_source_initializer<Lambdas>...>;
+		using impl_t = incremental_source<
+			detail::modular_source_private::use_source<Source>,
+			detail::modular_source_private::modular_source_initializer<Lambdas>...
+		>;
 		
 	public:
 		explicit(sizeof...(Lambdas) == 1)
@@ -101,7 +105,8 @@ KANGARU5_EXPORT namespace kangaru {
 				detail::modular_source_private::modular_source_initializer<Lambdas>{std::move(lambdas)}...
 			} {}
 		
-		template<injectable T, forwarded<modular_source> Self> requires source_of<detail::forward_like_t<Self, decltype(std::declval<impl_t>().next)>, T>
+		template<injectable T, forwarded<modular_source> Self>
+			requires(source_of<detail::forward_like_t<Self, decltype(std::declval<impl_t>().next)>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			// Here we must skip first head of the incremental source. This is because we don't want to provide
 			// from source of other modules.
@@ -195,13 +200,20 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	// lazy modular source initializer
-	template<source Source>
+	template<source Source, copiable_object MakeInjector = make_strict_spread_injector_function>
 	struct make_lazy_initialized_source_function {
 	private:
 		template<typename>
 		using pick_source = Source;
 		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		MakeInjector make_injector;
+		
 	public:
+		make_lazy_initialized_source_function() = default;
+		explicit constexpr make_lazy_initialized_source_function(MakeInjector make_injector) :
+			make_injector{std::move(make_injector)} {}
+		
 		constexpr auto operator()(forwarded_source auto&& from)
 		requires(
 			callable<strict_spread_injector<ref_result_t<decltype(from)&>>, constructor_function<Source>>
@@ -211,7 +223,7 @@ KANGARU5_EXPORT namespace kangaru {
 					make_source_with_lazy_evaluation_of<Source>(
 						with_construction{
 							KANGARU5_FWD(from),
-							basic_exhaustive_construction{make_strict_spread_injector_function{}},
+							basic_exhaustive_construction{make_injector},
 						}
 					)
 				),
@@ -219,9 +231,9 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	template<source Source>
-	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from) {
-		return make_lazy_initialized_source_function<Source>{}(KANGARU5_FWD(from));
+	template<source Source, copiable_object MakeInjector = make_strict_spread_injector_function>
+	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from, MakeInjector make_injector) {
+		return make_lazy_initialized_source_function<Source, MakeInjector>{}(KANGARU5_FWD(from), std::move(make_injector));
 	}
 } // namespace kangaru
 

@@ -49,10 +49,11 @@ namespace kangaru {
 	KANGARU5_EXPORT template<
 		rebindable_source Source = none_source,
 		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<std::size_t, any_source_of_one_ref>>,
-		dereferenceable_heap_storage Storage = default_heap_storage
+		dereferenceable_heap_storage Storage = default_heap_storage,
+		construction Construction = exhaustive_construction
 	>
 	struct polymorphic_container {
-		constexpr polymorphic_container(Source source, Cache cache, Storage storage)  :
+		constexpr polymorphic_container(Source source, Cache cache, Storage storage, Construction construction) :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<
 					detail::never_type_identity
@@ -61,8 +62,9 @@ namespace kangaru {
 						with_heap_storage{
 							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
-									KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
-										std::move(source)
+									KANGARU5_NO_ADL(make_source_with_construction)(
+										std::move(source),
+										construction
 									)
 								)
 							),
@@ -71,24 +73,36 @@ namespace kangaru {
 					},
 					std::move(cache)
 				),
-			} {}
+			},
+			construction{construction} {}
 		
-		constexpr polymorphic_container(Source source, Cache cache) noexcept
-			requires std::default_initializable<Storage> :
-			polymorphic_container{std::move(source), std::move(cache), Storage{}} {}
+		constexpr polymorphic_container(Source source, Cache cache, Storage storage)
+			requires std::default_initializable<Construction> :
+			polymorphic_container{std::move(source), std::move(cache), std::move(storage), Construction{}} {}
 		
-		explicit constexpr polymorphic_container(Source source) noexcept
+		constexpr polymorphic_container(Source source, Cache cache)
+			requires(
+				    std::default_initializable<Storage>
+				and std::default_initializable<Construction>
+			) :
+			polymorphic_container{std::move(source), std::move(cache), Storage{}, Construction{}} {}
+		
+		explicit constexpr polymorphic_container(Source source)
 			requires(
 				    std::default_initializable<Cache>
 				and std::default_initializable<Storage>
-			) : polymorphic_container{std::move(source), Cache{}, Storage{}} {}
+				and std::default_initializable<Construction>
+			) :
+			polymorphic_container{std::move(source), Cache{}, Storage{}, Construction{}} {}
 		
-		constexpr polymorphic_container() noexcept
+		constexpr polymorphic_container()
 			requires(
 				    std::default_initializable<Source>
 				and std::default_initializable<Cache>
 				and std::default_initializable<Storage>
-			) : polymorphic_container{Source{}, Cache{}, Storage{}} {}
+				and std::default_initializable<Construction>
+			) :
+			polymorphic_container{Source{}, Cache{}, Storage{}, Construction{}} {}
 		
 	private:
 		with_cache_asymmetric<
@@ -96,7 +110,7 @@ namespace kangaru {
 				with_heap_storage<
 					with_source_wrapping<
 						with_source_wrapping<
-							with_exhaustive_construction<Source>
+							with_construction<Source, Construction>
 						>
 					>,
 					Storage
@@ -107,6 +121,9 @@ namespace kangaru {
 			// we pass a template type alias that never exists by default and change it in container_source.
 			detail::never_type_identity
 		> state;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Construction construction;
 		
 		template<injectable T>
 		using polymorphic_source = any_source_of_ref<T>;
@@ -125,7 +142,7 @@ namespace kangaru {
 			
 			return with_recursion{
 				with_passthrough{
-					KANGARU5_NO_ADL(make_source_with_exhaustive_two_step_construction)(
+					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
 						with_alternative{
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
@@ -138,7 +155,8 @@ namespace kangaru {
 								)
 							},
 							external_reference_source{self},
-						}
+						},
+						self.construction
 					)
 				}
 			};
@@ -164,7 +182,7 @@ namespace kangaru {
 			);
 		}
 		
-		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Cache>
+		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Cache, Storage, Construction>
 		requires(
 			    not reference_wrapper<Cache>
 			and std::default_initializable<Cache>
@@ -176,6 +194,8 @@ namespace kangaru {
 			return polymorphic_container<ref_result_t<Source const&>, Cache>{
 				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source),
 				std::move(cache),
+				Storage{},
+				construction,
 			};
 		}
 		

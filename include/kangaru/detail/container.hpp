@@ -19,51 +19,66 @@ KANGARU5_EXPORT namespace kangaru {
 	template<
 		rebindable_source Source = none_source,
 		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, void*>,
-		dereferenceable_heap_storage Storage = default_heap_storage
+		dereferenceable_heap_storage Storage = default_heap_storage,
+		construction Construction = exhaustive_construction
 	>
 	struct container {
-		constexpr container(Source source, Cache cache, Storage storage) noexcept :
+		constexpr container(Source source, Cache cache, Storage storage, Construction construction) :
 			state{
 				with_cache{
 					with_heap_storage{
-						KANGARU5_NO_ADL(make_source_with_exhaustive_construction)(
-							std::move(source)
+						KANGARU5_NO_ADL(make_source_with_construction)(
+							std::move(source),
+							construction
 						),
 						std::move(storage),
 					},
 					std::move(cache),
 				}
-			} {}
+			},
+			construction{construction} {}
 		
-		constexpr container(Source source, Cache cache) noexcept
-			requires std::default_initializable<Storage> :
-			container{std::move(source), std::move(cache), Storage{}} {}
+		constexpr container(Source source, Cache cache, Storage storage)
+			requires std::default_initializable<Construction> :
+			container{std::move(source), std::move(cache), std::move(storage), Construction{}} {}
 		
-		explicit constexpr container(Source source) noexcept
+		constexpr container(Source source, Cache cache)
+			requires(
+				    std::default_initializable<Storage>
+				and std::default_initializable<Construction>
+			) :
+			container{std::move(source), std::move(cache), Storage{}, Construction{}} {}
+		
+		explicit constexpr container(Source source)
 			requires(
 				    std::default_initializable<Cache>
 				and std::default_initializable<Storage>
+				and std::default_initializable<Construction>
 			) :
-			container{std::move(source), Cache{}, Storage{}} {}
+			container{std::move(source), Cache{}, Storage{}, Construction{}} {}
 		
-		constexpr container() noexcept
+		constexpr container()
 			requires(
 				    std::default_initializable<Source>
 				and std::default_initializable<Cache>
 				and std::default_initializable<Storage>
+				and std::default_initializable<Construction>
 			) :
-			container{Source{}, Cache{}, Storage{}} {}
+			container{Source{}, Cache{}, Storage{}, Construction{}} {}
 		
 	private:
 		using state_type = with_cache<
 			with_heap_storage<
-				with_exhaustive_construction<Source>,
+				with_construction<Source, Construction>,
 				Storage
 			>,
 			Cache
 		>;
 		
 		state_type state;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Construction construction;
 		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
@@ -76,7 +91,7 @@ KANGARU5_EXPORT namespace kangaru {
 			
 			return with_recursion{
 				with_passthrough{
-					KANGARU5_NO_ADL(make_source_with_exhaustive_two_step_construction)(
+					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
 						with_alternative{
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
@@ -95,7 +110,8 @@ KANGARU5_EXPORT namespace kangaru {
 								),
 							},
 							external_reference_source{self},
-						}
+						},
+						self.construction
 					),
 				},
 			};
@@ -121,9 +137,9 @@ KANGARU5_EXPORT namespace kangaru {
 			);
 		}
 		
-		constexpr auto scoped() const& -> container<ref_result_t<Source const&>, Cache, Storage>
+		constexpr auto scoped() const& -> container<ref_result_t<Source const&>, Cache, Storage, Construction>
 		requires(
-				not reference_wrapper<Cache>
+			    not reference_wrapper<Cache>
 			and std::default_initializable<Cache>
 			and std::default_initializable<Storage>
 		) {
@@ -133,6 +149,8 @@ KANGARU5_EXPORT namespace kangaru {
 			return container<ref_result_t<Source const&>, Cache, Storage>{
 				KANGARU5_NO_ADL(ref)(state.source.source.source),
 				std::move(cache),
+				Storage{},
+				construction,
 			};
 		}
 		

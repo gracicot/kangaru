@@ -26,12 +26,12 @@ namespace kangaru::detail::modular_container_private {
 	struct module_initializer {
 		template<forwarded_source Source>
 		constexpr auto operator()(Source&& source) && ->
-			with_source_reference_wrapping<reference_source<detail::call_result_t<detail::call_result_t<make_strict_spread_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>>>
+			with_source_reference_wrapping<reference_source<detail::call_result_t<detail::call_result_t<make_strict_optional_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>>>
 		requires(
-			callable<detail::call_result_t<make_strict_spread_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>
+			callable<detail::call_result_t<make_strict_optional_injector_function, injection_source<std::remove_reference_t<Source>>>, Function>
 		) {
-			auto const injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}};
-			auto injector = KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source));
+			auto const injection_source = with_recursion{with_construction{KANGARU5_FWD(source), basic_exhaustive_construction{make_slow_spread_injector}}};
+			auto injector = make_strict_optional_injector(KANGARU5_NO_ADL(ref)(injection_source));
 			using type = decltype(std::move(injector)(std::move(function)));
 			auto construct_source = in_place_construct{[&]() -> type { return std::move(injector)(std::move(function)); }};
 			return with_source_reference_wrapping{reference_source<type>{std::move(construct_source)}};
@@ -46,14 +46,14 @@ namespace kangaru::detail::modular_container_private {
 	struct modular_container_base {
 		template<typename T, std::size_t... S>
 		consteval static auto index_of(std::index_sequence<S...>) {
-			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 8>>, T> ? S : 0) + ...);
+			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 1>>, T> ? S : 0) + ...);
 		}
 		
 		struct module_for_type {
 			template<injectable T>
 			using type = std::tuple_element_t<
 				index_of<T>(std::index_sequence_for<Modules...>{}),
-				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 8>>...>
+				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 1>>...>
 			>;
 		};
 	};
@@ -83,7 +83,8 @@ KANGARU5_EXPORT namespace kangaru {
 						>(
 							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl)
 						)
-					}, exhaustive_construction{}
+					},
+					basic_exhaustive_construction{make_spread_injector}
 				}
 			};
 		}
@@ -105,7 +106,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<typename... Modules> requires((... and (std::is_function_v<Modules> or function_object<Modules>)))
-	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 8>...>;
+	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 1>...>;
 } // namespace kangaru
 
 #include "undef.hpp"

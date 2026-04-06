@@ -107,22 +107,6 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	template<auto fn>
-	struct call_injected_function {
-		template<injectable T, forwarded_source Source>
-			requires(
-				callable<
-					spread_injector<fwd_ref_result_t<Source&&>>,
-					detail::two_step_init_private::bound_fn<fn, T&>
-				>
-			)
-		constexpr auto operator()(T& object, Source&& source) const -> void {
-			make_spread_injector(KANGARU5_FWD(source))(
-				detail::two_step_init_private::bound_fn<fn, T&>{object}
-			);
-		}
-	};
-	
 	template<function_object MakeInjector, auto fn>
 	struct call_injected_function_with {
 		template<injectable T, forwarded_source Source>
@@ -139,20 +123,8 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	template<auto... memfn> requires(... and pointer_to_member_function<std::remove_cvref_t<decltype(memfn)>>)
-	struct call_injected_member_functions {
-		template<injectable T, forwarded_source Source>
-			requires(
-				(... and callable<
-					spread_injector<fwd_ref_result_t<Source&&>>,
-					detail::two_step_init_private::bound_memfn<memfn, T&>
-				>)
-			)
-		constexpr auto operator()(T& object, Source&& source) const -> void {
-			auto injector = make_spread_injector(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
-			(std::move(injector)(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
-		}
-	};
+	template<auto fn>
+	using call_injected_function = call_injected_function_with<make_spread_injector_function, fn>;
 	
 	template<function_object MakeInjector, auto... memfn>
 		requires(
@@ -172,6 +144,9 @@ KANGARU5_EXPORT namespace kangaru {
 			(std::move(injector)(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);
 		}
 	};
+	
+	template<auto... memfn>
+	using call_injected_member_functions = call_injected_member_functions_with<make_spread_injector_function, memfn...>;
 	
 	struct second_step_from_attribute {
 		template<injectable T, forwarded_source Source>

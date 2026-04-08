@@ -152,7 +152,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename F>
 	concept construction = copiable_object<F> and function_object<F>;
 	
-	template<copiable_object MakeInjector>
+	template<make_injector MakeInjector>
 	struct basic_non_empty_construction {
 		constexpr basic_non_empty_construction() requires std::default_initializable<MakeInjector> = default;
 		
@@ -172,7 +172,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	using non_empty_construction = basic_non_empty_construction<make_spread_injector_function>;
 	
-	template<copiable_object MakeInjector>
+	template<make_injector MakeInjector>
 	struct basic_unsafe_exhaustive_construction {
 		constexpr basic_unsafe_exhaustive_construction() requires std::default_initializable<MakeInjector> = default;
 		
@@ -229,7 +229,7 @@ KANGARU5_EXPORT namespace kangaru {
 		return construction_with_two_step_init<Construction, SecondStep>{KANGARU5_FWD(construction), second_step};
 	}
 	
-	template<copiable_object MakeInjector>
+	template<make_injector MakeInjector>
 	struct basic_exhaustive_construction {
 	private:
 		template<unqualified_object T>
@@ -258,7 +258,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	using exhaustive_construction = basic_exhaustive_construction<make_spread_injector_function>;
 	
-	template<injectable Type, copiable_object MakeInjector>
+	template<injectable Type, make_injector MakeInjector>
 	struct basic_placeholder_except_construction {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_except_construction() requires std::default_initializable<MakeInjector> = default;
 		
@@ -277,7 +277,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<injectable Type>
 	using placeholder_except_construction = basic_placeholder_except_construction<Type, make_spread_injector_function>;
 	
-	template<copiable_object MakeInjector>
+	template<make_injector MakeInjector>
 	struct basic_placeholder_construction {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construction() requires std::default_initializable<MakeInjector> = default;
 		

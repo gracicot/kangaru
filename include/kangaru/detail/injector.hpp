@@ -15,96 +15,99 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	namespace detail::injector_private {
-		// TODO: Report issue to clang
-		template<typename Function, std::size_t... S>
-		inline constexpr auto callable_workaround_for_clang =
-			callable<Function, detail::expand<kangaru::placeholder_deducer, S>...>;
-		
-		// TODO: Can we do that without template metaprogramming?
-		template<typename Function, typename>
-		struct parameter_sequence_impl {};
-		
-		template<typename Function>
-			requires callable<Function>
-		struct parameter_sequence_impl<Function, std::index_sequence<>> {
-			using type = std::index_sequence<>;
-			using return_type = decltype(std::declval<Function>()());
-		};
-		
-		template<typename Function, std::size_t head, std::size_t... tail>
-			requires callable_workaround_for_clang<Function, head, tail...>
-		struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
-			using type = std::index_sequence<head, tail...>;
-			using return_type = decltype(
-				call_with_deducers(
-					std::declval<Function>(),
-					std::declval<kangaru::placeholder_deducer>(),
-					std::declval<detail::expand<kangaru::placeholder_deducer, tail>>()...
-				)
-			);
-		};
-		
-		template<typename Function, std::size_t head, std::size_t... tail>
-		struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> :
-			parameter_sequence_impl<Function, std::index_sequence<(tail - 1)...>> {};
-		
-		template<typename F, std::size_t max>
-		using parameter_sequence = parameter_sequence_impl<F, std::make_index_sequence<max>>;
-		
-		template<typename F, std::size_t max>
-		using parameter_sequence_t = typename parameter_sequence<F, max>::type;
-		
-		// TODO: Can we do that without template metaprogramming?
-		template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, typename, typename = std::index_sequence<>>
-		struct injectable_sequence {};
-		
-		template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t... drop>
-			requires callable<Function, Expand<kangaru::placeholder_deducer, drop>...>
-		struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<>, std::index_sequence<drop...>> {
-			using type = std::index_sequence<>;
-		};
-		
-		template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
-			requires callable<Function, Deducer, Expand<Deducer, tail>..., detail::expand<kangaru::placeholder_deducer, drop>...>
-		struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
-			using type = std::index_sequence<head, tail...>;
-		};
-		
-		template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
-		struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> :
-			injectable_sequence<Expand, Function, Deducer, std::index_sequence<(tail - 1)...>, std::index_sequence<drop..., sizeof...(drop)>> {};
-		
-		template<typename Function, typename Deducer, std::size_t max>
-		using spread_sequence_t = typename injectable_sequence<detail::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
-		
-		template<typename F, kangaru::deducer Deducer, typename>
-		inline constexpr auto callable_with_deducer_sequence_v = false;
-		
-		template<typename F, std::size_t... S, kangaru::deducer Deducer>
-		inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
-			callable_with_deducers<F, detail::expand<Deducer, S>...>;
-	} // namespace detail::injector_private
+namespace kangaru::detail::injector_private {
+	// TODO: Report issue to clang
+	template<typename Function, std::size_t... S>
+	inline constexpr auto callable_workaround_for_clang =
+		callable<Function, detail::expand<kangaru::placeholder_deducer, S>...>;
 	
-	KANGARU5_EXPORT template<typename T>
+	// TODO: Can we do that without template metaprogramming?
+	template<typename Function, typename>
+	struct parameter_sequence_impl {};
+	
+	template<typename Function>
+		requires callable<Function>
+	struct parameter_sequence_impl<Function, std::index_sequence<>> {
+		using type = std::index_sequence<>;
+		using return_type = decltype(std::declval<Function>()());
+	};
+	
+	template<typename Function, std::size_t head, std::size_t... tail>
+		requires callable_workaround_for_clang<Function, head, tail...>
+	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
+		using type = std::index_sequence<head, tail...>;
+		using return_type = decltype(
+			call_with_deducers(
+				std::declval<Function>(),
+				std::declval<kangaru::placeholder_deducer>(),
+				std::declval<detail::expand<kangaru::placeholder_deducer, tail>>()...
+			)
+		);
+	};
+	
+	template<typename Function, std::size_t head, std::size_t... tail>
+	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> :
+		parameter_sequence_impl<Function, std::index_sequence<(tail - 1)...>> {};
+	
+	template<typename F, std::size_t max>
+	using parameter_sequence = parameter_sequence_impl<F, std::make_index_sequence<max>>;
+	
+	template<typename F, std::size_t max>
+	using parameter_sequence_t = typename parameter_sequence<F, max>::type;
+	
+	// TODO: Can we do that without template metaprogramming?
+	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, typename, typename = std::index_sequence<>>
+	struct injectable_sequence {};
+	
+	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t... drop>
+		requires callable<Function, Expand<kangaru::placeholder_deducer, drop>...>
+	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<>, std::index_sequence<drop...>> {
+		using type = std::index_sequence<>;
+	};
+	
+	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
+		requires callable<Function, Deducer, Expand<Deducer, tail>..., detail::expand<kangaru::placeholder_deducer, drop>...>
+	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
+		using type = std::index_sequence<head, tail...>;
+	};
+	
+	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
+	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> :
+		injectable_sequence<Expand, Function, Deducer, std::index_sequence<(tail - 1)...>, std::index_sequence<drop..., sizeof...(drop)>> {};
+	
+	template<typename Function, typename Deducer, std::size_t max>
+	using spread_sequence_t = typename injectable_sequence<detail::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
+	
+	template<typename F, kangaru::deducer Deducer, typename>
+	inline constexpr auto callable_with_deducer_sequence_v = false;
+	
+	template<typename F, std::size_t... S, kangaru::deducer Deducer>
+	inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
+		callable_with_deducers<F, detail::expand<Deducer, S>...>;
+} // namespace detail::injector_private
+
+KANGARU5_EXPORT namespace kangaru {
+	template<typename T>
 	concept injector = function_object<T>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename F>
+	concept make_injector = copiable_object<F> and function_object<F>;
+	
+	template<typename T>
 	concept forwarded_injector = injector<std::remove_cvref_t<T>>;
 	
-	KANGARU5_EXPORT template<typename F, std::size_t max>
+	template<typename F, std::size_t max>
 	concept reflectable_function = requires {
 		typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
 	};
 	
-	KANGARU5_EXPORT template<typename F, std::size_t max>
+	template<typename F, std::size_t max>
 	concept forwarded_reflectable_function = reflectable_function<std::remove_cvref_t<F>, max>;
 	
-	KANGARU5_EXPORT template<typename F, std::size_t max> requires reflectable_function<F, max>
+	template<typename F, std::size_t max> requires reflectable_function<F, max>
 	using reflected_return_type = typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::return_type;
 	
-	KANGARU5_EXPORT template<source Source, template<source_ref> typename Deducer, std::size_t N>
+	template<source Source, template<source_ref> typename Deducer, std::size_t N>
 	struct basic_fixed_injector {
 		explicit constexpr basic_fixed_injector(Source source) noexcept : source{std::move(source)} {}
 		
@@ -142,22 +145,22 @@ namespace kangaru {
 		Source source;
 	};
 	
-	KANGARU5_EXPORT template<source Source, std::size_t max>
+	template<source Source, std::size_t max>
 	using fixed_injector = basic_fixed_injector<Source, basic_deducer, max>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using simple_injector = fixed_injector<Source, 1>;
 	
-	KANGARU5_EXPORT struct make_simple_injector_function {
+	struct make_simple_injector_function {
 		template<typename Source> requires source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return simple_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	KANGARU5_EXPORT inline constexpr auto make_simple_injector = make_simple_injector_function{};
+	inline constexpr auto make_simple_injector = make_simple_injector_function{};
 	
-	KANGARU5_EXPORT template<std::size_t N>
+	template<std::size_t N>
 	struct make_fixed_injector_function {
 		template<typename Source> requires source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
@@ -165,25 +168,25 @@ namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT template<std::size_t N>
+	template<std::size_t N>
 	inline constexpr auto make_fixed_injector = make_fixed_injector_function<N>{};
 	
-	KANGARU5_EXPORT template<source Source, std::size_t max>
+	template<source Source, std::size_t max>
 	using strict_fixed_injector = basic_fixed_injector<Source, strict_deducer, max>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using strict_simple_injector = strict_fixed_injector<Source, 1>;
 	
-	KANGARU5_EXPORT struct make_strict_simple_injector_function {
+	struct make_strict_simple_injector_function {
 		template<typename Source> requires source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
 			return strict_simple_injector<std::remove_cvref_t<Source>>{KANGARU5_FWD(source)};
 		}
 	};
 	
-	KANGARU5_EXPORT inline constexpr auto make_strict_simple_injector = make_strict_simple_injector_function{};
+	inline constexpr auto make_strict_simple_injector = make_strict_simple_injector_function{};
 	
-	KANGARU5_EXPORT template<std::size_t N>
+	template<std::size_t N>
 	struct make_strict_fixed_injector_function {
 		template<typename Source> requires source<std::remove_cvref_t<Source>>
 		inline constexpr auto operator()(Source&& source) const {
@@ -191,10 +194,10 @@ namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT template<std::size_t N>
+	template<std::size_t N>
 	inline constexpr auto make_strict_fixed_injector = make_strict_fixed_injector_function<N>{};
 	
-	KANGARU5_EXPORT template<source Source, template<source_ref> typename Deducer, std::size_t max>
+	template<source Source, template<source_ref> typename Deducer, std::size_t max>
 	struct basic_spread_injector {
 		explicit constexpr basic_spread_injector(Source source) noexcept : source{std::move(source)} {}
 		
@@ -228,16 +231,16 @@ namespace kangaru {
 		Source source;
 	};
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using fast_spread_injector = basic_spread_injector<Source, basic_deducer, 4>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using spread_injector = basic_spread_injector<Source, basic_deducer, 8>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using slow_spread_injector = basic_spread_injector<Source, basic_deducer, 16>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using optional_injector = basic_spread_injector<Source, basic_deducer, 1>;
 	
 	KANGARU5_EXPORT
@@ -267,21 +270,21 @@ namespace kangaru {
 	KANGARU5_EXPORT
 	using make_optional_injector_function = make_basic_spread_injector_function<basic_deducer, 1>;
 	
-	KANGARU5_EXPORT inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_spread_injector = make_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_slow_spread_injector = make_slow_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_optional_injector = make_optional_injector_function{};
+	inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
+	inline constexpr auto make_spread_injector = make_spread_injector_function{};
+	inline constexpr auto make_slow_spread_injector = make_slow_spread_injector_function{};
+	inline constexpr auto make_optional_injector = make_optional_injector_function{};
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using strict_fast_spread_injector = basic_spread_injector<Source, strict_deducer, 4>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using strict_spread_injector = basic_spread_injector<Source, strict_deducer, 8>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using strict_slow_spread_injector = basic_spread_injector<Source, strict_deducer, 16>;
 	
-	KANGARU5_EXPORT template<source Source>
+	template<source Source>
 	using strict_optional_injector = basic_spread_injector<Source, strict_deducer, 1>;
 	
 	KANGARU5_EXPORT
@@ -296,12 +299,12 @@ namespace kangaru {
 	KANGARU5_EXPORT
 	using make_strict_optional_injector_function = make_basic_spread_injector_function<strict_deducer, 1>;
 	
-	KANGARU5_EXPORT inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_strict_slow_spread_injector = make_strict_slow_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
-	KANGARU5_EXPORT inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
+	inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
+	inline constexpr auto make_strict_slow_spread_injector = make_strict_slow_spread_injector_function{};
+	inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
+	inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
 	
-	KANGARU5_EXPORT template<injector Injector1, injector Injector2>
+	template<injector Injector1, injector Injector2>
 	struct concatenated_injector {
 		explicit constexpr concatenated_injector(Injector1 injector1, Injector2 injector2) noexcept :
 			injector1{std::move(injector1)}, injector2{std::move(injector2)} {}
@@ -355,7 +358,7 @@ namespace kangaru {
 		Injector2 injector2;
 	};
 	
-	KANGARU5_EXPORT template<forwarded_injector Injector1, forwarded_injector... Injectors>
+	template<forwarded_injector Injector1, forwarded_injector... Injectors>
 	inline constexpr auto concat(Injector1&& first, Injectors&&... rest) {
 		if constexpr (sizeof...(rest) > 1) {
 			return concatenated_injector{KANGARU5_FWD(first), concat(KANGARU5_FWD(rest)...)};

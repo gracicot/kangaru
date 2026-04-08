@@ -27,82 +27,86 @@ namespace kangaru::detail::modular_source_private {
 		constexpr auto operator()(forwarded_source auto&&) && { return std::move(source); }
 	};
 	
-	// TODO: Deduplicate
-	template<source Source>
-	using injection_source = with_recursion<with_construction<Source, exhaustive_construction>>;
-	
-	template<function_object Function>
+	template<function_object Function, construction Construction>
 	struct modular_source_initializer {
 		explicit constexpr modular_source_initializer(Function function) : function{std::move(function)} {}
+		constexpr modular_source_initializer(Function function, Construction construction) :
+			function{std::move(function)}, construction{std::move(construction)} {}
 		
 		template<forwarded_source Source>
 			requires(
 				not callable<
 					Function,
-					injection_source<std::remove_reference_t<Source>>
+					with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
 				>
 				and callable<
 					detail::call_result_t<
 						make_strict_spread_injector_function,
-						injection_source<std::remove_reference_t<Source>>
+						with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
 					>,
 					Function
 				>
 			)
 		constexpr auto operator()(Source&& source) && {
-			auto injection_source = with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}};
+			auto injection_source = with_recursion{with_construction{KANGARU5_FWD(source), construction}};
 			return KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source))(std::move(function));
 		}
 		
 		template<forwarded_source Source>
 			requires callable<
 				Function,
-				injection_source<std::remove_reference_t<Source>>
+				with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
 			>
 		constexpr auto operator()(Source&& source) && {
-			return std::move(function)(with_recursion{with_construction{KANGARU5_FWD(source), exhaustive_construction{}}});
+			return std::move(function)(with_recursion{with_construction{KANGARU5_FWD(source), construction}});
 		}
 		
 	private:
 		Function function;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Construction construction = {};
 	};
 } // namespace kangaru::detail::modular_source_private
 
 KANGARU5_EXPORT namespace kangaru {
-	template<source Source = none_source, function_object... Lambdas>
+	template<construction Construction = exhaustive_construction, source Source = none_source, function_object... Lambdas>
 		requires(
 			std::constructible_from<
 				incremental_source<
 					detail::modular_source_private::use_source<Source>,
-					detail::modular_source_private::modular_source_initializer<Lambdas>...
+					detail::modular_source_private::modular_source_initializer<Lambdas, Construction>...
 				>,
 				detail::modular_source_private::use_source<Source>,
-				detail::modular_source_private::modular_source_initializer<Lambdas>...
+				detail::modular_source_private::modular_source_initializer<Lambdas, Construction>...
 			>
 		)
 	struct modular_source {
 	private:
 		using impl_t = incremental_source<
 			detail::modular_source_private::use_source<Source>,
-			detail::modular_source_private::modular_source_initializer<Lambdas>...
+			detail::modular_source_private::modular_source_initializer<Lambdas, Construction>...
 		>;
 		
 	public:
 		explicit(sizeof...(Lambdas) == 1)
-		constexpr modular_source(Lambdas... lambdas) requires(std::same_as<none_source, Source>) :
+		constexpr modular_source(Lambdas... lambdas) requires(std::default_initializable<Construction> and std::same_as<none_source, Source>) :
 			impl{
 				detail::modular_source_private::use_source<Source>{Source{}},
-				detail::modular_source_private::modular_source_initializer<Lambdas>{std::move(lambdas)}...
+				detail::modular_source_private::modular_source_initializer<Lambdas, Construction>{std::move(lambdas)}...
 			} {}
 		
-		constexpr modular_source() requires(sizeof...(Lambdas) == 0 and std::default_initializable<Source>) :
-			impl{detail::modular_source_private::use_source<Source>{Source{}}} {}
-		
 		explicit(sizeof...(Lambdas) == 0)
-		constexpr modular_source(Source source, Lambdas... lambdas) :
+		constexpr modular_source(Source source, Lambdas... lambdas) requires(std::default_initializable<Construction>) :
 			impl{
 				detail::modular_source_private::use_source<Source>{std::move(source)},
-				detail::modular_source_private::modular_source_initializer<Lambdas>{std::move(lambdas)}...
+				detail::modular_source_private::modular_source_initializer<Lambdas, Construction>{std::move(lambdas)}...
+			} {}
+		
+		constexpr modular_source(Construction construction, Source source, Lambdas... lambdas) :
+			impl{
+				detail::modular_source_private::use_source<Source>{std::move(source), construction},
+				detail::modular_source_private::modular_source_initializer<Lambdas, Construction>{std::move(lambdas), construction}...
 			} {}
 		
 		template<injectable T, forwarded<modular_source> Self>
@@ -118,25 +122,65 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<callable First, typename... Rest>
-	modular_source(First, Rest...) -> modular_source<none_source, First, Rest...>;
+	modular_source(First, Rest...) -> modular_source<exhaustive_construction, none_source, First, Rest...>;
 	
-	template<source Source, typename... Rest> requires(not callable<Source>)
-	modular_source(Source, Rest...) -> modular_source<Source, Rest...>;
+	template<source Source, typename First, typename... Rest>
+		requires(
+			    not callable<Source>
+			and std::constructible_from<
+				incremental_source<
+					detail::modular_source_private::use_source<Source>,
+					detail::modular_source_private::modular_source_initializer<First, exhaustive_construction>,
+					detail::modular_source_private::modular_source_initializer<Rest, exhaustive_construction>...
+				>,
+				detail::modular_source_private::use_source<Source>,
+				detail::modular_source_private::modular_source_initializer<First, exhaustive_construction>,
+				detail::modular_source_private::modular_source_initializer<Rest, exhaustive_construction>...
+			>
+		)
+	modular_source(Source, First, Rest...) -> modular_source<exhaustive_construction, Source, First, Rest...>;
+	
+	template<construction Construction, source Source, typename First, typename... Rest>
+		requires(
+			    not callable<Construction>
+			and not callable<Source>
+			and std::constructible_from<
+				incremental_source<
+					detail::modular_source_private::use_source<Source>,
+					detail::modular_source_private::modular_source_initializer<First, Construction>,
+					detail::modular_source_private::modular_source_initializer<Rest, Construction>...
+				>,
+				detail::modular_source_private::use_source<Source>,
+				detail::modular_source_private::modular_source_initializer<First, Construction>,
+				detail::modular_source_private::modular_source_initializer<Rest, Construction>...
+			>
+		)
+	modular_source(Construction, Source, First, Rest...) -> modular_source<Construction, Source, First, Rest...>;
+	
+	template<source Source>
+		requires(not callable<Source>)
+	modular_source(Source) -> modular_source<exhaustive_construction, Source>;
 	
 	template<source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<Source, Lambdas...>, Source&&, Lambdas&...>
+		requires std::constructible_from<modular_source<exhaustive_construction, Source, Lambdas...>, Source&&, Lambdas&&...>
 	inline constexpr auto make_modular_source(Source source, Lambdas... lambdas) {
-		return modular_source<Source, Lambdas...>{std::move(source), lambdas...};
+		return modular_source<exhaustive_construction, Source, Lambdas...>{std::move(source), std::move(lambdas)...};
+	}
+	
+	template<construction Construction, source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<Construction, Source, Lambdas...>, Construction&&, Source&&, Lambdas&&...>
+	inline constexpr auto make_modular_source(Construction construction, Source source, Lambdas... lambdas) {
+		return modular_source<Construction, Source, Lambdas...>{std::move(construction), std::move(source), std::move(lambdas)...};
 	}
 	
 	template<source... Sources, source Source>
 		requires std::constructible_from<
-			modular_source<Source, constructor_function<Sources>...>,
+			modular_source<exhaustive_construction, Source, constructor_function<Sources>...>,
 			Source&&,
 			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source(Source source) {
-		return modular_source<Source, constructor_function<Sources>...>{
+		return modular_source<exhaustive_construction, Source, constructor_function<Sources>...>{
 			std::move(source),
 			constructor_function<Sources>{}...
 		};
@@ -144,37 +188,47 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source... Sources>
 		requires std::constructible_from<
-			modular_source<none_source, constructor_function<Sources>...>,
+			modular_source<exhaustive_construction, none_source, constructor_function<Sources>...>,
 			none_source,
 			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source() {
-		return modular_source<none_source, constructor_function<Sources>...>{
+		return modular_source<exhaustive_construction, none_source, constructor_function<Sources>...>{
 			none_source{},
 			constructor_function<Sources>{}...
 		};
 	}
 	
 	template<source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<Source, Lambdas...>, Source&&, Lambdas&...>
+		requires std::constructible_from<modular_source<exhaustive_construction, Source, Lambdas...>, Source&&, Lambdas&&...>
 	inline constexpr auto make_modular_source_in_place(Source source, Lambdas... lambdas) {
 		return in_place_construct{
 			[source = std::move(source), ...lambdas = std::move(lambdas)]() mutable {
-				return modular_source<Source, Lambdas...>{std::move(source), lambdas...};
+				return modular_source<exhaustive_construction, Source, Lambdas...>{std::move(source), std::move(lambdas)...};
+			},
+		};
+	}
+	
+	template<construction Construction, source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<Construction, Source, Lambdas...>, Construction&&, Source&&, Lambdas&&...>
+	inline constexpr auto make_modular_source_in_place(Construction construction, Source source, Lambdas... lambdas) {
+		return in_place_construct{
+			[construction = std::move(construction), source = std::move(source), ...lambdas = std::move(lambdas)]() mutable {
+				return modular_source<Construction, Source, Lambdas...>{std::move(construction), std::move(source), std::move(lambdas)...};
 			},
 		};
 	}
 	
 	template<source... Sources, source Source>
 		requires std::constructible_from<
-			modular_source<Source, constructor_function<Sources>...>,
+			modular_source<exhaustive_construction, Source, constructor_function<Sources>...>,
 			Source&&,
 			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source_in_place(Source source) {
 		return in_place_construct{
 			[source = std::move(source)]() mutable {
-				return modular_source<Source, constructor_function<Sources>...>{
+				return modular_source<exhaustive_construction, Source, constructor_function<Sources>...>{
 					std::move(source),
 					constructor_function<Sources>{}...
 				};
@@ -184,14 +238,14 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source... Sources>
 		requires std::constructible_from<
-			modular_source<none_source, constructor_function<Sources>...>,
+			modular_source<exhaustive_construction, none_source, constructor_function<Sources>...>,
 			none_source,
 			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source_in_place() {
 		return in_place_construct{
 			[] {
-				return modular_source<none_source, constructor_function<Sources>...>{
+				return modular_source<exhaustive_construction, none_source, constructor_function<Sources>...>{
 					none_source{},
 					constructor_function<Sources>{}...
 				};
@@ -200,19 +254,19 @@ KANGARU5_EXPORT namespace kangaru {
 	}
 	
 	// lazy modular source initializer
-	template<source Source, copiable_object MakeInjector = make_strict_spread_injector_function>
+	template<source Source, construction Construction = exhaustive_construction>
 	struct make_lazy_initialized_source_function {
 	private:
 		template<typename>
 		using pick_source = Source;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS
-		MakeInjector make_injector;
+		Construction construction;
 		
 	public:
 		make_lazy_initialized_source_function() = default;
-		explicit constexpr make_lazy_initialized_source_function(MakeInjector make_injector) :
-			make_injector{std::move(make_injector)} {}
+		explicit constexpr make_lazy_initialized_source_function(Construction construction) :
+			construction{std::move(construction)} {}
 		
 		constexpr auto operator()(forwarded_source auto&& from)
 		requires(
@@ -223,7 +277,7 @@ KANGARU5_EXPORT namespace kangaru {
 					make_source_with_lazy_evaluation_of<Source>(
 						with_construction{
 							KANGARU5_FWD(from),
-							basic_exhaustive_construction{make_injector},
+							construction,
 						}
 					)
 				),
@@ -231,9 +285,9 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	template<source Source, copiable_object MakeInjector = make_strict_spread_injector_function>
-	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from, MakeInjector make_injector) {
-		return make_lazy_initialized_source_function<Source, MakeInjector>{}(KANGARU5_FWD(from), std::move(make_injector));
+	template<source Source, copiable_object Construction = make_strict_spread_injector_function>
+	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from, Construction construction) {
+		return make_lazy_initialized_source_function<Source, Construction>{}(KANGARU5_FWD(from), std::move(construction));
 	}
 } // namespace kangaru
 

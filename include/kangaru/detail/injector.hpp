@@ -243,7 +243,6 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source>
 	using optional_injector = basic_spread_injector<Source, basic_deducer, 1>;
 	
-	KANGARU5_EXPORT
 	template<template<typename> typename Deducer, std::size_t max>
 	struct make_basic_spread_injector_function {
 		template<forwarded_source Source>
@@ -254,20 +253,12 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	KANGARU5_EXPORT
 	template<template<typename> typename Deducer, std::size_t max>
 	inline constexpr auto make_basic_spread_injector = make_basic_spread_injector_function<Deducer, max>{};
 	
-	KANGARU5_EXPORT
 	using make_fast_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 4>;
-	
-	KANGARU5_EXPORT
 	using make_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 8>;
-	
-	KANGARU5_EXPORT
 	using make_slow_spread_injector_function = make_basic_spread_injector_function<basic_deducer, 16>;
-	
-	KANGARU5_EXPORT
 	using make_optional_injector_function = make_basic_spread_injector_function<basic_deducer, 1>;
 	
 	inline constexpr auto make_fast_spread_injector = make_fast_spread_injector_function{};
@@ -287,16 +278,9 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source>
 	using strict_optional_injector = basic_spread_injector<Source, strict_deducer, 1>;
 	
-	KANGARU5_EXPORT
 	using make_strict_fast_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 4>;
-	
-	KANGARU5_EXPORT
 	using make_strict_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 8>;
-	
-	KANGARU5_EXPORT
 	using make_strict_slow_spread_injector_function = make_basic_spread_injector_function<strict_deducer, 16>;
-	
-	KANGARU5_EXPORT
 	using make_strict_optional_injector_function = make_basic_spread_injector_function<strict_deducer, 1>;
 	
 	inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};

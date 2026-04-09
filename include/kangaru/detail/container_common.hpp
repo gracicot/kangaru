@@ -164,7 +164,7 @@ KANGARU5_EXPORT namespace kangaru {
 			with_function_call{
 				KANGARU5_FWD(source),
 				call_with_injector{
-					lambdas,
+					KANGARU5_FWD(lambdas),
 					make_basic_spread_injector<Deducer, max>,
 				}...,
 			}
@@ -173,7 +173,24 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<
 		std::size_t max = 8,
-		template<typename> typename Deducer = basic_deducer,
+		make_injector MakeInjector,
+		forwarded_source Source,
+		forwarded_reflectable_function<max>... Lambdas
+	> requires(not forwarded_reflectable_function<Source, max>)
+	inline constexpr auto make_container_base_source(MakeInjector make_injector, Source&& source, Lambdas&&... lambdas) {
+		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
+			with_function_call{
+				KANGARU5_FWD(source),
+				call_with_injector{
+					KANGARU5_FWD(lambdas),
+					make_injector,
+				}...,
+			}
+		);
+	}
+	
+	template<
+		std::size_t max = 8,
 		forwarded_reflectable_function<max>... Lambdas
 	>
 	inline constexpr auto make_container_base_source(Lambdas&&... lambdas) {
@@ -181,8 +198,8 @@ KANGARU5_EXPORT namespace kangaru {
 			with_function_call{
 				none_source{},
 				call_with_injector{
-					lambdas,
-					make_basic_spread_injector<Deducer, max>,
+					KANGARU5_FWD(lambdas),
+					make_basic_spread_injector<basic_deducer, max>,
 				}...,
 			}
 		);
@@ -190,11 +207,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<
 		std::size_t max = 8,
-		template<typename> typename Deducer = basic_deducer,
 		forwarded_source IfNotFound,
 		forwarded_source Source,
 		forwarded_reflectable_function<max>... Lambdas
-	>
+	> requires(not forwarded_reflectable_function<IfNotFound, max> and not forwarded_reflectable_function<Source, max>)
 	inline constexpr auto make_container_base_source(
 		allow_assume_cached_t,
 		IfNotFound&& source_if_not_found,
@@ -208,8 +224,8 @@ KANGARU5_EXPORT namespace kangaru {
 				with_function_call{
 					KANGARU5_FWD(source),
 					call_with_injector{
-						lambdas,
-						make_basic_spread_injector<Deducer, max>,
+						KANGARU5_FWD(lambdas),
+						make_basic_spread_injector<basic_deducer, max>,
 					}...,
 				},
 				KANGARU5_FWD(source_if_not_found),
@@ -219,7 +235,36 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<
 		std::size_t max = 8,
-		template<typename> typename Deducer = basic_deducer,
+		make_injector MakeInjector,
+		forwarded_source IfNotFound,
+		forwarded_source Source,
+		forwarded_reflectable_function<max>... Lambdas
+	> requires(not forwarded_reflectable_function<IfNotFound, max> and not forwarded_reflectable_function<Source, max>)
+	inline constexpr auto make_container_base_source(
+		allow_assume_cached_t,
+		MakeInjector make_injector,
+		IfNotFound&& source_if_not_found,
+		Source&& source,
+		Lambdas&&... lambdas
+	) {
+		return KANGARU5_NO_ADL(enumerate_source<
+			reflected_return_type<Lambdas, max>...
+		>)(
+			with_alternative{
+				with_function_call{
+					KANGARU5_FWD(source),
+					call_with_injector{
+						KANGARU5_FWD(lambdas),
+						make_injector,
+					}...,
+				},
+				KANGARU5_FWD(source_if_not_found),
+			}
+		);
+	}
+	
+	template<
+		std::size_t max = 8,
 		forwarded_source IfNotFound,
 		forwarded_reflectable_function<max>... Lambdas
 	>
@@ -238,8 +283,8 @@ KANGARU5_EXPORT namespace kangaru {
 					with_function_call{
 						none_source{},
 						call_with_injector{
-							lambdas,
-							make_basic_spread_injector<Deducer, max>,
+							KANGARU5_FWD(lambdas),
+							make_basic_spread_injector<basic_deducer, max>,
 						}...,
 					},
 					kangaru::object_source{KANGARU5_FWD(source_if_not_found)},

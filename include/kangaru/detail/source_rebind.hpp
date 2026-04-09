@@ -78,7 +78,7 @@ namespace kangaru {
 			template<forwarded_source Wrapper> requires (rebindable_wrapping_source<std::remove_reference_t<Wrapper>> and not forwarded_reference_wrapper<Wrapper>)
 			constexpr auto operator()(Wrapper&& source, forwarded_object auto&& new_leaf) const noexcept {
 				if constexpr (stateful_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
-					return std::decay_t<Wrapper>::rebind(source, new_leaf);
+					return std::decay_t<Wrapper>::rebind(source, KANGARU5_FWD(new_leaf));
 				} else if constexpr (transparent_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
 					using rebound = typename detail::ttype_t<
 						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,

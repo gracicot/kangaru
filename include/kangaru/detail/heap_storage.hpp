@@ -208,7 +208,7 @@ namespace kangaru {
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
 		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>> {
 			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
-				kangaru::rebind(KANGARU5_FWD(original).source, new_leaf),
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
 				KANGARU5_NO_ADL(ref)(original.storage)
 			};
 		}

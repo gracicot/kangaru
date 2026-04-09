@@ -157,7 +157,7 @@ namespace kangaru {
 			};
 		}
 		
-		template<injectable T, forwarded<with_cache> Self>
+		template<injectable T, typename Self>
 			requires(
 				    std::derived_from<std::remove_cvref_t<Self>, with_cache_asymmetric>
 				and cache_map<std::remove_cvref_t<Self>>

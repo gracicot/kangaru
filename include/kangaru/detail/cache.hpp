@@ -157,14 +157,14 @@ namespace kangaru {
 			};
 		}
 		
-		template<injectable T, typename Self>
+		template<injectable T, forwarded<with_cache> Self>
 			requires(
 				    std::derived_from<std::remove_cvref_t<Self>, with_cache_asymmetric>
 				and cache_map<std::remove_cvref_t<Self>>
 				and not std::is_const_v<std::remove_reference_t<Self>>
 				and requires{ typename CacheFrom<T>; }
 				and std::constructible_from<mapped_type, CacheFrom<T>>
-				and source_of<detail::forward_like_t<Self, source_type>, CacheFrom<T>>
+				and wrapping_source_of<Self, CacheFrom<T>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			constexpr auto id = detail::ctti::type_id_for<T>();

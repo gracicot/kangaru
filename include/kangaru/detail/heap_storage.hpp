@@ -188,17 +188,15 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source Source, dereferenceable_heap_storage Storage = default_heap_storage>
 	struct with_heap_storage {
-		using source_type = Source;
-		
-		explicit constexpr with_heap_storage(source_type source) noexcept
+		explicit constexpr with_heap_storage(Source source) noexcept
 			requires(
 				std::default_initializable<Storage>
 			) : source{std::move(source)} {}
 		
-		constexpr with_heap_storage(source_type source, Storage storage) noexcept :
+		constexpr with_heap_storage(Source source, Storage storage) noexcept :
 			source{std::move(source)}, storage{std::move(storage)} {}
 		
-		source_type source;
+		Source source;
 		
 		template<std::copy_constructible F>
 		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
@@ -213,8 +211,8 @@ namespace kangaru {
 			};
 		}
 		
-		template<pointer T> requires source_of<source_type, std::remove_pointer_t<T>>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_heap_storage> auto&& source) -> T {
+		template<pointer T, forwarded<with_heap_storage> Self> requires wrapping_source_of<Self, std::remove_pointer_t<T>>
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).emplace_from(
 				[&source] {
 					return kangaru::provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);

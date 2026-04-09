@@ -160,7 +160,7 @@ KANGARU5_EXPORT namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source>, non_default_constructor_function<T>>
+			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, non_default_constructor_function<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(non_default_constructor_function<T>{});
 		}
@@ -180,7 +180,7 @@ KANGARU5_EXPORT namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source>, constructor_function<T>>
+			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<T>>
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(constructor_function<T>{});
 		}
@@ -266,7 +266,7 @@ KANGARU5_EXPORT namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires(different_from<T, Type> and callable<detail::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>)
+			requires(different_from<T, Type> and callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<std::decay_t<T>>>)
 		auto operator()(Source&& source) const -> T;
 		
 	private:
@@ -285,7 +285,7 @@ KANGARU5_EXPORT namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source>, constructor_function<std::decay_t<T>>>
+			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<std::decay_t<T>>>
 		auto operator()(Source&& source) const -> T;
 		
 	private:

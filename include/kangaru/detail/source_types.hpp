@@ -37,9 +37,16 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source... Sources>
 	struct composed_source {
+		// Constructor only needed for GCC.
 		explicit(sizeof...(Sources) == 1)
 		constexpr composed_source(Sources... sources)
-		requires(... and (not detail::is_specialisation_of_v<in_place_construct, Sources> and not deducer<Sources>)) :
+		requires(
+			... and (
+				    not detail::is_specialisation_of_v<in_place_construct, Sources>
+				and not deducer<Sources>
+				and std::move_constructible<Sources>
+			)
+		) :
 			sources{std::move(sources)...} {}
 		
 		template<typename... S>

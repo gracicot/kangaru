@@ -17,15 +17,13 @@
 
 #include "define.hpp"
 
-// TODO: Make type of deducer parameterizable
 namespace kangaru::detail::modular_source_private {
-	// TODO: Support immovable sources
 	template<source Source>
 	struct use_source {
 		Source&& source;
 		
 		// We ignore the source since we have one already constructed
-		constexpr auto operator()(forwarded_source auto&&) && { return std::move(source); }
+		constexpr auto operator()(forwarded_source auto&&) && -> deduced_source_type<Source&&> { return std::move(source); }
 	};
 	
 	template<function_object Function, construction Construction>
@@ -38,28 +36,28 @@ namespace kangaru::detail::modular_source_private {
 			requires(
 				not callable<
 					Function,
-					with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
+					with_recursion<with_construction<sealed_source<std::remove_reference_t<Source>>, Construction>>
 				>
 				and callable<
 					detail::call_result_t<
 						make_strict_spread_injector_function,
-						with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
+						with_recursion<with_construction<sealed_source<std::remove_reference_t<Source>>, Construction>>
 					>,
 					Function
 				>
 			)
 		constexpr auto operator()(Source&& source) && {
-			auto injection_source = with_recursion{with_construction{KANGARU5_FWD(source), construction}};
+			auto injection_source = with_recursion{with_construction{seal_source(KANGARU5_FWD(source)), construction}};
 			return KANGARU5_NO_ADL(make_strict_spread_injector)(KANGARU5_NO_ADL(ref)(injection_source))(std::move(function));
 		}
 		
 		template<forwarded_source Source>
 			requires callable<
 				Function,
-				with_recursion<with_construction<std::remove_reference_t<Source>, Construction>>
+				with_recursion<with_construction<sealed_source<std::remove_reference_t<Source>>, Construction>>
 			>
 		constexpr auto operator()(Source&& source) && {
-			return std::move(function)(with_recursion{with_construction{KANGARU5_FWD(source), construction}});
+			return std::move(function)(with_recursion{with_construction{seal_source(KANGARU5_FWD(source)), construction}});
 		}
 		
 	private:
@@ -71,7 +69,6 @@ namespace kangaru::detail::modular_source_private {
 } // namespace kangaru::detail::modular_source_private
 
 KANGARU5_EXPORT namespace kangaru {
-	// TODO: Support immovable sources
 	template<construction Construction = exhaustive_construction, source Source = none_source, function_object... Lambdas>
 		requires(
 			std::constructible_from<
@@ -124,7 +121,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	template<callable First, typename... Rest>
-	modular_source(First, Rest...) -> modular_source<exhaustive_construction, none_source, First, Rest...>;
+	modular_source(First const&, Rest const&...) -> modular_source<exhaustive_construction, none_source, First, Rest...>;
 	
 	template<source Source, typename First, typename... Rest>
 		requires(
@@ -140,7 +137,7 @@ KANGARU5_EXPORT namespace kangaru {
 				detail::modular_source_private::modular_source_initializer<Rest, exhaustive_construction>...
 			>
 		)
-	modular_source(Source, First, Rest...) -> modular_source<exhaustive_construction, Source, First, Rest...>;
+	modular_source(Source const&, First const&, Rest const&...) -> modular_source<exhaustive_construction, Source, First, Rest...>;
 	
 	template<construction Construction, source Source, typename First, typename... Rest>
 		requires(
@@ -157,34 +154,35 @@ KANGARU5_EXPORT namespace kangaru {
 				detail::modular_source_private::modular_source_initializer<Rest, Construction>...
 			>
 		)
-	modular_source(Construction, Source, First, Rest...) -> modular_source<Construction, Source, First, Rest...>;
+	modular_source(Construction const&, Source const&, First const&, Rest const&...) -> modular_source<Construction, Source, First, Rest...>;
 	
 	template<source Source>
 		requires(not callable<Source>)
-	modular_source(Source) -> modular_source<exhaustive_construction, Source>;
+	modular_source(Source const&) -> modular_source<exhaustive_construction, Source>;
 	
-	// TODO: Add forwarding
-	template<source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<exhaustive_construction, Source, Lambdas...>, Source&&, Lambdas&&...>
-	inline constexpr auto make_modular_source(Source source, Lambdas... lambdas) {
-		return modular_source<exhaustive_construction, Source, Lambdas...>{std::move(source), std::move(lambdas)...};
+	// For all the following factory functions, we do not unwrap the source type for in_place_construct.
+	// Instead, modular_source will internally unwrap it properly. This is why we use std::decay_t directly.
+	template<forwarded_source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<exhaustive_construction, std::decay_t<Source>, Lambdas...>, Source&&, Lambdas&&...>
+	inline constexpr auto make_modular_source(Source&& source, Lambdas... lambdas) {
+		return modular_source<exhaustive_construction, std::decay_t<Source>, Lambdas...>{KANGARU5_FWD(source), std::move(lambdas)...};
 	}
 	
-	template<construction Construction, source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<Construction, Source, Lambdas...>, Construction&&, Source&&, Lambdas&&...>
-	inline constexpr auto make_modular_source(Construction construction, Source source, Lambdas... lambdas) {
-		return modular_source<Construction, Source, Lambdas...>{std::move(construction), std::move(source), std::move(lambdas)...};
+	template<construction Construction, forwarded_source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<Construction, std::decay_t<Source>, Lambdas...>, Construction&&, Source&&, Lambdas&&...>
+	inline constexpr auto make_modular_source(Construction construction, Source&& source, Lambdas... lambdas) {
+		return modular_source<Construction, std::decay_t<Source>, Lambdas...>{std::move(construction), KANGARU5_FWD(source), std::move(lambdas)...};
 	}
 	
-	template<source... Sources, source Source>
+	template<source... Sources, forwarded_source Source>
 		requires std::constructible_from<
-			modular_source<exhaustive_construction, Source, constructor_function<Sources>...>,
+			modular_source<exhaustive_construction, std::decay_t<Source>, constructor_function<Sources>...>,
 			Source&&,
 			constructor_function<Sources>...
 		>
-	inline constexpr auto make_modular_source(Source source) {
-		return modular_source<exhaustive_construction, Source, constructor_function<Sources>...>{
-			std::move(source),
+	inline constexpr auto make_modular_source(Source&& source) {
+		return modular_source<exhaustive_construction, std::decay_t<Source>, constructor_function<Sources>...>{
+			KANGARU5_FWD(source),
 			constructor_function<Sources>{}...
 		};
 	}
@@ -202,36 +200,36 @@ KANGARU5_EXPORT namespace kangaru {
 		};
 	}
 	
-	template<source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<exhaustive_construction, Source, Lambdas...>, Source&&, Lambdas&&...>
-	inline constexpr auto make_modular_source_in_place(Source source, Lambdas... lambdas) {
+	template<forwarded_source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<exhaustive_construction, std::decay_t<Source>, Lambdas...>, std::decay_t<Source>&&, Lambdas&&...>
+	inline constexpr auto make_modular_source_in_place(Source&& source, Lambdas... lambdas) {
 		return in_place_construct{
-			[source = std::move(source), ...lambdas = std::move(lambdas)]() mutable {
-				return modular_source<exhaustive_construction, Source, Lambdas...>{std::move(source), std::move(lambdas)...};
+			[source = KANGARU5_FWD(source), ...lambdas = std::move(lambdas)]() mutable {
+				return modular_source<exhaustive_construction, std::decay_t<Source>, Lambdas...>{std::move(source), std::move(lambdas)...};
 			},
 		};
 	}
 	
-	template<construction Construction, source Source, function_object... Lambdas>
-		requires std::constructible_from<modular_source<Construction, Source, Lambdas...>, Construction&&, Source&&, Lambdas&&...>
-	inline constexpr auto make_modular_source_in_place(Construction construction, Source source, Lambdas... lambdas) {
+	template<construction Construction, forwarded_source Source, function_object... Lambdas>
+		requires std::constructible_from<modular_source<Construction, std::decay_t<Source>, Lambdas...>, Construction&&, std::decay_t<Source>&&, Lambdas&&...>
+	inline constexpr auto make_modular_source_in_place(Construction construction, Source&& source, Lambdas... lambdas) {
 		return in_place_construct{
-			[construction = std::move(construction), source = std::move(source), ...lambdas = std::move(lambdas)]() mutable {
-				return modular_source<Construction, Source, Lambdas...>{std::move(construction), std::move(source), std::move(lambdas)...};
+			[construction = std::move(construction), source = KANGARU5_FWD(source), ...lambdas = std::move(lambdas)]() mutable {
+				return modular_source<Construction, std::decay_t<Source>, Lambdas...>{std::move(construction), std::move(source), std::move(lambdas)...};
 			},
 		};
 	}
 	
-	template<source... Sources, source Source>
+	template<source... Sources, forwarded_source Source>
 		requires std::constructible_from<
-			modular_source<exhaustive_construction, Source, constructor_function<Sources>...>,
-			Source&&,
+			modular_source<exhaustive_construction, std::decay_t<Source>, constructor_function<Sources>...>,
+			std::decay_t<Source>&&,
 			constructor_function<Sources>...
 		>
 	inline constexpr auto make_modular_source_in_place(Source source) {
 		return in_place_construct{
-			[source = std::move(source)]() mutable {
-				return modular_source<exhaustive_construction, Source, constructor_function<Sources>...>{
+			[source = KANGARU5_FWD(source)]() mutable {
+				return modular_source<exhaustive_construction, std::decay_t<Source>, constructor_function<Sources>...>{
 					std::move(source),
 					constructor_function<Sources>{}...
 				};
@@ -256,11 +254,8 @@ KANGARU5_EXPORT namespace kangaru {
 		};
 	}
 	
-	// TODO: Add initializer with custom injector
-	
-	// lazy modular source initializer
 	template<source Source, construction Construction = exhaustive_construction>
-	struct make_lazy_initialized_source_function {
+	struct module_initializer_using_lazy {
 	private:
 		template<typename>
 		using pick_source = Source;
@@ -269,30 +264,33 @@ KANGARU5_EXPORT namespace kangaru {
 		Construction construction;
 		
 	public:
-		make_lazy_initialized_source_function() = default;
-		explicit constexpr make_lazy_initialized_source_function(Construction construction) :
+		module_initializer_using_lazy() = default;
+		explicit constexpr module_initializer_using_lazy(Construction construction) :
 			construction{std::move(construction)} {}
 		
 		constexpr auto operator()(forwarded_source auto&& from)
 		requires(
 			callable<strict_spread_injector<ref_result_t<decltype(from)&>>, constructor_function<Source>>
 		) {
-			return sealed_source{
-				make_source_with_provide_using_source<pick_source>(
-					make_source_with_lazy_evaluation_of<Source>(
-						with_construction{
-							KANGARU5_FWD(from),
-							construction,
-						}
-					)
-				),
-			};
+			return make_source_with_provide_using_source<pick_source>(
+				make_source_with_lazy_evaluation_of<Source>(
+					with_construction{
+						KANGARU5_FWD(from),
+						construction,
+					}
+				)
+			);
 		}
 	};
 	
-	template<source Source, copiable_object Construction = make_strict_spread_injector_function>
-	inline constexpr auto make_lazy_initialized_source(forwarded_source auto&& from, Construction construction) {
-		return make_lazy_initialized_source_function<Source, Construction>{}(KANGARU5_FWD(from), std::move(construction));
+	template<source Source>
+	inline constexpr auto make_module_initializer_using_lazy() {
+		return module_initializer_using_lazy<Source, make_strict_spread_injector_function>{};
+	}
+	
+	template<source Source, copiable_object Construction>
+	inline constexpr auto make_module_initializer_using_lazy(Construction construction) {
+		return module_initializer_using_lazy<Source, Construction>{}(std::move(construction));
 	}
 } // namespace kangaru
 

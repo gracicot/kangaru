@@ -101,7 +101,7 @@ auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> ka
 		},
 		// Instead of listing dependencies, let's use a generic constructor function, and let kangaru deduce the parameters!
 		kangaru::constructor_function<kangaru::reference_source<service_1_c>>{},
-		kangaru::make_lazy_initialized_source_function<kangaru::shared_pointer_source<service_1_d>>{}
+		kangaru::module_initializer_using_lazy<kangaru::shared_pointer_source<service_1_d>>{}
 	);
 }
 

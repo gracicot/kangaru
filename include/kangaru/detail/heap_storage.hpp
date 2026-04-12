@@ -134,7 +134,8 @@ namespace kangaru {
 			}
 		}
 		
-		template<std::copy_constructible F>
+		// TODO: Now that in_place_construct is a thing, think about the ergonomics on the api
+		template<function_object F>
 		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
 			KANGARU5_UNSAFE_BLOCK {
 				using object_type = detail::call_result_t<F>;
@@ -188,19 +189,21 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<source Source, dereferenceable_heap_storage Storage = default_heap_storage>
 	struct with_heap_storage {
-		explicit constexpr with_heap_storage(Source source) noexcept
+		template<allows_construction_of<Source> S>
+		explicit constexpr with_heap_storage(S&& source) noexcept
 			requires(
 				std::default_initializable<Storage>
-			) : source{std::move(source)} {}
+			) : source{KANGARU5_FWD(source)} {}
 		
-		constexpr with_heap_storage(Source source, Storage storage) noexcept :
-			source{std::move(source)}, storage{std::move(storage)} {}
+		template<allows_construction_of<Source> S>
+		constexpr with_heap_storage(S&& source, Storage storage) noexcept :
+			source{KANGARU5_FWD(source)}, storage{std::move(storage)} {}
 		
 		Source source;
 		
-		template<std::copy_constructible F>
+		template<function_object F>
 		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
-			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(function);
+			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(std::move(function));
 		}
 		
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
@@ -224,16 +227,24 @@ namespace kangaru {
 		Storage storage = {};
 	};
 	
+	template<typename Source, typename Storage>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_heap_storage(Source&&, Storage const&) -> with_heap_storage<deduced_source_type<Source>, Storage>;
+	
+	template<typename Source>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_heap_storage(Source&&) -> with_heap_storage<deduced_source_type<Source>>;
+	
 	KANGARU5_EXPORT template<forwarded_source Source, forwarded_heap_storage Storage>
 	inline constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage) {
-		return with_heap_storage<std::decay_t<Source>, std::decay_t<Storage>>{
+		return with_heap_storage<deduced_source_type<Source>, std::decay_t<Storage>>{
 			KANGARU5_FWD(source), KANGARU5_FWD(storage)
 		};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_heap_storage(Source&& source) {
-		return with_heap_storage<std::decay_t<Source>>{KANGARU5_FWD(source)};
+		return with_heap_storage<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	static_assert(heap_storage<with_heap_storage<none_source>>);

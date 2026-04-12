@@ -23,12 +23,13 @@ KANGARU5_EXPORT namespace kangaru {
 		construction Construction = exhaustive_construction
 	>
 	struct container {
-		constexpr container(Source source, Cache cache, Storage storage, Construction construction) :
+		template<allows_construction_of<Source> S>
+		constexpr container(S&& source, Cache cache, Storage storage, Construction construction) :
 			state{
 				with_cache{
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_construction)(
-							std::move(source),
+							KANGARU5_FWD(source),
 							construction
 						),
 						std::move(storage),
@@ -38,24 +39,27 @@ KANGARU5_EXPORT namespace kangaru {
 			},
 			construction{construction} {}
 		
-		constexpr container(Source source, Cache cache, Storage storage)
+		template<allows_construction_of<Source> S>
+		constexpr container(S&& source, Cache cache, Storage storage)
 			requires std::default_initializable<Construction> :
-			container{std::move(source), std::move(cache), std::move(storage), Construction{}} {}
+			container{KANGARU5_FWD(source), std::move(cache), std::move(storage), Construction{}} {}
 		
-		constexpr container(Source source, Cache cache)
+		template<allows_construction_of<Source> S>
+		constexpr container(S&& source, Cache cache)
 			requires(
 				    std::default_initializable<Storage>
 				and std::default_initializable<Construction>
 			) :
-			container{std::move(source), std::move(cache), Storage{}, Construction{}} {}
+			container{KANGARU5_FWD(source), std::move(cache), Storage{}, Construction{}} {}
 		
-		explicit constexpr container(Source source)
+		template<allows_construction_of<Source> S>
+		explicit constexpr container(S&& source)
 			requires(
 				    std::default_initializable<Cache>
 				and std::default_initializable<Storage>
 				and std::default_initializable<Construction>
 			) :
-			container{std::move(source), Cache{}, Storage{}, Construction{}} {}
+			container{KANGARU5_FWD(source), Cache{}, Storage{}, Construction{}} {}
 		
 		constexpr container()
 			requires(
@@ -205,6 +209,36 @@ KANGARU5_EXPORT namespace kangaru {
 			state.erase(id);
 		}
 	};
+	
+	template<typename Source, typename Cache, typename Storage, typename Construction>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	container(
+		Source&& source,
+		Cache const& cache,
+		Storage const& storage,
+		Construction const& construction
+	) -> container<deduced_source_type<Source>, Cache, Storage, Construction>;
+	
+	template<typename Source, typename Cache, typename Storage>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	container(
+		Source&& source,
+		Cache const& cache,
+		Storage const& storage
+	) -> container<deduced_source_type<Source>, Cache, Storage>;
+	
+	template<typename Source, typename Cache>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	container(
+		Source&& source,
+		Cache const& cache
+	) -> container<deduced_source_type<Source>, Cache>;
+	
+	template<typename Source>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	container(
+		Source&& source
+	) -> container<deduced_source_type<Source>>;
 }
 
 #include "undef.hpp"

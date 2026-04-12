@@ -301,13 +301,15 @@ KANGARU5_EXPORT namespace kangaru {
 		using overloaded_function = detail::recursive_source_private::select_function<Functions...>;
 		
 	public:
-		explicit constexpr with_function_call(Source source) noexcept requires(
+		template<allows_construction_of<Source> S>
+		explicit constexpr with_function_call(S&& source) noexcept requires(
 			sizeof...(Functions) > 0 and (true and ... and std::default_initializable<Functions>)
 		) :
-			source{std::move(source)} {}
+			source{KANGARU5_FWD(source)} {}
 		
-		constexpr with_function_call(Source source, Functions... functions) noexcept :
-			source{std::move(source)},
+		template<allows_construction_of<Source> S>
+		constexpr with_function_call(S&& source, Functions... functions) noexcept :
+			source{KANGARU5_FWD(source)},
 			functions{std::move(functions)...} {}
 		
 		template<injectable T, forwarded<with_function_call> Self>
@@ -333,34 +335,42 @@ KANGARU5_EXPORT namespace kangaru {
 		template<kangaru::source S, function_object... F>
 		friend struct with_function_call;
 		
-		constexpr with_function_call(Source source, overloaded_function functions) noexcept :
-			source{std::move(source)},
+		template<allows_construction_of<Source> S>
+		constexpr with_function_call(S&& source, overloaded_function functions) noexcept :
+			source{KANGARU5_FWD(source)},
 			functions{std::move(functions)} {}
 		
 		overloaded_function functions;
 	};
 	
+	template<typename Source, typename... Functions>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_function_call(Source&&, Functions const&...) -> with_function_call<deduced_source_type<Source>, Functions...>;
+	
 	template<forwarded_source Source, forwarded_function_object... Functions>
 	inline constexpr auto make_source_with_function_call(Source&& source, Functions&&... functions) {
-		return with_function_call<std::decay_t<Source>, std::decay_t<Functions>...>{KANGARU5_FWD(source), KANGARU5_FWD(functions)...};
+		return with_function_call<deduced_source_type<Source>, std::decay_t<Functions>...>{KANGARU5_FWD(source), KANGARU5_FWD(functions)...};
 	}
 	
 	template<source Source, source Passthrough, construction Construction>
 	struct with_construction_original_passthrough {
-		explicit constexpr with_construction_original_passthrough(Source source) noexcept
+		template<allows_construction_of<Source> S>
+		explicit constexpr with_construction_original_passthrough(S&& source) noexcept
 				requires std::default_initializable<Construction> :
-			source{std::move(source)},
+			source{KANGARU5_FWD(source)},
 			passthrough{},
 			construction{} {}
 		
-		constexpr with_construction_original_passthrough(Source source, Passthrough passthrough) noexcept
+		template<allows_construction_of<Source> S>
+		constexpr with_construction_original_passthrough(S&& source, Passthrough passthrough) noexcept
 				requires(std::default_initializable<Passthrough> and std::default_initializable<Construction>) :
-			source{std::move(source)},
+			source{KANGARU5_FWD(source)},
 			passthrough{std::move(passthrough)},
 			construction{std::move(construction)} {}
 		
-		constexpr with_construction_original_passthrough(Source source, Passthrough passthrough, Construction construction) noexcept :
-			source{std::move(source)},
+		template<allows_construction_of<Source> S>
+		constexpr with_construction_original_passthrough(S&& source, Passthrough passthrough, Construction construction) noexcept :
+			source{KANGARU5_FWD(source)},
 			passthrough{std::move(passthrough)},
 			construction{std::move(construction)} {}
 		
@@ -401,14 +411,21 @@ KANGARU5_EXPORT namespace kangaru {
 		Construction construction;
 	};
 	
+	template<typename Source, typename Passthrough, typename Construction>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_construction_original_passthrough(Source&&, Passthrough const&, Construction const&) ->
+		with_construction_original_passthrough<deduced_source_type<Source>, Passthrough, Construction>;
+	
 	template<source Source, construction Construction>
 	struct with_construction {
-		explicit constexpr with_construction(Source source) noexcept
+		template<allows_construction_of<Source> S>
+		explicit constexpr with_construction(S&& source) noexcept
 			requires std::default_initializable<Construction> :
-			source{std::move(source)} {}
+			source{KANGARU5_FWD(source)} {}
 		
-		constexpr with_construction(Source source, Construction construction) noexcept :
-			source{std::move(source)},
+		template<allows_construction_of<Source> S>
+		constexpr with_construction(S&& source, Construction construction) noexcept :
+			source{KANGARU5_FWD(source)},
 			construction{std::move(construction)} {}
 		
 		template<injectable T, forwarded<with_construction> Self>
@@ -442,10 +459,15 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
 	};
-
+	
+	template<typename Source, typename Construction>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_construction(Source&&, Construction const&) ->
+		with_construction<deduced_source_type<Source>, Construction>;
+	
 	template<forwarded_source Source, construction Construction>
 	inline constexpr auto make_source_with_construction(Source&& source, Construction construction) {
-		return with_construction<std::decay_t<Source>, Construction>{KANGARU5_FWD(source), std::move(construction)};
+		return with_construction<deduced_source_type<Source>, Construction>{KANGARU5_FWD(source), std::move(construction)};
 	}
 	
 	template<source Source>
@@ -453,7 +475,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_non_empty_construction(Source&& source) {
-		return with_construction<std::decay_t<Source>, non_empty_construction>{KANGARU5_FWD(source), non_empty_construction{}};
+		return with_construction<deduced_source_type<Source>, non_empty_construction>{KANGARU5_FWD(source), non_empty_construction{}};
 	}
 	
 	template<source Source>
@@ -461,7 +483,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_exhaustive_construction(Source&& source) {
-		return with_construction<std::decay_t<Source>, exhaustive_construction>{KANGARU5_FWD(source), exhaustive_construction{}};
+		return with_construction<deduced_source_type<Source>, exhaustive_construction>{KANGARU5_FWD(source), exhaustive_construction{}};
 	}
 	
 	template<source Source>
@@ -469,7 +491,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_unsafe_exhaustive_construction(Source&& source) {
-		return with_construction<std::decay_t<Source>, unsafe_exhaustive_construction>{KANGARU5_FWD(source), unsafe_exhaustive_construction{}};
+		return with_construction<deduced_source_type<Source>, unsafe_exhaustive_construction>{KANGARU5_FWD(source), unsafe_exhaustive_construction{}};
 	}
 	
 	template<source Source>
@@ -481,7 +503,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<forwarded_source Source, construction Construction>
 	inline constexpr auto make_source_with_two_step_construction(Source&& source, Construction construction) {
 		return with_construction<
-			std::decay_t<Source>,
+			deduced_source_type<Source>,
 			construction_with_two_step_init<Construction, second_step_from_attribute>
 		>{
 			KANGARU5_FWD(source),
@@ -498,7 +520,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_non_empty_two_step_construction(Source&& source) {
 		return with_construction<
-			std::decay_t<Source>,
+			deduced_source_type<Source>,
 			construction_with_two_step_init<non_empty_construction, second_step_from_attribute>
 		>{
 			KANGARU5_FWD(source),
@@ -515,7 +537,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_exhaustive_two_step_construction(Source&& source) {
 		return with_construction<
-			std::decay_t<Source>,
+			deduced_source_type<Source>,
 			construction_with_two_step_init<exhaustive_construction, second_step_from_attribute>
 		>{
 			KANGARU5_FWD(source),
@@ -532,7 +554,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_unsafe_exhaustive_two_step_construction(Source&& source) {
 		return with_construction<
-			std::decay_t<Source>,
+			deduced_source_type<Source>,
 			construction_with_two_step_init<unsafe_exhaustive_construction, second_step_from_attribute>
 		>{
 			KANGARU5_FWD(source),
@@ -570,13 +592,13 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	};
 	
-	// This deduction guide is required for clang 16 to work
 	template<typename Source>
-	with_recursion(Source const& source) -> with_recursion<Source>;
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_recursion(Source&& source) -> with_recursion<deduced_source_type<Source>>;
 	
 	template<forwarded_source Source>
 	inline constexpr auto make_source_with_recursion(Source&& source) {
-		return with_recursion<std::decay_t<Source>>{KANGARU5_FWD(source)};
+		return with_recursion<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	template<typename Tree, typename Type>

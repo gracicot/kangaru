@@ -53,7 +53,8 @@ namespace kangaru {
 		construction Construction = exhaustive_construction
 	>
 	struct polymorphic_container {
-		constexpr polymorphic_container(Source source, Cache cache, Storage storage, Construction construction) :
+		template<allows_construction_of<Source> S>
+		constexpr polymorphic_container(S&& source, Cache cache, Storage storage, Construction construction) :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<
 					detail::never_type_identity
@@ -63,7 +64,7 @@ namespace kangaru {
 							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
-										std::move(source),
+										KANGARU5_FWD(source),
 										construction
 									)
 								)
@@ -76,24 +77,27 @@ namespace kangaru {
 			},
 			construction{construction} {}
 		
-		constexpr polymorphic_container(Source source, Cache cache, Storage storage)
+		template<allows_construction_of<Source> S>
+		constexpr polymorphic_container(S&& source, Cache cache, Storage storage)
 			requires std::default_initializable<Construction> :
-			polymorphic_container{std::move(source), std::move(cache), std::move(storage), Construction{}} {}
+			polymorphic_container{KANGARU5_FWD(source), std::move(cache), std::move(storage), Construction{}} {}
 		
-		constexpr polymorphic_container(Source source, Cache cache)
+		template<allows_construction_of<Source> S>
+		constexpr polymorphic_container(S&& source, Cache cache)
 			requires(
 				    std::default_initializable<Storage>
 				and std::default_initializable<Construction>
 			) :
-			polymorphic_container{std::move(source), std::move(cache), Storage{}, Construction{}} {}
+			polymorphic_container{KANGARU5_FWD(source), std::move(cache), Storage{}, Construction{}} {}
 		
-		explicit constexpr polymorphic_container(Source source)
+		template<allows_construction_of<Source> S>
+		explicit constexpr polymorphic_container(S&& source)
 			requires(
 				    std::default_initializable<Cache>
 				and std::default_initializable<Storage>
 				and std::default_initializable<Construction>
 			) :
-			polymorphic_container{std::move(source), Cache{}, Storage{}, Construction{}} {}
+			polymorphic_container{KANGARU5_FWD(source), Cache{}, Storage{}, Construction{}} {}
 		
 		constexpr polymorphic_container()
 			requires(
@@ -253,6 +257,36 @@ namespace kangaru {
 			state.erase(id);
 		}
 	};
+	
+	template<typename Source, typename Cache, typename Storage, typename Construction>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	polymorphic_container(
+		Source&& source,
+		Cache const& cache,
+		Storage const& storage,
+		Construction const& construction
+	) -> polymorphic_container<deduced_source_type<Source>, Cache, Storage, Construction>;
+	
+	template<typename Source, typename Cache, typename Storage>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	polymorphic_container(
+		Source&& source,
+		Cache const& cache,
+		Storage const& storage
+	) -> polymorphic_container<deduced_source_type<Source>, Cache, Storage>;
+	
+	template<typename Source, typename Cache>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	polymorphic_container(
+		Source&& source,
+		Cache const& cache
+	) -> polymorphic_container<deduced_source_type<Source>, Cache>;
+	
+	template<typename Source>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	polymorphic_container(
+		Source&& source
+	) -> polymorphic_container<deduced_source_type<Source>>;
 }
 
 #include "undef.hpp"

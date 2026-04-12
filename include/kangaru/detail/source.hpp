@@ -90,6 +90,16 @@ namespace kangaru {
 			template<injectable T>
 			inline constexpr auto provide = detail::source_private::provide_function<T>{};
 		}
+		
+		template<typename T>
+		struct deduced_source_type_impl {
+			using type = T;
+		};
+		
+		template<typename F>
+		struct deduced_source_type_impl<in_place_construct<F>> {
+			using type = detail::call_result_t<F>;
+		};
 	}
 	
 	KANGARU5_EXPORT inline namespace niebloid {
@@ -158,7 +168,8 @@ namespace kangaru {
 			or source_of<Source const&&, T>
 		)
 	struct provide_using {
-		explicit constexpr provide_using(Source source) noexcept : source{std::move(source)} {}
+		template<allows_construction_of<Source> S>
+		explicit constexpr provide_using(S&& source) noexcept : source{KANGARU5_FWD(source)} {}
 		
 		constexpr auto operator()() & -> T requires source_of<Source&, T> {
 			return kangaru::provide<T>(source);
@@ -179,6 +190,9 @@ namespace kangaru {
 	private:
 		Source source;
 	};
+	
+	KANGARU5_EXPORT template<typename T>
+	using deduced_source_type = typename detail::source_private::deduced_source_type_impl<std::decay_t<T>>::type;
 } // namespace kangaru
 
 #include "undef.hpp"

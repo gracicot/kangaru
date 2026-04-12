@@ -19,6 +19,7 @@
 
 // TODO: Make type of deducer parameterizable
 namespace kangaru::detail::modular_source_private {
+	// TODO: Support immovable sources
 	template<source Source>
 	struct use_source {
 		Source&& source;
@@ -70,6 +71,7 @@ namespace kangaru::detail::modular_source_private {
 } // namespace kangaru::detail::modular_source_private
 
 KANGARU5_EXPORT namespace kangaru {
+	// TODO: Support immovable sources
 	template<construction Construction = exhaustive_construction, source Source = none_source, function_object... Lambdas>
 		requires(
 			std::constructible_from<
@@ -161,6 +163,7 @@ KANGARU5_EXPORT namespace kangaru {
 		requires(not callable<Source>)
 	modular_source(Source) -> modular_source<exhaustive_construction, Source>;
 	
+	// TODO: Add forwarding
 	template<source Source, function_object... Lambdas>
 		requires std::constructible_from<modular_source<exhaustive_construction, Source, Lambdas...>, Source&&, Lambdas&&...>
 	inline constexpr auto make_modular_source(Source source, Lambdas... lambdas) {
@@ -252,6 +255,8 @@ KANGARU5_EXPORT namespace kangaru {
 			},
 		};
 	}
+	
+	// TODO: Add initializer with custom injector
 	
 	// lazy modular source initializer
 	template<source Source, construction Construction = exhaustive_construction>

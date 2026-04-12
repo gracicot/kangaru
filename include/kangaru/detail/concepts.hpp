@@ -107,7 +107,7 @@ KANGARU5_EXPORT namespace kangaru {
 		};
 	
 	template<typename T, typename U>
-	concept allows_construction_of = std::constructible_from<U, T>;
+	concept allows_construction_of = std::constructible_from<U, T&&>;
 	
 	template<typename From, typename To>
 	concept explicitly_castable_to = requires(From&& from) {

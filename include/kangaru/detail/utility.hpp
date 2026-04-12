@@ -111,6 +111,17 @@ KANGARU5_EXPORT namespace kangaru {
 			T,
 			in_place_construct<detail::utility_private::function_returning_type<T>>
 		>;
+	
+	template<typename>
+	struct in_place_construct_result {};
+	
+	template<callable F>
+	struct in_place_construct_result<in_place_construct<F>> {
+		using type = detail::call_result_t<F>;
+	};
+	
+	template<typename F>
+	using in_place_construct_result_t = typename in_place_construct_result<F>::type;
 }
 
 #include "undef.hpp"

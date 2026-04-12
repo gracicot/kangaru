@@ -45,13 +45,14 @@ namespace kangaru {
 		using unwrapped_cache_type = std::remove_reference_t<maybe_unwrap_result_t<cache_type>>;
 	
 	public:
-		explicit constexpr with_cache_asymmetric(source_type source) noexcept
-		requires (
-			std::default_initializable<cache_type>
-		) : source{std::move(source)}, cache{} {}
+		template<allows_construction_of<Source> S>
+			requires(std::default_initializable<cache_type>)
+		explicit constexpr with_cache_asymmetric(S&& source) noexcept :
+			source{KANGARU5_FWD(source)}, cache{} {}
 		
-		constexpr with_cache_asymmetric(source_type source, cache_type cache) noexcept :
-			source{std::move(source)}, cache{std::move(cache)} {}
+		template<allows_construction_of<Source> S>
+		constexpr with_cache_asymmetric(S&& source, cache_type cache) noexcept :
+			source{KANGARU5_FWD(source)}, cache{std::move(cache)} {}
 		
 		using key_type = typename unwrapped_cache_type::key_type;
 		using value_type = typename unwrapped_cache_type::value_type;
@@ -197,12 +198,12 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
-		return with_cache_asymmetric<std::decay_t<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
+		return with_cache_asymmetric<deduced_source_type<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
 	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
-		return with_cache_asymmetric<std::decay_t<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
+		return with_cache_asymmetric<deduced_source_type<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	
 	KANGARU5_EXPORT template<
@@ -234,19 +235,21 @@ namespace kangaru {
 	};
 	
 	template<typename Source, typename Cache>
-	with_cache(Source const&, Cache const&) -> with_cache<Source, Cache>;
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_cache(Source&&, Cache const&) -> with_cache<deduced_source_type<Source>, Cache>;
 	
 	template<typename Source>
-	with_cache(Source const&) -> with_cache<Source>;
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_cache(Source&&) -> with_cache<deduced_source_type<Source>>;
 	
 	KANGARU5_EXPORT template<forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
-		return with_cache<std::decay_t<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
+		return with_cache<deduced_source_type<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
 	KANGARU5_EXPORT template<forwarded_source Source>
 	inline constexpr auto make_source_with_cache(Source&& source) {
-		return with_cache<std::decay_t<Source>>{KANGARU5_FWD(source)};
+		return with_cache<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	KANGARU5_EXPORT template<
@@ -267,8 +270,12 @@ namespace kangaru {
 		}
 		
 	public:
-		explicit constexpr cache_with_two_step_init_on_insert(Cache cache) requires(std::default_initializable<SecondStep>) : Cache{std::move(cache)} {}
-		constexpr cache_with_two_step_init_on_insert(Cache cache, SecondStep second_step) : Cache{std::move(cache)}, second_step{std::move(second_step)} {}
+		template<allows_construction_of<Cache> C>
+			requires(std::default_initializable<SecondStep>)
+		explicit constexpr cache_with_two_step_init_on_insert(C&& cache) : Cache{KANGARU5_FWD(cache)} {}
+		
+		template<allows_construction_of<Cache> C>
+		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
 		// TODO: Can we automate calling rebind from parent?
 		// TODO: Big todo: change forwarded_source to function_object
@@ -308,6 +315,10 @@ namespace kangaru {
 			return Cache::insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}
 	};
+	
+	template<typename Cache, typename SecondStep>
+		requires(not deducer<std::remove_cvref_t<Cache>>)
+	cache_with_two_step_init_on_insert(Cache&&, SecondStep const&) -> cache_with_two_step_init_on_insert<deduced_source_type<Cache>, SecondStep>;
 	
 	// NOTE: Implement a cache with dynamic callbacks to fill it using the source. But the source is a template parameter? Is it possible to
 	//       even have dynamic callbacks for it? I think it is technically possible, because we could compute the type in advance for a given

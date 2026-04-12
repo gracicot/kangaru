@@ -58,13 +58,15 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source Source, second_step_function SecondStep>
 	struct with_two_step_init {
-		explicit constexpr with_two_step_init(Source source, SecondStep) noexcept :
-			source{std::move(source)} {}
+		template<allows_construction_of<Source> S>
+		explicit constexpr with_two_step_init(S&& source, SecondStep) noexcept :
+			source{KANGARU5_FWD(source)} {}
 		
-		constexpr with_two_step_init(Source source) noexcept requires(
+		template<allows_construction_of<Source> S>
+		constexpr with_two_step_init(S&& source) noexcept requires(
 			std::default_initializable<SecondStep>
 		) :
-			source{std::move(source)} {}
+			source{KANGARU5_FWD(source)} {}
 		
 		Source source;
 		
@@ -93,6 +95,10 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		SecondStep second_step;
 	};
+	
+	template<typename Source, typename SecondStep>
+		requires(not deducer<std::remove_cvref_t<Source>>)
+	with_two_step_init(Source&&, SecondStep const&) -> with_two_step_init<deduced_source_type<Source>, SecondStep>;
 	
 	template<auto f>
 	struct call_function {

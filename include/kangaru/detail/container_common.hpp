@@ -287,7 +287,7 @@ KANGARU5_EXPORT namespace kangaru {
 							make_basic_spread_injector<basic_deducer, max>,
 						}...,
 					},
-					kangaru::object_source{KANGARU5_FWD(source_if_not_found)},
+					KANGARU5_FWD(source_if_not_found),
 				}
 			);
 		}

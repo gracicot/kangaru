@@ -206,10 +206,11 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(std::move(function));
 		}
 		
-		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
-		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>> {
-			return with_heap_storage<wrapped_source_rebind_result_t<Original, NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+		template<forwarded<with_heap_storage> Original, forwarded_function_object ReplaceLeaf>
+			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Storage>&>> {
+			return with_heap_storage<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 				KANGARU5_NO_ADL(ref)(original.storage)
 			};
 		}

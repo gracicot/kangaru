@@ -150,10 +150,11 @@ namespace kangaru {
 			std::ranges::swap(cache, other.cache);
 		}
 		
-		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom> {
-			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+		template<forwarded<with_cache_asymmetric> Original, forwarded_function_object ReplaceLeaf>
+			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom> {
+			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 				KANGARU5_NO_ADL(ref)(original.cache)
 			};
 		}
@@ -223,13 +224,12 @@ namespace kangaru {
 	public:
 		using parent::parent;
 		
-		// TODO: Can we automate calling rebind from parent?
-		template<forwarded<with_cache> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
+		template<forwarded<with_cache> Original, forwarded_function_object ReplaceLeaf>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
+			-> with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
 		{
-			return with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>{
-				parent::rebind(static_cast<detail::forward_like_t<Original, parent>&&>(original), KANGARU5_FWD(new_leaf))
+			return with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>{
+				parent::rebind(static_cast<detail::forward_like_t<Original, parent>&&>(original), KANGARU5_FWD(replace_leaf))
 			};
 		}
 	};
@@ -277,15 +277,13 @@ namespace kangaru {
 		template<allows_construction_of<Cache> C>
 		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
-		// TODO: Can we automate calling rebind from parent?
-		// TODO: Big todo: change forwarded_source to function_object
-		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_source NewLeaf>
+		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_function_object ReplaceLeaf>
 			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>> and not std::is_const_v<std::remove_reference_t<Original>>)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, NewLeaf>, SecondStep>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
+			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, ReplaceLeaf>, SecondStep>
 		{
-			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, NewLeaf>, SecondStep>{
-				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(new_leaf)),
+			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, ReplaceLeaf>, SecondStep>{
+				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(replace_leaf)),
 				KANGARU5_FWD(original).second_step,
 			};
 		}

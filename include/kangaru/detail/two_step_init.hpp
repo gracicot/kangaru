@@ -83,11 +83,11 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		template<forwarded<with_two_step_init> Original, forwarded_source NewSource>
+		template<forwarded<with_two_step_init> Original, forwarded_function_object ReplaceLeaf>
 			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>>)
-		static constexpr auto rebind(Original&& original, NewSource&& new_leaf) noexcept -> with_two_step_init<wrapped_source_rebind_result_t<Original, NewSource>, SecondStep> {
-			return with_two_step_init<wrapped_source_rebind_result_t<Original, NewSource>, SecondStep>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_two_step_init<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SecondStep> {
+			return with_two_step_init<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SecondStep>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 				KANGARU5_FWD(original).second_step
 			};
 		}

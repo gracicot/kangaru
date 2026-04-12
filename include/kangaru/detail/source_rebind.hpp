@@ -76,16 +76,16 @@ namespace kangaru {
 	namespace detail::source_rebind_private {
 		struct rebind_function {
 			template<forwarded_source Wrapper> requires (rebindable_wrapping_source<std::remove_reference_t<Wrapper>> and not forwarded_reference_wrapper<Wrapper>)
-			constexpr auto operator()(Wrapper&& source, forwarded_object auto&& new_leaf) const noexcept {
+			constexpr auto operator()(Wrapper&& source, forwarded_function_object auto&& replace_leaf) const noexcept {
 				if constexpr (stateful_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
-					return std::decay_t<Wrapper>::rebind(source, KANGARU5_FWD(new_leaf));
+					return std::decay_t<Wrapper>::rebind(source, KANGARU5_FWD(replace_leaf));
 				} else if constexpr (transparent_rebindable_wrapping_source<std::remove_reference_t<Wrapper>>) {
 					using rebound = typename detail::ttype_t<
 						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
-						decltype(operator()(source.source, KANGARU5_FWD(new_leaf)))
+						decltype(operator()(source.source, KANGARU5_FWD(replace_leaf)))
 					>;
 					return rebound{
-						operator()(source.source, KANGARU5_FWD(new_leaf))
+						operator()(source.source, KANGARU5_FWD(replace_leaf))
 					};
 				} else {
 					static_assert(not std::same_as<Wrapper, Wrapper>, "exhaustive");
@@ -93,9 +93,9 @@ namespace kangaru {
 			}
 			
 			template<forwarded_reference_wrapper Wrapper>
-			constexpr auto operator()(Wrapper&& wrapper, forwarded_object auto&& new_leaf) const noexcept {
+			constexpr auto operator()(Wrapper&& wrapper, forwarded_function_object auto&& replace_leaf) const noexcept {
 				decltype(auto) unwrapped = KANGARU5_FWD(wrapper).unwrap();
-				return operator()(KANGARU5_FWD(unwrapped), KANGARU5_FWD(new_leaf));
+				return operator()(KANGARU5_FWD(unwrapped), KANGARU5_FWD(replace_leaf));
 			}
 			
 			template<forwarded_source Leaf> requires (
@@ -103,9 +103,9 @@ namespace kangaru {
 				and not rebindable_wrapping_source<std::remove_reference_t<Leaf>>
 				and not forwarded_wrapping_source<Leaf>
 			)
-			constexpr auto operator()(Leaf&& leaf, forwarded_object auto&& new_leaf) const noexcept {
+			constexpr auto operator()(Leaf&& leaf, forwarded_function_object auto&& replace_leaf) const noexcept {
 				// We do not forward new_leaf here, since it may be called multiple times
-				return new_leaf(KANGARU5_FWD(leaf));
+				return replace_leaf(KANGARU5_FWD(leaf));
 			}
 		};
 		
@@ -136,8 +136,8 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename Source>
 	concept forwarded_rebindable_source = forwarded_source<Source> and rebindable_source<std::remove_reference_t<Source>>;
 	
-	KANGARU5_EXPORT template<forwarded_rebindable_source Source, forwarded_source Leaf>
-	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<Leaf>()));
+	KANGARU5_EXPORT template<forwarded_rebindable_source Source, forwarded_function_object ReplaceLeaf>
+	using rebind_result_t = decltype(kangaru::rebind(std::declval<Source>(), std::declval<ReplaceLeaf>()));
 	
 	KANGARU5_EXPORT template<forwarded_wrapping_source Source, forwarded_source Leaf>
 	using wrapped_source_rebind_result_t = decltype(kangaru::rebind(std::declval<forwarded_wrapped_source_t<Source>>(), std::declval<Leaf>()));

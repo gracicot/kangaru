@@ -479,10 +479,10 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<with_alternative> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) -> with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>> {
-			return with_alternative<wrapped_source_rebind_result_t<Original, NewLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+		template<forwarded<with_alternative> Original, forwarded_function_object ReplaceLeaf>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) -> with_alternative<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>> {
+			return with_alternative<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative))
 			};
 		}
@@ -658,18 +658,12 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		// TODO: Report clang issue. We shouldn't need to define this function. detail::source_rebind::rebind_wrapper is broken?
-		template<forwarded<with_provide_using_source> Original, forwarded_source NewLeaf>
-			requires(
-				std::constructible_from<
-					Source,
-					detail::forward_like_t<Original, Source>
-				>
-			)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) ->
-			with_provide_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, SourceFor>
+		template<forwarded<with_provide_using_source> Original, forwarded_source ReplaceLeaf>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) ->
+			with_provide_using_source<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SourceFor>
 		{
-			return with_provide_using_source<wrapped_source_rebind_result_t<Original, NewLeaf>, SourceFor> {
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			return with_provide_using_source<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SourceFor> {
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 			};
 		}
 		
@@ -732,18 +726,12 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<enumerated_source_of> Original, forwarded_source NewLeaf>
-			requires(
-				std::constructible_from<
-					Source,
-					detail::forward_like_t<Original, Source>
-				>
-			)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) ->
-			enumerated_source_of<wrapped_source_rebind_result_t<Original, NewLeaf>, Types...>
+		template<forwarded<enumerated_source_of> Original, forwarded_function_object ReplaceLeaf>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) ->
+			enumerated_source_of<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Types...>
 		{
-			return enumerated_source_of<wrapped_source_rebind_result_t<Original, NewLeaf>, Types...> {
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			return enumerated_source_of<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Types...> {
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 			};
 		}
 		

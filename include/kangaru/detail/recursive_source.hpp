@@ -103,20 +103,20 @@ namespace kangaru::detail::recursive_source_private {
 		)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T = delete;
 		
-		template<forwarded<with_function_call_experiment> Original, forwarded_source NewLeaf>
+		template<forwarded<with_function_call_experiment> Original, forwarded_source ReplaceLeaf>
 			requires(
 				std::constructible_from<
 					std::tuple<Functions...>,
 					detail::forward_like_t<Original, std::tuple<Functions...>>
 				>
 			)
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept ->
-			with_function_call_experiment<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept ->
+			with_function_call_experiment<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>
 		{
 			return std::apply(
 				[&](auto&&... functions) {
-					return with_function_call_experiment<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...> {
-						kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+					return with_function_call_experiment<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...> {
+						kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 						KANGARU5_FWD(functions)...
 					};
 				},
@@ -318,13 +318,13 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.functions).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_function_call> Original, forwarded_source NewLeaf>
+		template<forwarded<with_function_call> Original, forwarded_source ReplaceLeaf>
 			requires std::constructible_from<overloaded_function, detail::forward_like_t<Original, overloaded_function>>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...>
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
+			-> with_function_call<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>
 		{
-			return with_function_call<wrapped_source_rebind_result_t<Original, NewLeaf>, Functions...>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
+			return with_function_call<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
 				KANGARU5_FWD(original).functions,
 			};
 		}
@@ -379,7 +379,7 @@ KANGARU5_EXPORT namespace kangaru {
 				source_of<detail::forward_like_t<Self, Passthrough&&>, T>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).passthrough);
+			return kangaru::provide<T>(KANKGARU5_FWD(source).passthrough);
 		}
 		
 		template<unqualified_object T, forwarded<with_construction_original_passthrough> Self>
@@ -391,13 +391,19 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_construction_original_passthrough> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>
+		template<forwarded<with_construction_original_passthrough> Original, forwarded_source ReplaceLeaf>
+			requires(
+				std::constructible_from<
+					Construction,
+					detail::forward_like_t<Original, Construction>
+				>
+			)
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
-				KANGARU5_NO_ADL(ref)(original.passthrough),
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(original).passthrough),
 				KANGARU5_FWD(original).construction
 			};
 		}
@@ -442,13 +448,19 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_construction> Original, forwarded_source NewLeaf>
-		static constexpr auto rebind(Original&& original, NewLeaf&& new_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>
+		template<forwarded<with_construction> Original, forwarded_function_object ReplaceLeaf>
+			requires(
+				std::constructible_from<
+					Construction,
+					detail::forward_like_t<Original, Construction>
+				>
+			)
+		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
+			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, NewLeaf>, ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(new_leaf)),
-				KANGARU5_NO_ADL(ref)(original.source),
+			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>{
+				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(original).source),
 				KANGARU5_FWD(original).construction
 			};
 		}

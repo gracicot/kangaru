@@ -151,7 +151,6 @@ namespace kangaru {
 		}
 		
 		template<forwarded<with_cache_asymmetric> Original, forwarded_function_object ReplaceLeaf>
-			requires(not std::is_const_v<std::remove_reference_t<Original>>)
 		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom> {
 			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
 				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
@@ -224,6 +223,7 @@ namespace kangaru {
 	public:
 		using parent::parent;
 		
+		// TODO: Understand why rebind is detected to be callable while it shouldn't
 		template<forwarded<with_cache> Original, forwarded_function_object ReplaceLeaf>
 		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
 			-> with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
@@ -278,7 +278,7 @@ namespace kangaru {
 		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
 		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_function_object ReplaceLeaf>
-			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>> and not std::is_const_v<std::remove_reference_t<Original>>)
+			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>>)
 		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
 			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, ReplaceLeaf>, SecondStep>
 		{

@@ -17,7 +17,6 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept injectable = weak_injectable<T> and allow_injection_using_v<T>;
 	
-	// TODO: Add std::move_constructible at every point of use
 	KANGARU5_EXPORT template<typename T>
 	concept source = object<T> and std::is_class_v<T> and not pointer<T>;
 	

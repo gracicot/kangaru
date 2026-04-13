@@ -379,7 +379,7 @@ KANGARU5_EXPORT namespace kangaru {
 				source_of<detail::forward_like_t<Self, Passthrough&&>, T>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANKGARU5_FWD(source).passthrough);
+			return kangaru::provide<T>(KANGARU5_FWD(source).passthrough);
 		}
 		
 		template<unqualified_object T, forwarded<with_construction_original_passthrough> Self>

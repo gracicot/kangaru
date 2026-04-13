@@ -21,7 +21,6 @@ namespace kangaru::detail::injector_private {
 	inline constexpr auto callable_workaround_for_clang =
 		callable<Function, detail::expand<kangaru::placeholder_deducer, S>...>;
 	
-	// TODO: Can we do that without template metaprogramming?
 	template<typename Function, typename>
 	struct parameter_sequence_impl {};
 	

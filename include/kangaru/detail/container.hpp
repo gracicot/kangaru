@@ -84,8 +84,8 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
 		
-		template<typename Self, typename S>
-		static constexpr auto container_source(Self&& self, S&& source) {
+		template<typename S>
+		constexpr auto container_source(S&& source) {
 			auto rebound_state = with_cache<
 				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
 				ref_result_t<S&>
@@ -100,44 +100,39 @@ KANGARU5_EXPORT namespace kangaru {
 							with_recursion{
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
 									cached_reference_to_source_mapping_using<
-										detail::forward_like_t<Self, Source>
+										detail::forward_like_t<S, Source>
 									>::template source_for
 								>)(
 									with_dereference{
 										cache_with_two_step_init_on_insert{
 											std::move(rebound_state),
 											call_second_step_on_dereference{
-												call_second_step_from_attribute_on_prvalue{}
+												call_second_step_from_attribute_on_prvalue{},
 											},
 										},
 									}
 								),
 							},
-							external_reference_source{self},
+							external_reference_source{*this},
 						},
-						self.construction
+						std::as_const(construction)
 					),
 				},
 			};
 		}
 		
-		template<typename Self>
-		using container_source_t = decltype(
-			container_source(std::declval<Self>(), std::declval<Self>().state)
-		);
-		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<container_source_t<container&>, T> {
+		constexpr auto provide() & -> T requires source_of<decltype(container_source(state)), T> {
 			return kangaru::provide<T>(
-				container_source(*this, state)
+				container_source(state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<container_source_t<container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<decltype(container_source(std::move(state))), T> {
 			return kangaru::provide<T>(
-				container_source(std::move(*this), std::move(state))
+				container_source(std::move(state))
 			);
 		}
 		

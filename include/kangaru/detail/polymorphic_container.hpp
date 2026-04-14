@@ -132,11 +132,11 @@ namespace kangaru {
 		template<injectable T>
 		using polymorphic_source = any_source_of_ref<T>;
 		
-		template<typename Self, typename S>
-		static constexpr auto container_source(Self&& self, S&& source) {
+		template<typename S>
+		constexpr auto container_source(S&& source) {
 			auto rebound_state = std::remove_cvref_t<S>::template rebind<
 				detail::polymorphic_container_private::cached_source<
-					detail::forward_like_t<Self, Source>
+					detail::forward_like_t<S, Source>
 				>::template source_for
 			>(
 				KANGARU5_FWD(source),
@@ -155,33 +155,28 @@ namespace kangaru {
 										std::move(rebound_state),
 										second_step_from_attribute{},
 									}
-								)
+								),
 							},
-							external_reference_source{self},
+							external_reference_source{*this},
 						},
-						self.construction
+						std::as_const(construction)
 					)
 				}
 			};
 		}
 		
-		template<typename Self>
-		using container_source_t = decltype(
-			container_source(std::declval<Self>(), std::declval<Self>().state)
-		);
-		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<container_source_t<polymorphic_container&>, T> {
+		constexpr auto provide() & -> T requires source_of<decltype(container_source(state)), T> {
 			return kangaru::provide<T>(
-				container_source(*this, state)
+				container_source(state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<container_source_t<polymorphic_container&&>, T> {
+		constexpr auto provide() && -> T requires source_of<decltype(container_source(std::move(state))), T> {
 			return kangaru::provide<T>(
-				container_source(std::move(*this), std::move(state))
+				container_source(std::move(state))
 			);
 		}
 		

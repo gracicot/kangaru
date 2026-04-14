@@ -25,14 +25,14 @@ namespace kangaru::detail::injector_private {
 	struct parameter_sequence_impl {};
 	
 	template<typename Function>
-		requires callable<Function>
+		requires(callable<Function>)
 	struct parameter_sequence_impl<Function, std::index_sequence<>> {
 		using type = std::index_sequence<>;
 		using return_type = decltype(std::declval<Function>()());
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-		requires callable_workaround_for_clang<Function, head, tail...>
+		requires(callable<Function, kangaru::placeholder_deducer, detail::expand<kangaru::placeholder_deducer, tail>...>)
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 		using return_type = decltype(
@@ -58,13 +58,13 @@ namespace kangaru::detail::injector_private {
 	struct injectable_sequence {};
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t... drop>
-		requires callable<Function, Expand<kangaru::placeholder_deducer, drop>...>
+		requires(callable<Function, Expand<kangaru::placeholder_deducer, drop>...>)
 	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<>;
 	};
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
-		requires callable<Function, Deducer, Expand<Deducer, tail>..., detail::expand<kangaru::placeholder_deducer, drop>...>
+		requires(callable<Function, Deducer, Expand<Deducer, tail>..., detail::expand<kangaru::placeholder_deducer, drop>...>)
 	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};

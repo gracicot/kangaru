@@ -72,17 +72,23 @@ namespace kangaru::detail::container_common_private {
 KANGARU5_EXPORT namespace kangaru {
 	template<source Source> requires(unqualified_object<Source>)
 	struct mapping_with_base_source {
+		template<injectable T>
+		using source_for = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
+	};
+	
+	// Unconstrained typename since we rely on enumerated_source_of for constrains
+	template<typename Source, typename... Enumerated>
+	struct mapping_with_base_source<enumerated_source_of<Source, Enumerated...>> {
 	private:
 		template<injectable T>
 		struct mapping : detail::container_common_private::default_type_to_source_mapping<T> {};
 		
-		// Allow for a source to provide alternative mappings.
 		template<injectable T>
 			requires(
-				requires{ typename detail::container_common_private::enumerated_select_source_of_t<T, Source>; }
+				requires{ typename select_source_of<T, Enumerated...>; }
 			)
 		struct mapping<T> {
-			using type = detail::container_common_private::enumerated_select_source_of_t<T, Source>;
+			using type = select_source_of<T, Enumerated...>;
 		};
 		
 	public:

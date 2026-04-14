@@ -150,12 +150,12 @@ namespace kangaru {
 			std::ranges::swap(cache, other.cache);
 		}
 		
-		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
+		template<template<typename> typename NewCacheFrom = CacheFrom, forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
 			requires(not std::is_const_v<std::remove_reference_t<Original>>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
-			-> with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>
+			-> with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, NewCacheFrom>
 		{
-			return with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
+			return with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, NewCacheFrom>{
 				KANGARU5_FWD(new_source),
 				KANGARU5_NO_ADL(ref)(original.cache),
 			};
@@ -226,9 +226,8 @@ namespace kangaru {
 	public:
 		using parent::parent;
 		
-		// TODO: Infer requirement
 		template<forwarded<with_cache> Original, forwarded_source NewSource>
-			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+			requires(stateful_rebindable_wrapping_source<detail::forward_like_t<Original, parent>&&>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
 			-> with_cache<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
 		{
@@ -282,6 +281,7 @@ namespace kangaru {
 		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
 		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_source NewSource>
+			requires(stateful_rebindable_wrapping_source<detail::forward_like_t<Original, Cache>&&>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
 			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>
 		{

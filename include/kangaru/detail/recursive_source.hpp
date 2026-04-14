@@ -308,7 +308,7 @@ KANGARU5_EXPORT namespace kangaru {
 			functions{std::move(functions)...} {}
 		
 		template<injectable T, forwarded<with_function_call> Self>
-			requires(callable_template_1t_returns<T, overloaded_function const&, T, wrapped_source_t<Self>>)
+			requires(callable_template_1t_returns<T, overloaded_function const&, T, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return std::as_const(source.functions).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
@@ -380,7 +380,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<unqualified_object T, forwarded<with_construction_original_passthrough> Self>
 			requires(
 				    not source_of<detail::forward_like_t<Self, Passthrough&&>, T>
-				and callable_template_1t<Construction const&, T, wrapped_source_t<Self>>
+				and callable_template_1t<Construction const&, T, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
@@ -432,7 +432,7 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<unqualified_object T, forwarded<with_construction> Self>
-			requires(callable_template_1t<Construction const&, T, wrapped_source_t<Self>> and not wrapping_source_of<Self, T>)
+			requires(not wrapping_source_of<Self, T> and callable_template_1t<Construction const&, T, fwd_ref_result_t<forwarded_wrapped_source_t<Self>>>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}

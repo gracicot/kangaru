@@ -134,15 +134,14 @@ namespace kangaru {
 		
 		template<typename Self, typename S>
 		static constexpr auto container_source(Self&& self, S&& source) {
-			auto rebound_state = with_cache_asymmetric<
-				fwd_ref_result_t<forwarded_wrapped_source_t<S&&>>,
-				ref_result_t<S&>,
+			auto rebound_state = std::remove_cvref_t<S>::template rebind<
 				detail::polymorphic_container_private::cached_source<
 					detail::forward_like_t<Self, Source>
 				>::template source_for
-			>{
-				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source), KANGARU5_NO_ADL(ref)(source)
-			};
+			>(
+				KANGARU5_FWD(source),
+				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
+			);
 			
 			return with_recursion{
 				with_passthrough{

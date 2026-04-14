@@ -160,12 +160,6 @@ namespace kangaru {
 		and source_of<forwarded_wrapped_source_t<Source>, T>;
 	
 	KANGARU5_EXPORT template<injectable T, source Source>
-		requires (
-			   source_of<Source&, T>
-			or source_of<Source const&, T>
-			or source_of<Source&&, T>
-			or source_of<Source const&&, T>
-		)
 	struct provide_using {
 		template<allows_construction_of<Source> S>
 		explicit constexpr provide_using(S&& source) noexcept : source(KANGARU5_FWD(source)) {}

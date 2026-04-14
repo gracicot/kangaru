@@ -168,7 +168,7 @@ namespace kangaru {
 		)
 	struct provide_using {
 		template<allows_construction_of<Source> S>
-		explicit constexpr provide_using(S&& source) noexcept : source{KANGARU5_FWD(source)} {}
+		explicit constexpr provide_using(S&& source) noexcept : source(KANGARU5_FWD(source)) {}
 		
 		constexpr auto operator()() & -> T requires source_of<Source&, T> {
 			return kangaru::provide<T>(source);

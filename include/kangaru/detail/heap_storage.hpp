@@ -193,11 +193,11 @@ namespace kangaru {
 		explicit constexpr with_heap_storage(S&& source) noexcept
 			requires(
 				std::default_initializable<Storage>
-			) : source{KANGARU5_FWD(source)} {}
+			) : source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_heap_storage(S&& source, Storage storage) noexcept :
-			source{KANGARU5_FWD(source)}, storage{std::move(storage)} {}
+			source(KANGARU5_FWD(source)), storage{std::move(storage)} {}
 		
 		Source source;
 		
@@ -206,11 +206,14 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(std::move(function));
 		}
 		
-		template<forwarded<with_heap_storage> Original, forwarded_function_object ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_heap_storage<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Storage>&>> {
-			return with_heap_storage<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-				KANGARU5_NO_ADL(ref)(original.storage)
+		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
+			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_heap_storage<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>>
+		{
+			return with_heap_storage<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Storage>&>>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(ref)(original.storage),
 			};
 		}
 		

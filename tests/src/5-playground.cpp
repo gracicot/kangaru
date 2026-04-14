@@ -106,13 +106,15 @@ struct with_cache_2 {
 		
 		return *result;
 	}
-	
-	// TODO: properly rebind cache
-	template<kangaru::forwarded<with_cache_2> Original, kangaru::forwarded_function_object ReplaceLeaf>
-	static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_cache_2<kangaru::wrapped_source_rebind_result_t<Original, ReplaceLeaf>, kangaru::ref_result_t<decltype((original.cache))>> {
-		return with_cache_2<kangaru::wrapped_source_rebind_result_t<Original, ReplaceLeaf>, kangaru::ref_result_t<decltype((original.cache))>>{
-			kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-			kangaru::ref(original.cache)
+
+	template<kangaru::forwarded<with_cache_2> Original, kangaru::forwarded_source NewSource>
+		requires(not std::is_const_v<std::remove_reference_t<Original>>)
+	static constexpr auto rebind(Original&& original, NewSource&& new_source)
+		-> with_cache_2<kangaru::deduced_source_type<NewSource>, kangaru::ref_result_t<decltype((original.cache))>>
+	{
+		return with_cache_2<kangaru::deduced_source_type<NewSource>, kangaru::ref_result_t<decltype((original.cache))>>{
+			KANGARU5_FWD(new_source),
+			kangaru::ref(original.cache),
 		};
 	}
 	

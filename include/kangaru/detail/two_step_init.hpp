@@ -60,13 +60,13 @@ KANGARU5_EXPORT namespace kangaru {
 	struct with_two_step_init {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_two_step_init(S&& source, SecondStep) noexcept :
-			source{KANGARU5_FWD(source)} {}
+			source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_two_step_init(S&& source) noexcept requires(
 			std::default_initializable<SecondStep>
 		) :
-			source{KANGARU5_FWD(source)} {}
+			source(KANGARU5_FWD(source)) {}
 		
 		Source source;
 		
@@ -83,11 +83,13 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		template<forwarded<with_two_step_init> Original, forwarded_function_object ReplaceLeaf>
+		template<forwarded<with_two_step_init> Original, forwarded_source NewSource>
 			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>>)
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_two_step_init<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SecondStep> {
-			return with_two_step_init<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SecondStep>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_two_step_init<deduced_source_type<NewSource>, SecondStep>
+		{
+			return with_two_step_init<deduced_source_type<NewSource>, SecondStep>{
+				KANGARU5_FWD(new_source),
 				KANGARU5_FWD(original).second_step
 			};
 		}

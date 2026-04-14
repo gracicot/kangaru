@@ -479,11 +479,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<with_alternative> Original, forwarded_function_object ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) -> with_alternative<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>> {
-			return with_alternative<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative))
+		// TODO: Explore rebind alternative with same leaf
+		template<forwarded<with_alternative> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_alternative<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>
+		{
+			return with_alternative<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative)),
 			};
 		}
 	};
@@ -500,7 +503,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source, injectable Type>
 	struct filter_source {
 		template<allows_construction_of<Source> S>
-		constexpr filter_source(S&& source) : source{KANGARU5_FWD(source)} {}
+		constexpr filter_source(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<injectable T, forwarded<filter_source> Self>
 			requires(different_from<Type, T> and wrapping_source_of<Self, T>)
@@ -514,10 +517,10 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source, std::default_initializable Filter>
 	struct filter_if_source {
 		template<allows_construction_of<Source> S>
-		explicit constexpr filter_if_source(S&& source) : source{KANGARU5_FWD(source)} {}
+		explicit constexpr filter_if_source(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>
-		constexpr filter_if_source(S&& source, Filter) : source{KANGARU5_FWD(source)} {}
+		constexpr filter_if_source(S&& source, Filter) : source(KANGARU5_FWD(source)) {}
 		
 		template<injectable T, forwarded<filter_if_source> Self>
 			requires(Filter{}.template operator()<T>() and source_of<detail::forward_like_t<Self, Source>, T>)
@@ -657,16 +660,6 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source_for_t));
 		}
 		
-		// TODO: Report clang issue. We shouldn't need to define this function. detail::source_rebind::rebind_wrapper is broken?
-		template<forwarded<with_provide_using_source> Original, forwarded_source ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) ->
-			with_provide_using_source<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SourceFor>
-		{
-			return with_provide_using_source<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, SourceFor> {
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-			};
-		}
-		
 		Source source;
 	};
 	
@@ -678,7 +671,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source>
 	struct sealed_source {
 		template<allows_construction_of<Source> S>
-		explicit constexpr sealed_source(S&& source) : source{KANGARU5_FWD(source)} {}
+		explicit constexpr sealed_source(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<injectable T, forwarded<sealed_source> Self> requires source_of<detail::forward_like_t<Self, Source&&>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -726,12 +719,12 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<forwarded<enumerated_source_of> Original, forwarded_function_object ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) ->
-			enumerated_source_of<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Types...>
+		template<forwarded<enumerated_source_of> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> enumerated_source_of<deduced_source_type<NewSource>, Types...>
 		{
-			return enumerated_source_of<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Types...> {
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+			return enumerated_source_of<deduced_source_type<NewSource>, Types...>{
+				KANGARU5_FWD(new_source),
 			};
 		}
 		

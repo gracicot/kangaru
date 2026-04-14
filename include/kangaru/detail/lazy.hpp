@@ -15,7 +15,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<injectable T, source_of<T> Source>
 	struct lazy {
 		template<allows_construction_of<Source> S>
-		explicit constexpr lazy(S&& source) noexcept : source{KANGARU5_FWD(source)} {}
+		explicit constexpr lazy(S&& source) noexcept : source(KANGARU5_FWD(source)) {}
 		
 		constexpr auto operator*() & -> T {
 			ensure_initialized();
@@ -53,7 +53,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source, injectable Type>
 	struct with_lazy_evaluation_of {
 		template<allows_construction_of<Source> S>
-		explicit constexpr with_lazy_evaluation_of(S&& source) noexcept : source{KANGARU5_FWD(source)} {}
+		explicit constexpr with_lazy_evaluation_of(S&& source) noexcept : source(KANGARU5_FWD(source)) {}
 		
 		template<forwarded<with_lazy_evaluation_of> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> Type {

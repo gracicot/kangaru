@@ -104,11 +104,11 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source Source, template<source_ref> typename Deducer, std::size_t N>
 	struct basic_fixed_injector {
-		explicit constexpr basic_fixed_injector(Source source) : source{std::move(source)} {}
+		explicit constexpr basic_fixed_injector(Source source) : source(std::move(source)) {}
 		
 		template<allows_construction_of<Source> S>
 			requires(not std::same_as<std::remove_cvref_t<S>, Source>)
-		explicit constexpr basic_fixed_injector(S&& source) : source{KANGARU5_FWD(source)} {}
+		explicit constexpr basic_fixed_injector(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		constexpr auto operator()(auto&& function) & -> decltype(auto)
 			requires detail::injector_private::callable_with_deducer_sequence_v<decltype(function), Deducer<Source&>, std::make_index_sequence<N>>
@@ -198,11 +198,11 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source Source, template<source_ref> typename Deducer, std::size_t max>
 	struct basic_spread_injector {
-		explicit constexpr basic_spread_injector(Source source) : source{std::move(source)} {}
+		explicit constexpr basic_spread_injector(Source source) : source(std::move(source)) {}
 		
 		template<allows_construction_of<Source> S>
 			requires(not std::same_as<std::remove_cvref_t<S>, Source>)
-		explicit constexpr basic_spread_injector(S&& source) : source{KANGARU5_FWD(source)} {}
+		explicit constexpr basic_spread_injector(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::spread_sequence_t<F, Deducer<Source&>, max>>
 		constexpr auto operator()(F&& function) & -> decltype(auto) requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {

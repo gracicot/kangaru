@@ -89,7 +89,7 @@ namespace kangaru::detail::recursive_source_private {
 	template<source Source, function_object... Functions>
 	struct with_function_call_experiment {
 		explicit(sizeof...(Functions) == 0) constexpr with_function_call_experiment(Source source, Functions... functions) :
-			source{std::move(source)}, functions{std::move(functions)...} {}
+			source(std::move(source)), functions{std::move(functions)...} {}
 		
 		template<kangaru::source T, forwarded<with_function_call_experiment> Self> requires((... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0)) == 1)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -103,24 +103,19 @@ namespace kangaru::detail::recursive_source_private {
 		)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T = delete;
 		
-		template<forwarded<with_function_call_experiment> Original, forwarded_source ReplaceLeaf>
-			requires(
-				std::constructible_from<
-					std::tuple<Functions...>,
-					detail::forward_like_t<Original, std::tuple<Functions...>>
-				>
-			)
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept ->
-			with_function_call_experiment<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>
+		template<forwarded<with_function_call_experiment> Original, forwarded_source NewSource>
+			requires(... and std::copy_constructible<Functions>)
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_function_call_experiment<deduced_source_type<NewSource>, Functions...>
 		{
 			return std::apply(
-				[&](auto&&... functions) {
-					return with_function_call_experiment<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...> {
-						kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-						KANGARU5_FWD(functions)...
+				[&](Functions const&... functions) {
+					return with_function_call_experiment<deduced_source_type<NewSource>, Functions...> {
+						KANGARU5_FWD(new_source),
+						functions...,
 					};
 				},
-				KANGARU5_FWD(original).functions
+				original.functions
 			);
 		}
 		
@@ -305,11 +300,11 @@ KANGARU5_EXPORT namespace kangaru {
 		explicit constexpr with_function_call(S&& source) noexcept requires(
 			sizeof...(Functions) > 0 and (true and ... and std::default_initializable<Functions>)
 		) :
-			source{KANGARU5_FWD(source)} {}
+			source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_function_call(S&& source, Functions... functions) noexcept :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			functions{std::move(functions)...} {}
 		
 		template<injectable T, forwarded<with_function_call> Self>
@@ -318,14 +313,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.functions).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_function_call> Original, forwarded_source ReplaceLeaf>
-			requires std::constructible_from<overloaded_function, detail::forward_like_t<Original, overloaded_function>>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
-			-> with_function_call<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>
+		template<forwarded<with_function_call> Original, forwarded_source NewSource>
+			requires(std::copy_constructible<overloaded_function>)
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_function_call<deduced_source_type<NewSource>, Functions...>
 		{
-			return with_function_call<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, Functions...>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-				KANGARU5_FWD(original).functions,
+			return with_function_call<deduced_source_type<NewSource>, Functions...>{
+				KANGARU5_FWD(new_source),
+				std::as_const(original).functions,
 			};
 		}
 		
@@ -337,7 +332,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_function_call(S&& source, overloaded_function functions) noexcept :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			functions{std::move(functions)} {}
 		
 		overloaded_function functions;
@@ -357,20 +352,20 @@ KANGARU5_EXPORT namespace kangaru {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_construction_original_passthrough(S&& source) noexcept
 				requires std::default_initializable<Construction> :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			passthrough{},
 			construction{} {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_construction_original_passthrough(S&& source, Passthrough passthrough) noexcept
 				requires(std::default_initializable<Passthrough> and std::default_initializable<Construction>) :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			passthrough{std::move(passthrough)},
 			construction{std::move(construction)} {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_construction_original_passthrough(S&& source, Passthrough passthrough, Construction construction) noexcept :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			passthrough{std::move(passthrough)},
 			construction{std::move(construction)} {}
 		
@@ -391,20 +386,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_construction_original_passthrough> Original, forwarded_source ReplaceLeaf>
-			requires(
-				std::constructible_from<
-					Construction,
-					detail::forward_like_t<Original, Construction>
-				>
-			)
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>
+		template<forwarded<with_construction_original_passthrough> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_construction_original_passthrough<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&&>, Construction>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&>, Construction>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+			return with_construction_original_passthrough<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Passthrough>&&>, Construction>{
+				KANGARU5_FWD(new_source),
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(original).passthrough),
-				KANGARU5_FWD(original).construction
+				std::as_const(original).construction,
 			};
 		}
 		
@@ -427,11 +416,11 @@ KANGARU5_EXPORT namespace kangaru {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_construction(S&& source) noexcept
 			requires std::default_initializable<Construction> :
-			source{KANGARU5_FWD(source)} {}
+			source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_construction(S&& source, Construction construction) noexcept :
-			source{KANGARU5_FWD(source)},
+			source(KANGARU5_FWD(source)),
 			construction{std::move(construction)} {}
 		
 		template<injectable T, forwarded<with_construction> Self>
@@ -448,20 +437,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return std::as_const(source.construction).template operator()<T>(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source));
 		}
 		
-		template<forwarded<with_construction> Original, forwarded_function_object ReplaceLeaf>
-			requires(
-				std::constructible_from<
-					Construction,
-					detail::forward_like_t<Original, Construction>
-				>
-			)
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
-			-> with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>
+		template<forwarded<with_construction> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_construction_original_passthrough<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&&>, Construction>
 		{
-			return with_construction_original_passthrough<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&>, Construction>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
+			return with_construction_original_passthrough<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Source>&&>, Construction>{
+				KANGARU5_FWD(new_source),
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(original).source),
-				KANGARU5_FWD(original).construction
+				std::as_const(original).construction,
 			};
 		}
 		

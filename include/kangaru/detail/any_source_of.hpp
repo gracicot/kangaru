@@ -113,7 +113,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		explicit(false) constexpr any_source_of(Source&& source) :
-			base{new Source{KANGARU5_FWD(source)}} {}
+			base{new Source(KANGARU5_FWD(source))} {}
 		
 		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
 		constexpr auto operator=(Source&& rhs) -> any_source_of& {

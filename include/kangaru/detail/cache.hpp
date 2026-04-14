@@ -48,11 +48,11 @@ namespace kangaru {
 		template<allows_construction_of<Source> S>
 			requires(std::default_initializable<cache_type>)
 		explicit constexpr with_cache_asymmetric(S&& source) noexcept :
-			source{KANGARU5_FWD(source)}, cache{} {}
+			source(KANGARU5_FWD(source)), cache{} {}
 		
 		template<allows_construction_of<Source> S>
 		constexpr with_cache_asymmetric(S&& source, cache_type cache) noexcept :
-			source{KANGARU5_FWD(source)}, cache{std::move(cache)} {}
+			source(KANGARU5_FWD(source)), cache{std::move(cache)} {}
 		
 		using key_type = typename unwrapped_cache_type::key_type;
 		using value_type = typename unwrapped_cache_type::value_type;
@@ -150,11 +150,14 @@ namespace kangaru {
 			std::ranges::swap(cache, other.cache);
 		}
 		
-		template<forwarded<with_cache_asymmetric> Original, forwarded_function_object ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept -> with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom> {
-			return with_cache_asymmetric<wrapped_source_rebind_result_t<Original, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
-				kangaru::rebind(KANGARU5_FWD(original).source, KANGARU5_FWD(replace_leaf)),
-				KANGARU5_NO_ADL(ref)(original.cache)
+		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
+			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>
+		{
+			return with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
+				KANGARU5_FWD(new_source),
+				KANGARU5_NO_ADL(ref)(original.cache),
 			};
 		}
 		
@@ -223,13 +226,14 @@ namespace kangaru {
 	public:
 		using parent::parent;
 		
-		// TODO: Understand why rebind is detected to be callable while it shouldn't
-		template<forwarded<with_cache> Original, forwarded_function_object ReplaceLeaf>
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
-			-> with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
+		// TODO: Infer requirement
+		template<forwarded<with_cache> Original, forwarded_source NewSource>
+			requires(not std::is_const_v<std::remove_reference_t<Original>>)
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_cache<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>>
 		{
-			return with_cache<wrapped_source_rebind_result_t<detail::forward_like_t<Original, parent>, ReplaceLeaf>, ref_result_t<detail::forward_like_t<Original, Cache>&>>{
-				parent::rebind(static_cast<detail::forward_like_t<Original, parent>&&>(original), KANGARU5_FWD(replace_leaf))
+			return with_cache<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>>{
+				parent::rebind(static_cast<detail::forward_like_t<Original, parent>&&>(original), KANGARU5_FWD(new_source)),
 			};
 		}
 	};
@@ -254,7 +258,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<
 		cache_map Cache,
-		function_object SecondStep
+		second_step_function SecondStep
 	> requires(source<Cache>)
 	struct cache_with_two_step_init_on_insert final : Cache {
 	private:
@@ -277,14 +281,13 @@ namespace kangaru {
 		template<allows_construction_of<Cache> C>
 		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
-		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_function_object ReplaceLeaf>
-			requires(std::constructible_from<SecondStep, detail::forward_like_t<Original, SecondStep>>)
-		static constexpr auto rebind(Original&& original, ReplaceLeaf&& replace_leaf) noexcept
-			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, ReplaceLeaf>, SecondStep>
+		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>
 		{
-			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>, ReplaceLeaf>, SecondStep>{
-				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(replace_leaf)),
-				KANGARU5_FWD(original).second_step,
+			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>{
+				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(new_source)),
+				std::as_const(original).second_step,
 			};
 		}
 		

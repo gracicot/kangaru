@@ -106,18 +106,29 @@ KANGARU5_EXPORT namespace kangaru {
 		template<callable Function>
 			requires(
 				    not_self<detail::call_result_t<Function>, any_source_of>
-				and ... and source_of<detail::call_result_t<Function>, Types>
+				and kangaru::source<detail::call_result_t<Function>>
+				and (... and source_of<detail::call_result_t<Function>, Types>)
 			)
 		explicit(false) constexpr any_source_of(in_place_construct<Function> source) noexcept :
 			base{new detail::call_result_t<Function>(std::move(source))} {}
 		
-		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
+		template<not_self<any_source_of> Source>
+			requires(
+				    forwarded_source<Source>
+				and std::constructible_from<std::decay_t<Source>, Source>
+				and (... and source_of<std::remove_cvref_t<Source>&, Types>)
+			)
 		explicit(false) constexpr any_source_of(Source&& source) :
-			base{new Source(KANGARU5_FWD(source))} {}
+			base{new std::decay_t<Source>(KANGARU5_FWD(source))} {}
 		
-		template<not_self<any_source_of> Source> requires(forwarded_source<Source> and ... and source_of<Source&, Types>)
+		template<not_self<any_source_of> Source>
+			requires(
+				    forwarded_source<Source>
+				and std::constructible_from<std::decay_t<Source>, Source>
+				and (... and source_of<std::remove_cvref_t<Source>&, Types>)
+			)
 		constexpr auto operator=(Source&& rhs) -> any_source_of& {
-			auto s = std::make_unique<Source>(KANGARU5_FWD(rhs));
+			auto s = std::make_unique<std::decay_t<Source>>(KANGARU5_FWD(rhs));
 			if (source) {
 				vtable().destroy(source);
 			}

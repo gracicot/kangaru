@@ -184,10 +184,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<unqualified_object T>
 	struct object_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<object_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr object_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires(constructor_callable<T, Args&&...>)
+		template<typename... Args> requires((... and not_self<Args, object_source>) and constructor_callable<T, Args&&...>)
 		constexpr object_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<object_source> auto&& source) -> T {
@@ -215,10 +215,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object T>
 	struct rvalue_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<rvalue_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr rvalue_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires(constructor_callable<T, Args&&...>)
+		template<typename... Args> requires((... and not_self<Args, rvalue_source>) and constructor_callable<T, Args&&...>)
 		constexpr rvalue_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> T&& {
@@ -250,10 +250,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object T>
 	struct reference_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<reference_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr reference_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires constructor_callable<T, Args&&...>
+		template<typename... Args> requires((... and not_self<Args, reference_source>) and constructor_callable<T, Args&&...>)
 		constexpr reference_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> T& {
@@ -285,7 +285,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object T>
 	struct shared_pointer_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<shared_pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr shared_pointer_source(From&& object) :
 			object{
 				std::make_shared<T>(
@@ -293,7 +293,7 @@ KANGARU5_EXPORT namespace kangaru {
 				)
 			} {}
 		
-		template<typename... Args> requires constructor_callable<T, Args&&...>
+		template<typename... Args> requires((... and not_self<Args, shared_pointer_source>) and constructor_callable<T, Args&&...>)
 		constexpr shared_pointer_source(Args&&... args) :
 			object{
 				std::make_shared<T>(
@@ -355,10 +355,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object Base, std::derived_from<Base> T>
 	struct derived_reference_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<derived_reference_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr derived_reference_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires constructor_callable<T, Args&&...>
+		template<typename... Args> requires((... and not_self<Args, derived_reference_source>) and constructor_callable<T, Args&&...>)
 		constexpr derived_reference_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> Base& {
@@ -387,10 +387,10 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object Base, std::derived_from<Base> T>
 	struct derived_pointer_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<derived_pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr derived_pointer_source(From&& object) : object(KANGARU5_FWD(object)) {}
 		
-		template<typename... Args> requires(constructor_callable<T, Args&&...>)
+		template<typename... Args> requires((... and not_self<Args, derived_pointer_source>) and constructor_callable<T, Args&&...>)
 		constexpr derived_pointer_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
 		
 		constexpr auto provide() & -> Base* {
@@ -423,7 +423,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<object Base, std::derived_from<Base> T>
 	struct derived_shared_pointer_source {
-		template<typename From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		template<not_self<derived_shared_pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr derived_shared_pointer_source(From&& object) :
 			object{
 				std::make_shared<T>(
@@ -431,7 +431,7 @@ KANGARU5_EXPORT namespace kangaru {
 				)
 			} {}
 		
-		template<typename... Args> requires(constructor_callable<T, Args&&...>)
+		template<typename... Args> requires((... and not_self<Args, derived_shared_pointer_source>) and constructor_callable<T, Args&&...>)
 		constexpr derived_shared_pointer_source(Args&&... args) :
 			object{
 				std::make_shared<T>(

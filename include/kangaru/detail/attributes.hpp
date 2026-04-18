@@ -61,6 +61,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<weak_injectable T>
 	inline constexpr auto allow_empty_injection_v = detail::attribute_private::evaluate_attribute_t<allow_empty_injection, T>::value;
 	
+	// Consider having one type by default and a special list of types if necessary.
 	template<typename T>
 	struct overrides_types_in_cache {
 		template<weak_injectable A> requires(std::same_as<T, A>)

@@ -1,12 +1,8 @@
 .*
 build
-build-*
-*.kdev4
 !.gitignore
 !.gitmodules
 !.editorconfig
-!.travis.yml
-!.appveyor.yml
 !.github
 !.envrc
 CMakeSettings.json

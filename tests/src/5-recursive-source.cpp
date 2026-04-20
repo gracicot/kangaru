@@ -105,7 +105,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 							increment_source{}
 						)
 					),
-					std::unordered_map<std::size_t, void*>{}
+					std::unordered_map<kangaru::type_id, void*>{}
 				)
 			)
 		};
@@ -123,7 +123,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 								increment_source{.n = 3} // just a source of int
 							)
 						),
-						std::unordered_map<std::size_t, void*>{}
+						std::unordered_map<kangaru::type_id, void*>{}
 					)
 				)
 			)
@@ -149,7 +149,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 											increment_source{.n = 3} // just a source of int
 										)
 									),
-									std::unordered_map<std::size_t, void*>{}
+									std::unordered_map<kangaru::type_id, void*>{}
 								)
 							)
 						)

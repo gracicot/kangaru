@@ -31,7 +31,7 @@ namespace kangaru::detail::murmur {
 	 * Theorically slightly slower since it only does aligned reads.
 	 */
 	KANGARU5_EXPORT template<byte_like T>
-	inline constexpr auto murmur64a(std::span<T const> const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	inline consteval auto murmur64a(std::span<T const> const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		auto constexpr m = std::uint64_t{0xc6a4a7935bd1e995ull};
 		auto constexpr r = int{47};
 		
@@ -80,21 +80,21 @@ namespace kangaru::detail::murmur {
 		return static_cast<hash_t>(hash);
 	}
 	
-	KANGARU5_EXPORT inline constexpr auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	KANGARU5_EXPORT inline consteval auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<char const>{buf.data(), buf.size()}, seed);
 	}
 	
-	KANGARU5_EXPORT inline constexpr auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	KANGARU5_EXPORT inline consteval auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<char8_t const>{buf.data(), buf.size()}, seed);
 	}
 	
 	KANGARU5_EXPORT template<byte_like T>
-	inline constexpr auto murmur64a(std::vector<T> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	inline consteval auto murmur64a(std::vector<T> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span{buf}, seed);
 	}
 	
 	KANGARU5_EXPORT template<byte_like T, std::size_t n>
-	inline constexpr auto murmur64a(std::array<T, n> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	inline consteval auto murmur64a(std::array<T, n> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<T const>{buf.data(), n}, seed);
 	}
 }

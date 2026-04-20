@@ -46,7 +46,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		);
 		auto runtime_source = kangaru::make_source_with_cache(
 			kangaru::make_source_with_heap_storage(source),
-			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
+			kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, void*>>{}
 		);
 		
 		CHECK(kangaru::provide<Derived*>(runtime_source)->get() == 3);
@@ -60,7 +60,7 @@ TEST_CASE("Runtime source will cache sources results", "[deducer]") {
 		);
 		auto runtime_source = kangaru::make_source_with_cache(
 			kangaru::make_source_with_heap_storage(source),
-			kangaru::polymorphic_map<std::unordered_map<std::size_t, void*>>{}
+			kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, void*>>{}
 		);
 		
 		CHECK(kangaru::provide<Base*>(runtime_source)->get() == 0);

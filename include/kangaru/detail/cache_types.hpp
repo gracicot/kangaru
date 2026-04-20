@@ -20,16 +20,12 @@
 
 namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
-	concept cache_map = requires(T map, detail::ctti::type_id_for_result<T> id) {
+	concept cache_map = requires(T map) {
 		{ map.begin() } -> std::forward_iterator;
 		{ map.end() } -> std::forward_iterator;
 		{ std::as_const(map).begin() } -> std::forward_iterator;
 		{ std::as_const(map).end() } -> std::forward_iterator;
 		{ map.insert(map.begin(), map.end()) };
-		{ map.find(id) } -> std::same_as<decltype(map.begin())>;
-		{ std::as_const(map).find(id) } -> std::same_as<decltype(std::as_const(map).begin())>;
-		{ std::as_const(map).contains(id) } -> std::same_as<bool>;
-		{ map.erase(id) };
 		{ map.clear() };
 		{ std::as_const(map).empty() } -> std::same_as<bool>;
 		{ std::as_const(map).size() } -> std::same_as<std::size_t>;
@@ -50,7 +46,7 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
-	static_assert(cache_map<std::unordered_map<std::size_t, void*>>);
+	static_assert(cache_map<std::unordered_map<type_id, void*>>);
 	
 	KANGARU5_EXPORT template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
@@ -107,14 +103,14 @@ namespace kangaru {
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U> const& value) -> std::pair<iterator, bool> {
+		constexpr auto insert(std::pair<static_type_id<T>, U> const& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
 			// TODO: Should we cast to std::pair<key_type, T> first?
 			return map.insert(static_cast<value_type>(value));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, U>&& value) -> std::pair<iterator, bool> {
+		constexpr auto insert(std::pair<static_type_id<T>, U>&& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
 			// TODO: Should we cast to std::pair<key_type, T> first?
 			return map.insert(static_cast<value_type>(value));
@@ -134,13 +130,13 @@ namespace kangaru {
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& k, U&& obj) {
+		constexpr auto insert_or_assign(static_type_id<T> const& k, U&& obj) {
 			insert_or_assign_overrides(obj);
 			return map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert_or_assign(const_iterator hint, detail::ctti::type_id_for_result<T> const& k, U&& obj) {
+		constexpr auto insert_or_assign(const_iterator hint, static_type_id<T> const& k, U&& obj) {
 			insert_or_assign_overrides(obj);
 			return map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
@@ -154,7 +150,7 @@ namespace kangaru {
 		}
 		
 		template<injectable T>
-		constexpr auto erase(detail::ctti::type_id_for_result<T> id) -> size_type {
+		constexpr auto erase(static_type_id<T> id) -> size_type {
 			auto const overrides = remove_overrides<T>();
 			return overrides + map.erase(id);
 		}
@@ -175,24 +171,12 @@ namespace kangaru {
 			return map.find(key);
 		}
 		
-		template<typename K> requires(
-			    not std::same_as<key_type, K>
-			and requires{
-				typename hasher::is_transparent;
-				typename key_equal::is_transparent;
-			}
-		)
+		template<typename K> requires(requires(Map& map, K const& key) { { map.find(key) } -> std::same_as<iterator>; })
 		constexpr auto find(K const& key) -> iterator {
 			return map.find(key);
 		}
 		
-		template<typename K> requires(
-			    not std::same_as<key_type, K>
-			and requires{
-				typename hasher::is_transparent;
-				typename key_equal::is_transparent;
-			}
-		)
+		template<typename K> requires(requires(Map const& map, K const& key) { { map.find(key) } -> std::same_as<const_iterator>; })
 		constexpr auto find(K const& key) const -> const_iterator {
 			return map.find(key);
 		}
@@ -220,7 +204,7 @@ namespace kangaru {
 				[[maybe_unused]]
 				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override>();
+					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
 					map.insert(std::pair{id, static_cast<override>(value)});
 				};
 				(for_each(s, value), ...);
@@ -233,7 +217,7 @@ namespace kangaru {
 			std::apply([this, &value](auto... s) {
 				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override>();
+					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
 					map.insert_or_assign(id, static_cast<override>(value));
 				};
 				(for_each(s, value), ...);
@@ -247,7 +231,7 @@ namespace kangaru {
 			std::apply([this, &n](auto... s) {
 				auto const for_each = [this, &n](auto i) {
 					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = detail::ctti::type_id_for<override>();
+					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
 					n += map.erase(id);
 				};
 				(for_each(s), ...);
@@ -258,7 +242,7 @@ namespace kangaru {
 		Map map;
 	};
 	
-	static_assert(cache_map<polymorphic_map<std::unordered_map<std::size_t, void*>>>);
+	static_assert(cache_map<polymorphic_map<std::unordered_map<type_id, void*>>>);
 } // namespace kangaru
 
 #include "undef.hpp"

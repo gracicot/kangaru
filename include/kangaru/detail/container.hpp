@@ -18,7 +18,7 @@
 KANGARU5_EXPORT namespace kangaru {
 	template<
 		rebindable_source Source = none_source,
-		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, void*>,
+		dereferenceable_cache_map Cache = std::unordered_map<type_id, void*>,
 		dereferenceable_heap_storage Storage = default_heap_storage,
 		construction Construction = exhaustive_construction
 	>
@@ -155,14 +155,14 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T> requires(source_of<container&, T>)
 		constexpr auto has_in_cache() -> bool {
-			return state.contains(detail::ctti::type_id_for<typename mapping_with_base_source<Source>::template source_for<T>*>());
+			return state.contains(KANGARU5_NO_ADL(type_id_for<typename mapping_with_base_source<Source>::template source_for<T>*>)());
 		}
 		
 		template<injectable T, source_of<T> S>
 			requires(source_of<container&, T> and std::same_as<std::remove_cvref_t<S>, typename mapping_with_base_source<Source>::template source_for<T>>)
 		constexpr auto replace(S&& source) -> T {
 			using contained_type = std::remove_cvref_t<S>;
-			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_type*>)();
 			
 			auto& heap_storage = state.source;
 			auto& cache = state;
@@ -184,7 +184,7 @@ KANGARU5_EXPORT namespace kangaru {
 			)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
 			using contained_type = detail::call_result_t<F>;
-			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_type*>)();
 			
 			auto& heap_storage = state.source;
 			auto& cache = state;
@@ -200,7 +200,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T>
 		constexpr void erase() {
 			using contained_type = std::remove_cvref_t<T>;
-			constexpr auto id = detail::ctti::type_id_for<contained_type*>();
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_type*>)();
 			state.erase(id);
 		}
 	};

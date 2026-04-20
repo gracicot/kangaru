@@ -34,7 +34,7 @@ namespace kangaru {
 	KANGARU5_EXPORT
 	template<
 		source Source,
-		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, std::any>,
+		dereferenceable_cache_map Cache = std::unordered_map<type_id, std::any>,
 		template<typename> typename CacheFrom = detail::type_identity
 	>
 	struct with_cache_asymmetric {
@@ -171,7 +171,7 @@ namespace kangaru {
 				and wrapping_source_of<Self, CacheFrom<T>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			constexpr auto id = detail::ctti::type_id_for<T>();
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<T>)();
 			auto const it = source.find(id);
 			
 			if (it == source.end()) {
@@ -206,12 +206,12 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
-		return with_cache_asymmetric<deduced_source_type<Source>, std::unordered_map<std::size_t, std::any>, CacheFrom>{KANGARU5_FWD(source)};
+		return with_cache_asymmetric<deduced_source_type<Source>, std::unordered_map<type_id, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	
 	KANGARU5_EXPORT template<
 		source Source,
-		dereferenceable_cache_map Cache = std::unordered_map<std::size_t, std::any>
+		dereferenceable_cache_map Cache = std::unordered_map<type_id, std::any>
 	>
 	struct with_cache : with_cache_asymmetric<Source, Cache> {
 	private:
@@ -294,13 +294,13 @@ namespace kangaru {
 		// TODO: properly constraints. To do so, we must test circular dependencies.
 		//       If circular dependency cannot be checked in the signature, we must do static_assert
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, Value>&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
+		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value.second);
 			return Cache::insert(std::move(value));
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<detail::ctti::type_id_for_result<T>, Value> const& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
+		constexpr auto insert(std::pair<static_type_id<T>, Value> const& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value.second);
 			return Cache::insert(value);
 		}
@@ -311,7 +311,7 @@ namespace kangaru {
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert_or_assign(detail::ctti::type_id_for_result<T> const& key, Value&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }) {
+		constexpr auto insert_or_assign(static_type_id<T> const& key, Value&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value);
 			return Cache::insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}

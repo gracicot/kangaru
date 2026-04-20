@@ -18,9 +18,7 @@ and we value sharing knowledge between contributors of this project.
 Contributors are responsible to understand code they submit to PRs. We do not allow LLMs impersonating humans, and all
 text generated using an LLM has to be disclosed as such, even if used for translation purpose.
 
-At the moment, we do not allow using LLMs for generating code, test or documentation. Using LLMs to debug or review
-contributions is at discretion of the contributor. They can sometimes be helpful to decipher large compiler error
-output for example.
+At the moment, we do not allow using LLMs for generating code, tests or documentation.
 
 ## Setup
 

@@ -8,6 +8,7 @@
 #include <concepts>
 #include <string_view>
 #include <vector>
+#include <array>
 #endif
 
 #include "define.hpp"

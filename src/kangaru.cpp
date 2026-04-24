@@ -1,5 +1,6 @@
 module;
 
+#include <array>
 #include <exception>
 #include <type_traits>
 #include <cstddef>

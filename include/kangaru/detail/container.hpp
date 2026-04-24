@@ -79,6 +79,11 @@ KANGARU5_EXPORT namespace kangaru {
 			Cache
 		>;
 		
+		using unwrapped_cache = std::remove_cvref_t<maybe_unwrap_result_t<Cache>>;
+		
+		template<injectable T>
+		using contained_mapped_type = typename mapping_with_base_source<Source>::template source_for<T>;
+		
 		state_type state;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS
@@ -104,7 +109,7 @@ KANGARU5_EXPORT namespace kangaru {
 									>::template source_for
 								>)(
 									with_dereference{
-										cache_with_two_step_init_on_insert{
+										cache_with_two_step_init{
 											std::move(rebound_state),
 											call_second_step_on_dereference{
 												call_second_step_from_attribute_on_prvalue{},
@@ -153,15 +158,23 @@ KANGARU5_EXPORT namespace kangaru {
 			};
 		}
 		
-		template<injectable T> requires(source_of<container&, T>)
+		template<injectable T>
+			requires(
+				    cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>
+				and source_of<container&, T>
+			)
 		constexpr auto has_in_cache() -> bool {
-			return state.contains(KANGARU5_NO_ADL(type_id_for<typename mapping_with_base_source<Source>::template source_for<T>*>)());
+			return state.contains(KANGARU5_NO_ADL(type_id_for<contained_mapped_type<T>*>)());
 		}
 		
 		template<injectable T, source_of<T> S>
-			requires(source_of<container&, T> and std::same_as<std::remove_cvref_t<S>, typename mapping_with_base_source<Source>::template source_for<T>>)
+			requires(
+				    std::same_as<std::remove_cvref_t<S>, contained_mapped_type<T>>
+				and cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>
+				and source_of<container&, T>
+			)
 		constexpr auto replace(S&& source) -> T {
-			using contained_type = std::remove_cvref_t<S>;
+			using contained_type = contained_mapped_type<T>;
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_type*>)();
 			
 			auto& heap_storage = state.source;
@@ -179,8 +192,9 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, callable F>
 			requires(
-				source_of<container&, T>
-				and std::same_as<detail::call_result_t<F>, typename mapping_with_base_source<Source>::template source_for<T>>
+				    std::same_as<detail::call_result_t<F>, contained_mapped_type<T>>
+				and cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>
+				and source_of<container&, T>
 			)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
 			using contained_type = detail::call_result_t<F>;
@@ -198,9 +212,9 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<injectable T>
+			requires(cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>)
 		constexpr void erase() {
-			using contained_type = std::remove_cvref_t<T>;
-			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_type*>)();
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_mapped_type<T>*>)();
 			state.erase(id);
 		}
 	};

@@ -1,5 +1,5 @@
-#ifndef KANGARU5_DETAIL_CTTI_HPP
-#define KANGARU5_DETAIL_CTTI_HPP
+#ifndef KANGARU5_DETAIL_TYPE_ID_HPP
+#define KANGARU5_DETAIL_TYPE_ID_HPP
 
 #include "concepts.hpp"
 #include "murmur.hpp"
@@ -12,7 +12,7 @@
 
 #include "define.hpp"
 
-namespace kangaru::detail::ctti_private {
+namespace kangaru::detail::type_id_private {
 	template<typename T>
 	inline consteval auto raw_typed_signature() -> std::string_view {
 		return KANGARU5_FUNCTION_SIGNATURE;
@@ -40,23 +40,22 @@ namespace kangaru::detail::ctti_private {
 		
 		return signature_prefix_length;
 	}
+	
+	struct key {};
 }
 
 namespace kangaru {
 	template<typename T>
 	inline consteval auto type_name() -> std::string_view {
-		auto const sig_prefix_trimmed = detail::ctti_private::raw_typed_signature<T>().substr(detail::ctti_private::type_name_prefix_length<T>());
+		auto const sig_prefix_trimmed = detail::type_id_private::raw_typed_signature<T>().substr(
+			detail::type_id_private::type_name_prefix_length<T>()
+		);
+		
 		return sig_prefix_trimmed.substr(
 			0,
-			sig_prefix_trimmed.size() - detail::ctti_private::signature_postfix_length
+			sig_prefix_trimmed.size() - detail::type_id_private::signature_postfix_length
 		);
 	}
-	
-	struct type_id {
-		std::size_t hash;
-		std::string_view name;
-		friend constexpr auto operator<=>(type_id const&, type_id const&) = default;
-	};
 	
 	template<typename T>
 	struct static_type_id {
@@ -70,12 +69,28 @@ namespace kangaru {
 			return KANGARU5_NO_ADL(type_name<T>)() <=> KANGARU5_NO_ADL(type_name<U>)();
 		}
 		
-		explicit(false) constexpr operator type_id() const {
-			return type_id{
-				.hash = detail::murmur::murmur64a(KANGARU5_NO_ADL(type_name<T>)()),
-				.name = KANGARU5_NO_ADL(type_name<T>)(),
-			};
+	};
+	
+	struct type_id {
+		template<typename T>
+		explicit(false) constexpr type_id(static_type_id<T> const&) :
+			hash{detail::murmur::murmur64a(KANGARU5_NO_ADL(type_name<T>)())},
+			name{KANGARU5_NO_ADL(type_name<T>)()} {}
+		
+	private:
+		std::size_t hash;
+		std::string_view name;
+		
+		friend constexpr auto operator==(type_id const& lhs, type_id const& rhs) -> bool {
+			return lhs.hash == rhs.hash and lhs.name == rhs.name;
 		}
+		
+		friend constexpr auto operator<=>(type_id const& lhs, type_id const& rhs) -> std::strong_ordering {
+			// This is still strong ordering, since hash is always derivated from name
+			return lhs.name <=> rhs.name;
+		}
+		
+		friend std::hash<type_id>;
 	};
 	
 	template<typename T>
@@ -87,7 +102,7 @@ namespace kangaru {
 namespace std {
 	template<>
 	struct hash<::kangaru::type_id> {
-		inline constexpr auto operator()(::kangaru::type_id const& type) const -> std::size_t {
+		inline constexpr auto operator()(::kangaru::type_id const& type) const noexcept -> std::size_t {
 			return type.hash;
 		}
 	};
@@ -95,4 +110,4 @@ namespace std {
 
 #include "undef.hpp"
 
-#endif // KANGARU5_DETAIL_CTTI_HPP
+#endif // KANGARU5_DETAIL_TYPE_ID_HPP

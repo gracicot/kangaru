@@ -50,7 +50,6 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/constructor.hpp
 		include/kangaru/detail/container.hpp
 		include/kangaru/detail/container_common.hpp
-		include/kangaru/detail/ctti.hpp
 		include/kangaru/detail/deducer.hpp
 		include/kangaru/detail/define.hpp
 		include/kangaru/detail/exceptions.hpp
@@ -70,6 +69,7 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/source_reference_wrapper.hpp
 		include/kangaru/detail/source_traits.hpp
 		include/kangaru/detail/source_types.hpp
+		include/kangaru/detail/type_id.hpp
 		include/kangaru/detail/type_traits.hpp
 		include/kangaru/detail/undef.hpp
 		include/kangaru/detail/utility.hpp

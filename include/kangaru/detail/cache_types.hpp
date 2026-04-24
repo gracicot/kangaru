@@ -4,7 +4,7 @@
 #include "attributes.hpp"
 #include "utility.hpp"
 #include "source.hpp"
-#include "ctti.hpp"
+#include "type_id.hpp"
 #include "concepts.hpp"
 #include "source_reference_wrapper.hpp"
 
@@ -18,81 +18,61 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT template<typename T>
+KANGARU5_EXPORT namespace kangaru {
+	template<typename T>
 	concept cache_map = requires(T map) {
-		{ map.begin() } -> std::forward_iterator;
-		{ map.end() } -> std::forward_iterator;
-		{ std::as_const(map).begin() } -> std::forward_iterator;
-		{ std::as_const(map).end() } -> std::forward_iterator;
-		{ map.insert(map.begin(), map.end()) };
-		{ map.clear() };
-		{ std::as_const(map).empty() } -> std::same_as<bool>;
-		{ std::as_const(map).size() } -> std::same_as<std::size_t>;
-		{ map.swap(map) };
-		
 		typename T::key_type;
 		typename T::value_type;
+		typename T::reference;
+		typename T::const_reference;
 		typename T::mapped_type;
 		typename T::iterator;
 		typename T::const_iterator;
+		typename T::size_type;
+		
+		{ map.begin() } noexcept -> std::forward_iterator;
+		{ map.end() } noexcept -> std::forward_iterator;
+		{ std::as_const(map).begin() } noexcept -> std::forward_iterator;
+		{ std::as_const(map).end() } noexcept -> std::forward_iterator;
+		{ map.insert(map.begin(), map.end()) } -> std::same_as<void>;
+		{ map.clear() } noexcept;
+		{ std::as_const(map).empty() } noexcept -> std::same_as<bool>;
+		{ std::as_const(map).size() } noexcept -> std::same_as<typename T::size_type>;
+		{ map.swap(map) };
 	};
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename Map, typename T>
+	concept cache_map_stores = cache_map<Map> and requires(Map map, static_type_id<T> id, std::pair<static_type_id<T>, T> element, T value) {
+		{ map.at(id) } -> std::same_as<typename Map::mapped_type&>;
+		{ std::as_const(map).at(id) } -> std::same_as<typename Map::mapped_type const&>;
+		{ map.find(id) } -> std::same_as<typename Map::iterator>;
+		{ std::as_const(map).find(id) } -> std::same_as<typename Map::const_iterator>;
+		{ std::as_const(map).contains(id) } -> std::same_as<bool>;
+		{ map.erase(id) };
+		{ map.insert(std::move(element)) } -> std::same_as<std::pair<typename Map::iterator, bool>>;
+		{ map.insert_or_assign(id, std::move(value)) } -> std::same_as<std::pair<typename Map::iterator, bool>>;
+	};
+	
+	template<typename T>
 	concept dereferenceable_cache_map = cache_map<T> or requires {
 		requires cache_map<source_reference_wrapped_type<T>>;
 	};
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<type_id, void*>>);
 	
-	KANGARU5_EXPORT template<dereferenceable_cache_map Map>
+	template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;
 		using mapped_type = typename Map::mapped_type;
-		using value_type = typename Map::value_type;
-		using size_type = typename Map::size_type;
-		using difference_type = typename Map::difference_type;
-		using hasher = typename Map::hasher;
-		using key_equal = typename Map::key_equal;
-		using allocator_type = typename Map::allocator_type;
 		using reference = typename Map::reference;
 		using const_reference = typename Map::const_reference;
-		using pointer = typename Map::pointer;
-		using const_pointer = typename Map::const_pointer;
 		using iterator = typename Map::iterator;
 		using const_iterator = typename Map::const_iterator;
-		
-		constexpr auto begin() noexcept -> iterator {
-			return map.begin();
-		}
-		
-		constexpr auto begin() const noexcept -> const_iterator {
-			return map.begin();
-		}
-		
-		constexpr auto end() noexcept -> iterator {
-			return map.end();
-		}
-		
-		constexpr auto end() const noexcept -> const_iterator {
-			return map.end();
-		}
-		
-		[[nodiscard]]
-		constexpr auto empty() const noexcept -> bool {
-			return map.empty();
-		}
-		
-		constexpr auto size() const noexcept -> size_type {
-			return map.size();
-		}
-		
-		constexpr auto clear() noexcept -> void {
-			map.clear();
-		}
+		using value_type = typename Map::value_type;
+		using size_type = typename Map::size_type;
 		
 		constexpr auto insert(value_type const& value) -> std::pair<iterator, bool> {
 			return map.insert(value);
@@ -105,15 +85,13 @@ namespace kangaru {
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U> const& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			// TODO: Should we cast to std::pair<key_type, T> first?
-			return map.insert(static_cast<value_type>(value));
+			return map.insert(value_type{value.first, static_cast<T>(value.second)});
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U>&& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			// TODO: Should we cast to std::pair<key_type, T> first?
-			return map.insert(static_cast<value_type>(value));
+			return map.insert(value_type{value.first, static_cast<T>(std::move(value).second)});
 		}
 		
 		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {
@@ -124,7 +102,9 @@ namespace kangaru {
 			return map.insert(hint, std::move(value));
 		}
 		
-		template<std::input_iterator Iterator> requires requires(Iterator it) { { *it } -> std::convertible_to<const_reference>; }
+		template<std::input_iterator Iterator> requires(
+			requires(Iterator it) { { *it } -> std::convertible_to<const_reference>; }
+		)
 		constexpr auto insert(Iterator begin, Iterator end) -> void {
 			map.insert(begin, end);
 		}
@@ -141,12 +121,87 @@ namespace kangaru {
 			return map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
-		constexpr auto erase(iterator pos) -> iterator {
-			return map.erase(pos);
+		constexpr auto swap(polymorphic_map& other) noexcept(noexcept(map.swap(other.map))) -> void {
+			map.swap(other.map);
 		}
 		
-		constexpr auto erase(const_iterator pos) -> iterator {
-			return map.erase(pos);
+		[[nodiscard]]
+		constexpr auto find(auto const& key) -> iterator requires(
+			requires(Map c) { { c.find(key) } -> std::same_as<iterator>; }
+		) {
+			return map.find(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto find(auto const& key) const -> const_iterator requires(
+			requires(Map const c) { { c.find(key) } -> std::same_as<const_iterator>; }
+		) {
+			return map.find(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto at(auto const& key) -> mapped_type& requires(
+			requires(Map c) { { c.at(key) } -> std::same_as<mapped_type&>; }
+		) {
+			return map.at(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto at(auto const& key) const -> mapped_type const& requires(
+			requires(Map const c) { { c.at(key) } -> std::same_as<mapped_type const&>; }
+		) {
+			return map.at(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto contains(auto const& key) const -> bool requires(
+			requires(Map const c) { c.contains(key); }
+		) {
+			return map.contains(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto begin() noexcept -> iterator {
+			return map.begin();
+		}
+		
+		[[nodiscard]]
+		constexpr auto end() noexcept -> iterator {
+			return map.end();
+		}
+		
+		[[nodiscard]]
+		constexpr auto begin() const noexcept -> const_iterator {
+			return map.begin();
+		}
+		
+		[[nodiscard]]
+		constexpr auto end() const noexcept -> const_iterator {
+			return map.end();
+		}
+		
+		[[nodiscard]]
+		constexpr auto cbegin() const noexcept -> const_iterator {
+			return map.cbegin();
+		}
+		
+		[[nodiscard]]
+		constexpr auto cend() const noexcept -> const_iterator {
+			return map.cend();
+		}
+		
+		[[nodiscard]]
+		constexpr auto empty() const noexcept -> bool {
+			return map.empty();
+		}
+		
+		constexpr auto clear() noexcept -> void {
+			return map.clear();
+		}
+		
+		[[nodiscard]]
+		constexpr auto size() const noexcept -> size_type {
+			return map.size();
 		}
 		
 		template<injectable T>
@@ -155,45 +210,17 @@ namespace kangaru {
 			return overrides + map.erase(id);
 		}
 		
-		constexpr auto swap(polymorphic_map& other) noexcept(noexcept(map.swap(other.map))) -> void{
-			map.swap(other.map);
+		template<typename It>
+		constexpr auto erase(It begin, It end) -> decltype(std::declval<Map>().erase(begin, end)) {
+			return map.erase(begin, end);
 		}
 		
-		friend constexpr auto swap(polymorphic_map& left, polymorphic_map& right) {
-			left.map.swap(right.map);
+		constexpr auto erase(iterator pos) -> iterator {
+			return map.erase(pos);
 		}
 		
-		constexpr auto find(key_type const& key) -> iterator {
-			return map.find(key);
-		}
-		
-		constexpr auto find(key_type const& key) const -> const_iterator {
-			return map.find(key);
-		}
-		
-		template<typename K> requires(requires(Map& map, K const& key) { { map.find(key) } -> std::same_as<iterator>; })
-		constexpr auto find(K const& key) -> iterator {
-			return map.find(key);
-		}
-		
-		template<typename K> requires(requires(Map const& map, K const& key) { { map.find(key) } -> std::same_as<const_iterator>; })
-		constexpr auto find(K const& key) const -> const_iterator {
-			return map.find(key);
-		}
-		
-		constexpr auto contains(key_type const& key) const -> bool {
-			return map.contains(key);
-		}
-		
-		template<typename K> requires(
-			    not std::same_as<key_type, K>
-			and requires{
-				typename hasher::is_transparent;
-				typename key_equal::is_transparent;
-			}
-		)
-		constexpr auto contains(K const& key) const -> bool {
-			return map.contains(key);
+		constexpr auto erase(const_iterator pos) -> iterator {
+			return map.erase(pos);
 		}
 		
 	private:
@@ -242,7 +269,6 @@ namespace kangaru {
 		Map map;
 	};
 	
-	static_assert(cache_map<polymorphic_map<std::unordered_map<type_id, void*>>>);
 } // namespace kangaru
 
 #include "undef.hpp"

@@ -132,6 +132,8 @@ namespace kangaru {
 		template<injectable T>
 		using polymorphic_source = any_source_of_ref<T>;
 		
+		using unwrapped_cache = std::remove_cvref_t<maybe_unwrap_result_t<Cache>>;
+		
 		template<typename S>
 		constexpr auto container_source(S&& source) {
 			auto rebound_state = std::remove_cvref_t<S>::template rebind<
@@ -151,7 +153,7 @@ namespace kangaru {
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
 									polymorphic_source
 								>)(
-									cache_with_two_step_init_on_insert{
+									cache_with_two_step_init{
 										std::move(rebound_state),
 										second_step_from_attribute{},
 									}
@@ -167,14 +169,14 @@ namespace kangaru {
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<decltype(container_source(state)), T> {
+		constexpr auto provide() & -> T requires(source_of<decltype(container_source(state)), T>) {
 			return kangaru::provide<T>(
 				container_source(state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<decltype(container_source(std::move(state))), T> {
+		constexpr auto provide() && -> T requires(source_of<decltype(container_source(std::move(state))), T>) {
 			return kangaru::provide<T>(
 				container_source(std::move(state))
 			);
@@ -197,13 +199,20 @@ namespace kangaru {
 			};
 		}
 		
-		template<injectable T> requires(source_of<polymorphic_container&, T>)
+		template<injectable T>
+			requires(
+				    cache_map_stores<unwrapped_cache, any_source_of_ref<T>>
+				and source_of<polymorphic_container&, T>
+			)
 		constexpr auto has_in_cache() -> bool {
 			return state.contains(KANGARU5_NO_ADL(type_id_for<any_source_of_ref<T>>)());
 		}
 		
 		template<injectable T, source_of<T> S>
-			requires(source_of<polymorphic_container&, T>)
+			requires(
+				    cache_map_stores<unwrapped_cache, any_source_of_ref<T>>
+				and source_of<polymorphic_container&, T>
+			)
 		constexpr auto replace(S&& source) -> T {
 			using contained_type = with_polymorphic_cast<with_cast_from<std::remove_cvref_t<S>, T>, T>;
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<any_source_of_ref<T>>)();
@@ -224,7 +233,11 @@ namespace kangaru {
 		}
 		
 		template<injectable T, callable F>
-			requires(source_of<polymorphic_container&, T> and source_of<detail::call_result_t<F>, T>)
+			requires(
+				    cache_map_stores<unwrapped_cache, any_source_of_ref<T>>
+				and source_of<polymorphic_container&, T>
+				and source_of<detail::call_result_t<F>, T>
+			)
 		constexpr auto replace(in_place_construct<F> in_place) -> T {
 			using source = detail::call_result_t<F>;
 			using contained_type = with_polymorphic_cast<with_cast_from<source, T>, T>;

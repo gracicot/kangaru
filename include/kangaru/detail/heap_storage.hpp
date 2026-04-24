@@ -201,6 +201,8 @@ namespace kangaru {
 		
 		Source source;
 		
+		// TODO: Constaints
+		// TODO: Should we use construct_in_place?
 		template<function_object F>
 		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
 			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(std::move(function));

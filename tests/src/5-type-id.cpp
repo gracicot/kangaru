@@ -6,7 +6,7 @@
 struct service_a {};
 struct service_b {};
 
-TEST_CASE("CTTI Gives reliable names", "[ctti]") {
+TEST_CASE("type_name Gives reliable names", "[type-id]") {
 	#ifndef _MSC_VER
 	CHECK(kangaru::type_name<kangaru::reference_source<service_a>>() == "kangaru::reference_source<service_a>");
 	#else

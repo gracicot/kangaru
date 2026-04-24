@@ -4,7 +4,7 @@
 #include "type_traits.hpp"
 #include "utility.hpp"
 #include "source.hpp"
-#include "ctti.hpp"
+#include "type_id.hpp"
 #include "concepts.hpp"
 #include "cache_types.hpp"
 #include "source_rebind.hpp"
@@ -20,18 +20,17 @@
 
 #include "define.hpp"
 
-namespace kangaru {
-	namespace detail::cache_private {
-		template<typename To>
-		auto any_cast(struct poison) -> To requires false;
-		
-		template<typename From, typename To>
-		concept adl_castable_to = requires (From&& from) {
-			{ any_cast<To>(KANGARU5_FWD(from)) } -> std::same_as<To>;
-		};
-	}
+namespace kangaru::detail::cache_private {
+	template<typename To>
+	auto any_cast(struct poison) -> To requires false;
 	
-	KANGARU5_EXPORT
+	template<typename From, typename To>
+	concept adl_castable_to = requires (From&& from) {
+		{ any_cast<To>(KANGARU5_FWD(from)) } -> std::same_as<To>;
+	};
+}
+
+KANGARU5_EXPORT namespace kangaru {
 	template<
 		source Source,
 		dereferenceable_cache_map Cache = std::unordered_map<type_id, std::any>,
@@ -56,20 +55,14 @@ namespace kangaru {
 		
 		using key_type = typename unwrapped_cache_type::key_type;
 		using value_type = typename unwrapped_cache_type::value_type;
+		using reference = typename unwrapped_cache_type::reference;
+		using const_reference = typename unwrapped_cache_type::const_reference;
 		using mapped_type = typename unwrapped_cache_type::mapped_type;
 		using iterator = typename unwrapped_cache_type::iterator;
 		using const_iterator = typename unwrapped_cache_type::const_iterator;
+		using size_type = typename unwrapped_cache_type::size_type;
 		
 		source_type source;
-		
-		constexpr auto insert(auto&& value) requires requires(unwrapped_cache_type c) { c.insert(KANGARU5_FWD(value)); } {
-			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(KANGARU5_FWD(value));
-		}
-		
-		template<typename It>
-		constexpr auto insert(It begin, It end) requires requires(unwrapped_cache_type c) { c.insert(begin, end); } {
-			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(begin, end);
-		}
 		
 		template<typename Key, typename Value>
 			requires(
@@ -77,77 +70,114 @@ namespace kangaru {
 				and std::constructible_from<mapped_type, Value&&>
 				and requires(unwrapped_cache_type c, Key&& key, Value&& value) { c.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }
 			)
-		constexpr auto insert_or_assign(Key&& key, Value&& value) {
+		constexpr auto insert_or_assign(Key&& key, Value&& value) -> std::pair<iterator, bool> {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
 		}
 		
+		constexpr auto insert(auto&& value) -> decltype(std::declval<unwrapped_cache_type>().insert(KANGARU5_FWD(value))) {
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(KANGARU5_FWD(value));
+		}
+		
+		template<typename It>
+		constexpr auto insert(It begin, It end) -> void requires(
+			requires(unwrapped_cache_type c) { { c.insert(begin, end) } -> std::same_as<void>; }
+		) {
+			KANGARU5_NO_ADL(maybe_unwrap)(cache).insert(begin, end);
+		}
+		
 		[[nodiscard]]
-		constexpr auto find(auto const& key) requires requires(unwrapped_cache_type c) { c.find(key); } {
+		constexpr auto find(auto const& key) -> iterator requires(
+			requires(unwrapped_cache_type c) { { c.find(key) } -> std::same_as<iterator>; }
+		) {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).find(key);
 		}
 		
 		[[nodiscard]]
-		constexpr auto find(auto const& key) const requires requires(unwrapped_cache_type const c) { c.find(key); } {
+		constexpr auto find(auto const& key) const -> const_iterator requires(
+			requires(unwrapped_cache_type const c) { { c.find(key) } -> std::same_as<const_iterator>; }
+		) {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).find(key);
 		}
 		
 		[[nodiscard]]
-		constexpr auto contains(auto const& key) const requires requires(unwrapped_cache_type c) { c.contains(key); } {
+		constexpr auto at(auto const& key) -> mapped_type& requires(
+			requires(unwrapped_cache_type c) { { c.at(key) } -> std::same_as<mapped_type&>; }
+		) {
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).at(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto at(auto const& key) const -> mapped_type const& requires(
+			requires(unwrapped_cache_type const c) { { c.at(key) } -> std::same_as<mapped_type const&>; }
+		) {
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).at(key);
+		}
+		
+		[[nodiscard]]
+		constexpr auto contains(auto const& key) const -> bool requires(
+			requires(unwrapped_cache_type c) { c.contains(key); }
+		) {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).contains(key);
 		}
 		
 		[[nodiscard]]
-		constexpr auto begin() -> typename unwrapped_cache_type::iterator {
+		constexpr auto begin() noexcept -> iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).begin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto end() -> typename unwrapped_cache_type::iterator {
+		constexpr auto end() noexcept -> iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).end();
 		}
 		
 		[[nodiscard]]
-		constexpr auto begin() const {
+		constexpr auto begin() const noexcept -> const_iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).begin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto end() const {
+		constexpr auto end() const noexcept -> const_iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).end();
 		}
 		
 		[[nodiscard]]
-		constexpr auto cbegin() const -> typename unwrapped_cache_type::const_iterator {
+		constexpr auto cbegin() const noexcept -> const_iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).cbegin();
 		}
 		
 		[[nodiscard]]
-		constexpr auto cend() const -> typename unwrapped_cache_type::const_iterator {
+		constexpr auto cend() const noexcept -> const_iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).cend();
 		}
 		
 		[[nodiscard]]
-		constexpr auto empty() const -> bool {
+		constexpr auto empty() const noexcept -> bool {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).empty();
 		}
 		
-		constexpr auto clear() -> void {
+		constexpr auto clear() noexcept -> void {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).clear();
 		}
 		
 		[[nodiscard]]
-		constexpr auto size() const {
+		constexpr auto size() const noexcept -> std::size_t {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).size();
 		}
 		
-		[[nodiscard]]
-		constexpr auto erase(auto const& key) requires requires(unwrapped_cache_type c) { c.erase(key); } {
+		constexpr auto erase(auto const& key) -> decltype(std::declval<unwrapped_cache_type>().erase(key)) {
 			return KANGARU5_NO_ADL(maybe_unwrap)(cache).erase(key);
 		}
 		
-		constexpr auto swap(with_cache_asymmetric& other) noexcept -> void {
+		template<typename It>
+		constexpr auto erase(It begin, It end) -> decltype(std::declval<unwrapped_cache_type>().erase(begin, end)) {
+			return KANGARU5_NO_ADL(maybe_unwrap)(cache).erase(begin, end);
+		}
+		
+		constexpr auto swap(with_cache_asymmetric& other) noexcept(
+			noexcept(std::declval<unwrapped_cache_type&>().swap(std::declval<unwrapped_cache_type&>()))
+		) -> void {
 			std::ranges::swap(source, other.source);
-			std::ranges::swap(cache, other.cache);
+			KANGARU5_NO_ADL(maybe_unwrap)(cache).swap(KANGARU5_NO_ADL(maybe_unwrap)(other.cache));
 		}
 		
 		template<template<typename> typename NewCacheFrom = CacheFrom, forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
@@ -164,8 +194,8 @@ namespace kangaru {
 		template<injectable T, typename Self>
 			requires(
 				    std::derived_from<std::remove_cvref_t<Self>, with_cache_asymmetric>
-				and cache_map<std::remove_cvref_t<Self>>
 				and not std::is_const_v<std::remove_reference_t<Self>>
+				and cache_map_stores<std::remove_cvref_t<Self>, T>
 				and requires{ typename CacheFrom<T>; }
 				and std::constructible_from<mapped_type, CacheFrom<T>>
 				and wrapping_source_of<Self, CacheFrom<T>>
@@ -199,17 +229,17 @@ namespace kangaru {
 		cache_type cache;
 	};
 	
-	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
+	template<template<typename> typename CacheFrom, forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source, Cache&& cache) {
 		return with_cache_asymmetric<deduced_source_type<Source>, std::decay_t<Cache>, CacheFrom>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	KANGARU5_EXPORT template<template<typename> typename CacheFrom, forwarded_source Source>
+	template<template<typename> typename CacheFrom, forwarded_source Source>
 	inline constexpr auto make_source_with_cache_asymmetric(Source&& source) {
 		return with_cache_asymmetric<deduced_source_type<Source>, std::unordered_map<type_id, std::any>, CacheFrom>{KANGARU5_FWD(source)};
 	}
 	
-	KANGARU5_EXPORT template<
+	template<
 		source Source,
 		dereferenceable_cache_map Cache = std::unordered_map<type_id, std::any>
 	>
@@ -245,21 +275,21 @@ namespace kangaru {
 		requires(not deducer<std::remove_cvref_t<Source>>)
 	with_cache(Source&&) -> with_cache<deduced_source_type<Source>>;
 	
-	KANGARU5_EXPORT template<forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
+	template<forwarded_source Source, forwarded_dereferenceable_cache_map Cache>
 	inline constexpr auto make_source_with_cache(Source&& source, Cache&& cache) {
 		return with_cache<deduced_source_type<Source>, std::decay_t<Cache>>{KANGARU5_FWD(source), KANGARU5_FWD(cache)};
 	}
 	
-	KANGARU5_EXPORT template<forwarded_source Source>
+	template<forwarded_source Source>
 	inline constexpr auto make_source_with_cache(Source&& source) {
 		return with_cache<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	KANGARU5_EXPORT template<
+	template<
 		cache_map Cache,
 		second_step_function SecondStep
 	> requires(source<Cache>)
-	struct cache_with_two_step_init_on_insert final : Cache {
+	struct cache_with_two_step_init final : Cache {
 	private:
 		SecondStep second_step;
 		
@@ -275,17 +305,17 @@ namespace kangaru {
 	public:
 		template<allows_construction_of<Cache> C>
 			requires(std::default_initializable<SecondStep>)
-		explicit constexpr cache_with_two_step_init_on_insert(C&& cache) : Cache{KANGARU5_FWD(cache)} {}
+		explicit constexpr cache_with_two_step_init(C&& cache) : Cache{KANGARU5_FWD(cache)} {}
 		
 		template<allows_construction_of<Cache> C>
-		constexpr cache_with_two_step_init_on_insert(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
+		constexpr cache_with_two_step_init(C&& cache, SecondStep second_step) : Cache{KANGARU5_FWD(cache)}, second_step{std::move(second_step)} {}
 		
-		template<forwarded<cache_with_two_step_init_on_insert> Original, forwarded_source NewSource>
+		template<forwarded<cache_with_two_step_init> Original, forwarded_source NewSource>
 			requires(stateful_rebindable_wrapping_source<detail::forward_like_t<Original, Cache>&&>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
-			-> cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>
+			-> cache_with_two_step_init<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>
 		{
-			return cache_with_two_step_init_on_insert<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>{
+			return cache_with_two_step_init<rebind_result_t<detail::forward_like_t<Original, Cache>&&, NewSource>, SecondStep>{
 				Cache::rebind(static_cast<detail::forward_like_t<Original, Cache>&&>(original), KANGARU5_FWD(new_source)),
 				std::as_const(original).second_step,
 			};
@@ -294,43 +324,39 @@ namespace kangaru {
 		// TODO: properly constraints. To do so, we must test circular dependencies.
 		//       If circular dependency cannot be checked in the signature, we must do static_assert
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
+		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(Cache::insert(std::move(value))) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value.second);
 			return Cache::insert(std::move(value));
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<static_type_id<T>, Value> const& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
+		constexpr auto insert(std::pair<static_type_id<T>, Value> const& value) -> decltype(Cache::insert(value))  requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value.second);
 			return Cache::insert(value);
 		}
 		
 		template<typename It>
-		constexpr auto insert(It begin, It end) requires requires(Cache c) { c.insert(begin, end); } {
-			return Cache::insert(begin, end);
+		constexpr auto insert(It begin, It end) -> void requires(
+			requires(Cache c) { { c.insert(begin, end) } -> std::same_as<void>; }
+		) {
+			Cache::insert(begin, end);
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert_or_assign(static_type_id<T> const& key, Value&& value) -> decltype(auto) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }) {
+		constexpr auto insert_or_assign(static_type_id<T> const& key, Value&& value) -> decltype(Cache::insert_or_assign(key, KANGARU5_FWD(value))) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }) {
 			run_second_step<T>(value);
-			return Cache::insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value));
+			return Cache::insert_or_assign(key, KANGARU5_FWD(value));
 		}
 	};
 	
 	template<typename Cache, typename SecondStep>
 		requires(not deducer<std::remove_cvref_t<Cache>>)
-	cache_with_two_step_init_on_insert(Cache&&, SecondStep const&) -> cache_with_two_step_init_on_insert<deduced_source_type<Cache>, SecondStep>;
+	cache_with_two_step_init(Cache&&, SecondStep const&) -> cache_with_two_step_init<deduced_source_type<Cache>, SecondStep>;
 	
 	// NOTE: Implement a cache with dynamic callbacks to fill it using the source. But the source is a template parameter? Is it possible to
 	//       even have dynamic callbacks for it? I think it is technically possible, because we could compute the type in advance for a given
 	//       source. How? Technically, we know it might be used in a context of a container or a polymorphic container. Given that knowledge,
 	//       we can target a specific rebind for the callback parameter.
-	
-	static_assert(cache_map<with_cache<none_source>>);
-	static_assert(dereferenceable_cache_map<source_reference_wrapper<with_cache<with_cache<none_source>>>>);
-	static_assert(cache_map<with_cache<none_source, source_reference_wrapper<with_cache<none_source>>>>);
-	static_assert(cache_map<cache_with_two_step_init_on_insert<with_cache_asymmetric<none_source>, noop_second_step>>);
-	static_assert(rebindable_source<cache_with_two_step_init_on_insert<with_cache_asymmetric<none_source>, noop_second_step>>);
 }
 
 #include "undef.hpp"

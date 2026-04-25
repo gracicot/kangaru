@@ -251,65 +251,65 @@ TEST_CASE("Runtime source will cache sources results", "[cache]") {
 		CHECK(kangaru::provide<Base1*>(runtime_source)->get() == 3);
 	}
 	
-	SECTION("Already cached type has priority") {
+	SECTION("Polymorphic map with heap storage") {
 		auto base_source = kangaru::compose(
 			kangaru::object_source{Derived1{3}},
 			kangaru::object_source{Derived2{4}},
 			kangaru::object_source{Base1{}},
 			kangaru::object_source{Base2{}}
 		);
+		
 		auto source = kangaru::make_source_with_cache(
 			kangaru::make_source_with_heap_storage(base_source),
 			kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, void*>>{}
 		);
 		
-		SECTION("Base type wins if taken first") {
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+		SECTION("Already cached type has priority") {
+			SECTION("Base type wins if taken first") {
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+				CHECK(kangaru::provide<Derived1*>(source)->get() == 3);
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+			}
+			
+			SECTION("But another type can win if it also extends another type") {
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+				CHECK(kangaru::provide<Derived2*>(source)->get() == 4);
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+				CHECK(kangaru::provide<Base2*>(source)->get() == 4);
+			}
+		}
+		
+		SECTION("Can replace types using insert_or_assign") {
+			SECTION("Replace base with derived") {
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+				source.insert_or_assign(
+					kangaru::type_id_for<Derived1*>(),
+					source.source.emplace_from([&] {
+						return kangaru::provide<Derived1>(base_source);
+					})
+				);
+				CHECK(kangaru::provide<Base1*>(source)->get() == 3);
+			}
+			
+			SECTION("Replace base with derived") {
+				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
+				source.insert_or_assign(
+					kangaru::type_id_for<Derived1*>(),
+					source.source.emplace_from([&] {
+						return kangaru::provide<Derived1>(base_source);
+					})
+				);
+				CHECK(kangaru::provide<Base1*>(source)->get() == 3);
+			}
+		}
+		
+		SECTION("Remove only removes non polymorphically") {
 			CHECK(kangaru::provide<Derived1*>(source)->get() == 3);
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
-		}
-		
-		SECTION("But another type can win if it also extends another type") {
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
-			CHECK(kangaru::provide<Derived2*>(source)->get() == 4);
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
-			CHECK(kangaru::provide<Base2*>(source)->get() == 4);
-		}
-	}
-	
-	SECTION("Can replace types using insert_or_assign") {
-		auto base_source = kangaru::compose(
-			kangaru::object_source{Derived1{3}},
-			kangaru::object_source{Derived2{4}},
-			kangaru::object_source{Base1{}},
-			kangaru::object_source{Base2{}}
-		);
-		
-		auto source = kangaru::make_source_with_cache(
-			kangaru::make_source_with_heap_storage(base_source),
-			kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, void*>>{}
-		);
-		
-		SECTION("Replace base with derived") {
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
-			source.insert_or_assign(
-				kangaru::type_id_for<Derived1*>(),
-				source.source.emplace_from([&] {
-					return kangaru::provide<Derived1>(base_source);
-				})
-			);
-			CHECK(kangaru::provide<Base1*>(source)->get() == 3);
-		}
-		
-		SECTION("Replace base with derived") {
-			CHECK(kangaru::provide<Base1*>(source)->get() == 0);
-			source.insert_or_assign(
-				kangaru::type_id_for<Derived1*>(),
-				source.source.emplace_from([&] {
-					return kangaru::provide<Derived1>(base_source);
-				})
-			);
-			CHECK(kangaru::provide<Base1*>(source)->get() == 3);
+			REQUIRE(source.contains(kangaru::type_id_for<Derived1*>()));
+			REQUIRE(source.contains(kangaru::type_id_for<Base1*>()));
+			REQUIRE(source.erase(kangaru::type_id_for<Derived1*>()) == 1);
+			REQUIRE(not source.contains(kangaru::type_id_for<Derived1*>()));
+			REQUIRE(source.contains(kangaru::type_id_for<Base1*>()));
 		}
 	}
 }

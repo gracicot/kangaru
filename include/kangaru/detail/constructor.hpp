@@ -13,31 +13,29 @@
 
 #include "define.hpp"
 
-KANGARU5_EXPORT namespace kangaru {
+// TODO: Remove when visual studio feedback item 11026651 is fixed
+namespace kangaru::detail::constructor_private {
 	template<typename T, typename... Args>
 	concept raw_constructor_callable =
 		   std::constructible_from<T, Args...>
-		or (
-			brace_constructible<T, Args...>
-			// TODO: Remove this preprocessor conditional when visual studio feedback item 11026651 is fixed
-			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
-				and (
-					   not std::is_aggregate_v<T>
-					or sizeof...(Args) != 1
-				)
-			#endif
-		);
+		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION() == 0
+		or brace_constructible<T, Args...>
+		#endif
+		;
 	
 	template<unqualified_object Type>
 	struct raw_constructor_function {
 		constexpr auto operator()(auto&&... args) const& -> Type requires(
 			raw_constructor_callable<Type, decltype(args)...>
 		) {
+			return Type(KANGARU5_FWD(args)...);
+		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION() == 0
 			if constexpr (std::constructible_from<Type, decltype(args)...>) {
 				return Type(KANGARU5_FWD(args)...);
 			} else {
 				return Type{KANGARU5_FWD(args)...};
 			}
+		#endif
 		}
 	};
 	
@@ -47,7 +45,9 @@ KANGARU5_EXPORT namespace kangaru {
 	) {
 		return raw_constructor_function<Type>{}(KANGARU5_FWD(args)...);
 	}
-	
+}
+
+KANGARU5_EXPORT namespace kangaru {
 	template<unqualified_object Type>
 	struct constructor_function {
 		template<typename From = Type>
@@ -58,13 +58,13 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<deducer Deducer1, typename... Args>
-			requires raw_constructor_callable<
+			requires detail::constructor_private::raw_constructor_callable<
 				Type,
 				exclude_special_constructors_deducer<Type, Deducer1>,
 				Args...
 			>
 		constexpr auto operator()(Deducer1 deduce1, Args&&... args) const -> Type {
-			return KANGARU5_NO_ADL(raw_constructor<Type>)(
+			return detail::constructor_private::raw_constructor<Type>(
 				KANGARU5_NO_ADL(exclude_special_constructors_for<Type>)(deduce1),
 				KANGARU5_FWD(args)...
 			);
@@ -73,18 +73,18 @@ KANGARU5_EXPORT namespace kangaru {
 		template<typename FirstArg, typename... Args>
 			requires(
 				    not deducer<std::remove_cvref_t<FirstArg>>
-				and raw_constructor_callable<
+				and detail::constructor_private::raw_constructor_callable<
 					Type,
 					FirstArg,
 					Args...
 				>
 			)
 		constexpr auto operator()(FirstArg&& first, Args&&... args) const -> Type {
-			return KANGARU5_NO_ADL(raw_constructor<Type>)(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
+			return detail::constructor_private::raw_constructor<Type>(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
 		}
 		
 		constexpr auto operator()() const requires std::default_initializable<Type> {
-			return KANGARU5_NO_ADL(raw_constructor<Type>)();
+			return detail::constructor_private::raw_constructor<Type>();
 		}
 	};
 	

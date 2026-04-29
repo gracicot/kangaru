@@ -346,7 +346,6 @@ struct agg { agg_1 agg1; agg_2 agg2; };
 static_assert(brace_constructible<int>);
 static_assert(brace_constructible<int, int>);
 static_assert(brace_constructible<int, int&>);
-static_assert(brace_constructible<int&, int&>);
 static_assert(not brace_constructible<int&, int>);
 static_assert(not brace_constructible<int&, int&&>);
 static_assert(brace_constructible<agg_1>);

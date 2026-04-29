@@ -45,24 +45,10 @@ namespace kangaru {
 			or deducer_strict<Deducer>
 		);
 	
-	namespace detail::deducer_private {
-		// TODO: Remove this workaround when this feedback item is fixed
-		//       https://developercommunity.visualstudio.com/t/1950-regression-Requires-fail-to-chec/11052128
-		template<typename Deducer, typename T>
-		consteval auto deducer_for_msvc_workaround() -> bool {
-			return requires(Deducer deducer) {
-				{ deducer.operator T() } -> std::same_as<T>;
-			};
-		}
-		
-		template<typename Deducer, typename T>
-		concept deducer_for_impl = deducer_for_msvc_workaround<Deducer, T>();
-	}
-	
 	KANGARU5_EXPORT template<typename Deducer, typename T>
 	concept deducer_for =
 		    deducer<Deducer>
-		and detail::deducer_private::deducer_for_impl<Deducer, T>;
+		and user_defined_convertible_to<Deducer, T>;
 	
 	KANGARU5_EXPORT template<typename T>
 	concept deducible =

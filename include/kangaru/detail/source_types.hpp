@@ -305,7 +305,6 @@ KANGARU5_EXPORT namespace kangaru {
 			return object;
 		}
 		
-		// TODO: Should we move the shared pointer?
 		constexpr auto provide() && -> std::shared_ptr<T> {
 			return object;
 		}
@@ -443,7 +442,6 @@ KANGARU5_EXPORT namespace kangaru {
 			return object;
 		}
 		
-		// TODO: Should we move the shared pointer?
 		constexpr auto provide() && -> std::shared_ptr<Base> {
 			return object;
 		}
@@ -594,8 +592,7 @@ KANGARU5_EXPORT namespace kangaru {
 		return with_dereference<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
-	// TODO: Allow enumerated source and variadic From
-	template<source Source, injectable From>
+	template<source Source, injectable... From>
 	struct with_cast_from {
 		Source source;
 		
@@ -604,10 +601,25 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<different_from<From> T, forwarded<with_cast_from> Self> requires(injectable<T> and not wrapping_source_of<Self, T> and safe_convertible_to<From, T>)
+		template<injectable T, forwarded<with_cast_from> Self>
+			requires(
+				not wrapping_source_of<Self, T> and
+				((
+					    different_from<T, From>
+					and safe_convertible_to<From, T>
+					and wrapping_source_of<Self, From> ? 1 : 0
+				) + ... + 0) == 1
+			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			decltype(auto) result = kangaru::provide<From>(KANGARU5_FWD(source).source);
-			return static_cast<T>(result);
+			constexpr auto index = index_of<T>(std::index_sequence_for<From...>{});
+			using F = std::tuple_element_t<index, std::tuple<From...>>;
+			return static_cast<T>(kangaru::provide<F>(KANGARU5_FWD(source).source));
+		}
+		
+	private:
+		template<typename T, std::size_t... S>
+		static constexpr auto index_of(std::index_sequence<S...>) {
+			return ((different_from<T, From> and safe_convertible_to<From, T> ? S : 0) + ... + 0);
 		}
 		
 		template<kangaru::source S, injectable F>

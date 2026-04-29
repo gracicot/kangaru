@@ -32,7 +32,7 @@ namespace kangaru::detail::injector_private {
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-		requires(callable<Function, kangaru::placeholder_deducer, detail::expand<kangaru::placeholder_deducer, tail>...>)
+		requires(callable_workaround_for_clang<Function, head, tail...>)
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 		using return_type = decltype(

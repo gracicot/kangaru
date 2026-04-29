@@ -13,6 +13,15 @@ namespace kangaru::detail::concepts_private {
 	consteval auto count_type_in_pack() -> std::size_t {
 		return ((std::same_as<Type, Pack> ? std::size_t{1} : std::size_t{0}) + ... + std::size_t{0});
 	}
+	
+	// TODO: Remove this workaround when this feedback item is fixed
+	//       https://developercommunity.visualstudio.com/t/1950-regression-Requires-fail-to-chec/11052128
+	template<typename From, typename To>
+	consteval auto user_defined_convertible_to_msvc_workaround() -> bool {
+		return requires(From&& from) {
+			{ KANGARU5_FWD(from).operator To() } -> std::same_as<To>;
+		};
+	}
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -49,14 +58,13 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
 	concept copiable_object =
 		    movable_object<T>
-		and unqualified_object<T>
 		and std::copy_constructible<T>;
 	
 	template<typename T>
 	concept forwarded_copiable_object = copiable_object<std::remove_cvref_t<T>>;
 	
 	template<typename T>
-	concept function_object = object<T> and std::move_constructible<T>;
+	concept function_object = movable_object<T>;
 	
 	template<typename T>
 	concept forwarded_function_object = function_object<std::remove_cvref_t<T>>;
@@ -74,7 +82,16 @@ KANGARU5_EXPORT namespace kangaru {
 	concept pointer_to_member_function = pointer_to_member<T> and std::is_member_function_pointer_v<T>;
 	
 	template<typename T>
-	concept weak_injectable = unqualified_object<T> or reference<T>;
+	concept weak_injectable =
+		    not std::is_array_v<T>
+		and not std::is_abstract_v<T>
+		and different_from<void, T>
+		and (unqualified_object<T> or reference<T>);
+	
+	template<typename From, typename To>
+	concept user_defined_convertible_to =
+		    std::is_class_v<std::remove_cvref_t<From>>
+		and detail::concepts_private::user_defined_convertible_to_msvc_workaround<From, To>();
 	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>
@@ -114,11 +131,22 @@ KANGARU5_EXPORT namespace kangaru {
 		static_cast<To>(KANGARU5_FWD(from));
 	};
 	
-	// TODO: Actually not safe when converting to a type with ref semantics
+	template<typename From, typename To>
+	concept conversion_materializes_temporary =
+		    not (std::is_lvalue_reference_v<To> and not std::is_const_v<std::remove_reference_t<To>>)
+		and not object<To>
+		and std::convertible_to<From, To>
+		and not user_defined_convertible_to<From, To>
+		and not std::derived_from<std::remove_cvref_t<From>, std::remove_cvref_t<To>>
+		and (
+			   not reference<From>
+			or not std::same_as<std::remove_cvref_t<To>, std::remove_cvref_t<From>>
+		);
+	
 	template<typename From, typename To>
 	concept safe_convertible_to =
 		    std::convertible_to<From, To>
-		and (reference<From> or unqualified_object<To>);
+		and not conversion_materializes_temporary<From, To>;
 	
 	template<typename... Pack>
 	concept pack_distinct = (... and (detail::concepts_private::count_type_in_pack<Pack, Pack...>() == 1));

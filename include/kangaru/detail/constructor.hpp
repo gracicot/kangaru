@@ -28,8 +28,9 @@ namespace kangaru::detail::constructor_private {
 		constexpr auto operator()(auto&&... args) const& -> Type requires(
 			raw_constructor_callable<Type, decltype(args)...>
 		) {
+		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION() == 1
 			return Type(KANGARU5_FWD(args)...);
-		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION() == 0
+		#else
 			if constexpr (std::constructible_from<Type, decltype(args)...>) {
 				return Type(KANGARU5_FWD(args)...);
 			} else {

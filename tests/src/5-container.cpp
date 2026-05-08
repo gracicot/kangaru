@@ -141,30 +141,22 @@ struct non_cached_with_second_step {
 };
 
 struct alias_container {
-	template<
-		kangaru::rebindable_source Source = kangaru::none_source,
-		kangaru::dereferenceable_cache_map Cache = std::unordered_map<kangaru::type_id, void*>,
-		kangaru::dereferenceable_heap_storage Storage = kangaru::default_heap_storage,
-		kangaru::construction Construction = kangaru::exhaustive_construction
-	>
-	using type = kangaru::container<Source, Cache, Storage, Construction>;
+	static auto make_container(auto&&... args) {
+		return kangaru::container{std::forward<decltype(args)>(args)...};
+	}
 };
 
 struct alias_polymorphic_container {
-	template<
-		kangaru::rebindable_source Source = kangaru::none_source,
-		kangaru::dereferenceable_cache_map Cache = kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, kangaru::any_source_of_one_ref>>,
-		kangaru::dereferenceable_heap_storage Storage = kangaru::default_heap_storage,
-		kangaru::construction Construction = kangaru::exhaustive_construction
-	>
-	using type = kangaru::polymorphic_container<Source, Cache, Storage, Construction>;
+	static auto make_container(auto&&... args) {
+		return kangaru::polymorphic_container{std::forward<decltype(args)>(args)...};
+	}
 };
 
 TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	(alias_container),
 	(alias_polymorphic_container)
 ) {
-	auto container = typename TestType::type{};
+	auto container = TestType::make_container();
 	
 	SECTION("Allow replacing") {
 		auto& a1 = container.template provide<service_a&>();
@@ -262,7 +254,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	}
 	
 	SECTION("Allow injection using shared pointers") {
-		auto container = typename TestType::type{};
+		auto container = TestType::make_container();
 		
 		SECTION("Simple caching of shared pointers") {
 			auto s = kangaru::provide<std::shared_ptr<shared_abstract>>(container);
@@ -290,7 +282,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 	(alias_polymorphic_container)
 ) {
 	SECTION("Forwards") {
-		auto container = typename TestType::type{int_source{}};
+		auto container = TestType::make_container(int_source{});
 		
 		SECTION("lvalues") {
 			auto& a = container.template provide<service_a&>();
@@ -315,7 +307,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 
 	SECTION("Supports provided services") {
 		auto base = kangaru::object_source{kangaru::reference_source{concrete{8.5f}}};
-		auto container = typename TestType::type{base};
+		auto container = TestType::make_container(base);
 		auto& c = kangaru::provide<concrete&>(container);
 		CHECK(c.value == 8.5f);
 	}
@@ -337,9 +329,9 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 	
 	
 	SECTION("container base source with dynamic supplied instances") {
-		auto container = typename TestType::type{
+		auto container = TestType::make_container(
 			kangaru::make_container_base_source(kangaru::allow_assume_cached)
-		};
+		);
 		
 		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::not_found_exception);
 		
@@ -364,7 +356,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			}
 		);
 		
-		auto container = typename TestType::type{base};
+		auto container = TestType::make_container(base);
 		auto provided = kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container);
 		
 		CHECK(provided->value == 3);

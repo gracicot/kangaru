@@ -106,11 +106,6 @@ KANGARU5_EXPORT namespace kangaru {
 			{ KANGARU5_FWD(f)(KANGARU5_FWD(args)...) } -> std::same_as<R>;
 		};
 	
-	template<typename T, typename... Args>
-	concept brace_constructible = requires(Args&&... args) {
-		T{KANGARU5_FWD(args)...};
-	};
-	
 	template<typename F, typename T, typename... Args>
 	concept callable_template_1t = requires(F&& f, Args&&... args) {
 		KANGARU5_FWD(f).template operator()<T>(KANGARU5_FWD(args)...);

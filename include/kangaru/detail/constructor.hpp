@@ -16,6 +16,11 @@
 // TODO: Remove when visual studio feedback item 11026651 is fixed
 namespace kangaru::detail::constructor_private {
 	template<typename T, typename... Args>
+	concept brace_constructible = requires(Args&&... args) {
+		T{KANGARU5_FWD(args)...};
+	};
+	
+	template<typename T, typename... Args>
 	concept raw_constructor_callable =
 		   std::constructible_from<T, Args...>
 		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION() == 0

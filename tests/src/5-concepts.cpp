@@ -343,22 +343,6 @@ struct agg_1 { int a; int b; };
 struct agg_2 { int a; int b; int c; };
 struct agg { agg_1 agg1; agg_2 agg2; };
 
-static_assert(brace_constructible<int>);
-static_assert(brace_constructible<int, int>);
-static_assert(brace_constructible<int, int&>);
-static_assert(not brace_constructible<int&, int>);
-static_assert(not brace_constructible<int&, int&&>);
-static_assert(brace_constructible<agg_1>);
-static_assert(brace_constructible<agg_1, int>);
-static_assert(brace_constructible<agg_1, int, int>);
-static_assert(not brace_constructible<agg_1, int, int, int>);
-static_assert(brace_constructible<agg_1, short>);
-static_assert(not brace_constructible<agg_1, float>);
-static_assert(brace_constructible<agg, agg_1, agg_2>);
-static_assert(brace_constructible<agg, int, int, int, int, int>);
-static_assert(brace_constructible<agg, int, int, agg_2>);
-static_assert(not brace_constructible<agg, agg_2, agg_2>);
-
 auto tlambda_0 = []<typename>{};
 auto tlambda_1 = []<typename>(int){};
 auto tlambda_2 = []<typename>(int, int){};

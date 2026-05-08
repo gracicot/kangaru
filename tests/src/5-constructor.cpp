@@ -6,20 +6,20 @@ struct agg {
 };
 
 struct needs_int {
-	explicit needs_int(int value) : value{value} {}
-	explicit needs_int(int value, needs_int&&) : value{value} {}
+	explicit constexpr needs_int(int value) : value{value} {}
+	explicit constexpr needs_int(int value, needs_int&&) : value{value} {}
 	int value;
 };
 
 struct int_or_swallow {
-	explicit int_or_swallow(int value) : value{value} {}
-	explicit int_or_swallow(auto) { value = 3; }
+	explicit constexpr int_or_swallow(int value) : value{value} {}
+	explicit constexpr int_or_swallow(auto) { value = 3; }
 	
 	int value;
 };
 
 struct strict_a {
-	explicit strict_a(int value) : value{value} {}
+	explicit constexpr strict_a(int value) : value{value} {}
 	
 	int value;
 };
@@ -54,9 +54,9 @@ struct explicitly_converts_to_a {
 
 struct with_args {
 	explicit with_args() = default;
-	with_args(int, float, double) {}
-	with_args(short, with_args, double) {}
-	with_args(short, float, double, double) {}
+	constexpr with_args(int, float, double) {}
+	constexpr with_args(short, with_args, double) {}
+	constexpr with_args(short, float, double, double) {}
 };
 
 template<typename T>

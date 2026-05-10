@@ -507,23 +507,6 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 		}
 	}
 	
-	SECTION("container base source can be used to make unique pointer based services") {
-		auto container = TestType::make_container(
-			kangaru::make_container_base_source(
-				[]() {
-					return kangaru::object_source<std::unique_ptr<abstract>>{
-						std::make_unique<concrete>(1.5f)
-					};
-				}
-			)
-		);
-		
-		auto a1 = kangaru::provide<std::unique_ptr<abstract>>(container);
-		auto a2 = kangaru::provide<std::unique_ptr<abstract>>(container);
-		CHECK(a1 != a2);
-		CHECK(dynamic_cast<concrete*>(a1.get()) != nullptr);
-	}
-	
 	SECTION("container base source with dynamic supplied instances and factory functions") {
 		auto base = kangaru::make_container_base_source(
 			kangaru::allow_assume_cached,

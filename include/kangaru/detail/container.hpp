@@ -217,6 +217,9 @@ KANGARU5_EXPORT namespace kangaru {
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_mapped_type<T>*>)();
 			state.erase(id);
 		}
+		
+		// TODO: Add a function get_from_cache to get a service without creating new instances.
+		// TODO: Allow container to return things like unique_ptr when using custom base source.
 	};
 	
 	template<typename Source, typename Cache, typename Storage, typename Construction>

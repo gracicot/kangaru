@@ -167,8 +167,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct function_source {
 		constexpr function_source() requires(std::default_initializable<F>) : function{} {}
 		
-		template<allows_construction_of<F> T>
-		explicit constexpr function_source(T&& function) : function{KANGARU5_FWD(function)} {}
+		explicit constexpr function_source(F function) : function{std::move(function)} {}
 		
 		template<forwarded<function_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> detail::call_result_t<detail::forward_like_t<Self, F>> {

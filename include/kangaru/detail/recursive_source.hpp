@@ -186,6 +186,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	using unsafe_exhaustive_construction = basic_unsafe_exhaustive_construction<make_spread_injector_function>;
+	using unsafe_exhaustive_strict_construction = basic_unsafe_exhaustive_construction<make_strict_spread_injector_function>;
 	
 	template<construction Construction, second_step_function SecondStep>
 	struct construction_with_two_step_init {
@@ -252,6 +253,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	using exhaustive_construction = basic_exhaustive_construction<make_spread_injector_function>;
+	using exhaustive_strict_construction = basic_exhaustive_construction<make_strict_spread_injector_function>;
 	
 	template<injectable Type, make_injector MakeInjector>
 	struct basic_placeholder_except_construction {
@@ -272,6 +274,9 @@ KANGARU5_EXPORT namespace kangaru {
 	template<injectable Type>
 	using placeholder_except_construction = basic_placeholder_except_construction<Type, make_spread_injector_function>;
 	
+	template<injectable Type>
+	using placeholder_except_strict_construction = basic_placeholder_except_construction<Type, make_strict_spread_injector_function>;
+	
 	template<make_injector MakeInjector>
 	struct basic_placeholder_construction {
 		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construction() requires std::default_initializable<MakeInjector> = default;
@@ -289,6 +294,7 @@ KANGARU5_EXPORT namespace kangaru {
 	};
 	
 	using placeholder_construction = basic_placeholder_construction<make_spread_injector_function>;
+	using placeholder_strict_construction = basic_placeholder_construction<make_strict_spread_injector_function>;
 	
 	template<source Source, function_object... Functions>
 	struct with_function_call {
@@ -601,7 +607,7 @@ KANGARU5_EXPORT namespace kangaru {
 		with_recursion<
 			with_function_call<
 				none_source,
-				basic_placeholder_except_construction<Type, make_strict_spread_injector_function>
+				placeholder_except_strict_construction<Type>
 			>
 		>,
 		Tree

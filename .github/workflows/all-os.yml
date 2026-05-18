@@ -110,7 +110,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clang: [18, 19, 20, 21]
+        clang: [18, 19, 20, 21, 22]
 
     steps:
       - uses: actions/checkout@v5

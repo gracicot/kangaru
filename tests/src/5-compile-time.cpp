@@ -4,6 +4,8 @@ struct type1 { int id; };
 struct type2 { int id; };
 struct aggregate { type1 t1; type2& t2; };
 struct type3 { aggregate agg; };
+struct type4 { type3 t3; };
+struct type5 { type4 t4; };
 
 int main() {
 	auto source = kangaru::with_recursion{
@@ -15,8 +17,8 @@ int main() {
 		)
 	};
 	
-	auto t3 = kangaru::provide<type3>(source);
+	auto t5 = kangaru::provide<type5>(source);
 
-	(void) t3.agg.t1.id;
-	(void) t3.agg.t2.id;
+	(void) t5.t4.t3.agg.t1.id;
+	(void) t5.t4.t3.agg.t2.id;
 }

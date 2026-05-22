@@ -483,7 +483,7 @@ KANGARU5_EXPORT namespace kangaru {
 		{
 			return with_alternative<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>{
 				KANGARU5_FWD(new_source),
-				KANGARU5_NO_ADL(fwd_ref)(maybe_unwrap(KANGARU5_FWD(original).alternative)),
+				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(original).alternative),
 			};
 		}
 	};
@@ -533,9 +533,9 @@ KANGARU5_EXPORT namespace kangaru {
 		requires(not deducer<std::remove_cvref_t<Source>>)
 	filter_if_source(Source&&, Filter const&) -> filter_if_source<deduced_source_type<Source>, Filter>;
 	
-	template<source Filter, forwarded_source Source>
+	template<injectable T, forwarded_source Source>
 	inline constexpr auto filter(Source&& source) {
-		return filter_source<deduced_source_type<Source>, Filter>{KANGARU5_FWD(source)};
+		return filter_source<deduced_source_type<Source>, T>{KANGARU5_FWD(source)};
 	}
 	
 	template<forwarded_source Source, std::default_initializable Filter>
@@ -543,9 +543,33 @@ KANGARU5_EXPORT namespace kangaru {
 		return filter_if_source<deduced_source_type<Source>, Filter>{KANGARU5_FWD(source)};
 	}
 	
-	template<source Source>
+	template<std::size_t level, source Source>
 	struct with_passthrough {
+	private:
+		template<std::size_t l = level, forwarded_source S>
+			requires(l == 0 or forwarded_wrapping_source<maybe_unwrap_result_t<S>>)
+		static constexpr auto target_source(S&& source) -> auto&& {
+			if constexpr (l > 0) {
+				return target_source<l - 1>(maybe_unwrap(KANGARU5_FWD(source)).source);
+			} else {
+				return KANGARU5_FWD(source);
+			}
+		}
+		
+		template<typename S>
+		using target_source_t = decltype(target_source<level>(std::declval<forwarded_wrapped_source_t<S>>()));
+		
+	public:
 		Source source;
+		
+		template<forwarded<with_passthrough> Original, forwarded_source NewSource>
+		static constexpr auto rebind(Original&& original, NewSource&& new_source)
+			-> with_passthrough<level, deduced_source_type<NewSource>>
+		{
+			return with_passthrough<level, deduced_source_type<NewSource>>{
+				KANGARU5_FWD(new_source),
+			};
+		}
 		
 		template<injectable T, forwarded<with_passthrough> Self>
 			requires wrapping_source_of<Self, T>
@@ -554,18 +578,15 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<injectable T, forwarded<with_passthrough> Self>
-			requires(not wrapping_source_of<Self, T> and wrapping_source_of<wrapped_source_t<Self>, T>)
+			requires(not wrapping_source_of<Self, T> and source_of<target_source_t<Self>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source.source);
+			return kangaru::provide<T>(target_source(KANGARU5_FWD(source).source));
 		}
 	};
 	
-	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
-	with_passthrough(T&&) -> with_passthrough<deduced_source_type<T>>;
-	
-	template<forwarded_source Source>
+	template<std::size_t level, forwarded_source Source>
 	inline constexpr auto make_source_with_passthrough(Source&& source) {
-		return with_passthrough<deduced_source_type<Source>>{KANGARU5_FWD(source)};
+		return with_passthrough<level, deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}
 	
 	template<source Source>
@@ -687,6 +708,22 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, forwarded<sealed_source> Self> requires source_of<detail::forward_like_t<Self, Source&&>, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		constexpr auto wrapped_source() & -> Source& {
+			return source;
+		}
+		
+		constexpr auto wrapped_source() && -> Source&& {
+			return std::move(source);
+		}
+		
+		constexpr auto wrapped_source() const& -> Source const& {
+			return source;
+		}
+		
+		constexpr auto wrapped_source() const&& -> Source const&& {
+			return std::move(source);
 		}
 		
 	private:

@@ -33,7 +33,7 @@ namespace kangaru::detail::optional_private {
 	template<typename T, typename Arg>
 	concept optional_forwarded_construction_object =
 		    different_from<in_place_t, std::decay_t<Arg>>
-		and injectable<T>
+		and optional_suitable<T>
 		and different_from<kangaru::optional<T>, std::decay_t<Arg>>
 		and std::constructible_from<T, Arg&&>;
 }

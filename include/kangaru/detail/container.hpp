@@ -29,7 +29,7 @@ KANGARU5_EXPORT namespace kangaru {
 				with_cache{
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_construction)(
-							KANGARU5_FWD(source),
+							KANGARU5_NO_ADL(seal_source)(with_exclude_mapping<Source, cached_source_mapping_using_t>{KANGARU5_FWD(source)}),
 							construction
 						),
 						std::move(storage),
@@ -73,7 +73,10 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		using state_type = with_cache<
 			with_heap_storage<
-				with_construction<Source, Construction>,
+				with_construction<
+					sealed_source<with_exclude_mapping<Source, cached_source_mapping_using_t>>,
+					Construction
+				>,
 				Storage
 			>,
 			Cache
@@ -99,10 +102,10 @@ KANGARU5_EXPORT namespace kangaru {
 			};
 			
 			return with_recursion{
-				with_passthrough{
+				KANGARU5_NO_ADL(make_source_with_passthrough<1>)(
 					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
 						with_alternative{
-							with_recursion{
+							KANGARU5_NO_ADL(make_source_with_passthrough<4>)(
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
 									cached_reference_to_source_mapping_using<
 										detail::forward_like_t<S, Source>
@@ -116,13 +119,16 @@ KANGARU5_EXPORT namespace kangaru {
 											},
 										},
 									}
-								),
+								)
+							),
+							composed_source{
+								external_reference_source{*this},
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.wrapped_source().source),
 							},
-							external_reference_source{*this},
 						},
 						std::as_const(construction)
-					),
-				},
+					)
+				),
 			};
 		}
 		
@@ -151,7 +157,7 @@ KANGARU5_EXPORT namespace kangaru {
 			cache.insert(state.begin(), state.end());
 			
 			return container<ref_result_t<Source const&>, Cache, Storage>{
-				KANGARU5_NO_ADL(ref)(state.source.source.source),
+				KANGARU5_NO_ADL(ref)(state.source.source.source.wrapped_source().source),
 				std::move(cache),
 				Storage{},
 				construction,

@@ -138,7 +138,7 @@ TEST_CASE("Recursive source", "[recursive]") {
 	
 	SECTION("Support the service idiom and cache and construction, with recursive construction on top") {
 		auto source = kangaru::make_source_with_recursion(
-			kangaru::make_source_with_passthrough(
+			kangaru::make_source_with_passthrough<1>(
 				kangaru::make_source_with_exhaustive_construction(
 					kangaru::make_source_with_recursion(
 						kangaru::make_source_with_provide_using_source<kangaru::cached_reference_to_source_mapping>(

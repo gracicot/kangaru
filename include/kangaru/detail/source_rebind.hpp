@@ -79,15 +79,17 @@ namespace kangaru {
 				requires(rebindable_wrapping_source<Wrapper> and not forwarded_reference_wrapper<Wrapper>)
 			constexpr auto operator()(Wrapper&& source, forwarded_function_object auto&& replace_leaf) const {
 				if constexpr (stateful_rebindable_wrapping_source<Wrapper>) {
-					decltype(auto) new_leaf = operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf));
-					return std::remove_cvref_t<Wrapper>::rebind(KANGARU5_FWD(source), KANGARU5_FWD(new_leaf));
+					return std::remove_cvref_t<Wrapper>::rebind(
+						KANGARU5_FWD(source),
+						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
+					);
 				} else if constexpr (transparent_rebindable_wrapping_source<Wrapper>) {
 					using rebound = typename detail::ttype_t<
 						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
-						decltype(operator()(source.source, KANGARU5_FWD(replace_leaf)))
+						decltype(operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf)))
 					>;
 					return rebound{
-						operator()(source.source, KANGARU5_FWD(replace_leaf))
+						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
 					};
 				} else {
 					static_assert(not std::same_as<Wrapper, Wrapper>, "exhaustive");

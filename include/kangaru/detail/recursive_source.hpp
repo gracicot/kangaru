@@ -137,7 +137,7 @@ namespace kangaru::detail::recursive_source_private {
 		constexpr auto operator()(forwarded_source auto&& leaf) const noexcept {
 			return KANGARU5_NO_ADL(make_source_with_alternative)(
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(leaf)),
-				alternative
+				std::move(alternative)
 			);
 		}
 	};
@@ -222,7 +222,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<construction Construction, second_step_function SecondStep = noop_second_step>
 	inline constexpr auto make_construction_with_two_step_init(Construction const& construction, SecondStep const& second_step) {
-		return construction_with_two_step_init<Construction, SecondStep>{KANGARU5_FWD(construction), second_step};
+		return construction_with_two_step_init<Construction, SecondStep>{construction, second_step};
 	}
 	
 	template<make_injector MakeInjector>
@@ -567,9 +567,10 @@ KANGARU5_EXPORT namespace kangaru {
 	struct with_recursion {
 		Source source;
 		
-		template<injectable T, forwarded<with_recursion> Self> requires(not wrapping_source_of<Self, T>)
+		template<injectable T, forwarded<with_recursion> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T requires(
-			source_of<
+			   wrapping_source_of<Self, T>
+			or source_of<
 				wrapped_source_rebind_result_t<
 					Self&&,
 					detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>
@@ -577,19 +578,19 @@ KANGARU5_EXPORT namespace kangaru {
 				T
 			>
 		) {
-			return kangaru::provide<T>(
-				kangaru::rebind(
-					source,
-					detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
-						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
-					}
-				).source
-			);
-		}
-		
-		template<injectable T, forwarded<with_recursion> Self> requires wrapping_source_of<Self, T>
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+			if constexpr (wrapping_source_of<Self, T>) {
+				// Compile time optimisation: Do not instantiate rebind when already a source of
+				return kangaru::provide<T>(KANGARU5_FWD(source).source);
+			} else {
+				return kangaru::provide<T>(
+					kangaru::rebind(
+						KANGARU5_FWD(source).source,
+						detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
+							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
+						}
+					)
+				);
+			}
 		}
 	};
 	
@@ -597,7 +598,7 @@ KANGARU5_EXPORT namespace kangaru {
 		requires(not deducer<std::remove_cvref_t<Source>>)
 	with_recursion(Source&& source) -> with_recursion<deduced_source_type<Source>>;
 	
-	template<forwarded_source Source>
+	template<forwarded_rebindable_source Source>
 	inline constexpr auto make_source_with_recursion(Source&& source) {
 		return with_recursion<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}

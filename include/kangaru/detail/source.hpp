@@ -151,12 +151,12 @@ namespace kangaru {
 	KANGARU5_EXPORT struct none_source {};
 	static_assert(source<none_source>);
 	
-	KANGARU5_EXPORT template<wrapping_source Source>
+	KANGARU5_EXPORT template<forwarded_wrapping_source Source>
 	using forwarded_wrapped_source_t = detail::forward_like_t<Source, wrapped_source_t<Source>>;
 	
 	KANGARU5_EXPORT template<typename Source, typename T>
 	concept wrapping_source_of =
-		    wrapping_source<std::remove_reference_t<Source>>
+		    forwarded_wrapping_source<Source>
 		and source_of<forwarded_wrapped_source_t<Source>, T>;
 	
 	KANGARU5_EXPORT template<injectable T, source Source>

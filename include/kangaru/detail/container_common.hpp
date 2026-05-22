@@ -18,19 +18,6 @@
 #include "define.hpp"
 
 namespace kangaru::detail::container_common_private {
-	// TODO: Prevent duplicate?
-	template<injectable, source>
-	struct enumerated_select_source_of {};
-	
-	template<injectable T, source Source, source... Sources>
-		requires(requires { typename select_source_of<T, Sources...>; })
-	struct enumerated_select_source_of<T, enumerated_source_of<Source, Sources...>> {
-		using type = select_source_of<T, Sources...>;
-	};
-	
-	template<injectable T, source EnumeratedSource>
-	using enumerated_select_source_of_t = typename enumerated_select_source_of<T, EnumeratedSource>::type;
-	
 	template<injectable T>
 	struct default_type_to_source_mapping {};
 	
@@ -67,6 +54,19 @@ namespace kangaru::detail::container_common_private {
 	
 	template<kangaru::object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T> const&&> {};
+	
+	// Banning source of a mapped source, a bit like provide_using source
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<reference_source<T>> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<rvalue_source<T>> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<shared_pointer_source<T>> {};
+	
+	template<kangaru::object T>
+	struct default_type_to_source_mapping<object_source<T>> {};
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -131,6 +131,23 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source_ref Source, injectable T>
 	using cached_reference_to_source_mapping_using_t = cached_source_mapping_using_t<Source, T>&;
+
+	template<typename Source, template<typename, typename> typename Mapping>
+	struct with_exclude_mapping {
+		template<injectable T, forwarded<with_exclude_mapping> Self>
+			requires(
+				    wrapping_source_of<Self, T>
+				and not requires {
+					typename Mapping<forwarded_wrapped_source_t<Self>, T>;
+					requires wrapping_source_of<Self, Mapping<forwarded_wrapped_source_t<Self>, T>>;
+				}
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		Source source;
+	};
 	
 	struct throw_if_not_found {
 		template<injectable T> requires(assume_runtime_cached_v<T>)

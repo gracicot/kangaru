@@ -64,7 +64,7 @@ namespace kangaru {
 							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
-										KANGARU5_FWD(source),
+										seal_source(with_exclude_mapping<Source, cached_source_mapping_using_t>{KANGARU5_FWD(source)}),
 										construction
 									)
 								)
@@ -114,7 +114,10 @@ namespace kangaru {
 				with_heap_storage<
 					with_source_wrapping<
 						with_source_wrapping<
-							with_construction<Source, Construction>
+							with_construction<
+								sealed_source<with_exclude_mapping<Source, cached_source_mapping_using_t>>,
+								Construction
+							>
 						>
 					>,
 					Storage
@@ -146,10 +149,10 @@ namespace kangaru {
 			);
 			
 			return with_recursion{
-				with_passthrough{
+				KANGARU5_NO_ADL(make_source_with_passthrough<1>)(
 					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
 						with_alternative{
-							with_recursion{
+							KANGARU5_NO_ADL(make_source_with_passthrough<6>)(
 								KANGARU5_NO_ADL(make_source_with_provide_using_source<
 									polymorphic_source
 								>)(
@@ -157,13 +160,16 @@ namespace kangaru {
 										std::move(rebound_state),
 										second_step_from_attribute{},
 									}
-								),
+								)
+							),
+							composed_source{
+								external_reference_source{*this},
+								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.source.source.source.wrapped_source().source)
 							},
-							external_reference_source{*this},
 						},
 						std::as_const(construction)
 					)
-				}
+				),
 			};
 		}
 		
@@ -192,7 +198,7 @@ namespace kangaru {
 			cache.insert(state.begin(), state.end());
 			
 			return polymorphic_container<ref_result_t<Source const&>, Cache>{
-				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source),
+				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source.wrapped_source().source),
 				std::move(cache),
 				Storage{},
 				construction,

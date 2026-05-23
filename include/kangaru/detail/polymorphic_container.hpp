@@ -3,6 +3,7 @@
 
 #include "concepts.hpp"
 #include "two_step_init.hpp"
+#include "optional.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_traits.hpp"
 #include "utility.hpp"
@@ -265,9 +266,32 @@ namespace kangaru {
 		}
 		
 		template<injectable T>
+			requires(cache_map_stores<unwrapped_cache, any_source_of_ref<T>>)
 		constexpr void erase() {
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<any_source_of_ref<T>>)();
 			state.erase(id);
+		}
+		
+		template<unqualified_object T>
+			requires(cache_map_stores<unwrapped_cache, any_source_of_ref<T>>)
+		constexpr auto get_from_cache() const -> optional<T> {
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<any_source_of_ref<T>>)();
+			if (auto const it = state.find(id); it != state.end()) {
+				return kangaru::provide<T>(static_cast<any_source_of_ref<T>>(it->second));
+			}
+			
+			return {};
+		}
+		
+		template<reference T>
+			requires(cache_map_stores<unwrapped_cache, any_source_of_ref<T>>)
+		constexpr auto get_from_cache() const -> optional<T&> {
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<any_source_of_ref<T>>)();
+			if (auto const it = state.find(id); it != state.end()) {
+				return static_cast<T&>(kangaru::provide<T>(static_cast<any_source_of_ref<T>>(it->second)));
+			}
+			
+			return {};
 		}
 	};
 	

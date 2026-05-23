@@ -181,7 +181,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<typename> typename Deducer = basic_deducer,
 		forwarded_source Source,
 		reflectable_function<max>... Lambdas
-	>
+	> requires(not reflectable_function<Source, max>)
 	inline constexpr auto make_container_base_source(Source&& source, Lambdas&&... lambdas) {
 		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
 			with_function_call{

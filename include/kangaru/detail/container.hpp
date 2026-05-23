@@ -2,6 +2,7 @@
 #define KANGARU5_DETAIL_CONTAINER_HPP
 
 #include "cache_types.hpp"
+#include "optional.hpp"
 #include "container_common.hpp"
 #include "type_traits.hpp"
 #include "recursive_source.hpp"
@@ -224,8 +225,27 @@ KANGARU5_EXPORT namespace kangaru {
 			state.erase(id);
 		}
 		
-		// TODO: Add a function get_from_cache to get a service without creating new instances.
-		// TODO: Allow container to return things like unique_ptr when using custom base source.
+		template<unqualified_object T>
+			requires(cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>)
+		constexpr auto get_from_cache() const -> optional<T> {
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_mapped_type<T>*>)();
+			if (auto const it = state.find(id); it != state.end()) {
+				return kangaru::provide<T>(*static_cast<contained_mapped_type<T>*>(it->second));
+			}
+			
+			return {};
+		}
+		
+		template<reference T>
+			requires(cache_map_stores<unwrapped_cache, contained_mapped_type<T>*>)
+		constexpr auto get_from_cache() const -> optional<T&> {
+			constexpr auto id = KANGARU5_NO_ADL(type_id_for<contained_mapped_type<T>*>)();
+			if (auto const it = state.find(id); it != state.end()) {
+				return static_cast<T&>(kangaru::provide<T>(*static_cast<contained_mapped_type<T>*>(it->second)));
+			}
+			
+			return {};
+		}
 	};
 	
 	template<typename Source, typename Cache, typename Storage, typename Construction>

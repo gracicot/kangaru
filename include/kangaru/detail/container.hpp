@@ -187,11 +187,13 @@ KANGARU5_EXPORT namespace kangaru {
 			auto& heap_storage = state.source;
 			auto& cache = state;
 			
-			auto const ptr = heap_storage.emplace_from([&] {
-				return contained_type{
-					KANGARU5_FWD(source)
-				};
-			});
+			auto const ptr = heap_storage.template emplace<contained_type>(
+				in_place_construct{[&] {
+					return contained_type{
+						KANGARU5_FWD(source)
+					};
+				}}
+			);
 			
 			cache.insert_or_assign(id, ptr);
 			return kangaru::provide<T>(*ptr);
@@ -210,9 +212,11 @@ KANGARU5_EXPORT namespace kangaru {
 			auto& heap_storage = state.source;
 			auto& cache = state;
 			
-			auto const ptr = heap_storage.emplace_from([&] {
-				return contained_type{std::move(in_place)};
-			});
+			auto const ptr = heap_storage.template emplace<contained_type>(
+				in_place_construct{[&] {
+					return contained_type{std::move(in_place)};
+				}}
+			);
 			
 			cache.insert_or_assign(id, ptr);
 			return kangaru::provide<T>(*ptr);

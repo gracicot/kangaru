@@ -284,9 +284,9 @@ TEST_CASE("Runtime source will cache sources results", "[cache]") {
 				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
 				source.insert_or_assign(
 					kangaru::type_id_for<Derived1*>(),
-					source.source.emplace_from([&] {
+					source.source.emplace<Derived1>(kangaru::in_place_construct{[&] {
 						return kangaru::provide<Derived1>(base_source);
-					})
+					}})
 				);
 				CHECK(kangaru::provide<Base1*>(source)->get() == 3);
 			}
@@ -295,9 +295,9 @@ TEST_CASE("Runtime source will cache sources results", "[cache]") {
 				CHECK(kangaru::provide<Base1*>(source)->get() == 0);
 				source.insert_or_assign(
 					kangaru::type_id_for<Derived1*>(),
-					source.source.emplace_from([&] {
+					source.source.emplace<Derived1>(kangaru::in_place_construct{[&] {
 						return kangaru::provide<Derived1>(base_source);
-					})
+					}})
 				);
 				CHECK(kangaru::provide<Base1*>(source)->get() == 3);
 			}

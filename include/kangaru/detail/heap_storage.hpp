@@ -76,16 +76,17 @@ namespace kangaru {
 				};
 			}
 			
-			template<std::copy_constructible F> KANGARU5_UNSAFE
-			constexpr auto construct(Allocator& allocator, F function) -> call_result_t<F>* {
-				using object_type = call_result_t<F>;
-				
-				auto ptr = std::unique_ptr<object_type, deallocate_uninitialized>{
-					allocator.template allocate_object<object_type>(),
+			template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args...>) KANGARU5_UNSAFE
+			constexpr auto construct(Allocator& allocator, Args&&... args) -> T* {
+				auto ptr = std::unique_ptr<T, deallocate_uninitialized>{
+					allocator.template allocate_object<T>(),
 					deallocate_uninitialized{std::addressof(allocator)}
 				};
 				
-				std::construct_at(ptr.get(), in_place_construct{std::move(function)});
+				std::construct_at(ptr.get(), in_place_construct{[&] {
+					return constructor<T>(KANGARU5_FWD(args)...);
+				}});
+				
 				return ptr.release();
 			}
 			
@@ -134,19 +135,17 @@ namespace kangaru {
 			}
 		}
 		
-		// TODO: Now that in_place_construct is a thing, think about the ergonomics on the api
-		template<function_object F>
-		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
+		template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args&&...>)
+		constexpr auto emplace(Args&&... args) {
 			KANGARU5_UNSAFE_BLOCK {
-				using object_type = detail::call_result_t<F>;
-				auto ptr = std::unique_ptr<object_type, destroy>{
-					basic_heap_storage::construct(allocator, std::move(function)),
+				auto ptr = std::unique_ptr<T, destroy>{
+					basic_heap_storage::template construct<T>(allocator, KANGARU5_FWD(args)...),
 					destroy{std::addressof(allocator)},
 				};
 				
 				container.push_back(runtime_dynamic_storage{
 					ptr.get(),
-					basic_heap_storage::template destroyer<object_type>(),
+					basic_heap_storage::template destroyer<T>(),
 				});
 				
 				return ptr.release();
@@ -173,8 +172,8 @@ namespace kangaru {
 	KANGARU5_EXPORT template<typename T>
 	concept heap_storage =
 		    std::move_constructible<T>
-		and requires(T storage, detail::function_pointer_t<auto() -> int> function) {
-			{ storage.emplace_from(function) } -> std::same_as<int*>;
+		and requires(T storage, int value) {
+			{ storage.template emplace<int>(value) } -> std::same_as<int*>;
 		};
 	
 	KANGARU5_EXPORT template<typename T>
@@ -201,11 +200,9 @@ namespace kangaru {
 		
 		Source source;
 		
-		// TODO: Constaints
-		// TODO: Should we use construct_in_place?
-		template<function_object F>
-		constexpr auto emplace_from(F function) -> detail::call_result_t<F>* {
-			return KANGARU5_NO_ADL(maybe_unwrap)(storage).emplace_from(std::move(function));
+		template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args...>)
+		constexpr auto emplace(Args&&... args) -> T* {
+			return KANGARU5_NO_ADL(maybe_unwrap)(storage).template emplace<T>(KANGARU5_FWD(args)...);
 		}
 		
 		template<forwarded<with_heap_storage> Original, forwarded_source NewSource>
@@ -221,10 +218,10 @@ namespace kangaru {
 		
 		template<pointer T, forwarded<with_heap_storage> Self> requires wrapping_source_of<Self, std::remove_pointer_t<T>>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).emplace_from(
-				[&source] {
+			return KANGARU5_NO_ADL(maybe_unwrap)(source.storage).template emplace<std::remove_pointer_t<T>>(
+				in_place_construct{[&source] {
 					return kangaru::provide<std::remove_pointer_t<T>>(KANGARU5_FWD(source).source);
-				}
+				}}
 			);
 		}
 		

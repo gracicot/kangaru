@@ -415,12 +415,12 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<object U>
 			requires(
-				    std::convertible_to<U*, std::remove_reference_t<T>*>
+				    std::convertible_to<U*, object_type*>
 				and not detail::is_specialisation_of_v<optional, std::remove_cv_t<U>>
 			)
 		explicit(false) constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
 		
-		template<lvalue_reference U> requires std::convertible_to<U*, std::remove_reference_t<T>*>
+		template<lvalue_reference U> requires std::convertible_to<U*, object_type*>
 		constexpr optional(optional<U> const& opt) noexcept : pointer{opt ? std::addressof(*opt) : nullptr} {}
 		
 		explicit(false) constexpr optional(nullopt_t) noexcept : pointer{nullptr} {}
@@ -443,21 +443,21 @@ KANGARU5_EXPORT namespace kangaru {
 			pointer = nullptr;
 		}
 		
-		template<std::convertible_to<T&> U>
-		constexpr auto emplace(U&& value) noexcept -> T& {
-			pointer = std::addressof(static_cast<T&>(value));
+		template<std::convertible_to<object_type&> U>
+		constexpr auto emplace(U&& value) noexcept -> object_type& {
+			pointer = std::addressof(static_cast<object_type&>(value));
 			return *pointer;
 		}
 		
-		constexpr auto value() const& -> T& {
+		constexpr auto value() const& -> object_type& {
 			return *pointer;
 		}
 		
-		constexpr auto operator*() const& noexcept -> T& {
+		constexpr auto operator*() const& noexcept -> object_type& {
 			return *pointer;
 		}
 		
-		constexpr auto operator->() const& noexcept -> std::remove_reference_t<T>* {
+		constexpr auto operator->() const& noexcept -> object_type* {
 			return pointer;
 		}
 		
@@ -469,9 +469,9 @@ KANGARU5_EXPORT namespace kangaru {
 			return has_value();
 		}
 		
-		template<typename U = std::remove_cvref_t<T>> requires std::convertible_to<U&&, T&>
-		constexpr auto value_or(U&& default_value) const& noexcept -> T& {
-			return has_value() ? **this : static_cast<T&>(KANGARU5_FWD(default_value));
+		template<typename U = object_type> requires std::convertible_to<U&&, object_type&>
+		constexpr auto value_or(U&& default_value) const& noexcept -> object_type& {
+			return has_value() ? **this : static_cast<object_type&>(KANGARU5_FWD(default_value));
 		}
 		
 		template<std::invocable<T&> F>

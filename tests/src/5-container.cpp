@@ -6,6 +6,99 @@
 
 #include <fmt/core.h>
 
+template<typename T>
+struct unmapped_dependent_on {
+	explicit unmapped_dependent_on(T value) : value(std::move(value)) {}
+	T value;
+};
+
+template<typename T>
+struct mapped_dependent_on {
+	explicit mapped_dependent_on(T value) : value(std::move(value)) {}
+	T value;
+	
+	template<typename U>
+	friend auto attribute(kangaru::allow_runtime_caching<mapped_dependent_on<U>>) -> std::true_type;
+};
+
+template<typename T, typename C>
+auto test_provide_through_dependency(C& container, auto check) {
+	SECTION("Provide through a mapped type") {
+		auto result = kangaru::provide<mapped_dependent_on<T>>(container);
+		check(result.value);
+		
+		SECTION("then through mapped") {
+			auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<T>>>(container);
+			check(result.value.value);
+			
+			SECTION("then through mapped") {
+				auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>(container);
+				check(result.value.value.value);
+			}
+		}
+		
+		SECTION("then through unmapped") {
+			auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<T>>>(container);
+			check(result.value.value);
+			
+			SECTION("then through unmapped") {
+				auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>(container);
+				check(result.value.value.value);
+				
+				SECTION("then through mapped") {
+					auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>>(container);
+					check(result.value.value.value.value);
+				}
+				
+				SECTION("then through unmapped") {
+					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>>(container);
+					check(result.value.value.value.value);
+				}
+			}
+		}
+	}
+	
+	SECTION("Provide through a unmapped type") {
+		auto result = kangaru::provide<unmapped_dependent_on<T>>(container);
+		check(result.value);
+		
+		SECTION("then through mapped") {
+			auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<T>>>(container);
+			check(result.value.value);
+		}
+		
+		SECTION("then through unmapped") {
+			auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<T>>>(container);
+			check(result.value.value);
+			
+			SECTION("then through unmapped") {
+				auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>(container);
+				check(result.value.value.value);
+				
+				SECTION("then through unmapped") {
+					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>(container);
+					check(result.value.value.value.value);
+					
+					SECTION("then through mapped") {
+						auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
+						check(result.value.value.value.value.value);
+						
+						SECTION("then through unmapped") {
+							auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>>(container);
+							check(result.value.value.value.value.value.value);
+						}
+					}
+					
+					SECTION("then through unmapped") {
+						auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
+						check(result.value.value.value.value.value);
+					}
+				}
+			}
+		}
+	}
+}
+
 struct empty {};
 struct empty_injectable {};
 
@@ -13,6 +106,18 @@ template<>
 struct kangaru::allow_empty_injection<empty_injectable> : std::true_type {};
 
 struct service_a {
+	service_a(){
+		fmt::println("a");
+	}
+	service_a(int i) : i{i} {
+		fmt::println("a: {}", i);
+	}
+	service_a(service_a const& o) : i{o.i} {
+		fmt::println("copy");
+	}
+	service_a(service_a&& o) : i{o.i} {
+		fmt::println("move");
+	}
 	int i;
 	friend auto attribute(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
@@ -71,27 +176,16 @@ struct int_wrapper {
 	int i;
 };
 
-template<typename T>
-struct unmapped_dependent_on {
-	explicit unmapped_dependent_on(T value) : value(std::move(value)) {}
-	T value;
-};
-
-template<typename T>
-struct mapped_dependent_on {
-	explicit mapped_dependent_on(T value) : value(std::move(value)) {}
-	T value;
-	
-	template<typename U>
-	friend auto attribute(kangaru::allow_runtime_caching<mapped_dependent_on<U>>) -> std::true_type;
-};
-
 struct service_a_child_1 : service_a {
+	service_a_child_1() = default;
+	explicit service_a_child_1(int i) : service_a{i} {}
 	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
 	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
 };
 
 struct service_a_child_2 : service_a {
+	service_a_child_2() = default;
+	explicit service_a_child_2(int i) : service_a{i} {}
 	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
 	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
 };
@@ -193,7 +287,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	
 	static_assert(not kangaru::source_of<decltype(container)&, empty>);
 	static_assert(kangaru::source_of<decltype(container)&, empty_injectable>);
-	
+
 	if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
 		auto c = TestType::make_container(kangaru::none_source{}, kangaru::polymorphic_map<std::map<kangaru::type_id, kangaru::any_source_of_one_ref>>{});
 		c.template provide<service_c&>();
@@ -201,7 +295,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		auto c = TestType::make_container(kangaru::none_source{}, std::map<kangaru::type_id, void*>{});
 		c.template provide<service_c&>();
 	}
-	
+
 	SECTION("Default construction is non strict") {
 		static_assert(kangaru::source_of<decltype(container)&, service_non_strict>);
 		
@@ -229,7 +323,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-	
+
 	SECTION("Allow replacing") {
 		auto& a1 = container.template provide<service_a&>();
 		CHECK(container.template has_in_cache<service_a&>());
@@ -239,7 +333,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		CHECK(std::addressof(a1) != std::addressof(a2));
 		CHECK(std::addressof(a2) == std::addressof(a3));
 	}
-	
+
 	SECTION("Containers are movable") {
 		auto& a1 = container.template provide<service_a&>();
 		auto c = std::move(container);
@@ -247,7 +341,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		auto& a2 = c.template provide<service_a&>();
 		CHECK(std::addressof(a1) == std::addressof(a2));
 	}
-	
+
 	SECTION("Allow replacing instances") {
 		SECTION("Replacing keeps old instance alive") {
 			auto& b = container.template provide<service_b&>();
@@ -280,14 +374,14 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 			auto& ac2 = container.template replace<service_a&>(kangaru::in_place_construct{[&]{
 				return injector([](service_a& previous) {
-					return kangaru::reference_source{service_a{.i = previous.i - 1}};
+					return kangaru::reference_source{service_a{previous.i - 1}};
 				});
 			}});
 			
 			auto& a2 = container.template provide<service_a&>();
 			CHECK(a2.i == 7);
 			
-			container.template replace<service_a&>(kangaru::reference_source{service_a{.i = 2}});
+			container.template replace<service_a&>(kangaru::reference_source{service_a{2}});
 			
 			CHECK(kangaru::provide<service_a&>(container).i == 2);
 		}
@@ -302,7 +396,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 				auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 				auto& ac2 = container.template replace<service_a_child_2&>(kangaru::in_place_construct{[&]{
 					return injector([](service_a& previous) {
-						return kangaru::reference_source{service_a_child_2{service_a{.i = previous.i - 1}}};
+						return kangaru::reference_source{service_a_child_2{previous.i - 1}};
 					});
 				}});
 				
@@ -312,7 +406,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-	
+
 	SECTION("Can create scoped instances") {
 		auto& a1 = std::same_as<TestType, alias_polymorphic_container>
 			? static_cast<service_a&>(container.template provide<service_a_child_1&>())
@@ -370,7 +464,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		
 		CHECK(not container.template has_in_cache<service_c&>());
 	}
-	
+
 	SECTION("Reuse instances that can override each other") {
 		auto& a1 = container.template provide<service_a_child_1&>();
 		auto& a = container.template provide<service_a&>();
@@ -383,7 +477,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(std::addressof(c.services.sa) == std::addressof(a));
 		}
 	}
-	
+
 	SECTION("Reuses instances") {
 		REQUIRE(not container.template has_in_cache<service_a&>());
 		auto& a = container.template provide<service_a&>();
@@ -394,59 +488,65 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		
 		CHECK(std::addressof(c.services.sa) == std::addressof(a));
 	}
-	
-	SECTION("Can forget instances without destroying the instance") {
-		auto& a = container.template provide<service_a&>();
-		a.i = 8;
-		REQUIRE(a.i == 8);
-		REQUIRE(container.template has_in_cache<service_a&>());
-		container.template erase<service_a&>();
-		REQUIRE(not container.template has_in_cache<service_a&>());
-		
-		SECTION("Access erased object is null") {
-			auto a_ref = std::as_const(container).template get_from_cache<service_a&>();
-			REQUIRE(not a_ref);
+
+	SECTION("Can forget instances") {
+		SECTION("Erase don't delete existing instances") {
+			auto& a = container.template provide<service_a&>();
+			a.i = 8;
+			REQUIRE(a.i == 8);
+			REQUIRE(container.template has_in_cache<service_a&>());
+			container.template erase<service_a&>();
+			REQUIRE(not container.template has_in_cache<service_a&>());
+			
+			SECTION("Access erased object is null") {
+				auto a_ref = std::as_const(container).template get_from_cache<service_a&>();
+				REQUIRE(not a_ref);
+			}
+			
+			auto& a2 = container.template provide<service_a&>();
+			CHECK(std::addressof(a) != std::addressof(a2));
+			
+			// If a is deleted, asan will trigger
+			REQUIRE(a.i == 8);
 		}
-		
-		auto& a2 = container.template provide<service_a&>();
-		CHECK(std::addressof(a) != std::addressof(a2));
-		
-		// If a is deleted, asan will trigger
-		REQUIRE(a.i == 8);
 		
 		SECTION("Erase don't erase overrides") {
 			if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
 				auto& a1 = container.template provide<service_a_child_1&>();
+				a1.i = 8;
 				REQUIRE(container.template has_in_cache<service_a_child_1&>());
 				REQUIRE(container.template has_in_cache<service_a&>());
+				auto& a = container.template provide<service_a&>();
+				CHECK(a.i == 8);
+				CHECK(std::addressof(a1) == std::addressof(a));
 				
 				SECTION("Access polymorphic object") {
 					auto a1_ref = std::as_const(container).template get_from_cache<service_a_child_1&>();
 					REQUIRE(a1_ref);
-					REQUIRE(std::addressof(a1) == std::addressof(*a1_ref));
-					auto a_ref = std::as_const(container).template get_from_cache<service_a&>();
+					CHECK(&a1 == std::addressof(*a1_ref));
+					kangaru::optional<service_a&> a_ref = std::as_const(container).template get_from_cache<service_a&>();
 					REQUIRE(a_ref);
-					REQUIRE(std::addressof(static_cast<service_a&>(a1)) == std::addressof(*a_ref));
+					CHECK(&(container.template provide<service_a&>()) == &*a_ref);
 				}
 				
 				container.template erase<service_a_child_1&>();
 				REQUIRE(not container.template has_in_cache<service_a_child_1&>());
 				REQUIRE(container.template has_in_cache<service_a&>());
 				
+				auto& a_after = container.template provide<service_a&>();
+				CHECK(std::addressof(a_after) == std::addressof(a));
+				
 				SECTION("Access polymorphic object") {
 					auto a1_ref = std::as_const(container).template get_from_cache<service_a_child_1&>();
 					REQUIRE(not a1_ref);
 					auto a_ref = std::as_const(container).template get_from_cache<service_a&>();
 					REQUIRE(a_ref);
-					REQUIRE(std::addressof(static_cast<service_a&>(a1)) == std::addressof(*a_ref));
+					CHECK(std::addressof(a1) == std::addressof(*a_ref));
 				}
-				
-				auto& a2 = container.template provide<service_a&>();
-				CHECK(std::addressof(static_cast<service_a&>(a1)) != std::addressof(a2));
 			}
 		}
 	}
-	
+
 	SECTION("Works with injectors") {
 		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 		
@@ -455,7 +555,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
 		});
 	}
-	
+
 	SECTION("Simple caching of shared pointers") {
 		SECTION("Can get directly from cache") {
 			auto d_ref = std::as_const(container).template get_from_cache<std::shared_ptr<service_d>>();
@@ -472,7 +572,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(*d_ref == s);
 		}
 	}
-	
+
 	SECTION("Allow injection using shared pointers") {
 		auto container = TestType::make_container();
 		
@@ -505,7 +605,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-	
+
 	SECTION("Supports second step for cached types") {
 		auto& a = kangaru::provide<has_second_step&>(container);
 		CHECK(a.a == 9);
@@ -514,7 +614,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	}
 }
 
-TEMPLATE_TEST_CASE("Container uses the base source", "[container]", 
+TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 	(alias_container),
 	(alias_polymorphic_container)
 ) {
@@ -638,82 +738,9 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
 		}
 		
-		SECTION("Provide through a mapped type") {
-			auto result = kangaru::provide<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>(container);
-			CHECK(result.value == provided);
-			
-			SECTION("then through mapped") {
-				auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(container);
-				CHECK(result.value.value == provided);
-				
-				SECTION("then through mapped") {
-					auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>(container);
-					CHECK(result.value.value.value == provided);
-				}
-			}
-			
-			SECTION("then through unmapped") {
-				auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(container);
-				CHECK(result.value.value == provided);
-				
-				SECTION("then through unmapped") {
-					auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>(container);
-					CHECK(result.value.value.value == provided);
-					
-					SECTION("then through mapped") {
-						auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>(container);
-						CHECK(result.value.value.value.value == provided);
-					}
-					
-					SECTION("then through unmapped") {
-						if constexpr (std::same_as<alias_container, TestType>) {
-							auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>(container);
-							CHECK(result.value.value.value.value == provided);
-						}
-					}
-				}
-			}
-		}
-		
-		SECTION("Provide through a unmapped type") {
-			auto result = kangaru::provide<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>(container);
-			CHECK(result.value == provided);
-			
-			SECTION("then through mapped") {
-				auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(container);
-				CHECK(result.value.value == provided);
-			}
-			
-			SECTION("then through unmapped") {
-				auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(container);
-				CHECK(result.value.value == provided);
-				
-				SECTION("then through unmapped") {
-					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>(container);
-					CHECK(result.value.value.value == provided);
-					
-					SECTION("then through unmapped") {
-						auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>(container);
-						CHECK(result.value.value.value.value == provided);
-						
-						SECTION("then through mapped") {
-							auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>>(container);
-							CHECK(result.value.value.value.value.value == provided);
-							
-							SECTION("then through unmapped") {
-								auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>>>(container);
-								CHECK(result.value.value.value.value.value.value == provided);
-							}
-						}
-						
-						SECTION("then through unmapped") {
-							auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>>>>(container);
-							CHECK(result.value.value.value.value.value == provided);
-						}
-					}
-				}
-			}
-		}
+		test_provide_through_dependency<std::shared_ptr<dynamic_provided_abstract>>(container, [&](auto& value) {
+			CHECK(value == provided);
+		});
 		
 		static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 		static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);

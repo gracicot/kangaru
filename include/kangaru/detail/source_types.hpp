@@ -661,10 +661,10 @@ KANGARU5_EXPORT namespace kangaru {
 		template<wrapping_source T, forwarded<with_source_wrapping> Self>
 			requires(
 				    wrapping_source_of<Self, wrapped_source_t<T>>
-				and constructor_callable<T, wrapped_source_t<T>>
+				and std::constructible_from<T, wrapped_source_t<T>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return KANGARU5_NO_ADL(constructor<T>)(kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source));
+			return T(kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source));
 		}
 	};
 	

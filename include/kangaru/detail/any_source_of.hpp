@@ -186,10 +186,10 @@ KANGARU5_EXPORT namespace kangaru {
 			base{std::addressof(source)} {}
 		
 		template<reference_wrapper Source> requires(not_self<Source, any_source_of_ref>)
-		explicit constexpr any_source_of_ref(Source&& source) noexcept
+		explicit constexpr any_source_of_ref(Source source) noexcept
 			requires (
-				    (... and source_of<Source&&, Types>)
-				and not std::is_rvalue_reference_v<decltype(source.unwrap())>
+				    not std::is_rvalue_reference_v<decltype(source.unwrap())>
+				and (... and source_of<Source, Types>)
 			) :
 				base{std::addressof(source.unwrap())} {}
 		

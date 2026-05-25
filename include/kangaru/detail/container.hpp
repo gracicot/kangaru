@@ -75,7 +75,12 @@ KANGARU5_EXPORT namespace kangaru {
 			container{Source{}, Cache{}, Storage{}, Construction{}} {}
 		
 	private:
-		using predicate_not_mapped = decltype([]<typename T>() consteval { return not allow_runtime_caching_v<T>;});
+		struct predicate_not_mapped {
+			template<typename T>
+			consteval bool operator()() const {
+				return not allow_runtime_caching_v<T>;
+			}
+		};
 		
 		with_cache<
 			with_heap_storage<

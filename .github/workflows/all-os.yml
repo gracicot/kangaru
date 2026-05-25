@@ -182,7 +182,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        gcc: [14, 15]
+        gcc: [14, 15, 16]
 
     steps:
       - uses: actions/checkout@v5

@@ -322,7 +322,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-
+	
 	SECTION("Allow replacing") {
 		auto& a1 = container.template provide<service_a&>();
 		CHECK(container.template has_in_cache<service_a&>());
@@ -332,7 +332,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		CHECK(std::addressof(a1) != std::addressof(a2));
 		CHECK(std::addressof(a2) == std::addressof(a3));
 	}
-
+	
 	SECTION("Containers are movable") {
 		auto& a1 = container.template provide<service_a&>();
 		auto c = std::move(container);
@@ -340,7 +340,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		auto& a2 = c.template provide<service_a&>();
 		CHECK(std::addressof(a1) == std::addressof(a2));
 	}
-
+	
 	SECTION("Allow replacing instances") {
 		SECTION("Replacing keeps old instance alive") {
 			auto& b = container.template provide<service_b&>();
@@ -405,7 +405,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-
+	
 	SECTION("Can create scoped instances") {
 		auto& a1 = std::same_as<TestType, alias_polymorphic_container>
 			? static_cast<service_a&>(container.template provide<service_a_child_1&>())
@@ -463,7 +463,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		
 		CHECK(not container.template has_in_cache<service_c&>());
 	}
-
+	
 	SECTION("Reuse instances that can override each other") {
 		auto& a1 = container.template provide<service_a_child_1&>();
 		auto& a = container.template provide<service_a&>();
@@ -476,7 +476,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(std::addressof(c.services.sa) == std::addressof(a));
 		}
 	}
-
+	
 	SECTION("Reuses instances") {
 		REQUIRE(not container.template has_in_cache<service_a&>());
 		auto& a = container.template provide<service_a&>();
@@ -487,7 +487,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		
 		CHECK(std::addressof(c.services.sa) == std::addressof(a));
 	}
-
+	
 	SECTION("Can forget instances") {
 		SECTION("Erase don't delete existing instances") {
 			auto& a = container.template provide<service_a&>();
@@ -554,7 +554,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(std::addressof(c.services.sb.a) == std::addressof(a));
 		});
 	}
-
+	
 	SECTION("Simple caching of shared pointers") {
 		SECTION("Can get directly from cache") {
 			auto d_ref = std::as_const(container).template get_from_cache<std::shared_ptr<service_d>>();
@@ -571,7 +571,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(*d_ref == s);
 		}
 	}
-
+	
 	SECTION("Allow injection using shared pointers") {
 		auto container = TestType::make_container();
 		
@@ -604,7 +604,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-
+	
 	SECTION("Supports second step for cached types") {
 		auto& a = kangaru::provide<has_second_step&>(container);
 		CHECK(a.a == 9);
@@ -715,7 +715,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			
 			static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 			static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-			static_assert(not kangaru::source_of<decltype(container)&, int>);
+			static_assert(not kangaru::source_of<decltype(container)&, float>);
 		}
 	}
 	
@@ -743,7 +743,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 		
 		static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 		static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-		static_assert(not kangaru::source_of<decltype(container)&, int>);
+		static_assert(not kangaru::source_of<decltype(container)&, float>);
 	}
 }
 

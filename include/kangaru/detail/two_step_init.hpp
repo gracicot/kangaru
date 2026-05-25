@@ -45,6 +45,15 @@ namespace kangaru::detail::two_step_init_private {
 	
 	template<auto mptr>
 	using member_type_for = typename member_type<decltype(mptr)>::type;
+	
+	// TODO: Remove workaround once this issue is fixed:
+	// https://github.com/llvm/llvm-project/issues/199569
+	template<typename MakeInjector, typename Source, typename T, auto... memfn>
+	inline constexpr auto all_callable_clang_22_workaround =
+		(... and callable<
+			detail::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
+			detail::two_step_init_private::bound_memfn<memfn, T&>
+		>);
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -141,12 +150,7 @@ KANGARU5_EXPORT namespace kangaru {
 		)
 	struct call_injected_member_functions_with {
 		template<injectable T, forwarded_source Source>
-			requires(
-				(... and callable<
-					detail::call_result_t<MakeInjector, fwd_ref_result_t<Source&&>>,
-					detail::two_step_init_private::bound_memfn<memfn, T&>
-				>)
-			)
+			requires(detail::two_step_init_private::all_callable_clang_22_workaround<MakeInjector, Source&&, T, memfn...>)
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			auto injector = MakeInjector{}(KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source)));
 			(std::move(injector)(detail::two_step_init_private::bound_memfn<memfn, T&>{object}), ...);

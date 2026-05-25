@@ -16,9 +16,10 @@
 #include "define.hpp"
 
 namespace kangaru::detail::injector_private {
-	// TODO: Report issue to clang
+	// TODO: Remove workaround once this issue is fixed:
+	// https://github.com/llvm/llvm-project/issues/199545
 	template<typename Function, std::size_t... S>
-	inline constexpr auto callable_workaround_for_clang =
+	inline constexpr auto callable_clang_22_workaround =
 		callable<Function, detail::expand<kangaru::placeholder_deducer, S>...>;
 	
 	template<typename Function, typename>
@@ -32,7 +33,7 @@ namespace kangaru::detail::injector_private {
 	};
 	
 	template<typename Function, std::size_t head, std::size_t... tail>
-		requires(callable_workaround_for_clang<Function, head, tail...>)
+		requires(callable_clang_22_workaround<Function, head, tail...>)
 	struct parameter_sequence_impl<Function, std::index_sequence<head, tail...>> {
 		using type = std::index_sequence<head, tail...>;
 		using return_type = decltype(

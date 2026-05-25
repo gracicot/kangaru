@@ -31,7 +31,10 @@ KANGARU5_EXPORT namespace kangaru {
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_construction)(
 							KANGARU5_NO_ADL(seal_source)(with_exclude_mapping<Source, cached_source_mapping_using_t>{KANGARU5_FWD(source)}),
-							construction
+							KANGARU5_NO_ADL(make_construction_with_two_step_init_if<predicate_not_mapped>)(
+								KANGARU5_NO_ADL(make_construction_with_unique_ptr)(construction),
+								second_step_from_attribute{}
+							)
 						),
 						std::move(storage),
 					},
@@ -72,23 +75,27 @@ KANGARU5_EXPORT namespace kangaru {
 			container{Source{}, Cache{}, Storage{}, Construction{}} {}
 		
 	private:
-		using state_type = with_cache<
+		using predicate_not_mapped = decltype([]<typename T>() consteval { return not allow_runtime_caching_v<T>;});
+		
+		with_cache<
 			with_heap_storage<
 				with_construction<
 					sealed_source<with_exclude_mapping<Source, cached_source_mapping_using_t>>,
-					Construction
+					construction_with_two_step_init_if<
+						construction_with_unique_ptr<Construction>,
+						second_step_from_attribute,
+						predicate_not_mapped
+					>
 				>,
 				Storage
 			>,
 			Cache
-		>;
+		> state;
 		
 		using unwrapped_cache = std::remove_cvref_t<maybe_unwrap_result_t<Cache>>;
 		
 		template<injectable T>
 		using contained_mapped_type = typename mapping_with_base_source<Source>::template source_for<T>;
-		
-		state_type state;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction;
@@ -103,33 +110,28 @@ KANGARU5_EXPORT namespace kangaru {
 			};
 			
 			return with_recursion{
-				KANGARU5_NO_ADL(make_source_with_passthrough<1>)(
-					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
-						with_alternative{
-							KANGARU5_NO_ADL(make_source_with_passthrough<4>)(
-								KANGARU5_NO_ADL(make_source_with_provide_using_source<
-									cached_reference_to_source_mapping_using<
-										detail::forward_like_t<S, Source>
-									>::template source_for
-								>)(
-									with_dereference{
-										cache_with_two_step_init{
-											std::move(rebound_state),
-											call_second_step_on_dereference{
-												call_second_step_from_attribute_on_prvalue{},
-											},
-										},
-									}
-								)
-							),
-							composed_source{
-								external_reference_source{*this},
-								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.wrapped_source().source),
-							},
-						},
-						std::as_const(construction)
-					)
-				),
+				with_alternative{
+					KANGARU5_NO_ADL(make_source_with_passthrough<4>)(
+						KANGARU5_NO_ADL(make_source_with_provide_using_source<
+							cached_reference_to_source_mapping_using<
+								detail::forward_like_t<S, Source>
+							>::template source_for
+						>)(
+							with_dereference{
+								cache_with_two_step_init{
+									std::move(rebound_state),
+									call_second_step_on_dereference{
+										call_second_step_from_attribute_on_prvalue{},
+									},
+								},
+							}
+						)
+					),
+					composed_source{
+						external_reference_source{*this},
+						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.wrapped_source().source),
+					},
+				},
 			};
 		}
 		

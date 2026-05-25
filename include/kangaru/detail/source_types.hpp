@@ -206,7 +206,7 @@ KANGARU5_EXPORT namespace kangaru {
 		friend auto attribute(assume_runtime_cached<object_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U>>;
 		
 		template<kangaru::object U>
-		friend auto attribute(second_step_init<object_source<U>>) -> call_second_step_from_attribute_on_member<&object_source<U>::object>;
+		friend auto attribute(second_step_init<object_source<U>>) -> call_second_step_from_attribute_on_member<&object_source<U>::object, U>;
 	};
 	
 	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -321,7 +321,7 @@ KANGARU5_EXPORT namespace kangaru {
 		friend auto attribute(assume_runtime_cached<shared_pointer_source<U>>) -> std::bool_constant<assume_runtime_cached_v<std::shared_ptr<U>>>;
 		
 		template<kangaru::object U>
-		friend auto attribute(second_step_init<shared_pointer_source<U>>) -> call_second_step_from_attribute_on_member<&shared_pointer_source<U>::object>;
+		friend auto attribute(second_step_init<shared_pointer_source<U>>) -> call_second_step_from_attribute_on_member<&shared_pointer_source<U>::object, std::shared_ptr<U>>;
 	};
 	
 	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -380,7 +380,7 @@ KANGARU5_EXPORT namespace kangaru {
 		friend auto attribute(assume_runtime_cached<derived_reference_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
 		
 		template<kangaru::object B, std::derived_from<B> U>
-		friend auto attribute(second_step_init<derived_reference_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_reference_source<B, U>::object>;
+		friend auto attribute(second_step_init<derived_reference_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_reference_source<B, U>::object, U&>;
 	};
 	
 	template<object Base, std::derived_from<Base> T>
@@ -416,7 +416,7 @@ KANGARU5_EXPORT namespace kangaru {
 		friend auto attribute(assume_runtime_cached<derived_pointer_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
 		
 		template<kangaru::object B, std::derived_from<B> U>
-		friend auto attribute(second_step_init<derived_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_pointer_source<B, U>::pointer>;
+		friend auto attribute(second_step_init<derived_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_pointer_source<B, U>::pointer, U*>;
 	};
 	
 	template<object Base, std::derived_from<Base> T>
@@ -458,7 +458,7 @@ KANGARU5_EXPORT namespace kangaru {
 		friend auto attribute(assume_runtime_cached<derived_shared_pointer_source<B, U>>) -> std::bool_constant<assume_runtime_cached_v<B*>>;
 		
 		template<kangaru::object B, std::derived_from<B> U>
-		friend auto attribute(second_step_init<derived_shared_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_shared_pointer_source<B, U>::object>;
+		friend auto attribute(second_step_init<derived_shared_pointer_source<B, U>>) -> call_second_step_from_attribute_on_member<&derived_shared_pointer_source<B, U>::object, std::shared_ptr<U>>;
 	};
 	
 	template<source Source, source Alternative>
@@ -476,7 +476,6 @@ KANGARU5_EXPORT namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		// TODO: Explore rebind alternative with same leaf
 		template<forwarded<with_alternative> Original, forwarded_source NewSource>
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
 			-> with_alternative<deduced_source_type<NewSource>, fwd_ref_result_t<detail::forward_like_t<Original, Alternative>>>
@@ -511,7 +510,7 @@ KANGARU5_EXPORT namespace kangaru {
 		Source source;
 	};
 	
-	template<source Source, std::default_initializable Filter>
+	template<source Source, type_predicate Filter>
 	struct filter_if_source {
 		template<allows_construction_of<Source> S>
 		explicit constexpr filter_if_source(S&& source) : source(KANGARU5_FWD(source)) {}

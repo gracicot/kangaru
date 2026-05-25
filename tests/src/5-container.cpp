@@ -1,4 +1,3 @@
-#include "kangaru/detail/container_common.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_template_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
@@ -240,7 +239,7 @@ struct has_second_step {
 	int a = 0;
 	
 	static auto init(has_second_step& instance) -> void {
-		instance.a = 9;
+		instance.a += 9;
 	}
 	
 	friend auto attribute(kangaru::allow_runtime_caching<has_second_step&>) -> std::true_type;
@@ -257,7 +256,7 @@ struct non_cached_with_second_step {
 	int a = 0;
 	
 	static auto init(non_cached_with_second_step& instance) -> void {
-		instance.a = 9;
+		instance.a += 9;
 	}
 	
 	friend auto attribute(kangaru::second_step_init<non_cached_with_second_step>) -> kangaru::call_function<

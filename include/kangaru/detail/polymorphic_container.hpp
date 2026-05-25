@@ -65,8 +65,15 @@ namespace kangaru {
 							KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
-										seal_source(with_exclude_mapping<Source, cached_source_mapping_using_t>{KANGARU5_FWD(source)}),
-										construction
+										KANGARU5_NO_ADL(seal_source)(
+											KANGARU5_NO_ADL(make_source_with_exclude_mapping<cached_source_mapping_using_t>)(
+												KANGARU5_FWD(source)
+											)
+										),
+										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<predicate_not_mapped>)(
+											KANGARU5_NO_ADL(make_construction_with_unique_ptr)(construction),
+											second_step_from_attribute{}
+										)
 									)
 								)
 							),
@@ -110,6 +117,8 @@ namespace kangaru {
 			polymorphic_container{Source{}, Cache{}, Storage{}, Construction{}} {}
 		
 	private:
+		using predicate_not_mapped = decltype([]<typename T>() consteval { return not allow_runtime_caching_v<T>;});
+		
 		with_cache_asymmetric<
 			with_dereference<
 				with_heap_storage<
@@ -117,7 +126,11 @@ namespace kangaru {
 						with_source_wrapping<
 							with_construction<
 								sealed_source<with_exclude_mapping<Source, cached_source_mapping_using_t>>,
-								Construction
+								construction_with_two_step_init_if<
+									construction_with_unique_ptr<Construction>,
+									second_step_from_attribute,
+									predicate_not_mapped
+								>
 							>
 						>
 					>,
@@ -150,27 +163,22 @@ namespace kangaru {
 			);
 			
 			return with_recursion{
-				KANGARU5_NO_ADL(make_source_with_passthrough<1>)(
-					KANGARU5_NO_ADL(make_source_with_two_step_construction)(
-						with_alternative{
-							KANGARU5_NO_ADL(make_source_with_passthrough<6>)(
-								KANGARU5_NO_ADL(make_source_with_provide_using_source<
-									polymorphic_source
-								>)(
-									cache_with_two_step_init{
-										std::move(rebound_state),
-										second_step_from_attribute{},
-									}
-								)
-							),
-							composed_source{
-								external_reference_source{*this},
-								KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.source.source.source.wrapped_source().source)
-							},
-						},
-						std::as_const(construction)
-					)
-				),
+				with_alternative{
+					KANGARU5_NO_ADL(make_source_with_passthrough<6>)(
+						KANGARU5_NO_ADL(make_source_with_provide_using_source<
+							polymorphic_source
+						>)(
+							cache_with_two_step_init{
+								std::move(rebound_state),
+								second_step_from_attribute{},
+							}
+						)
+					),
+					composed_source{
+						external_reference_source{*this},
+						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.source.source.source.wrapped_source().source)
+					},
+				},
 			};
 		}
 		

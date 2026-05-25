@@ -70,7 +70,7 @@ namespace kangaru::detail::container_common_private {
 }
 
 KANGARU5_EXPORT namespace kangaru {
-	template<source Source> requires(unqualified_object<Source>)
+	template<unqualified_object>
 	struct mapping_with_base_source {
 		template<injectable T>
 		using source_for = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
@@ -107,9 +107,7 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		template<injectable T>
 		using unconstrained =
-			typename mapping_with_base_source<
-				std::remove_cvref_t<Source>
-			>::template source_for<T>;
+			typename mapping_with_base_source<std::remove_cvref_t<Source>>::template source_for<T>;
 		
 	public:
 		template<injectable T>
@@ -148,6 +146,11 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		Source source;
 	};
+	
+	template<template<typename, typename> typename Mapping, forwarded_source Source>
+	inline constexpr auto make_source_with_exclude_mapping(Source&& source) {
+		return with_exclude_mapping<deduced_source_type<Source>, Mapping>{KANGARU5_FWD(source)};
+	}
 	
 	struct throw_if_not_found {
 		template<injectable T> requires(assume_runtime_cached_v<T>)

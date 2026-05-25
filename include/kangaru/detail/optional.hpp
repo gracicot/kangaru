@@ -370,14 +370,14 @@ KANGARU5_EXPORT namespace kangaru {
 		struct storage_initialize_t {} static constexpr storage_initialize{};
 
 		union storage_t {
-			explicit storage_t() : empty{} {}
-			explicit storage_t(detail::optional_private::empty) : empty{} {}
+			constexpr explicit storage_t() : empty{} {}
+			constexpr explicit storage_t(detail::optional_private::empty) : empty{} {}
 			
 			template<typename... Args>
 			explicit(sizeof...(Args) == 0) storage_t(storage_initialize_t, Args&&... args) : object(KANGARU5_FWD(args)...) {}
 			
-			~storage_t() requires(std::is_trivially_destructible_v<T>) = default;
-			~storage_t() {}
+			constexpr ~storage_t() requires(std::is_trivially_destructible_v<T>) = default;
+			constexpr ~storage_t() requires(not std::is_trivially_destructible_v<T>) {}
 			
 			detail::optional_private::empty empty;
 			T object;

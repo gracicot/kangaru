@@ -1,6 +1,7 @@
 #ifndef KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 #define KANGARU5_DETAIL_RECURSIVE_SOURCE_HPP
 
+#include "concepts.hpp"
 #include "utility.hpp"
 #include "constructor.hpp"
 #include "injector.hpp"
@@ -220,9 +221,104 @@ KANGARU5_EXPORT namespace kangaru {
 		SecondStep second_step;
 	};
 	
-	template<construction Construction, second_step_function SecondStep = noop_second_step>
+	template<construction Construction, second_step_function SecondStep>
 	inline constexpr auto make_construction_with_two_step_init(Construction const& construction, SecondStep const& second_step) {
 		return construction_with_two_step_init<Construction, SecondStep>{construction, second_step};
+	}
+	
+	template<construction Construction, second_step_function SecondStep, type_predicate SecondStepIf>
+	struct construction_with_two_step_init_if {
+		constexpr construction_with_two_step_init_if()
+			requires(std::default_initializable<Construction> and std::default_initializable<SecondStep>) = default;
+		
+		explicit constexpr construction_with_two_step_init_if(Construction construction) noexcept
+			requires(std::default_initializable<SecondStep>) :
+			construction{std::move(construction)} {}
+		
+		constexpr construction_with_two_step_init_if(Construction construction, SecondStep second_step) noexcept :
+			construction{std::move(construction)},
+			second_step{std::move(second_step)} {}
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				    callable_template_1t_returns<T, Construction, T, Source&&>
+				and callable_template_1t<SecondStep, T, T&, Source&&>
+			)
+		constexpr auto operator()(Source&& source) const -> T {
+			if constexpr (SecondStepIf{}.template operator()<T>()) {
+				// NOTE: This function requires the move constructor of T to be declared but not defined.
+				//       Is there a way around that and guarantee RVO?
+				decltype(auto) result = construction.template operator()<T>(KANGARU5_FWD(source));
+				void(second_step.template operator()<T>(result, KANGARU5_FWD(source)));
+				return result;
+			} else {
+				return construction.template operator()<T>(KANGARU5_FWD(source));
+			}
+		}
+		
+	private:
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Construction construction;
+		
+		KANGARU5_NO_UNIQUE_ADDRESS
+		SecondStep second_step;
+	};
+	
+	template<type_predicate SecondStepIf, construction Construction, second_step_function SecondStep>
+	inline constexpr auto make_construction_with_two_step_init_if(Construction const& construction, SecondStep const& second_step) {
+		return construction_with_two_step_init_if<Construction, SecondStep, SecondStepIf>{construction, second_step};
+	}
+	
+	template<construction Construction, second_step_function SecondStep, type_predicate SecondStepIf>
+	inline constexpr auto make_construction_with_two_step_init_if(Construction const& construction, SecondStep const& second_step, SecondStepIf const&) {
+		return construction_with_two_step_init_if<Construction, SecondStep, SecondStepIf>{construction, second_step};
+	}
+	
+	template<construction Construction>
+	struct construction_with_unique_ptr {
+	private:
+		template<typename>
+		struct tag {};
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				callable_template_1t_returns<T, Construction, T, Source&&>
+			)
+		auto construct(tag<T>, Source&& source) const -> T {
+			return construction.template operator()<T>(KANGARU5_FWD(source));
+		}
+		
+		template<object T, forwarded_source Source>
+			requires(
+				    in_place_constructible<std::remove_const_t<T>>
+				and callable_template_1t_returns<std::remove_const_t<T>, Construction, std::remove_const_t<T>, Source&&>
+			)
+		auto construct(tag<std::unique_ptr<T>>, Source&& source) const -> std::unique_ptr<T> {
+			return std::make_unique<T>(in_place_construct{[&]{
+				return construction.template operator()<std::remove_const_t<T>>(KANGARU5_FWD(source));
+			}});
+		}
+		
+	public:
+		constexpr construction_with_unique_ptr()
+			requires(std::default_initializable<Construction>) = default;
+		
+		explicit constexpr construction_with_unique_ptr(Construction construction) noexcept :
+			construction{std::move(construction)} {}
+		
+		template<injectable T, forwarded_source Source>
+		constexpr auto operator()(Source&& source) const -> decltype(construct(tag<T>{}, KANGARU5_FWD(source))) {
+			return construct(tag<T>{}, KANGARU5_FWD(source));
+		}
+		
+	private:
+		KANGARU5_NO_UNIQUE_ADDRESS
+		Construction construction;
+	};
+	
+	template<construction Construction>
+	inline constexpr auto make_construction_with_unique_ptr(Construction const& construction) {
+		return construction_with_unique_ptr<Construction>{construction};
 	}
 	
 	template<make_injector MakeInjector>

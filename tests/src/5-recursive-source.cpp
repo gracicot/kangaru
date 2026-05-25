@@ -1,5 +1,3 @@
-#include "kangaru/detail/recursive_source.hpp"
-#include "kangaru/detail/source_types.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 

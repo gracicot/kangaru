@@ -1,7 +1,7 @@
 #ifndef KANGARU5_DETAIL_HEAP_STORAGE_HPP
 #define KANGARU5_DETAIL_HEAP_STORAGE_HPP
 
-#include "kangaru/detail/type_traits.hpp"
+#include "type_traits.hpp"
 #include "source_types.hpp"
 #include "source.hpp"
 #include "allocator.hpp"
@@ -19,7 +19,8 @@ namespace kangaru {
 	/**
 	 * Simple struct that contains both a pointer to something and a deleter for that pointer.
 	 * 
-	 * I would have implemented the struct with RAII, but couldn't find a way to pass the allocator.
+	 * This type cannot be implemented as RAII since it needs a reference to the allocator to call the deleter.
+	 * See basic_heap_storage's destructor and basic_heap_storage_base for more details.
 	 */
 	KANGARU5_EXPORT struct runtime_dynamic_storage {
 		using dynamic_deleter = auto(void* ptr, void* resource) noexcept -> void;

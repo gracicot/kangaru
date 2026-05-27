@@ -715,7 +715,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			
 			static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 			static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-			static_assert(not kangaru::source_of<decltype(container)&, float>);
+			static_assert(not kangaru::source_of<decltype(container)&, int>);
 		}
 	}
 	
@@ -743,7 +743,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 		
 		static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 		static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-		static_assert(not kangaru::source_of<decltype(container)&, float>);
+		static_assert(not kangaru::source_of<decltype(container)&, int>);
 	}
 }
 

@@ -16,6 +16,66 @@
 #include "define.hpp"
 
 namespace kangaru::detail::injector_private {
+#if KANGARU5_USE_REFLECTION_PARAMETER_SEQUENCE() == 1
+	consteval auto parameter_sequence(std::meta::info function_type, std::size_t max) -> std::vector<std::meta::info> {
+		auto params = std::vector<std::meta::info>{};
+		params.push_back(function_type);
+		params.resize(max + 1, ^^placeholder_deducer);
+		
+		while (not params.empty()) {
+			if (extract<bool>(substitute(^^callable, params))) {
+				return params;
+			}
+			params.pop_back();
+		}
+		
+		return {};
+	}
+	
+	template<typename Function, std::size_t max>
+	concept reflectable_function = not parameter_sequence(^^Function, max).empty();
+	
+	template<typename Function, std::size_t max>
+	using reflected_return_type = typename[:
+		substitute(
+			^^call_with_deducers_result,
+			parameter_sequence(^^Function, max),
+		)
+	:];
+	
+	consteval spread_sequence_impl(std::meta::info function_type, std::meta::info deducer_type, std::size_t max) -> std::meta::info {
+		auto params = parameter_sequence(function_type, max);
+		
+		if (params.empty()) {
+			return {};
+		}
+		
+		std::fill(params.begin() + 1, params.end(), deducer_type);
+		
+		for (auto index = std::size_t{}; index < max; ++index) {
+			if (extract<bool>(substitute(^^callable, params))) {
+				return substitute(^^std::make_index_sequence, {params.size() - 1});
+			}
+			params[params.size() - 1 - index] = ^^placeholder_deducer;
+		}
+		
+		return {};
+	}
+	
+	template<typename Function, typename Deducer, std::size_t max>
+	using spread_sequence_t = typename[: spread_sequence_impl(^^Function, ^^Deducer, max) :];
+	
+	consteval auto callable_with_deducers_impl(std::meta::info function_type, std::meta::info deducer_type, std::size_t seq) -> bool {
+		auto params = std::vector<std::meta::info>{};
+		params.push_back(function_type);
+		params.resize(seq + 1, deducer_type);
+		return extract<bool>(substitute(^^callable_with_deducers, params));
+	}
+	
+	template<typename F, kangaru::deducer Deducer, typename Seq>
+	inline constexpr auto callable_with_deducer_sequence_v =
+		callable_with_deducers_impl(^^F, ^^Deducer, template_arguments_of(^^Seq).size());
+#else
 	// TODO: Remove workaround once this issue is fixed:
 	// https://github.com/llvm/llvm-project/issues/199545
 	template<typename Function, std::size_t... S>
@@ -77,12 +137,21 @@ namespace kangaru::detail::injector_private {
 	template<typename Function, typename Deducer, std::size_t max>
 	using spread_sequence_t = typename injectable_sequence<detail::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
 	
+	template<typename F, std::size_t max>
+	concept reflectable_function_impl = requires {
+		typename parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
+	};
+	
+	template<typename F, std::size_t max>
+	using reflected_return_type = typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::return_type;
+	
 	template<typename F, kangaru::deducer Deducer, typename>
 	inline constexpr auto callable_with_deducer_sequence_v = false;
 	
 	template<typename F, std::size_t... S, kangaru::deducer Deducer>
 	inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
 		callable_with_deducers<F, detail::expand<Deducer, S>...>;
+#endif
 } // namespace kangaru::detail::injector_private
 
 KANGARU5_EXPORT namespace kangaru {
@@ -96,12 +165,12 @@ KANGARU5_EXPORT namespace kangaru {
 	concept forwarded_injector = injector<std::remove_cvref_t<T>>;
 	
 	template<typename F, std::size_t max>
-	concept reflectable_function = (forwarded_function_object<F> or std::is_function_v<std::remove_pointer_t<F>>) and requires {
-		typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
-	};
+	concept reflectable_function =
+		    (forwarded_function_object<F> or std::is_function_v<std::remove_pointer_t<F>>)
+		and detail::injector_private::reflectable_function_impl<F, max>;
 	
 	template<typename F, std::size_t max> requires reflectable_function<F, max>
-	using reflected_return_type = typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::return_type;
+	using reflected_return_type = detail::injector_private::reflected_return_type<F, max>;
 	
 	template<source Source, template<source_ref> typename Deducer, std::size_t N>
 	struct basic_fixed_injector {

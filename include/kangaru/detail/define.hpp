@@ -33,6 +33,12 @@
 #define KANGARU5_FWD(...) static_cast<decltype(__VA_ARGS__)&&>(__VA_ARGS__)
 #define KANGARU5_NO_ADL(...) (__VA_ARGS__)
 
+#if defined(__cpp_impl_reflection) && __cpp_impl_reflection >= 202603L
+	#define KANGARU5_USE_REFLECTION_PARAMETER_SEQUENCE() 1
+#else
+	#define KANGARU5_USE_REFLECTION_PARAMETER_SEQUENCE() 0
+#endif
+
 #if KANGARU5_IS_CLANG()
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 	#define KANGARU5_INLINE [[clang::always_inline]]

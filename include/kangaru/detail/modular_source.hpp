@@ -104,7 +104,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		constexpr modular_source(Construction construction, Source source, Lambdas... lambdas) :
 			impl{
-				detail::modular_source_private::use_source<Source>{std::move(source), construction},
+				detail::modular_source_private::use_source<Source>{std::move(source)},
 				detail::modular_source_private::modular_source_initializer<Lambdas, Construction>{std::move(lambdas), construction}...
 			} {}
 		

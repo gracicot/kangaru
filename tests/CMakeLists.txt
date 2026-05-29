@@ -96,13 +96,5 @@ target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_
 target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
 
 kangaru_add_test(generic_lambdas)
-set_property(TARGET generic_lambdas_test PROPERTY CXX_STANDARD 14)
-target_compile_features(generic_lambdas_test PRIVATE cxx_std_14)
-
 kangaru_add_test(type_id_cxx14)
-set_property(TARGET type_id_cxx14_test PROPERTY CXX_STANDARD 14)
-target_compile_features(type_id_cxx14_test PRIVATE cxx_std_14)
-
 kangaru_add_test(noexcept_invoke)
-set_property(TARGET noexcept_invoke_test PROPERTY CXX_STANDARD 17)
-target_compile_features(noexcept_invoke_test PRIVATE cxx_std_17)

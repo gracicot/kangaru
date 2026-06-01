@@ -50,14 +50,20 @@ namespace kangaru {
 		};
 		
 		template<typename Source>
-		using transparent_rebindable_msvc_2022_workaround =
-			typename detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Source>>::template ttype<wrapped_source_t<Source>>;
+		inline constexpr auto transparent_rebindable_msvc_2022_workaround =
+			requires(Source source) {
+				// Here we need to used ttype_t instead of directly using ::ttype<...>::type because GCC 12 has issues with it.
+				typename detail::ttype_t<
+					detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Source>>,
+					std::decay_t<decltype(source.source)>
+				>;
+			};
 	} // namespace detail::source_rebind_private
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept transparent_rebindable_wrapping_source =
 		    wrapping_source<std::remove_reference_t<Source>>
-		and requires{ typename detail::source_rebind_private::transparent_rebindable_msvc_2022_workaround<Source>; };
+		and detail::source_rebind_private::transparent_rebindable_msvc_2022_workaround<Source>;
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept stateful_rebindable_wrapping_source =

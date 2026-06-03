@@ -154,7 +154,7 @@ auto test_provide(auto&& container, auto check) {
 			check(static_cast<Final>(accessor<level>(result)));
 			test_provide<depth - 1, agg_mapped_rref_dependent_on<T>&&, Final, level + 1>(FWD(container), check);
 		}
-	
+		
 		SECTION("Provide through a unmapped type") {
 			decltype(auto) result = kangaru::provide<unmapped_dependent_on<T>>(FWD(container));
 			check(static_cast<Final>(accessor<level>(result)));
@@ -191,6 +191,86 @@ auto test_provide(auto&& container, auto check) {
 			check(static_cast<Final>(accessor<level>(result)));
 			test_provide<depth - 1, mapped_rref_dependent_on<T>&&, Final, level + 1>(FWD(container), check);
 		}
+	}
+}
+
+template<std::size_t depth, typename T, typename Final = T, std::size_t level = 0>
+auto test_provide_first_half(auto&& container, auto check) {
+	SECTION("Provide through a aggregate unmapped type") {
+		decltype(auto) result = kangaru::provide<agg_unmapped_dependent_on<T>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, agg_unmapped_dependent_on<T>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a unique_ptr aggregate unmapped type") {
+		decltype(auto) result = kangaru::provide<std::unique_ptr<agg_unmapped_dependent_on<T>>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, std::unique_ptr<agg_unmapped_dependent_on<T>>, Final, level + 1>(FWD(container), check);
+	}
+	
+	if constexpr (std::copy_constructible<T>)
+	SECTION("Provide through a aggregate mapped value type") {
+		decltype(auto) result = kangaru::provide<agg_mapped_value_dependent_on<T>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, agg_mapped_value_dependent_on<T>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a aggregate mapped ref type") {
+		decltype(auto) result = kangaru::provide<agg_mapped_ref_dependent_on<T>&>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, agg_mapped_ref_dependent_on<T>&, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a aggregate mapped sptr type") {
+		decltype(auto) result = kangaru::provide<std::shared_ptr<agg_mapped_sptr_dependent_on<T>>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, std::shared_ptr<agg_mapped_sptr_dependent_on<T>>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a aggregate mapped rvalue ref type") {
+		decltype(auto) result = kangaru::provide<agg_mapped_rref_dependent_on<T>&&>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, agg_mapped_rref_dependent_on<T>&&, Final, level + 1>(FWD(container), check);
+	}
+}
+
+template<std::size_t depth, typename T, typename Final = T, std::size_t level = 0>
+auto test_provide_second_half(auto&& container, auto check) {
+	SECTION("Provide through a unmapped type") {
+		decltype(auto) result = kangaru::provide<unmapped_dependent_on<T>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, unmapped_dependent_on<T>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a unique_ptr unmapped type") {
+		decltype(auto) result = kangaru::provide<std::unique_ptr<unmapped_dependent_on<T>>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, std::unique_ptr<unmapped_dependent_on<T>>, Final, level + 1>(FWD(container), check);
+	}
+	
+	if constexpr (std::copy_constructible<T>)
+	SECTION("Provide through a mapped value type") {
+		decltype(auto) result = kangaru::provide<mapped_value_dependent_on<T>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, mapped_value_dependent_on<T>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a mapped ref type") {
+		decltype(auto) result = kangaru::provide<mapped_ref_dependent_on<T>&>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, mapped_ref_dependent_on<T>&, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a aggregate mapped sptr type") {
+		decltype(auto) result = kangaru::provide<std::shared_ptr<mapped_sptr_dependent_on<T>>>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, std::shared_ptr<mapped_sptr_dependent_on<T>>, Final, level + 1>(FWD(container), check);
+	}
+	
+	SECTION("Provide through a mapped rref type") {
+		decltype(auto) result = kangaru::provide<mapped_rref_dependent_on<T>&&>(FWD(container));
+		check(static_cast<Final>(accessor<level>(result)));
+		test_provide<depth - 1, mapped_rref_dependent_on<T>&&, Final, level + 1>(FWD(container), check);
 	}
 }
 
@@ -377,30 +457,31 @@ auto validate_initial(T& object) {
 	}
 }
 
-#if KANGARU5_SECOND_HALF == 0
+auto container_value_cat_conversion(auto& container) -> decltype(auto) {
+#if KANGARU5_RVALUE == 0
+	return container;
+#elif KANGARU5_RVALUE == 1
+	return std::move(container);
+#endif
+}
+
 TEST_CASE("Exhaustive provide expansion", "[container]") {
 	auto container = TestType::make_container();
 	decltype(auto) provided = kangaru::provide<TestType::provided_type>(container);
 	validate_initial(provided);
-	test_provide<2, TestType::provided_type>(container, [&](auto&& value) {
-		if constexpr (std::is_reference_v<TestType::provided_type>) {
-			CHECK(std::addressof(provided) == std::addressof(value));
-		} else {
-			CHECK(provided == value);
-		}
-	});
-}
+#if KANGARU5_SECOND_HALF == 0
+	test_provide_first_half<2, TestType::provided_type>(
 #elif KANGARU5_SECOND_HALF == 1
-TEST_CASE("Exhaustive provide expansion rvalue", "[container]") {
-	auto container = TestType::make_container();
-	decltype(auto) provided = kangaru::provide<TestType::provided_type>(container);
-	validate_initial(provided);
-	test_provide<2, TestType::provided_type>(std::move(container), [&](auto&& value) {
-		if constexpr (std::is_reference_v<TestType::provided_type>) {
-			CHECK(std::addressof(provided) == std::addressof(value));
-		} else {
-			CHECK(provided == value);
-		}
-	});
-}
+	test_provide_second_half<2, TestType::provided_type>(
 #endif
+		container_value_cat_conversion(container),
+		[&](auto&& value) {
+			if constexpr (std::is_reference_v<TestType::provided_type>) {
+				CHECK(std::addressof(provided) == std::addressof(value));
+			} else {
+				CHECK(provided == value);
+			}
+		}
+	);
+}
+

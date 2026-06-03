@@ -36,13 +36,23 @@ function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	
 	add_executable("${TEST_NAME}_${TEST_TYPE}_1_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_1_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=false)
+	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=0 KANGARU5_RVALUE=0)
 	add_test("${TEST_NAME}_${TEST_TYPE}_1" "${TEST_NAME}_${TEST_TYPE}_1_test")
 	
 	add_executable("${TEST_NAME}_${TEST_TYPE}_2_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_2_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=true)
+	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=1 KANGARU5_RVALUE=0)
 	add_test("${TEST_NAME}_${TEST_TYPE}_2" "${TEST_NAME}_${TEST_TYPE}_2_test")
+	
+	add_executable("${TEST_NAME}_${TEST_TYPE}_3_test" "src/${TEST_FILE}")
+	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_3_test" PRIVATE kangaru_test_common)
+	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_3_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=0 KANGARU5_RVALUE=1)
+	add_test("${TEST_NAME}_${TEST_TYPE}_3" "${TEST_NAME}_${TEST_TYPE}_3_test")
+	
+	add_executable("${TEST_NAME}_${TEST_TYPE}_4_test" "src/${TEST_FILE}")
+	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_4_test" PRIVATE kangaru_test_common)
+	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_4_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_SECOND_HALF=1 KANGARU5_RVALUE=1)
+	add_test("${TEST_NAME}_${TEST_TYPE}_4" "${TEST_NAME}_${TEST_TYPE}_4_test")
 endfunction()
 
 if(KANGARU_TEST)

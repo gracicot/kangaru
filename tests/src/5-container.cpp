@@ -21,37 +21,42 @@ struct mapped_dependent_on {
 };
 
 template<typename T, typename C>
-auto test_provide_through_dependency(C& container, auto check) {
+auto test_provide(C& container, auto check) {
+	SECTION("Provide direct") {
+		decltype(auto) result = kangaru::provide<T>(container);
+		check(static_cast<T>(result));
+	}
+
 	SECTION("Provide through a mapped type") {
 		auto result = kangaru::provide<mapped_dependent_on<T>>(container);
-		check(result.value);
+		check(static_cast<T>(result.value));
 		
 		SECTION("then through mapped") {
 			auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<T>>>(container);
-			check(result.value.value);
+			check(static_cast<T>(result.value.value));
 			
 			SECTION("then through mapped") {
 				auto result = kangaru::provide<mapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>(container);
-				check(result.value.value.value);
+				check(static_cast<T>(result.value.value.value));
 			}
 		}
 		
 		SECTION("then through unmapped") {
 			auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<T>>>(container);
-			check(result.value.value);
+			check(static_cast<T>(result.value.value));
 			
 			SECTION("then through unmapped") {
 				auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>(container);
-				check(result.value.value.value);
+				check(static_cast<T>(result.value.value.value));
 				
 				SECTION("then through mapped") {
 					auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>>(container);
-					check(result.value.value.value.value);
+					check(static_cast<T>(result.value.value.value.value));
 				}
 				
 				SECTION("then through unmapped") {
 					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<mapped_dependent_on<mapped_dependent_on<T>>>>>(container);
-					check(result.value.value.value.value);
+					check(static_cast<T>(result.value.value.value.value));
 				}
 			}
 		}
@@ -59,38 +64,38 @@ auto test_provide_through_dependency(C& container, auto check) {
 	
 	SECTION("Provide through a unmapped type") {
 		auto result = kangaru::provide<unmapped_dependent_on<T>>(container);
-		check(result.value);
+		check(static_cast<T>(result.value));
 		
 		SECTION("then through mapped") {
 			auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<T>>>(container);
-			check(result.value.value);
+			check(static_cast<T>(result.value.value));
 		}
 		
 		SECTION("then through unmapped") {
 			auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<T>>>(container);
-			check(result.value.value);
+			check(static_cast<T>(result.value.value));
 			
 			SECTION("then through unmapped") {
 				auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>(container);
-				check(result.value.value.value);
+				check(static_cast<T>(result.value.value.value));
 				
 				SECTION("then through unmapped") {
 					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>(container);
-					check(result.value.value.value.value);
+					check(static_cast<T>(result.value.value.value.value));
 					
 					SECTION("then through mapped") {
 						auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
-						check(result.value.value.value.value.value);
+						check(static_cast<T>(result.value.value.value.value.value));
 						
 						SECTION("then through unmapped") {
 							auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>>(container);
-							check(result.value.value.value.value.value.value);
+							check(static_cast<T>(result.value.value.value.value.value.value));
 						}
 					}
 					
 					SECTION("then through unmapped") {
 						auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
-						check(result.value.value.value.value.value);
+						check(static_cast<T>(result.value.value.value.value.value));
 					}
 				}
 			}
@@ -105,18 +110,6 @@ template<>
 struct kangaru::allow_empty_injection<empty_injectable> : std::true_type {};
 
 struct service_a {
-	service_a(){
-		fmt::println("a");
-	}
-	service_a(int i) : i{i} {
-		fmt::println("a: {}", i);
-	}
-	service_a(service_a const& o) : i{o.i} {
-		fmt::println("copy");
-	}
-	service_a(service_a&& o) : i{o.i} {
-		fmt::println("move");
-	}
 	int i;
 	friend auto attribute(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
@@ -715,7 +708,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			
 			static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 			static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-			static_assert(not kangaru::source_of<decltype(container)&, int>);
+			static_assert(not kangaru::source_of<decltype(container)&, float>);
 		}
 	}
 	
@@ -737,13 +730,13 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 			CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
 		}
 		
-		test_provide_through_dependency<std::shared_ptr<dynamic_provided_abstract>>(container, [&](auto& value) {
+		test_provide<std::shared_ptr<dynamic_provided_abstract>>(container, [&](auto value) {
 			CHECK(value == provided);
 		});
 		
 		static_assert(not kangaru::source_of<decltype(container)&, mapped_dependent_on<int>>);
 		static_assert(not kangaru::source_of<decltype(container)&, unmapped_dependent_on<int>>);
-		static_assert(not kangaru::source_of<decltype(container)&, int>);
+		static_assert(not kangaru::source_of<decltype(container)&, float>);
 	}
 }
 

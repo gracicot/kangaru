@@ -674,19 +674,14 @@ KANGARU5_EXPORT namespace kangaru {
 				T
 			>
 		) {
-			if constexpr (wrapping_source_of<Self, T>) {
-				// Compile time optimisation: Do not instantiate rebind when already a source of
-				return kangaru::provide<T>(KANGARU5_FWD(source).source);
-			} else {
-				return kangaru::provide<T>(
-					kangaru::rebind(
-						KANGARU5_FWD(source).source,
-						detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
-							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
-						}
-					)
-				);
-			}
+			return kangaru::provide<T>(
+				kangaru::rebind(
+					KANGARU5_FWD(source).source,
+					detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
+						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
+					}
+				)
+			);
 		}
 	};
 	

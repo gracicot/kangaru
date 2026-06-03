@@ -52,10 +52,10 @@ namespace kangaru {
 		template<typename... S>
 			requires(
 				    sizeof...(S) == sizeof...(Sources)
-				and (... and std::constructible_from<Sources, S&&>)
+				and (... and (in_place_constructible<std::remove_cvref_t<Sources>> and std::constructible_from<Sources, S&&>))
 			)
 		explicit(sizeof...(S) == 1)
-		constexpr composed_source(S&&... sources) : sources{std::forward_as_tuple(KANGARU5_FWD(sources)...)} {}
+		constexpr composed_source(S&&... sources) : sources{in_place_construct{in_place_construct_function_for<Sources, S&&>{KANGARU5_FWD(sources)}}...} {}
 		
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
@@ -74,6 +74,18 @@ namespace kangaru {
 		
 	private:
 		friend detail::source_types_private::composed_source_access;
+		
+		template<source S, reference From>
+			requires(std::constructible_from<std::remove_cvref_t<S>, From&&>)
+		struct in_place_construct_function_for {
+			explicit in_place_construct_function_for(From&& from) : from(std::addressof(from)) {}
+			constexpr auto operator()() const&& {
+				return std::remove_cvref_t<S>(static_cast<From&&>(*from));
+			}
+			
+		private:
+			std::remove_reference_t<From>* from;
+		};
 		
 		template<typename... S>
 			requires(

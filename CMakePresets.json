@@ -104,7 +104,7 @@
       "binaryDir": "${sourceDir}/build/ci-linux",
       "inherits": ["generator-single", "vcpkg", "dev"],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -113,7 +113,7 @@
       "binaryDir": "${sourceDir}/build/ci-macos",
       "inherits": ["generator-single", "vcpkg", "dev"],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     },
     {
@@ -122,7 +122,7 @@
       "binaryDir": "${sourceDir}/build/ci-windows",
       "inherits": ["generator-single", "vcpkg", "dev"],
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ],
@@ -152,21 +152,21 @@
       "name": "ci-linux",
       "displayName": "CI",
       "description": "The build configuration for CI",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-linux"
     },
     {
       "name": "ci-macos",
       "displayName": "CI",
       "description": "The build configuration for CI",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-macos"
     },
     {
       "name": "ci-windows",
       "displayName": "CI",
       "description": "The build configuration for CI",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-windows"
     }
   ],
@@ -198,19 +198,19 @@
     {
       "name": "ci-linux",
       "inherits": "default-test",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-linux"
     },
     {
       "name": "ci-macos",
       "inherits": "default-test",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-macos"
     },
     {
       "name": "ci-windows",
       "inherits": "default-test",
-      "configuration": "RelWithDebInfo",
+      "configuration": "Release",
       "configurePreset": "ci-windows"
     }
   ]

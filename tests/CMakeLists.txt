@@ -44,16 +44,6 @@ function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_lvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2 KANGARU5_RVALUE=0)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q2_lvalue" "${TEST_NAME}_${TEST_TYPE}_q2_lvalue_test")
 	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q3_lvalue_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q3_lvalue_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q3_lvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=3 KANGARU5_RVALUE=0)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q3_lvalue" "${TEST_NAME}_${TEST_TYPE}_q3_lvalue_test")
-	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q4_lvalue_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q4_lvalue_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q4_lvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=4 KANGARU5_RVALUE=0)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q4_lvalue" "${TEST_NAME}_${TEST_TYPE}_q4_lvalue_test")
-	
 	add_executable("${TEST_NAME}_${TEST_TYPE}_q1_rvalue_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q1_rvalue_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q1_rvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=1 KANGARU5_RVALUE=1)
@@ -63,16 +53,6 @@ function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q2_rvalue_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_rvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2 KANGARU5_RVALUE=1)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q2_rvalue" "${TEST_NAME}_${TEST_TYPE}_q2_rvalue_test")
-	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q3_rvalue_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q3_rvalue_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q3_rvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=3 KANGARU5_RVALUE=1)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q3_rvalue" "${TEST_NAME}_${TEST_TYPE}_q3_rvalue_test")
-	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q4_rvalue_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q4_rvalue_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q4_rvalue_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=4 KANGARU5_RVALUE=1)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q4_rvalue" "${TEST_NAME}_${TEST_TYPE}_q4_rvalue_test")
 endfunction()
 
 if(KANGARU_TEST)

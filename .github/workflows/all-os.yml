@@ -200,7 +200,7 @@ jobs:
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
-          buildPresetAdditionalArgs: "['--', '-j3']"
+          buildPresetAdditionalArgs: "['--', '-j4']"
 
       - name: 'Run CMake C++23'
         uses: lukka/run-cmake@v10
@@ -209,4 +209,4 @@ jobs:
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
-          buildPresetAdditionalArgs: "['--', '-j3']"
+          buildPresetAdditionalArgs: "['--', '-j4']"

@@ -180,12 +180,12 @@ KANGARU5_EXPORT namespace kangaru {
 			KANGARU5_NO_ADL(maybe_unwrap)(cache).swap(KANGARU5_NO_ADL(maybe_unwrap)(other.cache));
 		}
 		
-		template<template<typename> typename NewCacheFrom = CacheFrom, forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
+		template<forwarded<with_cache_asymmetric> Original, forwarded_source NewSource>
 			requires(not std::is_const_v<std::remove_reference_t<Original>>)
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
-			-> with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, NewCacheFrom>
+			-> with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>
 		{
-			return with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, NewCacheFrom>{
+			return with_cache_asymmetric<deduced_source_type<NewSource>, ref_result_t<detail::forward_like_t<Original, Cache>&>, CacheFrom>{
 				KANGARU5_FWD(new_source),
 				KANGARU5_NO_ADL(ref)(original.cache),
 			};

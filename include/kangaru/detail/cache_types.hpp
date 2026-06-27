@@ -110,13 +110,13 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert_or_assign(static_type_id<T> const& k, U&& obj) {
+		constexpr auto insert_or_assign(static_type_id<T> const& k, U&& obj) -> std::pair<iterator, bool> {
 			insert_or_assign_overrides(obj);
 			return map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
-		constexpr auto insert_or_assign(const_iterator hint, static_type_id<T> const& k, U&& obj) {
+		constexpr auto insert_or_assign(const_iterator hint, static_type_id<T> const& k, U&& obj) -> iterator {
 			insert_or_assign_overrides(obj);
 			return map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}

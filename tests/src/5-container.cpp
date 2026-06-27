@@ -26,7 +26,7 @@ auto test_provide(C& container, auto check) {
 		decltype(auto) result = kangaru::provide<T>(container);
 		check(static_cast<T>(result));
 	}
-
+	
 	SECTION("Provide through a mapped type") {
 		auto result = kangaru::provide<mapped_dependent_on<T>>(container);
 		check(static_cast<T>(result.value));
@@ -78,26 +78,6 @@ auto test_provide(C& container, auto check) {
 			SECTION("then through unmapped") {
 				auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>(container);
 				check(static_cast<T>(result.value.value.value));
-				
-				SECTION("then through unmapped") {
-					auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>(container);
-					check(static_cast<T>(result.value.value.value.value));
-					
-					SECTION("then through mapped") {
-						auto result = kangaru::provide<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
-						check(static_cast<T>(result.value.value.value.value.value));
-						
-						SECTION("then through unmapped") {
-							auto result = kangaru::provide<unmapped_dependent_on<mapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>>(container);
-							check(static_cast<T>(result.value.value.value.value.value.value));
-						}
-					}
-					
-					SECTION("then through unmapped") {
-						auto result = kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<unmapped_dependent_on<T>>>>>>(container);
-						check(static_cast<T>(result.value.value.value.value.value));
-					}
-				}
 			}
 		}
 	}
@@ -279,15 +259,15 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	
 	static_assert(not kangaru::source_of<decltype(container)&, empty>);
 	static_assert(kangaru::source_of<decltype(container)&, empty_injectable>);
-
+	
 	if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
-		auto c = TestType::make_container(kangaru::none_source{}, kangaru::polymorphic_map<std::map<kangaru::type_id, kangaru::any_source_of_one_ref>>{});
+		auto c = TestType::make_container(kangaru::none_source{}, kangaru::exhaustive_construction{}, kangaru::polymorphic_map<std::map<kangaru::type_id, kangaru::any_source_of_one_ref>>{});
 		c.template provide<service_c&>();
 	} else {
-		auto c = TestType::make_container(kangaru::none_source{}, std::map<kangaru::type_id, void*>{});
+		auto c = TestType::make_container(kangaru::none_source{}, kangaru::exhaustive_construction{}, std::map<kangaru::type_id, void*>{});
 		c.template provide<service_c&>();
 	}
-
+	
 	SECTION("Default construction is non strict") {
 		static_assert(kangaru::source_of<decltype(container)&, service_non_strict>);
 		
@@ -295,9 +275,9 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			if constexpr (std::same_as<TestType, alias_container>) {
 				auto container = TestType::make_container(
 					kangaru::none_source{},
+					kangaru::exhaustive_strict_construction{},
 					std::unordered_map<kangaru::type_id, void*>{},
-					kangaru::default_heap_storage{},
-					kangaru::exhaustive_strict_construction{}
+					kangaru::default_heap_storage{}
 				);
 				
 				static_assert(kangaru::source_of<decltype(container)&, service_b&>);
@@ -305,9 +285,9 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			} else {
 				auto container = TestType::make_container(
 					kangaru::none_source{},
+					kangaru::exhaustive_strict_construction{},
 					kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, kangaru::any_source_of_one_ref>>{},
-					kangaru::default_heap_storage{},
-					kangaru::exhaustive_strict_construction{}
+					kangaru::default_heap_storage{}
 				);
 				
 				static_assert(kangaru::source_of<decltype(container)&, service_b&>);
@@ -538,7 +518,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			}
 		}
 	}
-
+	
 	SECTION("Works with injectors") {
 		auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 		
@@ -655,14 +635,14 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 	}
 	
 	SECTION("Supports provided services") {
-		auto base = kangaru::object_source{kangaru::reference_source{concrete{8.5f}}};
+		auto base = kangaru::make_container_base(kangaru::object_source{kangaru::reference_source{concrete{8.5f}}});
 		auto container = TestType::make_container(base);
 		auto& c = kangaru::provide<concrete&>(container);
 		CHECK(c.value == 8.5f);
 	}
 	
 	SECTION("container base source with factory functions") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
 			[]() -> kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>> {
 				return kangaru::object_source<std::shared_ptr<dynamic_provided_abstract>>{std::make_shared<dynamic_provided_concrete>(3)};
@@ -675,10 +655,10 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 		CHECK(provided->value == 3);
 		CHECK(kangaru::provide<dependent_on_provided>(container).ptr == provided);
 	}
-	
+
 	SECTION("container base source with dynamic supplied instances") {
 		auto container = TestType::make_container(
-			kangaru::make_container_base_source(kangaru::allow_assume_cached)
+			kangaru::make_container_base(kangaru::allow_assume_cached)
 		);
 		
 		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(container), kangaru::not_found_exception);
@@ -713,7 +693,7 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 	}
 	
 	SECTION("container base source with dynamic supplied instances and factory functions") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached,
 			kangaru::throw_if_not_found{},
 			kangaru::constructor_function<kangaru::reference_source<dependent_on_provided>>{},
@@ -741,33 +721,46 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 }
 
 TEST_CASE("Container base source", "[container]") {
+	auto self_contained_base = [](auto&& base) {
+		return kangaru::with_recursion{
+			kangaru::make_source_with_passthrough<1>(
+				kangaru::make_source_with_provide_using_source<std::decay_t<decltype(base)>::template source_for>(
+					kangaru::with_construction{
+						kangaru::seal_source(kangaru::ref(base.source)),
+						base.construction,
+					}
+				)
+			),
+		};
+	};
+	
 	SECTION("Default assume cached") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached
 		);
 		
-		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(base), kangaru::not_found_exception);
+		CHECK_THROWS_AS(kangaru::provide<kangaru::shared_pointer_source<dynamic_provided_abstract>>(base.source), kangaru::not_found_exception);
 		
-		static_assert(std::same_as<decltype(base), kangaru::throw_if_not_found>);
-		static_assert(kangaru::source_of<decltype(base), std::shared_ptr<dynamic_provided_abstract>>);
-		static_assert(not kangaru::source_of<decltype(base), int>);
+		static_assert(not kangaru::source_of<decltype(base.source), std::shared_ptr<dynamic_provided_abstract>>);
+		static_assert(kangaru::source_of<decltype(base.source), kangaru::shared_pointer_source<dynamic_provided_abstract>>);
+		static_assert(not kangaru::source_of<decltype(base.source), int>);
 	}
-	
+
 	SECTION("Assume cached with specific not found source") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached,
 			kangaru::throw_if_not_found{}
 		);
 		
-		CHECK_THROWS_AS(kangaru::provide<std::shared_ptr<dynamic_provided_abstract>>(base), kangaru::not_found_exception);
+		CHECK_THROWS_AS(kangaru::provide<kangaru::shared_pointer_source<dynamic_provided_abstract>>(base.source), kangaru::not_found_exception);
 		
-		static_assert(std::same_as<decltype(base), kangaru::throw_if_not_found>);
-		static_assert(kangaru::source_of<decltype(base), std::shared_ptr<dynamic_provided_abstract>>);
-		static_assert(not kangaru::source_of<decltype(base), int>);
+		static_assert(not kangaru::source_of<decltype(base.source), std::shared_ptr<dynamic_provided_abstract>>);
+		static_assert(kangaru::source_of<decltype(base.source), kangaru::shared_pointer_source<dynamic_provided_abstract>>);
+		static_assert(not kangaru::source_of<decltype(base.source), int>);
 	}
-	
+
 	SECTION("Assume cached with lambdas") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached,
 			kangaru::throw_if_not_found{},
 			[](std::shared_ptr<dynamic_provided_abstract> ptr) {
@@ -776,13 +769,15 @@ TEST_CASE("Container base source", "[container]") {
 		);
 		
 		CHECK_THROWS_AS(
-			kangaru::provide<kangaru::object_source<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(kangaru::with_recursion{base}),
+			kangaru::provide<kangaru::object_source<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(
+				self_contained_base(base)
+			),
 			kangaru::not_found_exception
 		);
 	}
-	
+
 	SECTION("Assume cached with lambdas") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			[]() -> std::shared_ptr<dynamic_provided_abstract> {
 				return std::make_shared<dynamic_provided_concrete>(32);
 			},
@@ -794,14 +789,14 @@ TEST_CASE("Container base source", "[container]") {
 		CHECK(
 			kangaru::provide<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>(
 				kangaru::provide<kangaru::object_source<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(
-					kangaru::with_recursion{base}
+					self_contained_base(base)
 				)
 			).value->value == 32
 		);
 	}
-	
+
 	SECTION("Assume cached with lambdas and a source") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::none_source{},
 			[]() -> std::shared_ptr<dynamic_provided_abstract> {
 				return std::make_shared<dynamic_provided_concrete>(32);
@@ -814,109 +809,99 @@ TEST_CASE("Container base source", "[container]") {
 		CHECK(
 			kangaru::provide<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>(
 				kangaru::provide<kangaru::object_source<mapped_dependent_on<std::shared_ptr<dynamic_provided_abstract>>>>(
-					kangaru::with_recursion{base}
+					self_contained_base(base)
 				)
 			).value->value == 32
 		);
 	}
-	
+
 	SECTION("Custom injector") {
-		auto base1 = kangaru::with_recursion{
-			kangaru::make_container_base_source(
-				kangaru::make_strict_spread_injector_function{},
-				kangaru::none_source{},
-				[] {
-					return 1;
-				},
-				[](int&&) {
-					return std::string{};
-				}
-			)
-		};
+		auto base1 = kangaru::make_container_base(
+			kangaru::make_strict_spread_injector_function{},
+			kangaru::none_source{},
+			[] {
+				return 1;
+			},
+			[](int&&) {
+				return std::string{};
+			}
+		);
 		
-		auto base2 = kangaru::with_recursion{
-			kangaru::make_container_base_source(
-				kangaru::make_strict_spread_injector_function{},
-				kangaru::none_source{},
-				[] {
-					return 1;
-				},
-				[](int) {
-					return std::string{};
-				}
-			)
-		};
+		auto base2 = kangaru::make_container_base(
+			kangaru::make_strict_spread_injector_function{},
+			kangaru::none_source{},
+			[] {
+				return 1;
+			},
+			[](int) {
+				return std::string{};
+			}
+		);
 		
-		auto base3 = kangaru::with_recursion{
-			kangaru::make_container_base_source(
-				kangaru::make_spread_injector_function{},
-				kangaru::none_source{},
-				[] {
-					return 1;
-				},
-				[](int&&) {
-					return std::string{};
-				}
-			)
-		};
+		auto base3 = kangaru::make_container_base(
+			kangaru::make_spread_injector_function{},
+			kangaru::none_source{},
+			[] {
+				return 1;
+			},
+			[](int&&) {
+				return std::string{};
+			}
+		);
 		
-		auto base4 = kangaru::with_recursion{
-			kangaru::make_container_base_source(
-				kangaru::allow_assume_cached,
-				kangaru::make_strict_spread_injector_function{},
-				kangaru::throw_if_not_found{},
-				kangaru::none_source{},
-				[](std::shared_ptr<dynamic_provided_abstract>) {
-					return 1;
-				},
-				[](int) {
-					return std::string{};
-				}
-			)
-		};
+		auto base4 = kangaru::make_container_base(
+			kangaru::allow_assume_cached,
+			kangaru::make_strict_spread_injector_function{},
+			kangaru::throw_if_not_found{},
+			kangaru::none_source{},
+			[](std::shared_ptr<dynamic_provided_abstract>) {
+				return 1;
+			},
+			[](int) {
+				return std::string{};
+			}
+		);
 		
-		auto base5 = kangaru::with_recursion{
-			kangaru::make_container_base_source(
-				kangaru::allow_assume_cached,
-				kangaru::make_strict_spread_injector_function{},
-				kangaru::throw_if_not_found{},
-				kangaru::none_source{},
-				[](std::shared_ptr<dynamic_provided_abstract> const&) {
-					return 1;
-				}
-			)
-		};
+		auto base5 = kangaru::make_container_base(
+			kangaru::allow_assume_cached,
+			kangaru::make_strict_spread_injector_function{},
+			kangaru::throw_if_not_found{},
+			kangaru::none_source{},
+			[](std::shared_ptr<dynamic_provided_abstract> const&) {
+				return 1;
+			}
+		);
 		
-		static_assert(kangaru::source_of<decltype(base1), int>);
-		static_assert(not kangaru::source_of<decltype(base1), std::string>);
-		static_assert(kangaru::source_of<decltype(base2), int>);
-		static_assert(kangaru::source_of<decltype(base2), std::string>);
-		static_assert(kangaru::source_of<decltype(base3), int>);
-		static_assert(kangaru::source_of<decltype(base3), std::string>);
-		static_assert(kangaru::source_of<decltype(base4), int>);
-		static_assert(kangaru::source_of<decltype(base4), std::string>);
-		static_assert(not kangaru::source_of<decltype(base5), int>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base1)), int>);
+		static_assert(not kangaru::source_of<decltype(self_contained_base(base1)), std::string>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base2)), int>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base2)), std::string>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base3)), int>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base3)), std::string>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base4)), int>);
+		static_assert(kangaru::source_of<decltype(self_contained_base(base4)), std::string>);
+		static_assert(not kangaru::source_of<decltype(self_contained_base(base5)), int>);
 	}
-	
+
 	SECTION("Default assume abort") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached,
 			kangaru::abort_if_not_found{}
 		);
 		
-		static_assert(std::same_as<decltype(base), kangaru::abort_if_not_found>);
-		static_assert(kangaru::source_of<decltype(base), std::shared_ptr<dynamic_provided_abstract>>);
-		static_assert(not kangaru::source_of<decltype(base), int>);
+		static_assert(not kangaru::source_of<decltype(base.source), std::shared_ptr<dynamic_provided_abstract>>);
+		static_assert(kangaru::source_of<decltype(base.source), kangaru::shared_pointer_source<dynamic_provided_abstract>>);
+		static_assert(not kangaru::source_of<decltype(base.source), int>);
 	}
-	
+
 	SECTION("Default assume terminate") {
-		auto base = kangaru::make_container_base_source(
+		auto base = kangaru::make_container_base(
 			kangaru::allow_assume_cached,
 			kangaru::terminate_if_not_found{}
 		);
 		
-		static_assert(std::same_as<decltype(base), kangaru::terminate_if_not_found>);
-		static_assert(kangaru::source_of<decltype(base), std::shared_ptr<dynamic_provided_abstract>>);
-		static_assert(not kangaru::source_of<decltype(base), int>);
+		static_assert(not kangaru::source_of<decltype(base.source), std::shared_ptr<dynamic_provided_abstract>>);
+		static_assert(kangaru::source_of<decltype(base.source), kangaru::shared_pointer_source<dynamic_provided_abstract>>);
+		static_assert(not kangaru::source_of<decltype(base.source), int>);
 	}
 }

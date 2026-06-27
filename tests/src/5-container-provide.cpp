@@ -371,8 +371,32 @@ struct base_container_reference_source {
 };
 
 struct base_container_reference_source_source {
+	template<kangaru::injectable T>
+	struct mapping {};
+	
+	template<kangaru::injectable T>
+		requires(std::same_as<initial_value&, T>)
+	struct mapping<T> {
+		using type = kangaru::reference_source<initial_value>;
+	};
+	
+	template<kangaru::injectable T>
+		requires(requires{ typename kangaru::default_source_mapping_runtime_cached<T>; })
+	struct mapping<T> {
+		using type = kangaru::default_source_mapping_runtime_cached<T>;
+	};
+	
+	template<kangaru::injectable T>
+	using source_for = typename mapping<T>::type;
+	
 	static auto make_base() {
-		return kangaru::object_source{kangaru::reference_source{initial_value{42}}};
+		return kangaru::container_base<
+			kangaru::object_source<kangaru::reference_source<initial_value>>,
+			kangaru::exhaustive_construction,
+			source_for
+		>{
+			kangaru::object_source{kangaru::reference_source{initial_value{42}}}
+		};
 	}
 };
 
@@ -384,7 +408,7 @@ struct base_container_object_source_source {
 
 struct base_container_remapped {
 	static auto make_base() {
-		return kangaru::make_container_base_source([] {
+		return kangaru::make_container_base([] {
 			return kangaru::derived_reference_source<base, derived>{42};
 		});
 	}
@@ -392,9 +416,18 @@ struct base_container_remapped {
 
 struct base_container_remapped_sptr {
 	static auto make_base() {
-		return kangaru::make_container_base_source([] {
+		return kangaru::make_container_base([] {
 			return kangaru::derived_shared_pointer_source<base, derived>{42};
 		});
+	}
+};
+
+struct base_container_unmapped_dependent_on_mapped_value {
+	static auto make_base() {
+		return kangaru::make_container_base(
+			kangaru::reference_source{initial_value{42}},
+			kangaru::constructor_function<kangaru::reference_source<unmapped_dependent_on<mapped_value>>>{}
+		);
 	}
 };
 
@@ -438,6 +471,8 @@ using provide_test_remapped = provide_test<base&, base_container_remapped>;
 using provide_test_polymorphic_remapped = provide_test_polymorphic<base&, base_container_remapped>;
 using provide_test_remapped_sptr = provide_test<std::shared_ptr<base>, base_container_remapped_sptr>;
 using provide_test_polymorphic_remapped_sptr = provide_test_polymorphic<std::shared_ptr<base>, base_container_remapped_sptr>;
+using provide_test_unmapped_dependent_on_mapped_value = provide_test<unmapped_dependent_on<mapped_value>&, base_container_unmapped_dependent_on_mapped_value>;
+using provide_test_polymorphic_unmapped_dependent_on_mapped_value = provide_test_polymorphic<unmapped_dependent_on<mapped_value>&, base_container_unmapped_dependent_on_mapped_value>;
 
 using TestType = KANGARU5_TEST_TYPE;
 
@@ -451,7 +486,14 @@ auto validate_initial(T& object) {
 TEST_CASE("Exhaustive provide expansion", "[container]") {
 	auto container = TestType::make_container();
 	decltype(auto) provided = kangaru::provide<TestType::provided_type>(container);
+	decltype(auto) provided_rvalue = kangaru::provide<TestType::provided_type>(std::move(container));
 	validate_initial(provided);
+	validate_initial(provided_rvalue);
+	
+	if constexpr (std::is_reference_v<TestType::provided_type>) {
+		CHECK(std::addressof(provided) == std::addressof(provided_rvalue));
+	}
+	
 	test_provide<TestType::provided_type>(
 		container,
 		[&](auto&& value) {

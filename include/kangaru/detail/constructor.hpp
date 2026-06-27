@@ -89,7 +89,7 @@ KANGARU5_EXPORT namespace kangaru {
 			return detail::constructor_private::raw_constructor<Type>(KANGARU5_FWD(first), KANGARU5_FWD(args)...);
 		}
 		
-		constexpr auto operator()() const requires std::default_initializable<Type> {
+		constexpr auto operator()() const -> Type requires std::default_initializable<Type> {
 			return detail::constructor_private::raw_constructor<Type>();
 		}
 	};

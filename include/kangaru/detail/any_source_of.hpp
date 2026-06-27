@@ -115,11 +115,12 @@ KANGARU5_EXPORT namespace kangaru {
 		template<not_self<any_source_of> Source>
 			requires(
 				    forwarded_source<Source>
-				and std::constructible_from<std::decay_t<Source>, Source>
 				and (... and source_of<std::remove_cvref_t<Source>&, Types>)
 			)
 		explicit(false) constexpr any_source_of(Source&& source) :
-			base{new std::decay_t<Source>(KANGARU5_FWD(source))} {}
+			base{new std::decay_t<Source>(KANGARU5_FWD(source))} {
+			static_assert(std::constructible_from<std::decay_t<Source>, Source>);
+		}
 		
 		template<not_self<any_source_of> Source>
 			requires(

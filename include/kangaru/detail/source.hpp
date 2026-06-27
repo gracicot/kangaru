@@ -110,10 +110,10 @@ namespace kangaru {
 		    forwarded_source<Source>
 		and injectable<T>
 		and (
-			   detail::source_private::member_source_of<Source, T>
-			or detail::source_private::member_template_source_of<Source, T>
-			or detail::source_private::adl_nonmember_source_of<Source, T>
+			   detail::source_private::member_template_source_of<Source, T>
+			or detail::source_private::member_source_of<Source, T>
 			or detail::source_private::adl_nonmember_template_source_of<Source, T>
+			or detail::source_private::adl_nonmember_source_of<Source, T>
 		);
 	
 	template<typename T, typename F, typename... Args>

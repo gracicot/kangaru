@@ -67,90 +67,60 @@ namespace kangaru::detail::container_common_private {
 	
 	template<kangaru::object T>
 	struct default_type_to_source_mapping<object_source<T>> {};
-}
-
-KANGARU5_EXPORT namespace kangaru {
-	template<unqualified_object>
-	struct mapping_with_base_source {
-		template<injectable T>
-		using source_for = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
-	};
 	
-	// Unconstrained typename since we rely on enumerated_source_of for constrains
-	template<typename Source, typename... Enumerated>
-	struct mapping_with_base_source<enumerated_source_of<Source, Enumerated...>> {
+	template<template<typename> typename Mapping, source Source, std::size_t max, reflectable_function<max>... Functions>
+	struct container_base_mapping {
 	private:
 		template<injectable T>
-		struct mapping : detail::container_common_private::default_type_to_source_mapping<T> {};
+		struct mapping {};
 		
 		template<injectable T>
 			requires(
-				requires{ typename select_source_of<T, Enumerated...>; }
+				    requires{ typename Mapping<T>; }
+				and source_of<Source, Mapping<T>>
+				and not allow_runtime_caching_v<T>
+				and not requires{ typename select_source_of<T, reflected_return_type<Functions, max>...>; }
 			)
 		struct mapping<T> {
-			using type = select_source_of<T, Enumerated...>;
+			using type = Mapping<T>;
+		};
+		
+		template<injectable T>
+			requires(
+				    requires{ typename Mapping<T>; }
+				and allow_runtime_caching_v<T>
+				and not requires{ typename select_source_of<T, reflected_return_type<Functions, max>...>; }
+			)
+		struct mapping<T> {
+			using type = Mapping<T>;
+		};
+		
+		template<injectable T>
+			requires(
+				requires{ typename select_source_of<T, reflected_return_type<Functions, max>...>; }
+			)
+		struct mapping<T> {
+			using type = select_source_of<T, reflected_return_type<Functions, max>...>;
 		};
 		
 	public:
 		template<injectable T>
 		using source_for = typename mapping<T>::type;
 	};
-	
-	template<injectable T> requires(allow_runtime_caching_v<T>)
-	using cached_source_mapping = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
-	
-	template<injectable T> requires(allow_runtime_caching_v<T>)
-	using cached_reference_to_source_mapping = cached_source_mapping<T>&;
-	
-	template<source_ref Source>
-	struct cached_source_mapping_using {
-	private:
-		template<injectable T>
-		using unconstrained =
-			typename mapping_with_base_source<std::remove_cvref_t<Source>>::template source_for<T>;
-		
-	public:
-		template<injectable T>
-			requires(
-				   allow_runtime_caching_v<T>
-				or source_of<Source, unconstrained<T>>
-			)
-		using source_for = unconstrained<T>;
-	};
-	
-	template<source_ref Source, injectable T>
-	using cached_source_mapping_using_t = typename cached_source_mapping_using<Source>::template source_for<T>;
-	
-	template<source_ref Source>
-	struct cached_reference_to_source_mapping_using {
-		template<injectable T>
-		using source_for = cached_source_mapping_using_t<Source, T>&;
-	};
-	
-	template<source_ref Source, injectable T>
-	using cached_reference_to_source_mapping_using_t = cached_source_mapping_using_t<Source, T>&;
+}
 
-	template<typename Source, template<typename, typename> typename Mapping>
-	struct with_exclude_mapping {
-		template<injectable T, forwarded<with_exclude_mapping> Self>
-			requires(
-				    wrapping_source_of<Self, T>
-				and not requires {
-					typename Mapping<forwarded_wrapped_source_t<Self>, T>;
-					requires wrapping_source_of<Self, Mapping<forwarded_wrapped_source_t<Self>, T>>;
-				}
-			)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
-		}
-		
-		Source source;
-	};
+KANGARU5_EXPORT namespace kangaru {
+	template<injectable T>
+	using default_source_mapping = typename detail::container_common_private::default_type_to_source_mapping<T>::type;
 	
-	template<template<typename, typename> typename Mapping, forwarded_source Source>
-	inline constexpr auto make_source_with_exclude_mapping(Source&& source) {
-		return with_exclude_mapping<deduced_source_type<Source>, Mapping>{KANGARU5_FWD(source)};
-	}
+	template<injectable T> requires(allow_runtime_caching_v<T>)
+	using default_source_mapping_runtime_cached = default_source_mapping<T>;
+	
+	template<template<typename> typename Mapping>
+	struct source_mapping_with_reference {
+		template<injectable T>
+		using source_for = Mapping<T>&;
+	};
 	
 	struct throw_if_not_found {
 		template<injectable T> requires(assume_runtime_cached_v<T>)
@@ -175,152 +145,216 @@ KANGARU5_EXPORT namespace kangaru {
 			std::terminate();
 		}
 	};
+
+	template<typename Source, template<typename> typename Mapping>
+	struct not_found_with_provide_mapped {
+		template<injectable T, forwarded<not_found_with_provide_mapped> Self>
+			requires(
+				    wrapping_source_of<Self, T>
+				and not requires {
+					typename Mapping<T>;
+					requires wrapping_source_of<Self, Mapping<T>>;
+				}
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+		}
+		
+		Source source;
+	};
 	
+	template<template<typename> typename Mapping, forwarded_source Source>
+	inline constexpr auto make_source_not_found_with_provide_mapped(Source&& source) {
+		return not_found_with_provide_mapped<deduced_source_type<Source>, Mapping>{KANGARU5_FWD(source)};
+	}
+	
+	template<source Source, construction Construction, template<typename> typename Mapping>
+	struct container_base {
+		Source source;
+		Construction construction;
+		
+		template<injectable T>
+		using source_for = Mapping<T>;
+	};
+}
+
+namespace kangaru::detail::container_common_private {
+	template<template<typename> typename Mapping, std::size_t max, typename... Lambdas, forwarded_source Source, construction Construction>
+	auto make_container_base_impl(Source&& source, Construction const& construction) {
+		using mapping = detail::container_common_private::container_base_mapping<Mapping, deduced_source_type<Source>, max, Lambdas...>;
+		return container_base<deduced_source_type<Source>, Construction, mapping::template source_for>{
+			KANGARU5_FWD(source),
+			construction
+		};
+	}
+}
+
+KANGARU5_EXPORT namespace kangaru {
 	struct allow_assume_cached_t { constexpr allow_assume_cached_t() = default; }
 	inline constexpr allow_assume_cached{};
 	
 	template<
 		std::size_t max = 8,
-		template<typename> typename Deducer = basic_deducer,
+		template<typename> typename Mapping = default_source_mapping,
 		forwarded_source Source,
 		reflectable_function<max>... Lambdas
 	> requires(not reflectable_function<Source, max>)
-	inline constexpr auto make_container_base_source(Source&& source, Lambdas&&... lambdas) {
-		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
-			with_function_call{
-				KANGARU5_FWD(source),
-				call_with_injector{
-					KANGARU5_FWD(lambdas),
-					make_basic_spread_injector<Deducer, max>,
-				}...,
+	inline constexpr auto make_container_base(Source&& source, Lambdas&&... lambdas) {
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			filter<reflected_return_type<Lambdas, max>...>(
+				KANGARU5_FWD(source)
+			),
+			construct_with_alternative{
+				select_function_for_type{
+					call_with_injector{
+						KANGARU5_FWD(lambdas),
+						make_basic_spread_injector_function<basic_deducer, max>{},
+					}...,
+				},
+				exhaustive_construction{},
 			}
 		);
 	}
 	
 	template<
 		std::size_t max = 8,
+		template<typename> typename Mapping = default_source_mapping,
 		make_injector MakeInjector,
 		forwarded_source Source,
 		reflectable_function<max>... Lambdas
 	> requires(not reflectable_function<Source, max>)
-	inline constexpr auto make_container_base_source(MakeInjector make_injector, Source&& source, Lambdas&&... lambdas) {
-		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
-			with_function_call{
-				KANGARU5_FWD(source),
-				call_with_injector{
-					KANGARU5_FWD(lambdas),
-					make_injector,
-				}...,
+	inline constexpr auto make_container_base(MakeInjector make_injector, Source&& source, Lambdas&&... lambdas) {
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			filter<reflected_return_type<Lambdas, max>...>(
+				KANGARU5_FWD(source)
+			),
+			construct_with_alternative{
+				select_function_for_type{
+					call_with_injector{
+						KANGARU5_FWD(lambdas),
+						make_injector,
+					}...,
+				},
+				basic_exhaustive_construction{make_injector},
 			}
 		);
 	}
 	
 	template<
 		std::size_t max = 8,
+		template<typename> typename Mapping = default_source_mapping,
 		reflectable_function<max>... Lambdas
 	>
-	inline constexpr auto make_container_base_source(Lambdas&&... lambdas) {
-		return KANGARU5_NO_ADL(enumerate_source<reflected_return_type<Lambdas, max>...>)(
-			with_function_call{
-				none_source{},
-				call_with_injector{
-					KANGARU5_FWD(lambdas),
-					make_basic_spread_injector<basic_deducer, max>,
-				}...,
-			}
-		);
-	}
-	
-	template<
-		std::size_t max = 8,
-		forwarded_source IfNotFound,
-		forwarded_source Source,
-		reflectable_function<max>... Lambdas
-	> requires(not reflectable_function<IfNotFound, max> and not reflectable_function<Source, max>)
-	inline constexpr auto make_container_base_source(
-		allow_assume_cached_t,
-		IfNotFound&& source_if_not_found,
-		Source&& source,
-		Lambdas&&... lambdas
-	) {
-		return KANGARU5_NO_ADL(enumerate_source<
-			reflected_return_type<Lambdas, max>...
-		>)(
-			with_alternative{
-				with_function_call{
-					KANGARU5_FWD(source),
+	inline constexpr auto make_container_base(Lambdas&&... lambdas) {
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			none_source{},
+			construct_with_alternative{
+				select_function_for_type{
 					call_with_injector{
 						KANGARU5_FWD(lambdas),
 						make_basic_spread_injector<basic_deducer, max>,
 					}...,
 				},
-				KANGARU5_FWD(source_if_not_found),
+				exhaustive_construction{},
 			}
 		);
 	}
 	
 	template<
 		std::size_t max = 8,
+		template<typename> typename Mapping = default_source_mapping,
+		forwarded_source IfNotFound,
+		forwarded_source Source,
+		reflectable_function<max>... Lambdas
+	> requires(not reflectable_function<IfNotFound, max> and not reflectable_function<Source, max>)
+	inline constexpr auto make_container_base(
+		allow_assume_cached_t,
+		IfNotFound&& source_if_not_found,
+		Source&& source,
+		Lambdas&&... lambdas
+	) {
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			filter<reflected_return_type<Lambdas, max>...>(with_alternative{
+				KANGARU5_FWD(source),
+				make_source_not_found_with_provide_mapped<Mapping>(KANGARU5_FWD(source_if_not_found)),
+			}),
+			construct_with_alternative{
+				select_function_for_type{
+					call_with_injector{
+						KANGARU5_FWD(lambdas),
+						make_basic_spread_injector<basic_deducer, max>,
+					}...,
+				},
+				exhaustive_construction{},
+			}
+		);
+	}
+	
+	template<
+		std::size_t max = 8,
+		template<typename> typename Mapping = default_source_mapping,
 		make_injector MakeInjector,
 		forwarded_source IfNotFound,
 		forwarded_source Source,
 		reflectable_function<max>... Lambdas
 	> requires(not reflectable_function<IfNotFound, max> and not reflectable_function<Source, max>)
-	inline constexpr auto make_container_base_source(
+	inline constexpr auto make_container_base(
 		allow_assume_cached_t,
 		MakeInjector make_injector,
 		IfNotFound&& source_if_not_found,
 		Source&& source,
 		Lambdas&&... lambdas
 	) {
-		return KANGARU5_NO_ADL(enumerate_source<
-			reflected_return_type<Lambdas, max>...
-		>)(
-			with_alternative{
-				with_function_call{
-					KANGARU5_FWD(source),
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			filter<reflected_return_type<Lambdas, max>...>(with_alternative{
+				KANGARU5_FWD(source),
+				make_source_not_found_with_provide_mapped<Mapping>(KANGARU5_FWD(source_if_not_found))
+			}),
+			construct_with_alternative{
+				select_function_for_type{
 					call_with_injector{
 						KANGARU5_FWD(lambdas),
 						make_injector,
 					}...,
 				},
-				KANGARU5_FWD(source_if_not_found),
+				basic_exhaustive_construction{make_injector},
 			}
 		);
 	}
 	
 	template<
 		std::size_t max = 8,
+		template<typename> typename Mapping = default_source_mapping,
 		forwarded_source IfNotFound,
 		reflectable_function<max>... Lambdas
 	>
-	inline constexpr auto make_container_base_source(
+	inline constexpr auto make_container_base(
 		allow_assume_cached_t,
 		IfNotFound&& source_if_not_found,
 		Lambdas&&... lambdas
 	) {
-		if constexpr (sizeof...(Lambdas) == 0) {
-			return KANGARU5_FWD(source_if_not_found);
-		} else {
-			return KANGARU5_NO_ADL(enumerate_source<
-				reflected_return_type<Lambdas, max>...
-			>)(
-				with_alternative{
-					with_function_call{
-						none_source{},
-						call_with_injector{
-							KANGARU5_FWD(lambdas),
-							make_basic_spread_injector<basic_deducer, max>,
-						}...,
-					},
-					KANGARU5_FWD(source_if_not_found),
-				}
-			);
-		}
+		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
+			filter<reflected_return_type<Lambdas, max>...>(
+				make_source_not_found_with_provide_mapped<Mapping>(KANGARU5_FWD(source_if_not_found))
+			),
+			construct_with_alternative{
+				select_function_for_type{
+					call_with_injector{
+						KANGARU5_FWD(lambdas),
+						make_basic_spread_injector<basic_deducer, max>,
+					}...,
+				},
+				exhaustive_construction{},
+			}
+		);
 	}
 	
-	inline constexpr auto make_container_base_source(allow_assume_cached_t) {
-		return throw_if_not_found{};
+	template<template<typename> typename Mapping = default_source_mapping>
+	inline constexpr auto make_container_base(allow_assume_cached_t) {
+		return detail::container_common_private::make_container_base_impl<Mapping, 0>(
+			make_source_not_found_with_provide_mapped<Mapping>(throw_if_not_found{}),
+			exhaustive_construction{}
+		);
 	}
 }
 

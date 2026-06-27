@@ -26,39 +26,41 @@
 
 namespace kangaru {
 	namespace detail::polymorphic_container_private {
-		template<source_ref Source>
+		template<template<typename> typename Mapping>
 		struct cached_source {
+		private:
 			template<injectable T>
 			struct mapping {};
 			
-			template<injectable T> requires (requires{ typename cached_source_mapping_using_t<Source, T>; })
+			template<injectable T> requires (requires{ typename Mapping<T>; })
 			struct mapping<kangaru::any_source_of_ref<T>> {
 				using type = with_polymorphic_cast<
 					with_cast_from<
-						cached_source_mapping_using_t<Source, T>,
+						Mapping<T>,
 						T
 					>,
 					T
 				>&;
 			};
 			
+		public:
 			template<injectable T>
 			using source_for = typename mapping<T>::type;
 		};
 	}
 	
 	KANGARU5_EXPORT template<
-		rebindable_source Source = none_source,
+		source Source = none_source,
+		construction Construction = exhaustive_construction,
+		template<typename> typename CacheMapping = default_source_mapping_runtime_cached,
 		dereferenceable_cache_map Cache = polymorphic_map<std::unordered_map<type_id, any_source_of_one_ref>>,
-		dereferenceable_heap_storage Storage = default_heap_storage,
-		construction Construction = exhaustive_construction
+		dereferenceable_heap_storage Storage = default_heap_storage
 	>
 	struct polymorphic_container {
-		template<allows_construction_of<Source> S>
-		constexpr polymorphic_container(S&& source, Cache cache, Storage storage, Construction construction) :
+		constexpr polymorphic_container(Source source, Construction construction, Cache cache = {}, Storage storage = {}) :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<
-					detail::never_type_identity
+					cache_mapping::template source_for
 				>)(
 					with_dereference{
 						with_heap_storage{
@@ -66,8 +68,9 @@ namespace kangaru {
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
 										KANGARU5_NO_ADL(seal_source)(
-											KANGARU5_NO_ADL(make_source_with_exclude_mapping<cached_source_mapping_using_t>)(
-												KANGARU5_FWD(source)
+											KANGARU5_NO_ADL(filter_if)(
+												KANGARU5_FWD(source),
+												predicate_not_mapped{}
 											)
 										),
 										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<predicate_not_mapped>)(
@@ -85,40 +88,40 @@ namespace kangaru {
 			},
 			construction{construction} {}
 		
-		template<allows_construction_of<Source> S>
-		constexpr polymorphic_container(S&& source, Cache cache, Storage storage)
-			requires std::default_initializable<Construction> :
-			polymorphic_container{KANGARU5_FWD(source), std::move(cache), std::move(storage), Construction{}} {}
+		constexpr polymorphic_container(container_base<Source, Construction, CacheMapping> base, Cache cache, Storage storage = {}) :
+			polymorphic_container{std::move(base).source, std::move(base).construction, std::move(cache), std::move(storage)} {}
 		
-		template<allows_construction_of<Source> S>
-		constexpr polymorphic_container(S&& source, Cache cache)
-			requires(
-				    std::default_initializable<Storage>
-				and std::default_initializable<Construction>
-			) :
-			polymorphic_container{KANGARU5_FWD(source), std::move(cache), Storage{}, Construction{}} {}
-		
-		template<allows_construction_of<Source> S>
-		explicit constexpr polymorphic_container(S&& source)
+		explicit constexpr polymorphic_container(container_base<Source, Construction, CacheMapping> base)
 			requires(
 				    std::default_initializable<Cache>
 				and std::default_initializable<Storage>
-				and std::default_initializable<Construction>
 			) :
-			polymorphic_container{KANGARU5_FWD(source), Cache{}, Storage{}, Construction{}} {}
+			polymorphic_container{std::move(base).source, std::move(base).construction, Cache{}, Storage{}} {}
+		
+		explicit constexpr polymorphic_container(Source source)
+			requires(
+				    std::default_initializable<Construction>
+				and std::default_initializable<Cache>
+				and std::default_initializable<Storage>
+			) :
+			polymorphic_container{std::move(source), Construction{}, Cache{}, Storage{}} {}
 		
 		constexpr polymorphic_container()
 			requires(
 				    std::default_initializable<Source>
+				and std::default_initializable<Construction>
 				and std::default_initializable<Cache>
 				and std::default_initializable<Storage>
-				and std::default_initializable<Construction>
 			) :
-			polymorphic_container{Source{}, Cache{}, Storage{}, Construction{}} {}
+			polymorphic_container{Source{}, Construction{}, Cache{}, Storage{}} {}
 		
 	private:
+		using cache_mapping = detail::polymorphic_container_private::cached_source<
+			CacheMapping
+		>;
+		
 		struct predicate_not_mapped {
-			template<typename T>
+			template<injectable T>
 			consteval bool operator()() const {
 				return not allow_runtime_caching_v<T>;
 			}
@@ -130,7 +133,9 @@ namespace kangaru {
 					with_source_wrapping<
 						with_source_wrapping<
 							with_construction<
-								sealed_source<with_exclude_mapping<Source, cached_source_mapping_using_t>>,
+								sealed_source<
+									filter_if_source<Source, predicate_not_mapped>
+								>,
 								construction_with_two_step_init_if<
 									construction_with_unique_ptr<Construction>,
 									second_step_from_attribute,
@@ -143,9 +148,7 @@ namespace kangaru {
 				>
 			>,
 			Cache,
-			// Since we want to always properly support forwarding from the providing source,
-			// we pass a template type alias that never exists by default and change it in container_source.
-			detail::never_type_identity
+			cache_mapping::template source_for
 		> state;
 		
 		KANGARU5_NO_UNIQUE_ADDRESS
@@ -158,11 +161,7 @@ namespace kangaru {
 		
 		template<typename S>
 		constexpr auto container_source(S&& source) {
-			auto rebound_state = std::remove_cvref_t<S>::template rebind<
-				detail::polymorphic_container_private::cached_source<
-					detail::forward_like_t<S, Source>
-				>::template source_for
-			>(
+			auto rebound_state = std::remove_cvref_t<S>::rebind(
 				KANGARU5_FWD(source),
 				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
 			);
@@ -174,7 +173,7 @@ namespace kangaru {
 							polymorphic_source
 						>)(
 							cache_with_two_step_init{
-								std::move(rebound_state),
+								rebound_state,
 								second_step_from_attribute{},
 							}
 						)
@@ -202,7 +201,7 @@ namespace kangaru {
 			);
 		}
 		
-		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Cache, Storage, Construction>
+		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Construction, CacheMapping, Cache, Storage>
 		requires(
 			    not reference_wrapper<Cache>
 			and std::default_initializable<Cache>
@@ -211,11 +210,10 @@ namespace kangaru {
 			auto cache = Cache{};
 			cache.insert(state.begin(), state.end());
 			
-			return polymorphic_container<ref_result_t<Source const&>, Cache>{
+			return polymorphic_container<ref_result_t<Source const&>, Construction, CacheMapping, Cache>{
 				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source.wrapped_source().source),
-				std::move(cache),
-				Storage{},
 				construction,
+				std::move(cache),
 			};
 		}
 		
@@ -311,36 +309,6 @@ namespace kangaru {
 			return {};
 		}
 	};
-	
-	template<typename Source, typename Cache, typename Storage, typename Construction>
-		requires(not deducer<std::remove_cvref_t<Source>>)
-	polymorphic_container(
-		Source&& source,
-		Cache const& cache,
-		Storage const& storage,
-		Construction const& construction
-	) -> polymorphic_container<deduced_source_type<Source>, Cache, Storage, Construction>;
-	
-	template<typename Source, typename Cache, typename Storage>
-		requires(not deducer<std::remove_cvref_t<Source>>)
-	polymorphic_container(
-		Source&& source,
-		Cache const& cache,
-		Storage const& storage
-	) -> polymorphic_container<deduced_source_type<Source>, Cache, Storage>;
-	
-	template<typename Source, typename Cache>
-		requires(not deducer<std::remove_cvref_t<Source>>)
-	polymorphic_container(
-		Source&& source,
-		Cache const& cache
-	) -> polymorphic_container<deduced_source_type<Source>, Cache>;
-	
-	template<typename Source>
-		requires(not deducer<std::remove_cvref_t<Source>>)
-	polymorphic_container(
-		Source&& source
-	) -> polymorphic_container<deduced_source_type<Source>>;
 }
 
 #include "undef.hpp"

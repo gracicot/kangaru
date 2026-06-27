@@ -13,15 +13,6 @@ namespace kangaru::detail::concepts_private {
 	consteval auto count_type_in_pack() -> std::size_t {
 		return ((std::same_as<Type, Pack> ? std::size_t{1} : std::size_t{0}) + ... + std::size_t{0});
 	}
-	
-	// TODO: Remove this workaround when this feedback item is fixed
-	//       https://developercommunity.visualstudio.com/t/1950-regression-Requires-fail-to-chec/11052128
-	template<typename From, typename To>
-	consteval auto user_defined_convertible_to_msvc_workaround() -> bool {
-		return requires(From&& from) {
-			{ KANGARU5_FWD(from).operator To() } -> std::same_as<To>;
-		};
-	}
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -94,7 +85,9 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename From, typename To>
 	concept user_defined_convertible_to =
 		    std::is_class_v<std::remove_cvref_t<From>>
-		and detail::concepts_private::user_defined_convertible_to_msvc_workaround<From, To>();
+		and requires(From&& from) {
+			{ KANGARU5_FWD(from).operator To() } -> std::same_as<To>;
+		};
 	
 	// Matches more our usage of syntax for function calling
 	template<typename F, typename... Args>

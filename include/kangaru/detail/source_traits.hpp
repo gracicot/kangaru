@@ -63,7 +63,7 @@ namespace kangaru {
 	
 	template<std::size_t level, forwarded_source Source>
 		requires(level == 0 or forwarded_wrapping_source<maybe_unwrap_result_t<Source&&>>)
-	static constexpr auto get_nested_wrapped_source(Source&& source) -> get_nested_wrapped_source_t<level, maybe_unwrap_result_t<Source&&>> {
+	inline constexpr auto get_nested_wrapped_source(Source&& source) -> get_nested_wrapped_source_t<level, maybe_unwrap_result_t<Source&&>> {
 		if constexpr (level > 0) {
 			return KANGARU5_NO_ADL(get_nested_wrapped_source<level - 1>)(KANGARU5_NO_ADL(maybe_unwrap)(KANGARU5_FWD(source)).source);
 		} else {

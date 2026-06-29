@@ -179,7 +179,7 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename T>
 	concept dereferenceable_heap_storage = heap_storage<T> or requires {
-		requires heap_storage<source_reference_wrapped_type<T>>;
+		requires heap_storage<reference_wrapper_wrapped_source_t<T>>;
 	};
 	
 	KANGARU5_EXPORT template<typename T>

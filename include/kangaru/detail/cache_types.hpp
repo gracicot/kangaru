@@ -55,7 +55,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<typename T>
 	concept dereferenceable_cache_map = cache_map<T> or requires {
-		requires cache_map<source_reference_wrapped_type<T>>;
+		requires cache_map<reference_wrapper_wrapped_source_t<T>>;
 	};
 	
 	template<typename T>

@@ -41,39 +41,35 @@ namespace kangaru {
 	inline constexpr auto select_source_of_index = detail::source_traits_private::select_source_of_impl<0, T, Sources...>::index;
 	
 	namespace detail::source_traits_private {
-		template<std::size_t level, source Source>
+		template<std::size_t level, source_ref Source>
 		struct get_nested_wrapped_source {};
 		
-		template<typename Source>
+		template<source_ref Source>
 		struct get_nested_wrapped_source<0, Source> {
 			using type = Source;
 		};
 		
-		template<std::size_t level, source Source>
-			requires(level > 0 and forwarded_wrapping_source<maybe_unwrap_result_t<Source&&>>)
+		template<std::size_t level, source_ref Source>
+			requires(level > 0 and forwarded_wrapping_source<maybe_unwrap_result_t<Source>>)
 		struct get_nested_wrapped_source<level, Source> :
 			get_nested_wrapped_source<
 				level - 1,
-				wrapped_source_t<std::remove_cvref_t<maybe_unwrap_result_t<Source>>>
+				forwarded_wrapped_source_t<maybe_unwrap_result_t<Source>>
 			>{};
 	} // namespace detail::source_traits_private
 	
-	template<std::size_t level, source Source>
+	template<std::size_t level, source_ref Source>
 	using get_nested_wrapped_source_t = typename detail::source_traits_private::get_nested_wrapped_source<level, Source>::type;
 	
 	template<std::size_t level, forwarded_source Source>
-		requires(level == 0 or forwarded_wrapping_source<maybe_unwrap_result_t<Source>>)
-	static constexpr auto get_nested_wrapped_source(Source&& source) -> detail::forward_like_t<
-		Source,
-		get_nested_wrapped_source_t<level, std::remove_cvref_t<maybe_unwrap_result_t<Source>>>
-	> {
+		requires(level == 0 or forwarded_wrapping_source<maybe_unwrap_result_t<Source&&>>)
+	static constexpr auto get_nested_wrapped_source(Source&& source) -> get_nested_wrapped_source_t<level, maybe_unwrap_result_t<Source&&>> {
 		if constexpr (level > 0) {
 			return KANGARU5_NO_ADL(get_nested_wrapped_source<level - 1>)(KANGARU5_NO_ADL(maybe_unwrap)(KANGARU5_FWD(source)).source);
 		} else {
 			return KANGARU5_FWD(source);
 		}
 	}
-	
 }
 
 #include "undef.hpp"

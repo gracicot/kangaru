@@ -132,8 +132,8 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept weak_wrapping_source =
-		    source<std::remove_reference_t<Source>>
-		and requires(Source source) {
+		    forwarded_source<Source>
+		and requires(Source&& source) {
 			{ source.source };
 		};
 	
@@ -152,7 +152,7 @@ namespace kangaru {
 	static_assert(source<none_source>);
 	
 	KANGARU5_EXPORT template<forwarded_wrapping_source Source>
-	using forwarded_wrapped_source_t = detail::forward_like_t<Source, wrapped_source_t<Source>>;
+	using forwarded_wrapped_source_t = decltype((std::declval<Source&&>().source))&&;
 	
 	KANGARU5_EXPORT template<typename Source, typename T>
 	concept wrapping_source_of =

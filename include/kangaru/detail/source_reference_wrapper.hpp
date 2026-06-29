@@ -79,7 +79,10 @@ KANGARU5_EXPORT namespace kangaru {
 	source_forwarding_reference_wrapper(Source&&) -> source_forwarding_reference_wrapper<Source&&>;
 	
 	template<reference_wrapper Wrapper>
-	using source_reference_wrapped_type = std::remove_reference_t<decltype(std::declval<Wrapper>().unwrap())>;
+	using reference_wrapper_unwrap_result_t = decltype(std::declval<Wrapper>().unwrap());
+	
+	template<reference_wrapper Wrapper>
+	using reference_wrapper_wrapped_source_t = std::remove_reference_t<reference_wrapper_unwrap_result_t<Wrapper>>;
 	
 	inline constexpr auto maybe_unwrap(forwarded_reference_wrapper auto&& ref) noexcept -> decltype(auto) {
 		return KANGARU5_FWD(ref).unwrap();
@@ -92,13 +95,13 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename MaybeWrapper>
 	using maybe_unwrap_result_t = decltype(KANGARU5_NO_ADL(maybe_unwrap)(std::declval<MaybeWrapper>()));
 	
-	template<source Source> requires(not reference_wrapper<std::remove_cvref_t<Source>>)
+	template<source Source> requires(not reference_wrapper<std::remove_const_t<Source>>)
 	inline constexpr auto ref(Source& source) -> source_reference_wrapper<Source> {
 		return source_reference_wrapper<Source>{source};
 	}
 	
 	template<reference_wrapper Wrapper>
-	inline constexpr auto ref(Wrapper wrapper) -> source_reference_wrapper<source_reference_wrapped_type<Wrapper>> {
+	inline constexpr auto ref(Wrapper wrapper) -> source_reference_wrapper<reference_wrapper_wrapped_source_t<Wrapper>> {
 		auto&& r = std::move(wrapper).unwrap();
 		return source_reference_wrapper<std::remove_reference_t<decltype(r)>>{r};
 	}
@@ -108,10 +111,11 @@ KANGARU5_EXPORT namespace kangaru {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
 	}
 	
-	template<reference_wrapper Wrapper> requires(not reference_wrapper<source_reference_wrapped_type<Wrapper>>)
-	inline constexpr auto fwd_ref(Wrapper wrapper) -> source_forwarding_reference_wrapper<decltype(std::declval<Wrapper>().unwrap())> {
-		auto&& r = std::move(wrapper).unwrap();
-		return source_forwarding_reference_wrapper<decltype(r)>{KANGARU5_FWD(r)};
+	template<reference_wrapper Wrapper>
+	inline constexpr auto fwd_ref(Wrapper wrapper) -> source_forwarding_reference_wrapper<reference_wrapper_unwrap_result_t<Wrapper>> {
+		return source_forwarding_reference_wrapper<reference_wrapper_unwrap_result_t<Wrapper>>{
+			std::move(wrapper).unwrap()
+		};
 	}
 	
 	template<typename Source> requires(source_ref<Source> or reference_wrapper<Source>)

@@ -74,48 +74,21 @@ namespace kangaru {
 		or stateful_rebindable_wrapping_source<Source>;
 	
 	namespace detail::source_rebind_private {
-		template<typename Rebind, typename Wrapper, typename ReplaceLeaf>
-		struct rebind_result_helper {};
-		
-		template<typename Rebind, typename Wrapper, typename ReplaceLeaf>
-			requires(
-				    transparent_rebindable_wrapping_source<Wrapper> 
-				and not stateful_rebindable_wrapping_source<Wrapper>
-			)
-		struct rebind_result_helper<Rebind, Wrapper, ReplaceLeaf> {
-			using type = typename detail::ttype_t<
-				rebind_wrapper<std::remove_cvref_t<Wrapper>>,
-				call_result_t<Rebind, forwarded_wrapped_source_t<Wrapper&&>, ReplaceLeaf&&>
-			>;
-		};
-		
-		template<typename Rebind, typename Wrapper, typename ReplaceLeaf>
-			requires(stateful_rebindable_wrapping_source<Wrapper>)
-		struct rebind_result_helper<Rebind, Wrapper, ReplaceLeaf> {
-			using type = decltype(
-				std::decay_t<Wrapper>::rebind(
-					std::declval<Wrapper>(),
-					std::declval<call_result_t<Rebind, forwarded_wrapped_source_t<Wrapper&&>, ReplaceLeaf&&>>()
-				)
-			);
-		};
-		
-		template<typename Rebind, typename Wrapper, typename ReplaceLeaf>
-		using rebind_result_helper_t = typename rebind_result_helper<Rebind, Wrapper, ReplaceLeaf>::type;
-		
 		struct rebind_function {
 			template<forwarded_source Wrapper, forwarded_function_object ReplaceLeaf>
 				requires(rebindable_wrapping_source<Wrapper> and not forwarded_reference_wrapper<Wrapper>)
-			constexpr auto operator()(Wrapper&& source, ReplaceLeaf&& replace_leaf) const 
-				-> rebind_result_helper_t<rebind_function const, Wrapper, ReplaceLeaf&&>
-			{
+			constexpr auto operator()(Wrapper&& source, ReplaceLeaf&& replace_leaf) const {
 				if constexpr (stateful_rebindable_wrapping_source<Wrapper>) {
 					return std::remove_cvref_t<Wrapper>::rebind(
 						KANGARU5_FWD(source),
 						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
 					);
 				} else if constexpr (transparent_rebindable_wrapping_source<Wrapper>) {
-					return rebind_result_helper_t<rebind_function const, Wrapper, decltype(replace_leaf)>{
+					using rebound = typename detail::ttype_t<
+						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
+						decltype(operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf)))
+					>;
+					return rebound{
 						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
 					};
 				} else {
@@ -124,9 +97,7 @@ namespace kangaru {
 			}
 			
 			template<forwarded_reference_wrapper Wrapper, forwarded_function_object ReplaceLeaf>
-			constexpr auto operator()(Wrapper&& wrapper, ReplaceLeaf&& replace_leaf) const
-				-> detail::call_result_t<rebind_function const, maybe_unwrap_result_t<Wrapper>, ReplaceLeaf&&>
-			{
+			constexpr auto operator()(Wrapper&& wrapper, ReplaceLeaf&& replace_leaf) const {
 				return operator()(KANGARU5_FWD(wrapper).unwrap(), KANGARU5_FWD(replace_leaf));
 			}
 			
@@ -146,7 +117,7 @@ namespace kangaru {
 		
 		template<source Wrapper>
 			requires(reference_wrapper<Wrapper>)
-		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<source_reference_wrapped_type<Wrapper>>;
+		inline constexpr auto is_rebindable_v<Wrapper> = is_rebindable_v<reference_wrapper_wrapped_source_t<Wrapper>>;
 		
 		template<source Wrapper>
 			requires(rebindable_wrapping_source<Wrapper> and not reference_wrapper<Wrapper>)

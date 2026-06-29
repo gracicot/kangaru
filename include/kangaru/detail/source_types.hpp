@@ -579,7 +579,10 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<injectable T, forwarded<with_passthrough> Self>
-			requires(not wrapping_source_of<Self, T> and source_of<get_nested_wrapped_source_t<level, Source>, T>)
+			requires(
+				    not wrapping_source_of<Self, T>
+				and source_of<get_nested_wrapped_source_t<level, forwarded_wrapped_source_t<Self>>, T>
+			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_NO_ADL(get_nested_wrapped_source<level>)(KANGARU5_FWD(source).source));
 		}

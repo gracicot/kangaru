@@ -179,6 +179,7 @@ jobs:
       matrix:
         vs: [2026]
         windows: [2025]
+        cxx: [20, 23]
 
     steps:
       - uses: actions/checkout@v5
@@ -199,14 +200,6 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
           buildPresetAdditionalArgs: "['--', '-j3']"
 
-      - name: 'Run CMake C++23'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci-windows'
-          buildPreset: 'ci-windows'
-          testPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
-          buildPresetAdditionalArgs: "['--', '-j3']"

@@ -850,8 +850,8 @@ TEST_CASE("Container base source", "[container]") {
 		);
 		
 		auto base4 = kangaru::make_container_base(
-			kangaru::allow_assume_cached,
 			kangaru::make_strict_spread_injector_function{},
+			kangaru::allow_assume_cached,
 			kangaru::throw_if_not_found{},
 			kangaru::none_source{},
 			[](std::shared_ptr<dynamic_provided_abstract>) {
@@ -863,8 +863,8 @@ TEST_CASE("Container base source", "[container]") {
 		);
 		
 		auto base5 = kangaru::make_container_base(
-			kangaru::allow_assume_cached,
 			kangaru::make_strict_spread_injector_function{},
+			kangaru::allow_assume_cached,
 			kangaru::throw_if_not_found{},
 			kangaru::none_source{},
 			[](std::shared_ptr<dynamic_provided_abstract> const&) {

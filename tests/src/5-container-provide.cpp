@@ -298,6 +298,16 @@ struct empty_inject {
 	}
 };
 
+struct provided_value {
+	initial_value value;
+	friend auto operator<=>(provided_value const&, provided_value const&) = default;
+	friend auto attribute(kangaru::assume_runtime_cached<provided_value>) -> std::true_type;
+};
+
+struct provided_ref {
+	friend auto attribute(kangaru::assume_runtime_cached<provided_ref&>) -> std::true_type;
+};
+
 template<>
 struct kangaru::allow_empty_injection<empty_inject> : std::true_type {};
 
@@ -400,6 +410,14 @@ struct base_container_reference_source_source {
 	}
 };
 
+struct base_container_reference_source_source_auto_mapped {
+	static auto make_base() {
+		return kangaru::make_container_base(
+			kangaru::object_source{kangaru::reference_source{initial_value{42}}}
+		);
+	}
+};
+
 struct base_container_object_source_source {
 	static auto make_base() {
 		return kangaru::object_source{kangaru::object_source{initial_value{42}}};
@@ -431,6 +449,40 @@ struct base_container_unmapped_dependent_on_mapped_value {
 	}
 };
 
+struct base_container_assume_cached_direct {
+	static auto make_base() {
+		return kangaru::make_container_base(kangaru::allow_assume_cached);
+	}
+};
+
+struct base_container_assume_cached_value_through_construction {
+	static auto make_base() {
+		return kangaru::make_container_base(
+			kangaru::allow_assume_cached,
+			[](provided_value) {
+				return kangaru::reference_source{mapped_ref{}};
+			},
+			[](provided_value) {
+				return kangaru::object_source{mapped_value{initial_value{42}}};
+			}
+		);
+	}
+};
+
+struct base_container_assume_cached_ref_through_construction {
+	static auto make_base() {
+		return kangaru::make_container_base(
+			kangaru::allow_assume_cached,
+			[](provided_ref&) {
+				return kangaru::reference_source{mapped_ref{}};
+			},
+			[](provided_ref&) {
+				return kangaru::object_source{mapped_value{initial_value{42}}};
+			}
+		);
+	}
+};
+
 template<typename T, typename MakeBase>
 struct provide_test {
 	using provided_type = T;
@@ -449,6 +501,32 @@ struct provide_test_polymorphic {
 	}
 };
 
+
+template<typename T, typename MakeBase>
+struct provide_test_insert_assumed {
+	using provided_type = T;
+	using test = decltype(MakeBase::make_base())::template source_for<provided_value>;
+	
+	static auto make_container() {
+		auto container = kangaru::container{MakeBase::make_base()};
+		container.template replace<provided_value>(kangaru::object_source{provided_value{initial_value{42}}});
+		container.template replace<provided_ref&>(kangaru::reference_source{provided_ref{}});
+		return container;
+	}
+};
+
+template<typename T, typename MakeBase>
+struct provide_test_polymorphic_insert_assumed {
+	using provided_type = T;
+	
+	static auto make_container() {
+		auto container = kangaru::polymorphic_container{MakeBase::make_base()};
+		container.template replace<provided_value>(kangaru::object_source{provided_value{initial_value{42}}});
+		container.template replace<provided_ref&>(kangaru::reference_source{provided_ref{}});
+		return container;
+	}
+};
+
 using provide_test_self = provide_test<kangaru::container<>&, base_container_default>;
 using provide_test_polymorphic_self = provide_test_polymorphic<kangaru::polymorphic_container<>&, base_container_default>;
 using provide_test_mapped_ref = provide_test<mapped_ref&, base_container_default>;
@@ -461,6 +539,8 @@ using provide_test_mapped_value_base_reference_source = provide_test<mapped_valu
 using provide_test_polymorphic_mapped_value_base_reference_source = provide_test_polymorphic<mapped_value_ref_initial_value, base_container_reference_source>;
 using provide_test_mapped_value_base_reference_source_source = provide_test<mapped_value_ref_initial_value, base_container_reference_source_source>;
 using provide_test_polymorphic_mapped_value_base_reference_source_source = provide_test_polymorphic<mapped_value_ref_initial_value, base_container_reference_source_source>;
+using provide_test_mapped_value_base_reference_source_source_auto_mapped = provide_test<mapped_value_ref_initial_value, base_container_reference_source_source_auto_mapped>;
+using provide_test_polymorphic_mapped_value_base_reference_source_source_auto_mapped = provide_test_polymorphic<mapped_value_ref_initial_value, base_container_reference_source_source_auto_mapped>;
 using provide_test_mapped_has_empty = provide_test<mapped_has_empty_injectable, base_container_default>;
 using provide_test_polymorphic_mapped_has_empty = provide_test_polymorphic<mapped_has_empty_injectable, base_container_default>;
 using provide_test_unmapped_has_empty = provide_test<unmapped_has_empty_injectable, base_container_default>;
@@ -473,6 +553,18 @@ using provide_test_remapped_sptr = provide_test<std::shared_ptr<base>, base_cont
 using provide_test_polymorphic_remapped_sptr = provide_test_polymorphic<std::shared_ptr<base>, base_container_remapped_sptr>;
 using provide_test_unmapped_dependent_on_mapped_value = provide_test<unmapped_dependent_on<mapped_value>&, base_container_unmapped_dependent_on_mapped_value>;
 using provide_test_polymorphic_unmapped_dependent_on_mapped_value = provide_test_polymorphic<unmapped_dependent_on<mapped_value>&, base_container_unmapped_dependent_on_mapped_value>;
+using provide_test_assume_cached_value = provide_test_insert_assumed<provided_value, base_container_assume_cached_direct>;
+using provide_test_polymorphic_assume_cached_value = provide_test_polymorphic_insert_assumed<provided_value, base_container_assume_cached_direct>;
+using provide_test_assume_cached_ref = provide_test_insert_assumed<provided_ref&, base_container_assume_cached_direct>;
+using provide_test_polymorphic_assume_cached_ref = provide_test_polymorphic_insert_assumed<provided_ref&, base_container_assume_cached_direct>;
+using provide_test_mapped_value_construction_using_assume_cached_value = provide_test_insert_assumed<mapped_value, base_container_assume_cached_value_through_construction>;
+using provide_test_polymorphic_mapped_value_construction_using_assume_cached_value = provide_test_polymorphic_insert_assumed<mapped_value, base_container_assume_cached_value_through_construction>;
+using provide_test_mapped_value_construction_using_assume_cached_ref = provide_test_insert_assumed<mapped_value, base_container_assume_cached_ref_through_construction>;
+using provide_test_polymorphic_mapped_value_construction_using_assume_cached_ref = provide_test_polymorphic_insert_assumed<mapped_value, base_container_assume_cached_ref_through_construction>;
+using provide_test_mapped_ref_construction_using_assume_cached_value = provide_test_insert_assumed<mapped_ref&, base_container_assume_cached_value_through_construction>;
+using provide_test_polymorphic_mapped_ref_construction_using_assume_cached_value = provide_test_polymorphic_insert_assumed<mapped_ref&, base_container_assume_cached_value_through_construction>;
+using provide_test_mapped_ref_construction_using_assume_cached_ref = provide_test_insert_assumed<mapped_ref&, base_container_assume_cached_ref_through_construction>;
+using provide_test_polymorphic_mapped_ref_construction_using_assume_cached_ref = provide_test_polymorphic_insert_assumed<mapped_ref&, base_container_assume_cached_ref_through_construction>;
 
 using TestType = KANGARU5_TEST_TYPE;
 

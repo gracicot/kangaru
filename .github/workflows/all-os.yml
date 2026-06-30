@@ -172,7 +172,7 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   windows-msvc-2026:
-    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
+    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }} C++${{ matrix.cxx }}
     name: MSVC ${{ matrix.vs }} Windows
     strategy:
       fail-fast: false
@@ -194,7 +194,7 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'Run CMake C++20'
+      - name: 'Run CMake C++${{ matrix.cxx }}'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-windows'

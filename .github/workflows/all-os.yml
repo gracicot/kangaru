@@ -99,45 +99,13 @@ jobs:
           testPreset: 'ci-linux'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
-  linux-gcc-cxx-23:
-    name: GCC ${{ matrix.gcc }} Linux
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        gcc: [13]
-
-    steps:
-      - uses: actions/checkout@v5
-
-      - uses: DeterminateSystems/determinate-nix-action@v3
-      - uses: nicknovitski/nix-develop@v1
-        with:
-          arguments: ".#ci-gcc${{ matrix.gcc }}"
-
-      - name: 'Run CMake C++20'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci-linux'
-          buildPreset: 'ci-linux'
-          testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=20']"
-
-      - name: 'Run CMake C++23'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci-linux'
-          buildPreset: 'ci-linux'
-          testPreset: 'ci-linux'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=23']"
-
   linux-gcc:
     name: GCC ${{ matrix.gcc }} Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        gcc: [14, 15, 16]
+        gcc: [13, 14, 15, 16]
 
     steps:
       - uses: actions/checkout@v5

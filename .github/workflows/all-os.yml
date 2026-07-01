@@ -172,8 +172,8 @@ jobs:
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=26']"
 
   windows-msvc-2026:
-    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }} C++${{ matrix.cxx }}
-    name: MSVC ${{ matrix.vs }} Windows
+    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
+    name: MSVC ${{ matrix.vs }} Windows C++${{ matrix.cxx }}
     strategy:
       fail-fast: false
       matrix:

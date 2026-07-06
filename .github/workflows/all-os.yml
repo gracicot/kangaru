@@ -169,5 +169,5 @@ jobs:
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
-          buildPresetAdditionalArgs: "['--', '-j2']"
+          buildPresetAdditionalArgs: "['--', '-j3']"
 

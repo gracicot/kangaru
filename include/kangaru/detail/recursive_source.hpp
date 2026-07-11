@@ -267,10 +267,14 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, forwarded_source Source>
 			requires(
 				    callable_template_1t_returns<T, Construction, T, Source&&>
-				and callable_template_1t<SecondStep, T, T&, Source&&>
+				and (
+					   (SecondStepIf{}.template operator()<T>() and callable_template_1t<SecondStep, T, T&, Source&&>)
+					or not SecondStepIf{}.template operator()<T>()
+				)
 			)
 		constexpr auto operator()(Source&& source) const -> T {
 			if constexpr (SecondStepIf{}.template operator()<T>()) {
+				static_assert(callable_template_1t<SecondStep, T, T&, Source&&>);
 				// NOTE: This function requires the move constructor of T to be declared but not defined.
 				//       Is there a way around that and guarantee RVO?
 				decltype(auto) result = construction.template operator()<T>(KANGARU5_FWD(source));

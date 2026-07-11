@@ -197,7 +197,10 @@ KANGARU5_EXPORT namespace kangaru {
 				and not std::is_const_v<std::remove_reference_t<Self>>
 				and cache_map_stores<std::remove_cvref_t<Self>, T>
 				and requires{ typename CacheFrom<T>; }
-				and std::constructible_from<mapped_type, CacheFrom<T>>
+				and (
+					   std::same_as<mapped_type, CacheFrom<T>>
+					or std::constructible_from<mapped_type, CacheFrom<T>>
+				)
 				and wrapping_source_of<Self, CacheFrom<T>>
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -321,18 +324,18 @@ KANGARU5_EXPORT namespace kangaru {
 			};
 		}
 		
-		// TODO: properly constraints. To do so, we must test circular dependencies.
-		//       If circular dependency cannot be checked in the signature, we must do static_assert
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(Cache::insert(std::move(value))) requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
-			run_second_step<T>(value.second);
-			return Cache::insert(std::move(value));
+		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(Cache::insert(std::as_const(value))) requires(requires(Cache parent) { parent.insert(std::as_const(value)); }) {
+			auto it = Cache::insert(std::as_const(value));
+			run_second_step<T>(value.second); // TODO: Oh no, what if the value is actually a value type, instead of a reference type?
+			return it;
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert(std::pair<static_type_id<T>, Value> const& value) -> decltype(Cache::insert(value))  requires(requires(Cache parent) { parent.insert(KANGARU5_FWD(value)); }) {
+		constexpr auto insert(std::pair<static_type_id<T>, Value> const& value) -> decltype(Cache::insert(value))  requires(requires(Cache parent) { parent.insert(value); }) {
+			auto it = Cache::insert(value);
 			run_second_step<T>(value.second);
-			return Cache::insert(value);
+			return it;
 		}
 		
 		template<typename It>
@@ -343,9 +346,10 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<injectable T, allows_construction_of<T> Value>
-		constexpr auto insert_or_assign(static_type_id<T> const& key, Value&& value) -> decltype(Cache::insert_or_assign(key, KANGARU5_FWD(value))) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), KANGARU5_FWD(value)); }) {
+		constexpr auto insert_or_assign(static_type_id<T> const& key, Value&& value) -> decltype(Cache::insert_or_assign(key, value)) requires(requires(Cache parent) { parent.insert_or_assign(KANGARU5_FWD(key), value); }) {
+			auto it = Cache::insert_or_assign(key, value);
 			run_second_step<T>(value);
-			return Cache::insert_or_assign(key, KANGARU5_FWD(value));
+			return it;
 		}
 	};
 	

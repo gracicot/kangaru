@@ -239,6 +239,60 @@ struct non_cached_with_second_step {
 	>;
 };
 
+struct circular_dep_2;
+
+struct circular_dep_1 {
+	circular_dep_1() = default;
+	std::shared_ptr<circular_dep_2> dep;
+	
+	friend auto attribute(kangaru::allow_runtime_caching<circular_dep_1&>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<circular_dep_1&>) ->
+		kangaru::assign_member<&circular_dep_1::dep>;
+};
+
+struct circular_dep_2 {
+	circular_dep_1& dep;
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<circular_dep_2>>) -> std::true_type;
+};
+
+struct deep_circular_1;
+
+struct deep_circular_4 {
+	deep_circular_4() { fmt::println("dc4"); }
+	std::shared_ptr<deep_circular_1> dep;
+	
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<deep_circular_4>>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<std::shared_ptr<deep_circular_4>>) ->
+		kangaru::call_second_step_on_dereference<kangaru::assign_member<&deep_circular_4::dep>>;
+};
+
+struct deep_circular_3 {
+	deep_circular_3() { fmt::println("dc3"); }
+	std::shared_ptr<deep_circular_4> dep;
+	
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<deep_circular_3>>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<std::shared_ptr<deep_circular_3>>) ->
+		kangaru::call_second_step_on_dereference<kangaru::assign_member<&deep_circular_3::dep>>;
+};
+
+struct deep_circular_2 {
+	deep_circular_2() { fmt::println("dc2"); }
+	std::shared_ptr<deep_circular_3> dep;
+	
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<deep_circular_2>>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<std::shared_ptr<deep_circular_2>>) ->
+		kangaru::call_second_step_on_dereference<kangaru::assign_member<&deep_circular_2::dep>>;
+};
+
+struct deep_circular_1 {
+	deep_circular_1() { fmt::println("dc1"); }
+	std::shared_ptr<deep_circular_2> dep;
+	
+	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<deep_circular_1>>) -> std::true_type;
+	friend auto attribute(kangaru::second_step_init<std::shared_ptr<deep_circular_1>>) ->
+		kangaru::call_second_step_on_dereference<kangaru::assign_member<&deep_circular_1::dep>>;
+};
+
 struct alias_container {
 	static auto make_container(auto&&... args) {
 		return kangaru::container{std::forward<decltype(args)>(args)...};
@@ -272,27 +326,13 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		static_assert(kangaru::source_of<decltype(container)&, service_non_strict>);
 		
 		SECTION("Can replace construction with strict") {
-			if constexpr (std::same_as<TestType, alias_container>) {
-				auto container = TestType::make_container(
-					kangaru::none_source{},
-					kangaru::exhaustive_strict_construction{},
-					std::unordered_map<kangaru::type_id, void*>{},
-					kangaru::default_heap_storage{}
-				);
-				
-				static_assert(kangaru::source_of<decltype(container)&, service_b&>);
-				static_assert(not kangaru::source_of<decltype(container)&, service_non_strict&>);
-			} else {
-				auto container = TestType::make_container(
-					kangaru::none_source{},
-					kangaru::exhaustive_strict_construction{},
-					kangaru::polymorphic_map<std::unordered_map<kangaru::type_id, kangaru::any_source_of_one_ref>>{},
-					kangaru::default_heap_storage{}
-				);
-				
-				static_assert(kangaru::source_of<decltype(container)&, service_b&>);
-				static_assert(not kangaru::source_of<decltype(container)&, service_non_strict&>);
-			}
+			auto container = TestType::make_container(
+				kangaru::none_source{},
+				kangaru::exhaustive_strict_construction{}
+			);
+			
+			static_assert(kangaru::source_of<decltype(container)&, service_b&>);
+			static_assert(not kangaru::source_of<decltype(container)&, service_non_strict&>);
 		}
 	}
 	
@@ -583,6 +623,20 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		CHECK(a.a == 9);
 		auto b = kangaru::provide<non_cached_with_second_step>(container);
 		CHECK(b.a == 9);
+	}
+	
+	SECTION("Supports circular dependency using second step init") {
+		auto& dep1 = kangaru::provide<circular_dep_1&>(container);
+		auto dep2 = kangaru::provide<std::shared_ptr<circular_dep_2>>(container);
+		
+		CHECK(dep1.dep == dep2);
+		CHECK(std::addressof(dep2->dep) == std::addressof(dep1));
+	}
+	
+	SECTION("Supports deep circular dependency using second step init") {
+		auto dep2 = kangaru::provide<std::shared_ptr<deep_circular_2>>(container);
+		auto dep4 = kangaru::provide<std::shared_ptr<deep_circular_4>>(container);
+		CHECK(dep2->dep == dep4->dep->dep->dep);
 	}
 }
 

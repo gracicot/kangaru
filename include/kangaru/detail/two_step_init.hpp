@@ -40,7 +40,11 @@ namespace kangaru::detail::two_step_init_private {
 	
 	template<typename Type, typename Class>
 	struct member_type<Type Class::*> {
-		using type = std::invoke_result_t<Type Class::*, Class&>;
+		using type = conditional_t<
+			std::is_function_v<Type>,
+			std::invoke_result_t<Type Class::*, Class&>,
+			Type
+		>;
 	};
 	
 	template<auto mptr>
@@ -122,6 +126,31 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr auto operator()(T& object, Source&& source) const -> void {
 			f(object);
 		}
+	};
+	
+	template<second_step_function SecondStep, function_object TransformFunction>
+	struct call_second_step_with_transformed_source {
+		constexpr call_second_step_with_transformed_source() = default;
+		explicit constexpr call_second_step_with_transformed_source(SecondStep second_step)
+			requires(std::default_initializable<TransformFunction>) :
+			second_step{std::move(second_step)} {}
+		
+		constexpr call_second_step_with_transformed_source(SecondStep second_step, TransformFunction function) :
+			second_step{std::move(second_step)}, function{std::move(function)} {}
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				    not std::is_const_v<std::remove_reference_t<T>>
+				and callable<TransformFunction const&, Source&&>
+				and callable_template_1t<SecondStep const&, std::remove_cvref_t<T>, T&, detail::call_result_t<TransformFunction const&, Source&&>>
+			)
+		constexpr auto operator()(T& object, Source&& source) const -> void {
+			void(std::as_const(second_step).template operator()<std::remove_cvref_t<T>>(object, function(KANGARU5_FWD(source))));
+		}
+		
+	private:
+		SecondStep second_step;
+		TransformFunction function;
 	};
 	
 	template<function_object MakeInjector, auto fn>
@@ -252,6 +281,33 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		SecondStep second_step;
+	};
+	
+	template<auto mptr>
+		requires(pointer_to_member<decltype(mptr)>)
+	struct assign_member { template<injectable T, forwarded_source Source>
+			requires(
+				    requires(T o) { { o.*mptr }; }
+				and source_of<Source&&, detail::two_step_init_private::member_type_for<mptr>>
+			)
+		constexpr auto operator()(T& object, Source&& source) const -> void {
+			object.*mptr = kangaru::provide<detail::two_step_init_private::member_type_for<mptr>>(KANGARU5_FWD(source));
+		}
+	};
+	
+	template<typename... Steps>
+	struct call_second_step_on_all {
+		template<injectable T, forwarded_source Source>
+			requires(
+				(... and callable_template_1t<Steps const&, T, T&, Source&&>)
+			)
+		constexpr auto operator()(T& object, Source&& source) const -> void {
+			std::apply([&](auto... steps) {
+				(void(std::as_const(steps).template operator()<T>(object, KANGARU5_FWD(source))), ...);
+			}, steps);
+		}
+		
+		std::tuple<Steps...> steps;
 	};
 	
 	template<auto mptr, injectable As = detail::two_step_init_private::member_type_for<mptr>>

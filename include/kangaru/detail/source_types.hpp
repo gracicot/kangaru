@@ -295,6 +295,45 @@ KANGARU5_EXPORT namespace kangaru {
 	reference_source(T&&) -> reference_source<deduced_source_type<T>>;
 	
 	template<object T>
+	struct pointer_source {
+		template<not_self<pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
+		explicit constexpr pointer_source(From&& object) : object(KANGARU5_FWD(object)) {}
+		
+		template<typename... Args> requires((... and not_self<Args, pointer_source>) and constructor_callable<T, Args&&...>)
+		constexpr pointer_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
+		
+		constexpr auto provide() & -> T* {
+			return pointer();
+		}
+		
+		constexpr auto provide() && -> T* {
+			return pointer();
+		}
+		
+	private:
+		T object;
+		
+		constexpr auto pointer() -> T* {
+			return std::addressof(object);
+		}
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_empty_injection<pointer_source<U>>) -> std::true_type;
+		
+		template<kangaru::object U>
+		friend auto attribute(allow_runtime_caching<pointer_source<U>>) -> std::bool_constant<allow_runtime_caching_v<U&>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(assume_runtime_cached<pointer_source<U>>) -> std::bool_constant<assume_runtime_cached_v<U&>>;
+		
+		template<kangaru::object U>
+		friend auto attribute(second_step_init<pointer_source<U>>) -> call_second_step_from_attribute_on_member<&pointer_source<U>::pointer, U*>;
+	};
+	
+	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
+	pointer_source(T&&) -> pointer_source<deduced_source_type<T>>;
+	
+	template<object T>
 	struct shared_pointer_source {
 		template<not_self<shared_pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
 		explicit constexpr shared_pointer_source(From&& object) :

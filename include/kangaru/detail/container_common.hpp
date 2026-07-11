@@ -31,7 +31,7 @@ namespace kangaru::detail::container_common_private {
 		using type = rvalue_source<T>;
 	};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T>> {
 		using type = shared_pointer_source<T>;
 	};
@@ -43,29 +43,32 @@ namespace kangaru::detail::container_common_private {
 	};
 	
 	// Banned types. References to shared pointer are not allowed in the default mapping.
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T>&> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T> const&> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T>&&> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<std::shared_ptr<T> const&&> {};
 	
 	// Banning source of a mapped source, a bit like provide_using source
-	template<kangaru::object T>
+	template<object T>
+	struct default_type_to_source_mapping<pointer_source<T>> {};
+	
+	template<object T>
 	struct default_type_to_source_mapping<reference_source<T>> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<rvalue_source<T>> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<shared_pointer_source<T>> {};
 	
-	template<kangaru::object T>
+	template<object T>
 	struct default_type_to_source_mapping<object_source<T>> {};
 	
 	template<template<typename> typename Mapping, source Source, std::size_t max, reflectable_function<max>... Functions>

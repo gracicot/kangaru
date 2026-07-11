@@ -114,8 +114,13 @@ KANGARU5_EXPORT namespace kangaru {
 							with_dereference{
 								cache_with_two_step_init{
 									rebound_state,
-									call_second_step_on_dereference{
-										call_second_step_from_attribute_on_prvalue{},
+									call_second_step_with_transformed_source{
+										call_second_step_on_dereference{
+											call_second_step_from_attribute_on_prvalue{},
+										},
+										[](forwarded_source auto&& source) -> decltype(KANGARU5_FWD(source).source.source.alternative) {
+											return KANGARU5_FWD(source).source.source.alternative;
+										}
 									},
 								},
 							}

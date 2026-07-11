@@ -174,7 +174,12 @@ namespace kangaru {
 						>)(
 							cache_with_two_step_init{
 								rebound_state,
-								second_step_from_attribute{},
+								call_second_step_with_transformed_source{
+									second_step_from_attribute{},
+									[](forwarded_source auto&& source) -> decltype(KANGARU5_FWD(source).source.source.source.source.source.alternative) {
+										return KANGARU5_FWD(source).source.source.source.source.source.alternative;
+									}
+								}
 							}
 						)
 					),

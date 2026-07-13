@@ -96,6 +96,27 @@ namespace test_autowire_single {
 	}
 }
 
+namespace test_autowire_service {
+	int copy_count = 0;
+
+	struct service {
+		service() = default;
+		service(service const&) { ++copy_count; }
+		service(service&&) = default;
+	};
+
+	TEST_CASE("autowire_service behaves as a non-single service", "[autowire]") {
+		copy_count = 0;
+
+		kgr::container container;
+		auto instance = container.service<kgr::autowire_service<service>>();
+		(void) instance;
+
+		REQUIRE_FALSE(kgr::detail::is_single<kgr::autowire_service<service>>::value);
+		CHECK(copy_count == 0);
+	}
+}
+
 namespace test_autowire_multiple_dependency {
 	int nb_s1_constructed;
 	

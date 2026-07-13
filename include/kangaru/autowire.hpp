@@ -167,7 +167,7 @@ using mapped_autowire = detail::autowire_map<service, detail::decay_t, Map, max_
  * It act as a shorter alternative to service<Type, kgr::mapped_autowire<...>>
  */
 template<typename T, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
-using autowire_service = single_service<T, kgr::mapped_autowire<Map, max_dependencies>>;
+using autowire_service = service<T, kgr::mapped_autowire<Map, max_dependencies>>;
 
 template<typename T, typename Map = map<>, std::size_t max_dependencies = detail::default_max_dependency>
 using autowire_single_service = single_service<T, kgr::mapped_autowire<Map, max_dependencies>>;

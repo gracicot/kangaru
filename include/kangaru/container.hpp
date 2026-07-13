@@ -441,6 +441,7 @@ private:
 	auto make_contained_service(detail::meta_list<Overrides...>, Args&&... args) -> detail::single_insertion_result_t<T> {
 		auto storage = source().emplace<T, Overrides...>(std::true_type{}, std::forward<Args>(args)...);
 		auto& service = static_unwrap_single<T>(storage);
+		(void) service;
 		
 		return storage;
 	}

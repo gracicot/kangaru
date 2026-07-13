@@ -8,6 +8,7 @@
 #include "attributes.hpp"
 #include "source.hpp"
 #include "source_types.hpp"
+#include "source_wrappers.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_rebind.hpp"
 #include "type_traits.hpp"

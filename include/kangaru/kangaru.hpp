@@ -2,7 +2,6 @@
 #define KANGARU5_KANGARU_HPP
 
 #include "detail/allocator.hpp"
-#include "detail/any_source_of.hpp"
 #include "detail/attributes.hpp"
 #include "detail/cache.hpp"
 #include "detail/cache_types.hpp"
@@ -29,6 +28,7 @@
 #include "detail/source_reference_wrapper.hpp"
 #include "detail/source_traits.hpp"
 #include "detail/source_types.hpp"
+#include "detail/source_wrappers.hpp"
 #include "detail/two_step_init.hpp"
 #include "detail/type_traits.hpp"
 #include "detail/utility.hpp"

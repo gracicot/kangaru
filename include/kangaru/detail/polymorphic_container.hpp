@@ -8,6 +8,7 @@
 #include "source_traits.hpp"
 #include "utility.hpp"
 #include "source_types.hpp"
+#include "source_wrappers.hpp"
 #include "cache_types.hpp"
 #include "recursive_source.hpp"
 #include "polymorphic_source.hpp"
@@ -68,7 +69,7 @@ namespace kangaru {
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
 										KANGARU5_NO_ADL(seal_source)(
-											KANGARU5_NO_ADL(filter_if)(
+											KANGARU5_NO_ADL(make_source_with_filter_if)(
 												KANGARU5_FWD(source),
 												predicate_not_mapped{}
 											)
@@ -134,7 +135,7 @@ namespace kangaru {
 						with_source_wrapping<
 							with_construction<
 								sealed_source<
-									filter_if_source<Source, predicate_not_mapped>
+									with_filter_if<Source, predicate_not_mapped>
 								>,
 								construction_with_two_step_init_if<
 									construction_with_unique_ptr<Construction>,

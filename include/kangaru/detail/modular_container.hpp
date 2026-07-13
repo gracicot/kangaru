@@ -3,6 +3,7 @@
 
 #include "source.hpp"
 #include "source_types.hpp"
+#include "source_wrappers.hpp"
 #include "utility.hpp"
 #include "incremental_source.hpp"
 #include "recursive_source.hpp"

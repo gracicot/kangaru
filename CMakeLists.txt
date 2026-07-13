@@ -42,7 +42,6 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/kangaru.hpp
 		include/kangaru/short.hpp
 		include/kangaru/detail/allocator.hpp
-		include/kangaru/detail/any_source_of.hpp
 		include/kangaru/detail/attributes.hpp
 		include/kangaru/detail/cache.hpp
 		include/kangaru/detail/cache_types.hpp
@@ -69,6 +68,7 @@ PUBLIC FILE_SET HEADERS
 		include/kangaru/detail/source_reference_wrapper.hpp
 		include/kangaru/detail/source_traits.hpp
 		include/kangaru/detail/source_types.hpp
+		include/kangaru/detail/source_wrappers.hpp
 		include/kangaru/detail/type_id.hpp
 		include/kangaru/detail/type_traits.hpp
 		include/kangaru/detail/undef.hpp

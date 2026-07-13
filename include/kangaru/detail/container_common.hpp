@@ -6,6 +6,7 @@
 #include "injector.hpp"
 #include "recursive_source.hpp"
 #include "source_types.hpp"
+#include "source_wrappers.hpp"
 #include "source.hpp"
 #include "exceptions.hpp"
 #include "source_traits.hpp"
@@ -206,7 +207,7 @@ KANGARU5_EXPORT namespace kangaru {
 	> requires(not reflectable_function<Source, max>)
 	inline constexpr auto make_container_base(MakeInjector make_injector, Source&& source, Lambdas&&... lambdas) {
 		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
-			filter<reflected_return_type<Lambdas, max>...>(
+			make_source_with_filter<reflected_return_type<Lambdas, max>...>(
 				KANGARU5_FWD(source)
 			),
 			construct_with_alternative{
@@ -264,7 +265,7 @@ KANGARU5_EXPORT namespace kangaru {
 		Lambdas&&... lambdas
 	) {
 		return detail::container_common_private::make_container_base_impl<Mapping, max, Lambdas...>(
-			filter<reflected_return_type<Lambdas, max>...>(with_alternative{
+			make_source_with_filter<reflected_return_type<Lambdas, max>...>(with_alternative{
 				KANGARU5_FWD(source),
 				make_source_not_found_with_provide_mapped<Mapping>(KANGARU5_FWD(source_if_not_found))
 			}),

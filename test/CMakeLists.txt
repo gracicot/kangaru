@@ -2,7 +2,7 @@ find_package(Catch2 QUIET)
 
 add_library(kangaru_test_common INTERFACE)
 
-target_link_libraries(kangaru_test_common INTERFACE Catch2::Catch2)
+target_link_libraries(kangaru_test_common INTERFACE Catch2::Catch2 Catch2::Catch2WithMain)
 target_compile_features(kangaru_test_common INTERFACE cxx_std_11)
 target_compile_definitions(kangaru_test_common INTERFACE CATCH_CONFIG_MAIN)
 

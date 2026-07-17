@@ -156,20 +156,29 @@ KANGARU5_EXPORT namespace kangaru {
 				modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>{std::move(lambdas)}...
 			} {}
 		
+		template<forwarded<Source> S>
 		explicit(sizeof...(Lambdas) == 0)
-		constexpr modular_source(Source source, Lambdas... lambdas)
+		constexpr modular_source(S&& source, Lambdas... lambdas)
 			requires(std::same_as<exhaustive_construction, Construction> and not callable<Source>) :
 			impl{
-				detail::modular_source_private::use_source<Source>{std::move(source)},
+				detail::modular_source_private::use_source<Source>{KANGARU5_FWD(source)},
 				modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>{std::move(lambdas)}...
 			} {}
 		
-		constexpr modular_source(Construction construction, Source source, Lambdas... lambdas)
+		template<forwarded<Source> S>
+		constexpr modular_source(Construction construction, S&& source, Lambdas... lambdas)
 			requires(not callable<Construction> and not callable<Source>) :
 			impl{
-				detail::modular_source_private::use_source<Source>{std::move(source)},
+				detail::modular_source_private::use_source<Source>{KANGARU5_FWD(source)},
 				modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>{std::move(lambdas), construction}...
 			} {}
+		
+		// Workaround for GCC bug 126312
+		// Without the deleted constructors, GCC may produce bad codegen by omitting mandatory elision
+		modular_source(modular_source&&) = delete;
+		auto operator=(modular_source&&) -> modular_source& = delete;
+		modular_source(modular_source const&) = delete;
+		auto operator=(modular_source const&) -> modular_source& = delete;
 		
 		template<injectable T, forwarded<modular_source> Self>
 			requires(source_of<detail::forward_like_t<Self, decltype(std::declval<impl_t>().next)>, T>)

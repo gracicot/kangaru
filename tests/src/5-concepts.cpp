@@ -71,14 +71,14 @@ struct immovable {
 	auto operator=(immovable const&) -> immovable& = delete;
 };
 
-struct abstract {
-	virtual ~abstract() = 0;
+struct unmapped_abstract {
+	virtual ~unmapped_abstract() = 0;
 };
 
 static_assert(movable_object<int>);
 static_assert(movable_object<int*>);
 static_assert(not movable_object<int()>);
-static_assert(not movable_object<abstract>);
+static_assert(not movable_object<unmapped_abstract>);
 static_assert(not movable_object<void>);
 static_assert(not movable_object<int[]>);
 static_assert(not movable_object<int[7]>);
@@ -94,7 +94,7 @@ static_assert(not forwarded_movable_object<immovable&>);
 
 static_assert(copiable_object<int>);
 static_assert(not copiable_object<int()>);
-static_assert(not copiable_object<abstract>);
+static_assert(not copiable_object<unmapped_abstract>);
 static_assert(not copiable_object<void>);
 static_assert(not copiable_object<int[]>);
 static_assert(not copiable_object<int[7]>);
@@ -111,7 +111,7 @@ static_assert(not forwarded_copiable_object<immovable&>);
 static_assert(function_object<int>);
 static_assert(function_object<int*>);
 static_assert(not function_object<int()>);
-static_assert(not function_object<abstract>);
+static_assert(not function_object<unmapped_abstract>);
 static_assert(not function_object<void>);
 static_assert(not function_object<int[]>);
 static_assert(not function_object<int[7]>);
@@ -157,12 +157,12 @@ static_assert(not pointer_to_member_function<int immovable::*>);
 static_assert(pointer_to_member_function<int (immovable::*)(int)>);
 
 static_assert(weak_injectable<int>);
-static_assert(not weak_injectable<abstract>);
-static_assert(not weak_injectable<abstract const>);
-static_assert(weak_injectable<abstract*>);
-static_assert(not weak_injectable<abstract* const>);
-static_assert(weak_injectable<abstract&>);
-static_assert(weak_injectable<abstract const&>);
+static_assert(not weak_injectable<unmapped_abstract>);
+static_assert(not weak_injectable<unmapped_abstract const>);
+static_assert(weak_injectable<unmapped_abstract*>);
+static_assert(not weak_injectable<unmapped_abstract* const>);
+static_assert(weak_injectable<unmapped_abstract&>);
+static_assert(weak_injectable<unmapped_abstract const&>);
 static_assert(weak_injectable<int&>);
 static_assert(not weak_injectable<int[]>);
 static_assert(not weak_injectable<void>);

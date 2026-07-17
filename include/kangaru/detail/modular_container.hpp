@@ -131,7 +131,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 	private:
 		impl_type impl;
-
+		
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction = {};
 	};

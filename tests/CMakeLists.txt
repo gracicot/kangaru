@@ -3,6 +3,14 @@ find_package(fmt REQUIRED)
 
 add_library(kangaru_test_common INTERFACE)
 
+target_sources(kangaru_test_common
+PUBLIC FILE_SET HEADERS
+	BASE_DIRS
+		include
+	FILES
+		include/container_test_helper.hpp
+)
+
 target_link_libraries(kangaru_test_common INTERFACE kangaru::kangaru Catch2::Catch2 Catch2::Catch2WithMain fmt::fmt)
 
 function(kangaru_add_compilation_failure testname error_message)
@@ -53,6 +61,7 @@ if(KANGARU_TEST)
 	kangaru_add_test(5-concepts)
 	kangaru_add_test(5-reference-deducer)
 	kangaru_add_test(5-container)
+	kangaru_add_test(5-container-base)
 	kangaru_add_template_test(5-container-provide provide_test_self)
 	kangaru_add_template_test(5-container-provide provide_test_polymorphic_self)
 	kangaru_add_template_test(5-container-provide provide_test_mapped_ref)

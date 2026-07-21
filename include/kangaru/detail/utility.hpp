@@ -119,6 +119,11 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<typename F>
 	using in_place_construct_result_t = typename in_place_construct_result<F>::type;
+	
+	template<typename F>
+	constexpr auto materialize_in_place(in_place_construct<F> in_place) -> detail::call_result_t<F> {
+		return std::move(in_place);
+	}
 }
 
 #include "undef.hpp"

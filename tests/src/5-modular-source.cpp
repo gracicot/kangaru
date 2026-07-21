@@ -277,13 +277,14 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 	}
 	
 	SECTION("Using in-place factory function lambdas") {
-		auto in_place_source = kangaru::make_modular_source_in_place(
-			[] {
-				return kangaru::object_source{42};
-			},
-			kangaru::constructor_function<kangaru::object_source<agg_unmapped_dependent_on<int>>>{}
+		auto source = kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place(
+				[] {
+					return kangaru::object_source{42};
+				},
+				kangaru::constructor_function<kangaru::object_source<agg_unmapped_dependent_on<int>>>{}
+			)
 		);
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
 		
 		static_assert(kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), agg_unmapped_dependent_on<int>>);
@@ -291,11 +292,12 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 	}
 	
 	SECTION("Using in-place factory source and lambdas") {
-		auto in_place_source = kangaru::make_modular_source_in_place(
-			kangaru::object_source{42},
-			kangaru::constructor_function<kangaru::object_source<unmapped_dependent_on<int>>>{}
+		auto source = kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place(
+				kangaru::object_source{42},
+				kangaru::constructor_function<kangaru::object_source<unmapped_dependent_on<int>>>{}
+			)
 		);
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
 		
 		static_assert(not kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>>);
@@ -303,12 +305,13 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 	}
 	
 	SECTION("Using in-place factory construction, source and lambdas") {
-		auto in_place_source = kangaru::make_modular_source_in_place(
-			kangaru::exhaustive_strict_construction{},
-			kangaru::reference_source{42},
-			kangaru::constructor_function<kangaru::object_source<unmapped_dependent_on<unmapped_dependent_on<int&>>>>{}
+		auto source =  kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place(
+				kangaru::exhaustive_strict_construction{},
+				kangaru::reference_source{42},
+				kangaru::constructor_function<kangaru::object_source<unmapped_dependent_on<unmapped_dependent_on<int&>>>>{}
+			)
 		);
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
 		
 		static_assert(not kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<unmapped_dependent_on<int&>>>);
@@ -322,11 +325,12 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 			}
 		};
 		
-		auto in_place_source = kangaru::make_modular_source_in_place<
-			initialized_int_source,
-			kangaru::object_source<unmapped_dependent_on<int>>
-		>();
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
+		auto source = kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place<
+				initialized_int_source,
+				kangaru::object_source<unmapped_dependent_on<int>>
+			>()
+		);
 		
 		static_assert(kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>>);
@@ -334,11 +338,12 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 	}
 	
 	SECTION("Using in-place factory list of types and a source") {
-		auto in_place_source = kangaru::make_modular_source_in_place<
-			kangaru::object_source<unmapped_dependent_on<int>>,
-			kangaru::reference_source<unmapped_dependent_on<unmapped_dependent_on<int>>>
-		>(kangaru::object_source{42});
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
+		auto source = kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place<
+				kangaru::object_source<unmapped_dependent_on<int>>,
+				kangaru::reference_source<unmapped_dependent_on<unmapped_dependent_on<int>>>
+			>(kangaru::object_source{42})
+		);
 		
 		static_assert(not kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>>);
@@ -347,11 +352,12 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 	}
 	
 	SECTION("Using in-place factory list of types a construction and a source") {
-		auto in_place_source = kangaru::make_modular_source_in_place<
-			kangaru::reference_source<unmapped_dependent_on<int>>,
-			kangaru::object_source<unmapped_dependent_on<unmapped_dependent_on<int>&>>
-		>(kangaru::exhaustive_strict_construction{}, kangaru::object_source{42});
-		auto source = kangaru::in_place_construct_result_t<decltype(in_place_source)>{std::move(in_place_source)};
+		auto source = kangaru::materialize_in_place(
+			kangaru::make_modular_source_in_place<
+				kangaru::reference_source<unmapped_dependent_on<int>>,
+				kangaru::object_source<unmapped_dependent_on<unmapped_dependent_on<int>&>>
+			>(kangaru::exhaustive_strict_construction{}, kangaru::object_source{42})
+		);
 		
 		static_assert(not kangaru::source_of<decltype(source), int>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>&>);

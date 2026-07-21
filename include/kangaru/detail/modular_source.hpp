@@ -148,6 +148,11 @@ KANGARU5_EXPORT namespace kangaru {
 			modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>...
 		>;
 		
+		impl_t impl;
+		
+		template<typename Self>
+		using next_t = detail::forward_like_t<Self, decltype(std::declval<Self>().impl.next)>;
+		
 	public:
 		explicit(sizeof...(Lambdas) == 1)
 		constexpr modular_source(Lambdas... lambdas) requires(std::same_as<exhaustive_construction, Construction> and std::same_as<none_source, Source>) :
@@ -181,15 +186,12 @@ KANGARU5_EXPORT namespace kangaru {
 		auto operator=(modular_source const&) -> modular_source& = delete;
 		
 		template<injectable T, forwarded<modular_source> Self>
-			requires(source_of<detail::forward_like_t<Self, decltype(std::declval<impl_t>().next)>, T>)
+			requires(source_of<next_t<Self>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			// Here we must skip first head of the incremental source. This is because we don't want to provide
 			// from source of other modules. We let the modular container select the right source instead.
 			return kangaru::provide<T>(KANGARU5_FWD(source).impl.next);
 		}
-		
-	private:
-		impl_t impl;
 	};
 	
 	template<callable First, typename... Rest>

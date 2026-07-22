@@ -44,8 +44,6 @@ struct service_3_c {
 	std::shared_ptr<service_3_b_base> s3b;
 };
 
-
-
 constexpr auto module0() {
 	return kangaru::modular_source{
 		[]{
@@ -56,12 +54,8 @@ constexpr auto module0() {
 
 auto module1(kangaru::module_dependencies<decltype(module0)> dependencies) -> kangaru::any_source_of<service_1_a&, service_1_b, service_1_c&, std::shared_ptr<service_1_d>> {
 	return kangaru::make_modular_source_in_place(dependencies,
-		[](int i) {
-			return kangaru::reference_source<service_1_a>{i};
-		},
-		[](service_1_a& s1a, int i) {
-			return kangaru::object_source<service_1_b>{s1a, i};
-		},
+		kangaru::constructor_function<kangaru::reference_source<service_1_a>>{},
+		kangaru::constructor_function<kangaru::object_source<service_1_b>>{},
 		kangaru::constructor_function<kangaru::reference_source<service_1_c>>{},
 		kangaru::modular_source_initializer_using_lazy<kangaru::shared_pointer_source<service_1_d>>{}
 	);

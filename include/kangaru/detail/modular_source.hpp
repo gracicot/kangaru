@@ -24,6 +24,14 @@ namespace kangaru::detail::modular_source_private {
 		// We ignore the source since we have one already constructed
 		constexpr auto operator()(forwarded_source auto&&) && -> deduced_source_type<Source&&> { return std::move(source); }
 	};
+	
+	inline constexpr auto copy_on_lvalue(source auto&& s) -> auto&& {
+		return std::move(s);
+	}
+	
+	inline constexpr auto copy_on_lvalue(source auto const& s) -> auto {
+		return s;
+	}
 } // namespace kangaru::detail::modular_source_private
 
 KANGARU5_EXPORT namespace kangaru {
@@ -166,7 +174,7 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr modular_source(S&& source, Lambdas... lambdas)
 			requires(std::same_as<exhaustive_construction, Construction> and not callable<Source>) :
 			impl{
-				detail::modular_source_private::use_source<Source>{KANGARU5_FWD(source)},
+				detail::modular_source_private::use_source<Source>{detail::modular_source_private::copy_on_lvalue(KANGARU5_FWD(source))},
 				modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>{std::move(lambdas)}...
 			} {}
 		
@@ -174,7 +182,7 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr modular_source(Construction construction, S&& source, Lambdas... lambdas)
 			requires(not callable<Construction> and not callable<Source>) :
 			impl{
-				detail::modular_source_private::use_source<Source>{KANGARU5_FWD(source)},
+				detail::modular_source_private::use_source<Source>{detail::modular_source_private::copy_on_lvalue(KANGARU5_FWD(source))},
 				modular_source_initializer<Lambdas, make_strict_spread_injector_function, Construction>{std::move(lambdas), construction}...
 			} {}
 		

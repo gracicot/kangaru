@@ -188,10 +188,10 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		// Workaround for GCC bug 126312
 		// Without the deleted constructors, GCC may produce bad codegen by omitting mandatory elision
-		modular_source(modular_source&&) = delete;
-		auto operator=(modular_source&&) -> modular_source& = delete;
 		modular_source(modular_source const&) = delete;
-		auto operator=(modular_source const&) -> modular_source& = delete;
+		modular_source(modular_source&&) = delete;
+		auto operator=(modular_source const&) -> modular_source& = default;
+		auto operator=(modular_source&&) -> modular_source& = default;
 		
 		template<injectable T, forwarded<modular_source> Self>
 			requires(source_of<next_t<Self>, T>)

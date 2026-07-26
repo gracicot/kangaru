@@ -1,7 +1,6 @@
 #include "container_test_helper.hpp"
 #include <kangaru/kangaru.hpp>
 #include <catch2/catch_test_macros.hpp>
-#include <type_traits>
 
 TEST_CASE("Modular container", "[modular]") {
 	SECTION("Create modular container from modular sources") {

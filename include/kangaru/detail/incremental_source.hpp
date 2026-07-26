@@ -25,19 +25,20 @@ namespace kangaru::detail::incremental_source_private {
 	template<source... Constructed, function_object Head, function_object... Tail>
 		requires(callable_incremental_source_initializer<Head, composed_source<Constructed...>>)
 	inline constexpr auto incremental_source_complete_v<composed_source<Constructed...>, Head, Tail...> =
-		    callable_incremental_source_initializer<Head, composed_source<Constructed...>>
-		and incremental_source_complete_v<composed_source<Constructed..., source_reference_wrapper<detail::call_result_t<Head, composed_source<Constructed...>>>>, Tail...>;
+		incremental_source_complete_v<composed_source<Constructed..., source_reference_wrapper<detail::call_result_t<Head, composed_source<Constructed...>>>>, Tail...>;
 	
 	template<source... Constructed>
 	inline constexpr auto incremental_source_complete_v<composed_source<Constructed...>> = true;
+	
+	template<typename... Functions>
+	concept valid_incremental_source =
+		   detail::incremental_source_private::incremental_source_complete_v<Functions...>
+		or detail::incremental_source_private::incremental_source_complete_v<composed_source<>, Functions...>;
 } // namespace kangaru::detail::incremental_source_private
 
 KANGARU5_EXPORT namespace kangaru {
 	template<typename... Functions>
-		requires(
-			   detail::incremental_source_private::incremental_source_complete_v<Functions...>
-			or detail::incremental_source_private::incremental_source_complete_v<composed_source<>, Functions...>
-		)
+		requires(detail::incremental_source_private::valid_incremental_source<Functions...>)
 	struct incremental_source;
 	
 	template<source... Constructed, function_object MakeSource, function_object... Next>
@@ -48,23 +49,29 @@ KANGARU5_EXPORT namespace kangaru {
 		using constructed_t = composed_source<Constructed..., source_reference_wrapper<source_t>>;
 		using next_t = incremental_source<constructed_t, Next...>;
 		
-	public:
 		incremental_source(incremental_source const&) = delete;
-		auto operator=(incremental_source const&) -> incremental_source& = delete;
 		incremental_source(incremental_source&&) = delete;
-		auto operator=(incremental_source&&) -> incremental_source& = delete;
+		auto operator=(incremental_source const&) -> incremental_source& = default;
+		auto operator=(incremental_source&&) -> incremental_source& = default;
 		~incremental_source() = default;
 		
 		constexpr incremental_source(composed_source<Constructed...> accumulated, MakeSource make_source, Next... next) :
 			source{std::move(make_source)(accumulated)},
 			next{KANGARU5_NO_ADL(composed_source_cat)(accumulated, KANGARU5_NO_ADL(tie)(source)), next...} {}
 		
-		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
+		template<typename... Functions>
+			requires(detail::incremental_source_private::valid_incremental_source<Functions...>)
+		friend struct incremental_source;
+		
+	public:
+		template<injectable T, forwarded<incremental_source> Self>
+			requires(wrapping_source_of<Self, T> and not source_of<detail::forward_like_t<Self, next_t>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		template<injectable T, forwarded<incremental_source> Self> requires source_of<detail::forward_like_t<Self, next_t>, T>
+		template<injectable T, forwarded<incremental_source> Self>
+			requires(source_of<detail::forward_like_t<Self, next_t>, T> and not wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).next);
 		}
@@ -83,9 +90,9 @@ KANGARU5_EXPORT namespace kangaru {
 		
 	public:
 		incremental_source(incremental_source const&) = delete;
-		auto operator=(incremental_source const&) -> incremental_source& = delete;
 		incremental_source(incremental_source&&) = delete;
-		auto operator=(incremental_source&&) -> incremental_source& = delete;
+		auto operator=(incremental_source const&) -> incremental_source& = default;
+		auto operator=(incremental_source&&) -> incremental_source& = default;
 		~incremental_source() = default;
 		
 		constexpr incremental_source(MakeSource make_source, Next... next) :
@@ -112,10 +119,14 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		using source_t = detail::call_result_t<MakeSource, composed_source<Constructed...>>;
 		
-	public:
 		constexpr incremental_source(composed_source<Constructed...> accumulated, MakeSource make_head) :
 			source{std::move(make_head)(accumulated)} {}
 		
+		template<typename... Functions>
+			requires(detail::incremental_source_private::valid_incremental_source<Functions...>)
+		friend struct incremental_source;
+		
+	public:
 		template<injectable T, forwarded<incremental_source> Self> requires wrapping_source_of<Self, T>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
@@ -144,6 +155,14 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source... Constructed>
 	struct incremental_source<composed_source<Constructed...>> {
+	private:
+		template<typename... Functions>
+		requires(
+			   detail::incremental_source_private::incremental_source_complete_v<Functions...>
+			or detail::incremental_source_private::incremental_source_complete_v<composed_source<>, Functions...>
+		)
+		friend struct incremental_source;
+		
 		explicit constexpr incremental_source(composed_source<Constructed...>) {}
 	};
 	

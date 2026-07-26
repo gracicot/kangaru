@@ -111,7 +111,7 @@ namespace kangaru {
 			requires(
 				    not_self<detail::call_result_t<Function>, any_source_of>
 				and kangaru::source<detail::call_result_t<Function>>
-				and (... and source_of<detail::call_result_t<Function>, Types>)
+				and source_of_all<detail::call_result_t<Function>, Types...>
 			)
 		explicit(false) constexpr any_source_of(in_place_construct<Function> source) noexcept :
 			base{new detail::call_result_t<Function>(std::move(source))} {}
@@ -119,7 +119,7 @@ namespace kangaru {
 		template<not_self<any_source_of> Source>
 			requires(
 				    forwarded_source<Source>
-				and (... and source_of<std::remove_cvref_t<Source>&, Types>)
+				and source_of_all<std::remove_cvref_t<Source>&, Types...>
 			)
 		explicit(false) constexpr any_source_of(Source&& source) :
 			base{new std::decay_t<Source>(KANGARU5_FWD(source))} {
@@ -130,7 +130,7 @@ namespace kangaru {
 			requires(
 				    forwarded_source<Source>
 				and std::constructible_from<std::decay_t<Source>, Source>
-				and (... and source_of<std::remove_cvref_t<Source>&, Types>)
+				and source_of_all<std::remove_cvref_t<Source>&, Types...>
 			)
 		constexpr auto operator=(Source&& rhs) -> any_source_of& {
 			auto s = std::make_unique<std::decay_t<Source>>(KANGARU5_FWD(rhs));
@@ -186,7 +186,7 @@ namespace kangaru {
 			base{{.provide = {provide_function...}}, source} {}
 		
 	public:
-		template<source Source> requires(... and source_of<Source&, Types>)
+		template<source Source> requires(source_of_all<Source&, Types...>)
 		explicit(false) constexpr any_source_of_ref(Source& source) :
 			base{std::addressof(source)} {}
 		
@@ -194,7 +194,7 @@ namespace kangaru {
 		explicit constexpr any_source_of_ref(Source source) noexcept
 			requires (
 				    not std::is_rvalue_reference_v<decltype(source.unwrap())>
-				and (... and source_of<Source, Types>)
+				and source_of_all<Source, Types...>
 			) :
 				base{std::addressof(source.unwrap())} {}
 		

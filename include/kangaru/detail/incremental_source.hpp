@@ -157,10 +157,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct incremental_source<composed_source<Constructed...>> {
 	private:
 		template<typename... Functions>
-		requires(
-			   detail::incremental_source_private::incremental_source_complete_v<Functions...>
-			or detail::incremental_source_private::incremental_source_complete_v<composed_source<>, Functions...>
-		)
+			requires(detail::incremental_source_private::valid_incremental_source<Functions...>)
 		friend struct incremental_source;
 		
 		explicit constexpr incremental_source(composed_source<Constructed...>) {}

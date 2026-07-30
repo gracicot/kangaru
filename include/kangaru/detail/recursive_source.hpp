@@ -378,6 +378,8 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
 	};
+
+	struct no_construction {};
 	
 	using exhaustive_construction = basic_exhaustive_construction<make_spread_injector_function>;
 	using exhaustive_strict_construction = basic_exhaustive_construction<make_strict_spread_injector_function>;

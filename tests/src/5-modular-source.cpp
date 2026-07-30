@@ -244,6 +244,17 @@ TEST_CASE("Modular source can provide a type", "[modular]") {
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>>);
 		static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<unmapped_dependent_on<int>>&>);
 		CHECK(kangaru::provide<unmapped_dependent_on<unmapped_dependent_on<int>>&>(source).value.value == 42);
+		
+		SECTION("Only one source") {
+			auto dep = kangaru::object_source{42};
+			auto source = kangaru::make_modular_source<
+				kangaru::object_source<unmapped_dependent_on<int>>
+			>(dep);
+			
+			static_assert(not kangaru::source_of<decltype(source), int>);
+			static_assert(kangaru::source_of<decltype(source), unmapped_dependent_on<int>>);
+			CHECK(kangaru::provide<unmapped_dependent_on<int>>(source).value == 42);
+		}
 	}
 	
 	SECTION("Using factory list of types a construction and a source") {

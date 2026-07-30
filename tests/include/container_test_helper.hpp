@@ -61,13 +61,13 @@ struct agg_mapped_rref_dependent_on {
 
 template<typename T>
 struct unmapped_dependent_on {
-	explicit unmapped_dependent_on(T value) : value(FWD(value)) {}
+	explicit constexpr unmapped_dependent_on(T value) : value(FWD(value)) {}
 	T value;
 };
 
 template<typename T>
 struct mapped_value_dependent_on {
-	explicit mapped_value_dependent_on(T value) : value(FWD(value)) {}
+	explicit constexpr mapped_value_dependent_on(T value) : value(FWD(value)) {}
 	T value;
 	
 	template<typename U>
@@ -76,7 +76,7 @@ struct mapped_value_dependent_on {
 
 template<typename T>
 struct mapped_ref_dependent_on {
-	explicit mapped_ref_dependent_on(T value) : value(FWD(value)) {}
+	explicit constexpr mapped_ref_dependent_on(T value) : value(FWD(value)) {}
 	T value;
 	
 	template<typename U>
@@ -85,7 +85,7 @@ struct mapped_ref_dependent_on {
 
 template<typename T>
 struct mapped_sptr_dependent_on {
-	explicit mapped_sptr_dependent_on(T value) : value(FWD(value)) {}
+	explicit constexpr mapped_sptr_dependent_on(T value) : value(FWD(value)) {}
 	T value;
 	
 	template<typename U>
@@ -94,7 +94,7 @@ struct mapped_sptr_dependent_on {
 
 template<typename T>
 struct mapped_rref_dependent_on {
-	explicit mapped_rref_dependent_on(T value) : value(FWD(value)) {}
+	explicit constexpr mapped_rref_dependent_on(T value) : value(FWD(value)) {}
 	T value;
 	
 	template<typename U>

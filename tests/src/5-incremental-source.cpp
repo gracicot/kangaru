@@ -14,15 +14,8 @@ concept is_valid_incremental_source = requires{
 };
 
 template<typename... F>
-	requires(not is_valid_incremental_source<F...>)
 constexpr auto test_valid_incremental_source(F const&...) {
-	return false;
-}
-
-template<typename... F>
-	requires(is_valid_incremental_source<F...>)
-constexpr auto test_valid_incremental_source(F const&...) {
-	return true;
+	return is_valid_incremental_source<F...>;
 }
 
 TEST_CASE("Incremental source", "[modular]") {

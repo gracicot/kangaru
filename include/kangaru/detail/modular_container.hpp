@@ -8,7 +8,6 @@
 #include "incremental_source.hpp"
 #include "recursive_source.hpp"
 #include "injector.hpp"
-#include "constructor.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <utility>
@@ -81,6 +80,22 @@ namespace kangaru::detail::modular_container_private {
 			>;
 		};
 	};
+	
+	template<typename...  Modules>
+	struct modular_container_base_const {
+		template<typename T, std::size_t... S>
+		consteval static auto index_of(std::index_sequence<S...>) {
+			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 1> const>, T> ? S : 0) + ...);
+		}
+		
+		struct module_for_type {
+			template<injectable T>
+			using type = std::tuple_element_t<
+				index_of<T>(std::index_sequence_for<Modules...>{}),
+				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 1> const>...>
+			>;
+		};
+	};
 } // namespace kangaru::detail::modular_container_private
 
 KANGARU5_EXPORT namespace kangaru {
@@ -98,12 +113,18 @@ KANGARU5_EXPORT namespace kangaru {
 		using impl_type = incremental_source<detail::modular_container_private::module_initializer<Modules, Construction>...>;
 		
 		template<forwarded<modular_container> Self>
-		static auto container_source(Self&& source) {
+		static constexpr auto container_source(Self&& source) {
+			using base = detail::conditional_t<
+				std::is_const_v<std::remove_reference_t<Self>>,
+				detail::modular_container_private::modular_container_base_const<Modules...>,
+				detail::modular_container_private::modular_container_base<Modules...>
+			>;
+			
 			return with_recursion{
 				with_construction{
 					sealed_source{
 						make_source_with_provide_using_source<
-							detail::modular_container_private::modular_container_base<Modules...>::module_for_type::template type
+							base::module_for_type::template type
 						>(
 							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl)
 						)
@@ -117,7 +138,7 @@ KANGARU5_EXPORT namespace kangaru {
 		using container_source_t = decltype(container_source(std::declval<Self>()));
 		
 	public:
-		explicit(sizeof...(Modules) == 0) constexpr modular_container(Construction construction, Modules... modules) :
+		constexpr modular_container(Construction construction, Modules... modules) requires(not reflectable_function<Construction, 1> and sizeof...(Modules) > 0) :
 			impl{detail::modular_container_private::module_initializer<Modules, Construction>{std::move(modules), construction}...},
 			construction{std::move(construction)} {}
 		
@@ -135,12 +156,6 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction = {};
 	};
-	
-	template<construction Construction, reflectable_function<1>... Modules>
-	modular_container(Construction, Modules...) -> modular_container<Construction, Modules...>;
-	
-	template<reflectable_function<1>... Modules>
-	modular_container(Modules...) -> modular_container<exhaustive_construction, Modules...>;
 	
 	template<typename... Modules> requires((... and reflectable_function<Modules, 1>))
 	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 1>...>;

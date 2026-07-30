@@ -62,6 +62,10 @@ TEST_CASE("Sources can provide", "[source]") {
 		CHECK(kangaru::provide<grumpy&>(grumpy_source).token == 9);
 		kangaru::provide<grumpy&>(grumpy_source).token = 2;
 		CHECK(kangaru::provide<grumpy&>(grumpy_source).token == 2);
+		CHECK(kangaru::provide<grumpy const&>(std::as_const(grumpy_source)).token == 2);
+		
+		static_assert(not kangaru::source_of<decltype(grumpy_source), grumpy const&>);
+		static_assert(kangaru::source_of<decltype(std::as_const(grumpy_source)), grumpy const&>);
 	}
 	
 	SECTION("Rvalue source") {
@@ -80,6 +84,23 @@ TEST_CASE("Sources can provide", "[source]") {
 		
 		CHECK(kangaru::provide<grumpy&>(source).token == 1);
 		CHECK(std::same_as<sleepy, decltype(kangaru::provide<sleepy>(source))>);
+		
+		SECTION("Compose don't provide ambiguous") {
+			auto source = kangaru::composed_source{kangaru::object_source{42}, kangaru::object_source{32}};
+			static_assert(not kangaru::source_of<decltype(source), int>);
+			
+			// reference source can become ambiguous dependending on constness
+			auto source2 = kangaru::composed_source{
+				kangaru::reference_source<int>{42},
+				kangaru::reference_source<int const>{32}
+			};
+			
+			static_assert(not kangaru::source_of<decltype(source2), int>);
+			static_assert(kangaru::source_of<decltype(source2), int&>);
+			static_assert(kangaru::source_of<decltype(source2), int const&>);
+			static_assert(not kangaru::source_of<decltype(std::as_const(source2)), int&>);
+			static_assert(not kangaru::source_of<decltype(std::as_const(source2)), int const&>);
+		}
 	}
 	
 	SECTION("Tuple source") {

@@ -2,7 +2,6 @@
 #define KANGARU5_DETAIL_SOURCE_TYPES_HPP
 
 #include "deducer.hpp"
-#include "exceptions.hpp"
 #include "two_step_init.hpp"
 #include "source_traits.hpp"
 #include "source.hpp"
@@ -11,7 +10,6 @@
 #include "constructor.hpp"
 #include "source_reference_wrapper.hpp"
 #include "attributes.hpp"
-#include "source_rebind.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <tuple>
@@ -276,6 +274,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return object;
 		}
 		
+		constexpr auto provide() const& -> T const& {
+			return object;
+		}
+		
+		constexpr auto provide() const&& -> T const& {
+			return object;
+		}
+		
 	private:
 		T object;
 		
@@ -308,6 +314,14 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		constexpr auto provide() && -> T* {
+			return pointer();
+		}
+		
+		constexpr auto provide() const& -> T const* {
+			return pointer();
+		}
+		
+		constexpr auto provide() const&& -> T const* {
 			return pointer();
 		}
 		

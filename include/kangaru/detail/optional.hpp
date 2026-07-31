@@ -252,7 +252,7 @@ KANGARU5_EXPORT namespace kangaru {
 			return has_value();
 		}
 		
-		template<std::three_way_comparable_with<T> U> requires unqualified_object<U>
+		template<std::three_way_comparable_with<T> U> requires(unqualified_object<U>)
 		constexpr auto operator<=>(optional<U> const& rhs) const -> std::compare_three_way_result_t<T, U> {
 			optional const& lhs = *this;
 			return lhs and rhs ? *lhs <=> *rhs : lhs.has_value() <=> rhs.has_value();
@@ -268,12 +268,12 @@ KANGARU5_EXPORT namespace kangaru {
 			return lhs.has_value() ? *lhs <=> rhs : std::strong_ordering::less;
 		}
 		
-		template<typename U = std::remove_cv_t<T>> requires (std::is_copy_constructible_v<T> and std::convertible_to<U&&, T>)
+		template<typename U = std::remove_cv_t<T>> requires(std::is_copy_constructible_v<T> and std::convertible_to<U&&, T>)
 		constexpr auto value_or(U&& default_value) const& -> T {
 			return has_value() ? **this : static_cast<T>(KANGARU5_FWD(default_value));
 		}
 		
-		template<typename U = std::remove_cv_t<T>> requires (std::is_move_constructible_v<T> and std::convertible_to<U&&, T>)
+		template<typename U = std::remove_cv_t<T>> requires(std::is_move_constructible_v<T> and std::convertible_to<U&&, T>)
 		constexpr auto value_or(U&& default_value) && -> T {
 			return has_value() ? *std::move(*this) : static_cast<T>(KANGARU5_FWD(default_value));
 		}

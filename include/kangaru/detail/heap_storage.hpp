@@ -108,7 +108,7 @@ namespace kangaru {
 		constexpr basic_heap_storage() = default;
 		
 		constexpr basic_heap_storage(Container container) noexcept
-		requires (std::default_initializable<Allocator>) :
+		requires(std::default_initializable<Allocator>) :
 			container{std::move(container)} {}
 		
 		constexpr basic_heap_storage(Container container, Allocator allocator) noexcept :

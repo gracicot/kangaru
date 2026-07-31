@@ -33,7 +33,7 @@ namespace kangaru {
 			template<injectable T>
 			struct mapping {};
 			
-			template<injectable T> requires (requires{ typename Mapping<T>; })
+			template<injectable T> requires(requires{ typename Mapping<T>; })
 			struct mapping<kangaru::any_source_of_ref<T>> {
 				using type = with_polymorphic_cast<
 					with_cast_from<

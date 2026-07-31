@@ -67,13 +67,13 @@ namespace kangaru::detail::modular_container_private {
 	// clang will reject this code.
 	template<typename...  Modules>
 	struct modular_container_base {
-		template<typename T, std::size_t... S>
+		template<typename T, std::size_t... S> requires(sizeof...(Modules) > 0)
 		consteval static auto index_of(std::index_sequence<S...>) {
 			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 1>>, T> ? S : 0) + ...);
 		}
 		
 		struct module_for_type {
-			template<injectable T>
+			template<injectable T> requires(sizeof...(Modules) > 0)
 			using type = std::tuple_element_t<
 				index_of<T>(std::index_sequence_for<Modules...>{}),
 				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 1>>...>
@@ -83,13 +83,13 @@ namespace kangaru::detail::modular_container_private {
 	
 	template<typename...  Modules>
 	struct modular_container_base_const {
-		template<typename T, std::size_t... S>
+		template<typename T, std::size_t... S> requires(sizeof...(Modules) > 0)
 		consteval static auto index_of(std::index_sequence<S...>) {
 			return ((source_of<source_reference_wrapper<reflected_return_type<Modules, 1> const>, T> ? S : 0) + ...);
 		}
 		
 		struct module_for_type {
-			template<injectable T>
+			template<injectable T> requires(sizeof...(Modules) > 0)
 			using type = std::tuple_element_t<
 				index_of<T>(std::index_sequence_for<Modules...>{}),
 				std::tuple<source_reference_wrapper<reflected_return_type<Modules, 1> const>...>
@@ -140,7 +140,7 @@ KANGARU5_EXPORT namespace kangaru {
 	public:
 		template<typename... M>
 			requires(true and ... and (reflectable_function<std::decay_t<M>, 1> and std::constructible_from<Modules, M&&>))
-		constexpr modular_container(Construction construction, M&&... modules) requires(not reflectable_function<Construction, 1> and sizeof...(Modules) > 0) :
+		constexpr modular_container(Construction construction, M&&... modules) requires(not reflectable_function<Construction, 1>) :
 			impl{detail::modular_container_private::module_initializer<Modules, Construction>{KANGARU5_FWD(modules), construction}...},
 			construction{std::move(construction)} {}
 		

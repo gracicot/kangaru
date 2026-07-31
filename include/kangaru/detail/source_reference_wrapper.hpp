@@ -33,7 +33,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct source_reference_wrapper {
 		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
 		
-		template<injectable T> requires source_of<Source&, T>
+		template<injectable T> requires(source_of<Source&, T>)
 		constexpr auto provide() const& -> T {
 			return kangaru::provide<T>(*source);
 		}
@@ -51,12 +51,12 @@ KANGARU5_EXPORT namespace kangaru {
 	struct source_forwarding_reference_wrapper {
 		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
 		
-		template<injectable T> requires source_of<Source&, T>
+		template<injectable T> requires(source_of<Source&, T>)
 		constexpr auto provide() const& -> T {
 			return kangaru::provide<T>(static_cast<Source&>(*source));
 		}
 		
-		template<injectable T> requires source_of<Source, T>
+		template<injectable T> requires(source_of<Source, T>)
 		constexpr auto provide() const&& -> T {
 			return kangaru::provide<T>(static_cast<Source>(*source));
 		}
@@ -106,7 +106,7 @@ KANGARU5_EXPORT namespace kangaru {
 		return source_reference_wrapper<std::remove_reference_t<decltype(r)>>{r};
 	}
 	
-	template<forwarded_source Source> requires (not forwarded_reference_wrapper<Source>)
+	template<forwarded_source Source> requires(not forwarded_reference_wrapper<Source>)
 	inline constexpr auto fwd_ref(Source&& source) -> source_forwarding_reference_wrapper<Source&&> {
 		return source_forwarding_reference_wrapper<Source&&>{KANGARU5_FWD(source)};
 	}

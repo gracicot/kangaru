@@ -57,7 +57,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<unqualified_object Type>
 	struct constructor_function {
 		template<typename From = Type>
-			requires (not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, Type>)
+			requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, Type>)
 		constexpr auto operator()(From&& object) const -> Type {
 			// Here we don't use construct function since we always only want a copy/move or a conversion.
 			return Type(KANGARU5_FWD(object));

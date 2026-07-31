@@ -58,7 +58,7 @@ namespace kangaru {
 		
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
-		requires (
+		requires(
 			((source_of<detail::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) == 1
 		) {
 			constexpr auto index = select_source_of_index<T, detail::forward_like_t<Self, Sources>...>;
@@ -67,7 +67,7 @@ namespace kangaru {
 		
 		template<injectable T, forwarded<composed_source> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T
-		requires ("Ambiguous source resolution: One or more source can provide type T",
+		requires("Ambiguous source resolution: One or more source can provide type T",
 			((source_of<detail::forward_like_t<Self, Sources>, T> ? 1 : 0) + ... + 0) > 1
 		) = delete;
 		

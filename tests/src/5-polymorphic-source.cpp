@@ -28,7 +28,7 @@ struct value_category_source {
 };
 
 struct int_float_source {
-	template<typename T> requires (std::same_as<int, T> or std::same_as<float, T>)
+	template<typename T> requires(std::same_as<int, T> or std::same_as<float, T>)
 	auto provide() -> T {
 		return static_cast<T>(value);
 	}
@@ -37,7 +37,7 @@ struct int_float_source {
 };
 
 struct int_float_source_type2 {
-	template<typename T> requires (std::same_as<int, T> or std::same_as<float, T>)
+	template<typename T> requires(std::same_as<int, T> or std::same_as<float, T>)
 	auto provide() -> T {
 		return static_cast<T>(value);
 	}

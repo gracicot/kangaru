@@ -192,7 +192,7 @@ namespace kangaru {
 		
 		template<reference_wrapper Source> requires(not_self<Source, any_source_of_ref>)
 		explicit constexpr any_source_of_ref(Source source) noexcept
-			requires (
+			requires(
 				    not std::is_rvalue_reference_v<decltype(source.unwrap())>
 				and source_of_all<Source, Types...>
 			) :

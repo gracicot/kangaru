@@ -44,6 +44,11 @@ TEST_CASE("Modular container", "[modular]") {
 		CHECK(kangaru::provide<unmapped_dependent_on<int>>(container).value == 50);
 	}
 	
+	SECTION("No module") {
+		auto container = kangaru::modular_container{};
+		static_assert(not kangaru::source_of<decltype(container), int>);
+	}
+	
 	SECTION("constexpr container") {
 		auto module0 = []{ return kangaru::object_source{42}; };
 		constexpr auto container = kangaru::modular_container{
@@ -184,7 +189,7 @@ TEST_CASE("Modular container", "[modular]") {
 			return kangaru::none_source{};
 		}
 	));
-
+	
 	SECTION("CTAD") {
 		auto module0 = [] { return kangaru::object_source{42}; };
 		auto container1 = kangaru::modular_container{module0};

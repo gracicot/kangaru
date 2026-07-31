@@ -23,12 +23,12 @@ namespace kangaru {
 		Source source;
 		Alternative alternative;
 		
-		template<injectable T, forwarded<with_alternative> Self> requires (not wrapping_source_of<Self, T> and source_of<detail::forward_like_t<Self, Alternative&&>, T>)
+		template<injectable T, forwarded<with_alternative> Self> requires(not wrapping_source_of<Self, T> and source_of<detail::forward_like_t<Self, Alternative&&>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).alternative);
 		}
 		
-		template<injectable T, forwarded<with_alternative> Self> requires wrapping_source_of<Self, T>
+		template<injectable T, forwarded<with_alternative> Self> requires(wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
@@ -142,12 +142,12 @@ namespace kangaru {
 	struct with_dereference {
 		Source source;
 		
-		template<reference T, forwarded<with_dereference> Self> requires wrapping_source_of<Self, std::remove_reference_t<T>*>
+		template<reference T, forwarded<with_dereference> Self> requires(wrapping_source_of<Self, std::remove_reference_t<T>*>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return *kangaru::provide<std::remove_reference_t<T>*>(KANGARU5_FWD(source).source);
 		}
 		
-		template<object T, forwarded<with_dereference> Self> requires (not pointer<T> and wrapping_source_of<Self, T>)
+		template<object T, forwarded<with_dereference> Self> requires(not pointer<T> and wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_dereference> auto&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
@@ -228,7 +228,7 @@ namespace kangaru {
 	template<source Source, template<typename> typename SourceFor>
 	struct with_provide_using_source {
 		template<injectable T, forwarded<with_provide_using_source> Self>
-			requires (
+			requires(
 				// We prevent instanciation of this function with T as a SourceFor<...> to prevent
 				// recursive constaint evaluation
 				    not detail::is_specialisation_of_v<SourceFor, T>

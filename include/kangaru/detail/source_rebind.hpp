@@ -18,7 +18,7 @@ namespace kangaru {
 		struct rebind_wrapper {};
 		
 		template<template<typename> typename Branch, source Source>
-			requires std::constructible_from<Branch<Source>, Source&&>
+			requires(std::constructible_from<Branch<Source>, Source&&>)
 		struct rebind_wrapper<Branch<Source>> {
 			template<source NewSource> requires requires { typename Branch<NewSource>; }
 			struct ttype {
@@ -27,7 +27,7 @@ namespace kangaru {
 		};
 		
 		template<template<typename, typename> typename Branch, source Source, typename Param>
-			requires (
+			requires(
 				    std::constructible_from<Branch<Source, Param>, Source&&>
 				and not std::constructible_from<Branch<Source, Param>, Source&&, Param>
 			)
@@ -39,7 +39,7 @@ namespace kangaru {
 		};
 		
 		template<template<typename, template<typename> typename> typename Branch, source Source, template<typename> typename Param>
-			requires (
+			requires(
 				std::constructible_from<Branch<Source, Param>, Source&&>
 			)
 		struct rebind_wrapper<Branch<Source, Param>> {
@@ -101,7 +101,7 @@ namespace kangaru {
 				return operator()(KANGARU5_FWD(wrapper).unwrap(), KANGARU5_FWD(replace_leaf));
 			}
 			
-			template<forwarded_source Leaf, forwarded_function_object ReplaceLeaf> requires (
+			template<forwarded_source Leaf, forwarded_function_object ReplaceLeaf> requires(
 				    not forwarded_reference_wrapper<Leaf>
 				and not rebindable_wrapping_source<std::remove_reference_t<Leaf>>
 				and not forwarded_wrapping_source<Leaf>

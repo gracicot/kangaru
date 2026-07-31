@@ -9,7 +9,6 @@
 #include "cache_types.hpp"
 #include "source_rebind.hpp"
 #include "two_step_init.hpp"
-#include "recursive_source.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <type_traits>
@@ -25,7 +24,7 @@ namespace kangaru::detail::cache_private {
 	auto any_cast(struct poison) -> To requires false;
 	
 	template<typename From, typename To>
-	concept adl_castable_to = requires (From&& from) {
+	concept adl_castable_to = requires(From&& from) {
 		{ any_cast<To>(KANGARU5_FWD(from)) } -> std::same_as<To>;
 	};
 }
@@ -327,7 +326,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, allows_construction_of<T> Value>
 		constexpr auto insert(std::pair<static_type_id<T>, Value>&& value) -> decltype(Cache::insert(std::as_const(value))) requires(requires(Cache parent) { parent.insert(std::as_const(value)); }) {
 			auto it = Cache::insert(std::as_const(value));
-			run_second_step<T>(value.second); // TODO: Oh no, what if the value is actually a value type, instead of a reference type?
+			run_second_step<T>(value.second);
 			return it;
 		}
 		

@@ -138,12 +138,16 @@ KANGARU5_EXPORT namespace kangaru {
 		using container_source_t = decltype(container_source(std::declval<Self>()));
 		
 	public:
-		constexpr modular_container(Construction construction, Modules... modules) requires(not reflectable_function<Construction, 1> and sizeof...(Modules) > 0) :
-			impl{detail::modular_container_private::module_initializer<Modules, Construction>{std::move(modules), construction}...},
+		template<typename... M>
+			requires(true and ... and (reflectable_function<std::decay_t<M>, 1> and std::constructible_from<Modules, M&&>))
+		constexpr modular_container(Construction construction, M&&... modules) requires(not reflectable_function<Construction, 1> and sizeof...(Modules) > 0) :
+			impl{detail::modular_container_private::module_initializer<Modules, Construction>{KANGARU5_FWD(modules), construction}...},
 			construction{std::move(construction)} {}
 		
-		explicit(sizeof...(Modules) == 1) constexpr modular_container(Modules... modules) requires(std::default_initializable<Construction>) :
-			impl{detail::modular_container_private::module_initializer<Modules, Construction>{std::move(modules)}...} {}
+		template<typename... M>
+			requires(true and ... and (reflectable_function<std::decay_t<M>, 1> and std::constructible_from<Modules, M&&>))
+		explicit(sizeof...(Modules) == 1) constexpr modular_container(M&&... modules) requires(std::default_initializable<Construction>) :
+			impl{detail::modular_container_private::module_initializer<Modules, Construction>{KANGARU5_FWD(modules)}...} {}
 		
 		template<injectable T, forwarded<modular_container> Self> requires(source_of<container_source_t<Self>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
@@ -156,6 +160,13 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		Construction construction = {};
 	};
+	
+	template<construction Construction, reflectable_function<1>... Modules>
+		requires(not reflectable_function<Construction, 1>)
+	modular_container(Construction, Modules...) -> modular_container<Construction, Modules...>;
+	
+	template<reflectable_function<1>... Modules>
+	modular_container(Modules...) -> modular_container<exhaustive_construction, Modules...>;
 	
 	template<typename... Modules> requires((... and reflectable_function<Modules, 1>))
 	using module_dependencies = tied_source<reflected_return_type<std::decay_t<Modules>, 1>...>;

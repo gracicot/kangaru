@@ -625,6 +625,11 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<deducer Deducer>
 	using lvalue_reference_deducer = filtered_value_category_deducer<Deducer, reference_kind::lvalue_reference>;
+
+	template<reference_kind category>
+	inline constexpr auto allow_value_category_deduction(deducer auto deduce) {
+		return filtered_value_category_deducer<decltype(deduce), category>{deduce};
+	}
 	
 	template<injectable Exclude>
 	struct exclude_deducer<Exclude, prvalue_detector_deducer> {
@@ -901,14 +906,16 @@ namespace kangaru::detail::deducer_private {
 	
 	template<typename T, typename F, std::size_t nth, std::size_t max>
 	concept callable_with_nth_parameter_being =
-		callable_with_nth_parameter_being_expand<T, F, std::make_index_sequence<nth>, std::make_index_sequence<max - nth - 1>>;
+		    nth < max
+		and callable_with_nth_parameter_being_expand<T, F, std::make_index_sequence<nth>, std::make_index_sequence<max - nth - 1>>;
 	
 	template<typename F, std::size_t nth, std::size_t max>
 	concept function_nth_parameter_prvalue =
+		        nth < max
 		#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
-			not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
+			and not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
 		#else
-			callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
+			and callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
 		#endif
 	;
 	

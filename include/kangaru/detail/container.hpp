@@ -16,6 +16,21 @@
 
 #include "define.hpp"
 
+namespace kangaru::detail::container_private {
+	struct predicate_not_mapped {
+		template<injectable T>
+		consteval bool operator()() const {
+			return not allow_runtime_caching_v<T>;
+		}
+	};
+	
+	struct get_recursing_source {
+		constexpr auto operator()(forwarded_source auto&& source) const -> decltype(KANGARU5_FWD(source).source.source.alternative) {
+			return KANGARU5_FWD(source).source.source.alternative;
+		}
+	};
+}
+
 KANGARU5_EXPORT namespace kangaru {
 	template<
 		source Source = none_source,
@@ -30,8 +45,8 @@ KANGARU5_EXPORT namespace kangaru {
 				with_cache{
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_construction)(
-							KANGARU5_NO_ADL(seal_source)(make_source_with_filter_if(KANGARU5_FWD(source), predicate_not_mapped{})),
-							KANGARU5_NO_ADL(make_construction_with_two_step_init_if<predicate_not_mapped>)(
+							KANGARU5_NO_ADL(seal_source)(make_source_with_filter_if(KANGARU5_FWD(source), detail::container_private::predicate_not_mapped{})),
+							KANGARU5_NO_ADL(make_construction_with_two_step_init_if<detail::container_private::predicate_not_mapped>)(
 								KANGARU5_NO_ADL(make_construction_with_unique_ptr)(construction),
 								second_step_from_attribute{}
 							)
@@ -71,21 +86,14 @@ KANGARU5_EXPORT namespace kangaru {
 			container{Source{}, Construction{}, Cache{}, Storage{}} {}
 		
 	private:
-		struct predicate_not_mapped {
-			template<injectable T>
-			consteval bool operator()() const {
-				return not allow_runtime_caching_v<T>;
-			}
-		};
-		
 		with_cache<
 			with_heap_storage<
 				with_construction<
-					sealed_source<with_filter_if<Source, predicate_not_mapped>>,
+					sealed_source<with_filter_if<Source, detail::container_private::predicate_not_mapped>>,
 					construction_with_two_step_init_if<
 						construction_with_unique_ptr<Construction>,
 						second_step_from_attribute,
-						predicate_not_mapped
+						detail::container_private::predicate_not_mapped
 					>
 				>,
 				Storage
@@ -118,9 +126,7 @@ KANGARU5_EXPORT namespace kangaru {
 										call_second_step_on_dereference{
 											call_second_step_from_attribute_on_prvalue{},
 										},
-										[](forwarded_source auto&& source) -> decltype(KANGARU5_FWD(source).source.source.alternative) {
-											return KANGARU5_FWD(source).source.source.alternative;
-										}
+										detail::container_private::get_recursing_source{},
 									},
 								},
 							}

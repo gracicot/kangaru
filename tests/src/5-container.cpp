@@ -8,6 +8,7 @@
 #include <fmt/core.h>
 
 struct service_a {
+	service_a() = default;
 	int i;
 	friend auto attribute(kangaru::allow_runtime_caching<service_a&>) -> std::true_type;
 };
@@ -66,26 +67,26 @@ struct int_wrapper {
 	int i;
 };
 
-struct service_a_child_1 : service_a {
-	service_a_child_1() = default;
-	explicit service_a_child_1(int i) : service_a{i} {}
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_1&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_1&>) -> std::tuple<service_a&>;
+struct service_child_1 : service_a {
+	service_child_1() = default;
+	friend auto attribute(kangaru::allow_runtime_caching<service_child_1&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_child_1&>) -> std::tuple<service_a&>;
 };
 
-struct service_a_child_2 : service_a {
-	service_a_child_2() = default;
-	explicit service_a_child_2(int i) : service_a{i} {}
-	friend auto attribute(kangaru::allow_runtime_caching<service_a_child_2&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_a_child_2&>) -> std::tuple<service_a&>;
+struct service_child_2 : service_a {
+	service_child_2() = default;
+	friend auto attribute(kangaru::allow_runtime_caching<service_child_2&>) -> std::true_type;
+	friend auto attribute(kangaru::overrides_types_in_cache<service_child_2&>) -> std::tuple<service_a&>;
 };
 
 struct shared_abstract {
+	shared_abstract() = default;
 	std::int32_t value;
 	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<shared_abstract>>) -> std::true_type;
 };
 
 struct shared_concrete : shared_abstract {
+	shared_concrete() = default;
 	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<shared_concrete>>) -> std::true_type;
 	friend auto attribute(kangaru::overrides_types_in_cache<std::shared_ptr<shared_concrete>>)
 		-> std::tuple<std::shared_ptr<shared_abstract>>;
@@ -111,6 +112,7 @@ struct dynamic_provided_concrete : dynamic_provided_abstract {
 };
 
 struct has_second_step {
+	has_second_step() = default;
 	int a = 0;
 	
 	static auto init(has_second_step& instance) -> void {
@@ -284,33 +286,39 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			auto& a1 = container.template provide<service_a&>();
 			REQUIRE(container.template has_in_cache<service_a&>());
 			a1.i = 8;
-				
+			
 			auto injector = kangaru::make_spread_injector(kangaru::ref(container));
 			auto& ac2 = container.template replace<service_a&>(kangaru::in_place_construct{[&]{
 				return injector([](service_a& previous) {
-					return kangaru::reference_source{service_a{previous.i - 1}};
+					auto new_value = service_a{};
+					new_value.i = previous.i - 1;
+					return kangaru::reference_source{new_value};
 				});
 			}});
 			
 			auto& a2 = container.template provide<service_a&>();
 			CHECK(a2.i == 7);
 			
-			container.template replace<service_a&>(kangaru::reference_source{service_a{2}});
+			auto new_value = service_a{};
+			new_value.i = 2;
+			container.template replace<service_a&>(kangaru::reference_source{new_value});
 			
 			CHECK(kangaru::provide<service_a&>(container).i == 2);
 		}
 		
 		SECTION("Replacing with override") {
 			if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
-				auto& ac1 = container.template provide<service_a_child_1&>();
-				CHECK(container.template has_in_cache<service_a_child_1&>());
+				auto& ac1 = container.template provide<service_child_1&>();
+				CHECK(container.template has_in_cache<service_child_1&>());
 				CHECK(container.template has_in_cache<service_a&>());
 				ac1.i = 9;
 				
 				auto injector = kangaru::make_spread_injector(kangaru::ref(container));
-				auto& ac2 = container.template replace<service_a_child_2&>(kangaru::in_place_construct{[&]{
+				auto& ac2 = container.template replace<service_child_2&>(kangaru::in_place_construct{[&]{
 					return injector([](service_a& previous) {
-						return kangaru::reference_source{service_a_child_2{previous.i - 1}};
+						auto new_value = service_child_2{};
+						new_value.i = previous.i - 1;
+						return kangaru::reference_source{new_value};
 					});
 				}});
 				
@@ -323,7 +331,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	
 	SECTION("Can create scoped instances") {
 		auto& a1 = std::same_as<TestType, alias_polymorphic_container>
-			? static_cast<service_a&>(container.template provide<service_a_child_1&>())
+			? static_cast<service_a&>(container.template provide<service_child_1&>())
 			: container.template provide<service_a&>();
 		
 		SECTION("Scoping inherit the parent's instances") {
@@ -339,8 +347,8 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 			CHECK(c.template has_in_cache<service_c&>());
 			
 			if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
-				container.template replace<service_a_child_2&>(kangaru::reference_source{service_a_child_2{}});
-				auto& a1 = container.template provide<service_a_child_1&>();
+				container.template replace<service_child_2&>(kangaru::reference_source{service_child_2{}});
+				auto& a1 = container.template provide<service_child_1&>();
 				auto& a = container.template provide<service_a&>();
 				CHECK(std::addressof(a1) != std::addressof(a));
 			}
@@ -380,7 +388,7 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 	}
 	
 	SECTION("Reuse instances that can override each other") {
-		auto& a1 = container.template provide<service_a_child_1&>();
+		auto& a1 = container.template provide<service_child_1&>();
 		auto& a = container.template provide<service_a&>();
 		auto& c = container.template provide<service_c&>();
 		
@@ -426,16 +434,16 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		
 		SECTION("Erase don't erase overrides") {
 			if constexpr (std::same_as<TestType, alias_polymorphic_container>) {
-				auto& a1 = container.template provide<service_a_child_1&>();
+				auto& a1 = container.template provide<service_child_1&>();
 				a1.i = 8;
-				REQUIRE(container.template has_in_cache<service_a_child_1&>());
+				REQUIRE(container.template has_in_cache<service_child_1&>());
 				REQUIRE(container.template has_in_cache<service_a&>());
 				auto& a = container.template provide<service_a&>();
 				CHECK(a.i == 8);
 				CHECK(std::addressof(a1) == std::addressof(a));
 				
 				SECTION("Access polymorphic object") {
-					auto a1_ref = std::as_const(container).template get_from_cache<service_a_child_1&>();
+					auto a1_ref = std::as_const(container).template get_from_cache<service_child_1&>();
 					REQUIRE(a1_ref);
 					CHECK(&a1 == std::addressof(*a1_ref));
 					kangaru::optional<service_a&> a_ref = std::as_const(container).template get_from_cache<service_a&>();
@@ -443,15 +451,15 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 					CHECK(&(container.template provide<service_a&>()) == &*a_ref);
 				}
 				
-				container.template erase<service_a_child_1&>();
-				REQUIRE(not container.template has_in_cache<service_a_child_1&>());
+				container.template erase<service_child_1&>();
+				REQUIRE(not container.template has_in_cache<service_child_1&>());
 				REQUIRE(container.template has_in_cache<service_a&>());
 				
 				auto& a_after = container.template provide<service_a&>();
 				CHECK(std::addressof(a_after) == std::addressof(a));
 				
 				SECTION("Access polymorphic object") {
-					auto a1_ref = std::as_const(container).template get_from_cache<service_a_child_1&>();
+					auto a1_ref = std::as_const(container).template get_from_cache<service_child_1&>();
 					REQUIRE(not a1_ref);
 					auto a_ref = std::as_const(container).template get_from_cache<service_a&>();
 					REQUIRE(a_ref);
@@ -550,23 +558,25 @@ TEMPLATE_TEST_CASE("Container uses the base source", "[container]",
 		auto container = TestType::make_container(int_source{});
 		
 		SECTION("lvalues") {
-			auto& a = container.template provide<service_a&>();
-			CHECK(a.i == 3);
+			auto& a = container.template provide<mapped_ref_dependent_on<int>&>();
+			CHECK(a.value == 3);
 		}
 		
 		SECTION("rvalues") {
-			auto& a = std::move(container).template provide<service_a&>();
-			CHECK(a.i == 4);
+			auto& a = std::move(container).template provide<mapped_ref_dependent_on<int>&>();
+			CHECK(a.value == 4);
 		}
 		
+		using deep = mapped_ref_dependent_on<unmapped_dependent_on<mapped_ref_dependent_on<int>>>;
+		
 		SECTION("lvalues deep") {
-			auto& c = container.template provide<service_c&>();
-			CHECK(c.services.sa.i == 3);
+			auto& c = container.template provide<deep&>();
+			CHECK(c.value.value.value == 3);
 		}
 		
 		SECTION("rvalues deep") {
-			auto& c = std::move(container).template provide<service_c&>();
-			CHECK(c.services.sa.i == 4);
+			auto& c = std::move(container).template provide<deep&>();
+			CHECK(c.value.value.value == 4);
 		}
 		
 		SECTION("lvalues direct") {

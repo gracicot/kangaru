@@ -55,26 +55,26 @@ namespace kangaru::detail::injector_private {
 	using parameter_sequence_t = typename parameter_sequence<F, max>::type;
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, typename, typename = std::index_sequence<>>
-	struct injectable_sequence {};
+	struct composable_sequence {};
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t... drop>
 		requires(callable<Function, Expand<kangaru::placeholder_deducer, drop>...>)
-	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<>, std::index_sequence<drop...>> {
+	struct composable_sequence<Expand, Function, Deducer, std::index_sequence<>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<>;
 	};
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
 		requires(callable<Function, Deducer, Expand<Deducer, tail>..., detail::expand<kangaru::placeholder_deducer, drop>...>)
-	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
+	struct composable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> {
 		using type = std::index_sequence<head, tail...>;
 	};
 	
 	template<template<typename Deducer, std::size_t nth> typename Expand, typename Function, typename Deducer, std::size_t head, std::size_t... tail, std::size_t... drop>
-	struct injectable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> :
-		injectable_sequence<Expand, Function, Deducer, std::index_sequence<(tail - 1)...>, std::index_sequence<drop..., sizeof...(drop)>> {};
+	struct composable_sequence<Expand, Function, Deducer, std::index_sequence<head, tail...>, std::index_sequence<drop...>> :
+		composable_sequence<Expand, Function, Deducer, std::index_sequence<(tail - 1)...>, std::index_sequence<drop..., sizeof...(drop)>> {};
 	
 	template<typename Function, typename Deducer, std::size_t max>
-	using spread_sequence_t = typename injectable_sequence<detail::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
+	using composable_sequence_t = typename composable_sequence<detail::expand, Function, Deducer, parameter_sequence_t<Function, max>>::type;
 	
 	template<typename F, kangaru::deducer Deducer, typename>
 	inline constexpr auto callable_with_deducer_sequence_v = false;
@@ -207,6 +207,9 @@ KANGARU5_EXPORT namespace kangaru {
 	inline constexpr auto make_strict_fixed_injector = make_strict_fixed_injector_function<N>{};
 	
 	template<source Source, template<source_ref> typename Deducer, std::size_t max>
+	struct basic_composable_spread_injector;
+	
+	template<source Source, template<source_ref> typename Deducer, std::size_t max>
 	struct basic_spread_injector {
 		explicit constexpr basic_spread_injector(Source source) : source(std::move(source)) {}
 		
@@ -214,22 +217,22 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(not std::same_as<std::remove_cvref_t<S>, Source>)
 		explicit constexpr basic_spread_injector(S&& source) : source(KANGARU5_FWD(source)) {}
 		
-		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::spread_sequence_t<F, Deducer<Source&>, max>>
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
 		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::spread_sequence_t<F, Deducer<Source&&>, max>>
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
 		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
-		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::spread_sequence_t<F, Deducer<Source const&>, max>>
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
 		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
-		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::spread_sequence_t<F, Deducer<Source const&&>, max>>
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
 		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
@@ -240,6 +243,8 @@ KANGARU5_EXPORT namespace kangaru {
 			using deducer = Deducer<decltype(source)>;
 			return KANGARU5_NO_ADL(call_with_deducers)(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
 		}
+		
+		friend struct basic_composable_spread_injector<Source, Deducer, max>;
 		
 		Source source;
 	};
@@ -299,6 +304,101 @@ KANGARU5_EXPORT namespace kangaru {
 	inline constexpr auto make_strict_spread_injector = make_strict_spread_injector_function{};
 	inline constexpr auto make_strict_slow_spread_injector = make_strict_slow_spread_injector_function{};
 	inline constexpr auto make_strict_fast_spread_injector = make_strict_fast_spread_injector_function{};
+	
+	template<source Source, template<source_ref> typename Deducer, std::size_t max>
+	struct basic_composable_spread_injector {
+		explicit constexpr basic_composable_spread_injector(Source source) : source(std::move(source)) {}
+		explicit constexpr basic_composable_spread_injector(basic_spread_injector<Source, Deducer, max> injector) : source(std::move(injector).source) {}
+		
+		template<allows_construction_of<Source> S>
+			requires(not std::same_as<std::remove_cvref_t<S>, Source>)
+		explicit constexpr basic_composable_spread_injector(S&& source) : source(KANGARU5_FWD(source)) {}
+		
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source&>, max>>
+		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
+			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
+		}
+		
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source&&>, max>>
+		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
+			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
+		}
+		
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source const&>, max>>
+		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
+			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
+		}
+		
+		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source const&&>, max>>
+		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
+			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
+		}
+		
+	private:
+		template<std::size_t... s>
+		static constexpr auto expand_deducers(std::index_sequence<s...>, auto&& function, auto&& source) -> decltype(auto) {
+			using deducer = Deducer<decltype(source)>;
+			return KANGARU5_NO_ADL(call_with_deducers)(KANGARU5_FWD(function), (void(s), deducer{KANGARU5_FWD(source)})...);
+		}
+		
+		Source source;
+	};
+	
+	template<source Source>
+	using fast_composable_spread_injector = basic_composable_spread_injector<Source, basic_deducer, 4>;
+	
+	template<source Source>
+	using composable_spread_injector = basic_composable_spread_injector<Source, basic_deducer, 8>;
+	
+	template<source Source>
+	using slow_composable_spread_injector = basic_composable_spread_injector<Source, basic_deducer, 16>;
+	
+	template<source Source>
+	using composable_optional_injector = basic_composable_spread_injector<Source, basic_deducer, 1>;
+	
+	template<template<typename> typename Deducer, std::size_t max>
+	struct make_basic_composable_spread_injector_function {
+		template<forwarded_source Source>
+		inline constexpr auto operator()(Source&& source) const -> basic_composable_spread_injector<deduced_source_type<Source>, Deducer, max> {
+			return basic_composable_spread_injector<deduced_source_type<Source>, Deducer, max>{
+				KANGARU5_FWD(source)
+			};
+		}
+	};
+	
+	template<template<typename> typename Deducer, std::size_t max>
+	inline constexpr auto make_basic_composable_spread_injector = make_basic_composable_spread_injector_function<Deducer, max>{};
+	
+	using make_fast_composable_spread_injector_function = make_basic_composable_spread_injector_function<basic_deducer, 4>;
+	using make_composable_spread_injector_function = make_basic_composable_spread_injector_function<basic_deducer, 8>;
+	using make_slow_composable_spread_injector_function = make_basic_composable_spread_injector_function<basic_deducer, 16>;
+	using make_composable_optional_injector_function = make_basic_composable_spread_injector_function<basic_deducer, 1>;
+	
+	inline constexpr auto make_fast_composable_spread_injector = make_fast_composable_spread_injector_function{};
+	inline constexpr auto make_composable_spread_injector = make_composable_spread_injector_function{};
+	inline constexpr auto make_slow_composable_spread_injector = make_slow_composable_spread_injector_function{};
+	inline constexpr auto make_composable_optional_injector = make_optional_injector_function{};
+	
+	template<source Source>
+	using strict_fast_composable_spread_injector = basic_composable_spread_injector<Source, strict_deducer, 4>;
+	
+	template<source Source>
+	using strict_composable_spread_injector = basic_composable_spread_injector<Source, strict_deducer, 8>;
+	
+	template<source Source>
+	using strict_slow_composable_spread_injector = basic_composable_spread_injector<Source, strict_deducer, 16>;
+	
+	template<source Source>
+	using strict_composable_optional_injector = basic_composable_spread_injector<Source, strict_deducer, 1>;
+	
+	using make_strict_fast_composable_spread_injector_function = make_basic_composable_spread_injector_function<strict_deducer, 4>;
+	using make_strict_composable_spread_injector_function = make_basic_composable_spread_injector_function<strict_deducer, 8>;
+	using make_strict_slow_composable_spread_injector_function = make_basic_composable_spread_injector_function<strict_deducer, 16>;
+	using make_composable_strict_optional_injector_function = make_basic_composable_spread_injector_function<strict_deducer, 1>;
+	
+	inline constexpr auto make_strict_composable_spread_injector = make_strict_composable_spread_injector_function{};
+	inline constexpr auto make_strict_slow_composable_spread_injector = make_strict_slow_composable_spread_injector_function{};
+	inline constexpr auto make_strict_fast_composable_spread_injector = make_strict_fast_composable_spread_injector_function{};
 	inline constexpr auto make_strict_optional_injector = make_strict_optional_injector_function{};
 	
 	template<injector Injector1, injector Injector2>

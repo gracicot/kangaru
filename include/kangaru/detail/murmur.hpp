@@ -13,13 +13,12 @@
 
 #include "define.hpp"
 
-// TODO: Do we really need this for type id? Can we avoid compile time hashing?
 namespace kangaru::detail::murmur {
-	KANGARU5_EXPORT using hash_t = std::uint64_t;
+	using hash_t = std::uint64_t;
 	
-	KANGARU5_EXPORT inline constexpr auto murmur_default_seed = hash_t{0};
+	inline constexpr auto murmur_default_seed = hash_t{0};
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept byte_like =
 		   std::same_as<char, T>
 		or std::same_as<char8_t, T>
@@ -31,7 +30,7 @@ namespace kangaru::detail::murmur {
 	 * Constexpr compatible implementation of murmur hash 64a.
 	 * Theorically slightly slower since it only does aligned reads.
 	 */
-	KANGARU5_EXPORT template<byte_like T>
+	template<byte_like T>
 	inline consteval auto murmur64a(std::span<T const> const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		auto constexpr m = std::uint64_t{0xc6a4a7935bd1e995ull};
 		auto constexpr r = int{47};
@@ -81,20 +80,20 @@ namespace kangaru::detail::murmur {
 		return static_cast<hash_t>(hash);
 	}
 	
-	KANGARU5_EXPORT inline consteval auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	inline consteval auto murmur64a(std::string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<char const>{buf.data(), buf.size()}, seed);
 	}
 	
-	KANGARU5_EXPORT inline consteval auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
+	inline consteval auto murmur64a(std::u8string_view const buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<char8_t const>{buf.data(), buf.size()}, seed);
 	}
 	
-	KANGARU5_EXPORT template<byte_like T>
+	template<byte_like T>
 	inline consteval auto murmur64a(std::vector<T> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span{buf}, seed);
 	}
 	
-	KANGARU5_EXPORT template<byte_like T, std::size_t n>
+	template<byte_like T, std::size_t n>
 	inline consteval auto murmur64a(std::array<T, n> const& buf, hash_t const seed = murmur_default_seed) noexcept -> hash_t {
 		return KANGARU5_NO_ADL(murmur64a)(std::span<T const>{buf.data(), n}, seed);
 	}

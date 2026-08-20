@@ -5,7 +5,6 @@
 #include "two_step_init.hpp"
 #include "optional.hpp"
 #include "source_reference_wrapper.hpp"
-#include "source_traits.hpp"
 #include "utility.hpp"
 #include "source_types.hpp"
 #include "source_wrappers.hpp"
@@ -19,7 +18,6 @@
 #ifndef KANGARU5_MODULES
 #include <unordered_map>
 #include <concepts>
-#include <memory>
 #include <utility>
 #endif
 
@@ -48,6 +46,19 @@ namespace kangaru {
 			template<injectable T>
 			using source_for = typename mapping<T>::type;
 		};
+		
+		struct predicate_not_mapped {
+			template<injectable T>
+			consteval bool operator()() const {
+				return not allow_runtime_caching_v<T>;
+			}
+		};
+		
+		struct get_recursing_source {
+			constexpr auto operator()(forwarded_source auto&& source) const -> decltype(KANGARU5_FWD(source).source.source.source.source.source.alternative) {
+				return KANGARU5_FWD(source).source.source.source.source.source.alternative;
+			}
+		};
 	}
 	
 	KANGARU5_EXPORT template<
@@ -71,10 +82,10 @@ namespace kangaru {
 										KANGARU5_NO_ADL(seal_source)(
 											KANGARU5_NO_ADL(make_source_with_filter_if)(
 												KANGARU5_FWD(source),
-												predicate_not_mapped{}
+												detail::polymorphic_container_private::predicate_not_mapped{}
 											)
 										),
-										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<predicate_not_mapped>)(
+										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<detail::polymorphic_container_private::predicate_not_mapped>)(
 											KANGARU5_NO_ADL(make_construction_with_unique_ptr)(construction),
 											second_step_from_attribute{}
 										)
@@ -121,13 +132,6 @@ namespace kangaru {
 			CacheMapping
 		>;
 		
-		struct predicate_not_mapped {
-			template<injectable T>
-			consteval bool operator()() const {
-				return not allow_runtime_caching_v<T>;
-			}
-		};
-		
 		with_cache_asymmetric<
 			with_dereference<
 				with_heap_storage<
@@ -135,12 +139,12 @@ namespace kangaru {
 						with_source_wrapping<
 							with_construction<
 								sealed_source<
-									with_filter_if<Source, predicate_not_mapped>
+									with_filter_if<Source, detail::polymorphic_container_private::predicate_not_mapped>
 								>,
 								construction_with_two_step_init_if<
 									construction_with_unique_ptr<Construction>,
 									second_step_from_attribute,
-									predicate_not_mapped
+									detail::polymorphic_container_private::predicate_not_mapped
 								>
 							>
 						>
@@ -177,9 +181,7 @@ namespace kangaru {
 								rebound_state,
 								call_second_step_with_transformed_source{
 									second_step_from_attribute{},
-									[](forwarded_source auto&& source) -> decltype(KANGARU5_FWD(source).source.source.source.source.source.alternative) {
-										return KANGARU5_FWD(source).source.source.source.source.source.alternative;
-									}
+									detail::polymorphic_container_private::get_recursing_source{},
 								}
 							}
 						)

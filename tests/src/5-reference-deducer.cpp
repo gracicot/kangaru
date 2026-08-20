@@ -36,26 +36,107 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		);
 		
 		auto injector = kangaru::make_simple_injector(source);
+		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
 		
-		injector([](sneezy s) {
+		auto inject_by_value = [](sneezy s) {
 			CHECK(s.how == by_value);
-		});
+		};
 		
-		injector([](sneezy& s) {
+		auto inject_by_lvalue = [](sneezy& s) {
 			CHECK(s.how == by_lvalue_reference);
-		});
+		};
 		
-		injector([](sneezy&& s) {
-			CHECK(s.how == by_rvalue_reference);
-		});
-		
-		injector([](sneezy const& s) {
+		auto inject_by_lvalue_const = [](sneezy const& s) {
 			CHECK(s.how == by_lvalue_const_reference);
-		});
+		};
 		
-		injector([](sneezy const&& s) {
+		auto inject_by_rvalue = [](sneezy&& s){
+			CHECK(s.how == by_rvalue_reference);
+		};
+		
+		auto inject_by_rvalue_const = [](sneezy const&& s){
 			CHECK(s.how == by_rvalue_const_reference);
-		});
+		};
+		
+		injector(inject_by_value);
+		injector(inject_by_lvalue);
+		injector(inject_by_rvalue);
+		injector(inject_by_lvalue_const);
+		injector(inject_by_rvalue_const);
+		
+		kangaru::call_with_deducers(inject_by_value, deducer);
+		kangaru::call_with_deducers(inject_by_lvalue, deducer);
+		kangaru::call_with_deducers(inject_by_rvalue, deducer);
+		kangaru::call_with_deducers(inject_by_lvalue_const, deducer);
+		kangaru::call_with_deducers(inject_by_rvalue_const, deducer);
+		
+		static_assert(kangaru::callable_with_deducers<decltype(inject_by_value), decltype(deducer)>);
+		static_assert(kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+		static_assert(kangaru::callable_with_deducers<decltype(inject_by_lvalue_const), decltype(deducer)>);
+		static_assert(kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+		static_assert(kangaru::callable_with_deducers<decltype(inject_by_rvalue_const), decltype(deducer)>);
+		
+		SECTION("Exclude deducer excludes a particular deduction") {
+			auto deducer = kangaru::exclude_deduction<sneezy&>(kangaru::basic_deducer<decltype(source)&>{source});
+			
+			kangaru::call_with_deducers(inject_by_value, deducer);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			kangaru::call_with_deducers(inject_by_rvalue, deducer);
+			kangaru::call_with_deducers(inject_by_lvalue_const, deducer);
+			kangaru::call_with_deducers(inject_by_rvalue_const, deducer);
+		}
+		
+		SECTION("Exclude special constructor deducer excludes a type completely") {
+			auto deducer = kangaru::exclude_special_constructors_for<sneezy>(kangaru::basic_deducer<decltype(source)&>{source});
+			
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_value), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue_const), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue_const), decltype(deducer)>);
+		}
+		
+		SECTION("Allow value category") {
+			auto deducer = kangaru::allow_value_category_deduction<kangaru::reference_kind::lvalue_const_reference>(kangaru::basic_deducer<decltype(source)&>{source});
+			
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_value), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			kangaru::call_with_deducers(inject_by_lvalue_const, deducer);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue_const), decltype(deducer)>);
+		}
+		
+		SECTION("Allow value category mixed") {
+			auto deducer = kangaru::allow_value_category_deduction<kangaru::reference_kind::lvalue_const_reference_and_rvalue_const_reference>(kangaru::basic_deducer<decltype(source)&>{source});
+			
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_value), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			kangaru::call_with_deducers(inject_by_lvalue_const, deducer);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+			kangaru::call_with_deducers(inject_by_rvalue_const, deducer);
+		}
+		
+		SECTION("Allow prvalue") {
+			auto deducer = kangaru::allow_value_category_deduction<kangaru::reference_kind::none>(kangaru::basic_deducer<decltype(source)&>{source});
+			
+			kangaru::call_with_deducers(inject_by_value, deducer);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			
+			// prvalue can call into these with non-strict deducer
+			static_assert(kangaru::callable_with_deducers<decltype(inject_by_lvalue_const), decltype(deducer)>);
+			static_assert(kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+			static_assert(kangaru::callable_with_deducers<decltype(inject_by_rvalue_const), decltype(deducer)>);
+		}
+		
+		SECTION("Allow prvalue strict") {
+			auto deducer = kangaru::allow_value_category_deduction<kangaru::reference_kind::none>(kangaru::strict_deducer<decltype(source)&>{source});
+			
+			kangaru::call_with_deducers(inject_by_value, deducer);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_lvalue_const), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue), decltype(deducer)>);
+			static_assert(not kangaru::callable_with_deducers<decltype(inject_by_rvalue_const), decltype(deducer)>);
+		}
 	}
 	
 	SECTION("Will fallback to mutable ref if no const is available") {
@@ -81,6 +162,83 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 		injector([](sneezy const&& s) {
 			CHECK(s.how == by_rvalue_reference);
 		});
+		
+		injector([](sneezy s) {
+			CHECK(s.how == by_rvalue_reference);
+		});
+	}
+	
+	SECTION("By value fallback") {
+		SECTION("All reference types") {
+			auto source = kangaru::tie(
+				source_by_lvalue_ref,
+				source_by_lvalue_ref_const,
+				source_by_rvalue_ref_const,
+				source_by_rvalue_ref
+			);
+			
+			auto injector = kangaru::make_simple_injector(source);
+			
+			injector([](sneezy s) {
+				CHECK(s.how == by_rvalue_reference);
+			});
+		}
+		
+		SECTION("No rvalue") {
+			auto source = kangaru::tie(
+				source_by_lvalue_ref,
+				source_by_lvalue_ref_const,
+				source_by_rvalue_ref_const
+			);
+			
+			auto injector = kangaru::make_simple_injector(source);
+			
+			injector([](sneezy s) {
+				CHECK(s.how == by_rvalue_const_reference);
+			});
+		}
+		
+		SECTION("No rvalue const") {
+			auto source = kangaru::tie(
+				source_by_lvalue_ref,
+				source_by_lvalue_ref_const
+			);
+			
+			auto injector = kangaru::make_simple_injector(source);
+			
+			injector([](sneezy s) {
+				CHECK(s.how == by_lvalue_const_reference);
+			});
+		}
+	}
+	
+	SECTION("By lvalue const fallback") {
+		SECTION("All reference types") {
+			auto source = kangaru::tie(
+				source_by_lvalue_ref,
+				source_by_rvalue_ref_const,
+				source_by_rvalue_ref
+			);
+			
+			auto injector = kangaru::make_simple_injector(source);
+			
+			injector([](sneezy const& s) {
+				CHECK(s.how == by_lvalue_reference);
+			});
+		}
+		
+		SECTION("No lvalue") {
+			auto source = kangaru::tie(
+				source_by_rvalue_ref_const,
+				source_by_rvalue_ref
+			);
+			
+			auto injector = kangaru::make_simple_injector(source);
+			
+			injector([](sneezy const& s) {
+				CHECK(s.how == by_rvalue_const_reference);
+			});
+		}
 	}
 	
 	SECTION("Will fallback to rvalue ref if no const lvalue is available") {
@@ -163,9 +321,90 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			CHECK(s.how == by_lvalue_reference);
 		});
 	}
+	
+	SECTION("Strict deducers does not convert convertible references") {
+		auto injector_rvalue = kangaru::make_strict_simple_injector(source_by_rvalue_ref);
+		auto injector_const_rvalue = kangaru::make_strict_simple_injector(source_by_rvalue_ref_const);
+		auto injector_lvalue = kangaru::make_strict_simple_injector(source_by_lvalue_ref);
+		
+		auto function_lvalue_const_ref = [](sneezy const& s) {};
+		
+		static_assert(not kangaru::callable<decltype(injector_rvalue), decltype(function_lvalue_const_ref)>);
+		static_assert(not kangaru::callable<decltype(injector_const_rvalue), decltype(function_lvalue_const_ref)>);
+		static_assert(not kangaru::callable<decltype(injector_lvalue), decltype(function_lvalue_const_ref)>);
+	}
+	
+	SECTION("Strict deducer deduces the right type of reference") {
+		auto source = kangaru::tie(
+			source_by_value,
+			source_by_lvalue_ref,
+			source_by_lvalue_ref_const,
+			source_by_rvalue_ref_const,
+			source_by_rvalue_ref
+		);
+		
+		auto injector = kangaru::make_strict_simple_injector(source);
+		
+		injector([](sneezy s) {
+			CHECK(s.how == by_value);
+		});
+		
+		injector([](sneezy& s) {
+			CHECK(s.how == by_lvalue_reference);
+		});
+		
+		injector([](sneezy&& s) {
+			CHECK(s.how == by_rvalue_reference);
+		});
+		
+		injector([](sneezy const& s) {
+			CHECK(s.how == by_lvalue_const_reference);
+		});
+		
+		injector([](sneezy const&& s) {
+			CHECK(s.how == by_rvalue_const_reference);
+		});
+	}
+	
+	SECTION("Strict deducer has no fallback") {
+		auto source = kangaru::tie(
+			source_by_value,
+			source_by_lvalue_ref,
+			source_by_rvalue_ref_const,
+			source_by_rvalue_ref
+		);
+		
+		auto injector = kangaru::make_strict_simple_injector(source);
+		
+		injector([](sneezy s) {
+			CHECK(s.how == by_value);
+		});
+		
+		injector([](sneezy& s) {
+			CHECK(s.how == by_lvalue_reference);
+		});
+		
+		injector([](sneezy&& s) {
+			CHECK(s.how == by_rvalue_reference);
+		});
+		
+		auto function_lvalue_const_ref = [](sneezy const&){};
+		static_assert(not kangaru::callable<decltype(injector), decltype(function_lvalue_const_ref)>);
+		
+		injector([](sneezy const&& s) {
+			CHECK(s.how == by_rvalue_const_reference);
+		});
+	}
 }
 
-struct injected {};
+template<typename T>
+auto get_int() {
+	static_assert(not std::same_as<T, T>);
+	return 0;
+}
+
+struct injected {
+};
 
 struct type_0000 {
 	explicit type_0000(injected);
@@ -188,6 +427,9 @@ struct type_1000 {
 };
 
 struct agg_0000 {
+	agg_0000() {}
+	agg_0000(injected) {}
+	
 	injected i;
 };
 
@@ -219,8 +461,41 @@ struct level2_agg_0010 { agg_0010 member; };
 struct level2_agg_0100 { agg_0100 member; };
 struct level2_agg_1000 { agg_1000 member; };
 
-TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
-	SECTION("Strict reference deducer") {
+auto multi_param = [](injected const&, injected&&, injected, injected&){};
+using multi_param_t = decltype(multi_param);
+
+TEST_CASE("Deducer internals can detect value categories", "[deducer]") {
+	SECTION("Deducer internals") {
+		SECTION("Value category detection on functions") {
+			static_assert(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<multi_param_t, 0, 4>));
+			static_assert(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<multi_param_t, 1, 4>));
+			static_assert((kangaru::detail::deducer_private::function_nth_parameter_prvalue<multi_param_t, 2, 4>));
+			static_assert(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<multi_param_t, 3, 4>));
+			
+			// Out of bound is false
+			static_assert(not (kangaru::detail::deducer_private::function_nth_parameter_prvalue<multi_param_t, 4, 4>));
+			
+			static_assert(
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, multi_param_t, 0, 4>()
+				== kangaru::reference_kind::lvalue_const_reference
+			);
+			
+			static_assert(
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, multi_param_t, 1, 4>()
+				== kangaru::reference_kind::rvalue_reference
+			);
+			
+			static_assert(
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, multi_param_t, 2, 4>()
+				== kangaru::reference_kind::none
+			);
+			
+			static_assert(
+				kangaru::detail::deducer_private::reference_kind_for_nth_parameter<kangaru::placeholder_deducer, multi_param_t, 3, 4>()
+				== kangaru::reference_kind::lvalue_reference
+			);
+		}
+		
 		SECTION("Class type with constructors") {
 			using constructor_0000_t = kangaru::constructor_function<type_0000>;
 			using constructor_0001_t = kangaru::constructor_function<type_0001>;
@@ -319,6 +594,77 @@ TEST_CASE("Strict deducer strictly deduce", "[deducer]") {
 			CHECK(not kangaru::construction_tree_needs<type_1000, int const&>);
 			CHECK(not kangaru::construction_tree_needs<type_1000, int&&>);
 			CHECK(not kangaru::construction_tree_needs<type_1000, int const&&>);
+			
+			// TODO: Fix me: since agg is default constructible, is gets choosen?
+			//       This is weird, the function choosen for being called should not
+			//       depend on what the source can provide
+			static_assert(std::same_as<
+				std::index_sequence<0>,
+				kangaru::detail::injector_private::parameter_sequence_t<kangaru::constructor_function<agg_0000>, 4>
+			>);
+			static_assert(std::same_as<
+				std::index_sequence<>,
+				kangaru::detail::injector_private::composable_sequence_t<kangaru::constructor_function<agg_0000>, kangaru::strict_deducer<kangaru::none_source&>, 4>
+			>);
+			//CHECK(kangaru::construction_tree_needs<agg_0000, injected>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, injected&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0000, int>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, int&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, int const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, int&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0000, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0001, injected>);
+			CHECK(kangaru::construction_tree_needs<agg_0001, injected&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0001, int>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, int&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, int const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, int&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0001, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0010, injected>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, injected&>);
+			CHECK(kangaru::construction_tree_needs<agg_0010, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0010, int>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, int&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, int const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, int&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0010, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0100, injected>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, injected&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, injected const&>);
+			CHECK(kangaru::construction_tree_needs<agg_0100, injected&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_0100, int>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, int&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, int const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, int&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_0100, int const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_1000, injected>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, injected&>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, injected const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, injected&&>);
+			CHECK(kangaru::construction_tree_needs<agg_1000, injected const&&>);
+			
+			CHECK(not kangaru::construction_tree_needs<agg_1000, int>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, int&>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, int const&>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, int&&>);
+			CHECK(not kangaru::construction_tree_needs<agg_1000, int const&&>);
 		}
 		
 		SECTION("Class type aggregate") {

@@ -7,7 +7,6 @@
 #include "injector.hpp"
 #include "attributes.hpp"
 #include "source.hpp"
-#include "source_types.hpp"
 #include "source_wrappers.hpp"
 #include "source_reference_wrapper.hpp"
 #include "source_rebind.hpp"
@@ -24,52 +23,6 @@
 // TODO: Consider no unique address
 
 namespace kangaru::detail::recursive_source_private {
-	// TODO: Can we break the circular dependency by having an artificial check that takes the current deducing type?
-	
-	template<source Source, function_object... Functions>
-	struct with_function_call_experiment {
-		explicit(sizeof...(Functions) == 0) constexpr with_function_call_experiment(Source source, Functions... functions) :
-			source(std::move(source)), functions{std::move(functions)...} {}
-		
-		template<kangaru::source T, forwarded<with_function_call_experiment> Self> requires((... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0)) == 1)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			constexpr auto index = index_for<T>(std::index_sequence_for<Functions...>{});
-			auto& function = std::get<index>(source.functions);
-			return function(KANGARU5_NO_ADL(ref)(source.source));
-		}
-		
-		template<kangaru::source T, forwarded<with_function_call_experiment> Self> requires("Ambiguous source resolution: One or more callable returns source T",
-			(... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? 1 : 0)) > 1
-		)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T = delete;
-		
-		template<forwarded<with_function_call_experiment> Original, forwarded_source NewSource>
-			requires(... and std::copy_constructible<Functions>)
-		static constexpr auto rebind(Original&& original, NewSource&& new_source)
-			-> with_function_call_experiment<deduced_source_type<NewSource>, Functions...>
-		{
-			return std::apply(
-				[&](Functions const&... functions) {
-					return with_function_call_experiment<deduced_source_type<NewSource>, Functions...> {
-						KANGARU5_FWD(new_source),
-						functions...,
-					};
-				},
-				original.functions
-			);
-		}
-		
-		Source source;
-		
-	private:
-		template<kangaru::source T, std::size_t... S>
-		static constexpr auto index_for(std::index_sequence<S...>) -> std::size_t {
-			return (... + (callable_returns<T, Functions&, ref_result_t<Source&>> ? S : 0));
-		}
-		
-		std::tuple<Functions...> functions;
-	};
-	
 	template<source Alternative>
 	struct leaf_as_alternative {
 		Alternative alternative;
@@ -369,7 +322,7 @@ KANGARU5_EXPORT namespace kangaru {
 			make_injector{std::move(make_injector)} {}
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_type<T>>
+			requires(callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_type<T>>)
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(constructor_type<T>{});
 		}

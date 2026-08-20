@@ -1,7 +1,6 @@
 #ifndef KANGARU5_DETAIL_TYPE_ID_HPP
 #define KANGARU5_DETAIL_TYPE_ID_HPP
 
-#include "concepts.hpp"
 #include "murmur.hpp"
 
 #ifndef KANGARU5_MODULES
@@ -40,11 +39,9 @@ namespace kangaru::detail::type_id_private {
 		
 		return signature_prefix_length;
 	}
-	
-	struct key {};
 }
 
-namespace kangaru {
+KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
 	inline consteval auto type_name() -> std::string_view {
 		auto const sig_prefix_trimmed = detail::type_id_private::raw_typed_signature<T>().substr(
@@ -68,7 +65,6 @@ namespace kangaru {
 		friend constexpr auto operator<=>(static_type_id const&, static_type_id<U> const&) {
 			return KANGARU5_NO_ADL(type_name<T>)() <=> KANGARU5_NO_ADL(type_name<U>)();
 		}
-		
 	};
 	
 	struct type_id {

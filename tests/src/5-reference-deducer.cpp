@@ -427,9 +427,6 @@ struct type_1000 {
 };
 
 struct agg_0000 {
-	agg_0000() {}
-	agg_0000(injected) {}
-	
 	injected i;
 };
 
@@ -595,18 +592,7 @@ TEST_CASE("Deducer internals can detect value categories", "[deducer]") {
 			CHECK(not kangaru::construction_tree_needs<type_1000, int&&>);
 			CHECK(not kangaru::construction_tree_needs<type_1000, int const&&>);
 			
-			// TODO: Fix me: since agg is default constructible, is gets choosen?
-			//       This is weird, the function choosen for being called should not
-			//       depend on what the source can provide
-			static_assert(std::same_as<
-				std::index_sequence<0>,
-				kangaru::detail::injector_private::parameter_sequence_t<kangaru::constructor_function<agg_0000>, 4>
-			>);
-			static_assert(std::same_as<
-				std::index_sequence<>,
-				kangaru::detail::injector_private::composable_sequence_t<kangaru::constructor_function<agg_0000>, kangaru::strict_deducer<kangaru::none_source&>, 4>
-			>);
-			//CHECK(kangaru::construction_tree_needs<agg_0000, injected>);
+			CHECK(kangaru::construction_tree_needs<agg_0000, injected>);
 			CHECK(not kangaru::construction_tree_needs<agg_0000, injected&>);
 			CHECK(not kangaru::construction_tree_needs<agg_0000, injected const&>);
 			CHECK(not kangaru::construction_tree_needs<agg_0000, injected&&>);

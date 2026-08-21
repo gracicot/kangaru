@@ -28,6 +28,26 @@ TEST_CASE("Injectors can compose", "[injector]") {
 		REQUIRE(not std::invocable<decltype(injector), decltype(function3)>);
 	}
 	
+	SECTION("Spread injector chooses function it can call") {
+		struct function_t {
+			auto operator()(sleepy) { return 1; }
+			auto operator()(grumpy, grumpy) { return 2; }
+		};
+		
+		auto injector = kangaru::make_spread_injector(sleepy_value);
+		static_assert(not kangaru::callable<decltype(injector), function_t>);
+	}
+	
+	SECTION("Spread injector chooses function it can call with empty fallback") {
+		struct function_t {
+			auto operator()() { return 1; }
+			auto operator()(grumpy, grumpy) { return 2; }
+		};
+		
+		auto injector = kangaru::make_spread_injector(sleepy_value);
+		static_assert(not kangaru::callable<decltype(injector), function_t>);
+	}
+	
 	SECTION("Spread injector") {
 		auto injector = kangaru::make_spread_injector(kangaru::tie(sleepy_value, grumpy_value));
 		

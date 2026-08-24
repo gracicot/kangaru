@@ -20,6 +20,14 @@ struct grumpy_source {
 	int token = 0;
 };
 
+struct abstract {
+	virtual ~abstract() = 0;
+};
+
+abstract::~abstract() = default;
+
+struct concrete : abstract {};
+
 
 TEST_CASE("Sources can provide", "[source]") {
 	CHECK((std::same_as<sleepy, decltype(kangaru::provide<sleepy>(sleepy_source{}))>));
@@ -115,6 +123,12 @@ TEST_CASE("Sources can provide", "[source]") {
 		auto source_ref = kangaru::ref(source);
 		CHECK(std::addressof(source) == std::addressof(source_ref.unwrap()));
 		CHECK(std::same_as<sleepy, decltype(kangaru::provide<sleepy>(source_ref))>);
+	}
+	
+	SECTION("Derived reference to source") {
+		auto source = kangaru::derived_reference_source<abstract, concrete>{};
+		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
+		CHECK([](abstract&) { return 0; }(deducer) == 0);
 	}
 }
 

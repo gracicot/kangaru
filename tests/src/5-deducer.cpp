@@ -395,16 +395,78 @@ TEST_CASE("Deducer can deduce reference types", "[deducer]") {
 			CHECK(s.how == by_rvalue_const_reference);
 		});
 	}
+
+	SECTION("Can deduce values prvalues") {
+		struct grumpy { int token; };
+		struct grumpy_source {
+			constexpr auto provide() & -> grumpy {
+				return grumpy{.token = token++};
+			}
+			
+			int token = 0;
+		};
+
+		auto source = grumpy_source{};
+		auto deducer = kangaru::basic_deducer<grumpy_source&>{source};
+		
+		CHECK([](grumpy g) { return g; }(deducer).token == 0);
+		CHECK([](grumpy g) { return g; }(deducer).token == 1);
+	}
+	
+	SECTION("By const rvalue non strict") {
+		auto source = kangaru::tie(
+			source_by_rvalue_ref_const
+		);
+		
+		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
+		
+		auto lvalue = [](sneezy&) {};
+		auto rvalue = [](sneezy&&) {};
+		auto lvalue_const = [](sneezy const&) {};
+		
+		static_assert(not kangaru::callable<decltype(lvalue), decltype(deducer)>);
+		
+		// Call to function receiving rvalue can materialize temporary
+		static_assert(kangaru::callable<decltype(rvalue), decltype(deducer)>);
+		static_assert(kangaru::callable<decltype(lvalue_const), decltype(deducer)>);
+	}
+	
+	SECTION("Correctly deduce const& when has a source of any other kind of references") {
+		auto source = kangaru::compose(
+			source_by_lvalue_ref,
+			source_by_rvalue_ref
+		);
+		
+		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
+		
+		CHECK([](sneezy const& g) { return g; }(deducer).how == by_lvalue_reference);
+	}
+	
+	SECTION("Chooses between const& and &&") {
+		auto source = kangaru::compose(
+			source_by_lvalue_ref,
+			source_by_rvalue_ref
+		);
+		
+		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
+		
+		CHECK([](sneezy const& g) { return g; }(deducer).how == by_lvalue_reference);
+		CHECK([](sneezy&& g) { return g; }(deducer).how == by_rvalue_reference);
+		
+		SECTION("Prioritize rvalue when there's a choice") {
+			CHECK([](sneezy g) { return g; }(deducer).how == by_rvalue_reference);
+		}
+		
+		SECTION("Prioritize prvalue when possible") {
+			auto source2 = kangaru::compose(source_by_value, source);
+			auto deducer = kangaru::basic_deducer<decltype(source2)&>{source2};
+			
+			CHECK([](sneezy g) { return g; }(deducer).how == by_value);
+		}
+	}
 }
 
-template<typename T>
-auto get_int() {
-	static_assert(not std::same_as<T, T>);
-	return 0;
-}
-
-struct injected {
-};
+struct injected {};
 
 struct type_0000 {
 	explicit type_0000(injected);

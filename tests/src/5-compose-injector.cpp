@@ -4,6 +4,10 @@
 struct sleepy {};
 struct grumpy {};
 
+struct needs_int {
+	int a;
+};
+
 TEST_CASE("Injectors can compose", "[injector]") {
 	auto sleepy_value = kangaru::object_source{sleepy{}};
 	auto grumpy_value = kangaru::object_source{grumpy{}};
@@ -46,6 +50,13 @@ TEST_CASE("Injectors can compose", "[injector]") {
 		
 		auto injector = kangaru::make_spread_injector(sleepy_value);
 		static_assert(not kangaru::callable<decltype(injector), function_t>);
+	}
+	
+	SECTION("Spread injector chooses one constructor function no matter the source") {
+		auto injector1 = kangaru::make_spread_injector(kangaru::object_source{42});
+		auto injector2 = kangaru::make_spread_injector(kangaru::none_source{});
+		static_assert(kangaru::callable<decltype(injector1), kangaru::constructor_function<needs_int>>);
+		static_assert(not kangaru::callable<decltype(injector2), kangaru::constructor_function<needs_int>>);
 	}
 	
 	SECTION("Spread injector") {

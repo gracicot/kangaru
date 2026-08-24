@@ -12,22 +12,17 @@ struct sleepy_source {
 	}
 };
 
-struct grumpy_source {
-	friend constexpr auto provide(grumpy_source& source) -> grumpy {
-		return grumpy{.token = source.token++};
-	}
-	
-	int token = 0;
-};
-
 struct abstract {
+	int a;
+	explicit constexpr abstract(int a) : a{a} {}
 	virtual ~abstract() = 0;
 };
 
 abstract::~abstract() = default;
 
-struct concrete : abstract {};
-
+struct concrete : abstract {
+	explicit constexpr concrete(int a) : abstract{a} {}
+};
 
 TEST_CASE("Sources can provide", "[source]") {
 	CHECK((std::same_as<sleepy, decltype(kangaru::provide<sleepy>(sleepy_source{}))>));
@@ -126,53 +121,9 @@ TEST_CASE("Sources can provide", "[source]") {
 	}
 	
 	SECTION("Derived reference to source") {
-		auto source = kangaru::derived_reference_source<abstract, concrete>{};
-		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
-		CHECK([](abstract&) { return 0; }(deducer) == 0);
-	}
-}
-
-TEST_CASE("Deducer uses sources to deduce", "[deducer]") {
-	auto source = grumpy_source{};
-	
-	SECTION("Can deduce values prvalues") {
-		auto deducer = kangaru::basic_deducer<grumpy_source&>{source};
-		
-		CHECK([](grumpy g) { return g; }(deducer).token == 0);
-		CHECK([](grumpy g) { return g; }(deducer).token == 1);
-	}
-	
-	SECTION("Chooses between const& and &&") {
-		auto source = kangaru::compose(
-			kangaru::reference_source<grumpy const>{grumpy{.token = 1}},
-			kangaru::rvalue_source{grumpy{.token = 2}}
-		);
-		
-		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
-		
-		CHECK([](grumpy const& g) { return g; }(deducer).token == 1);
-		CHECK([](grumpy&& g) { return g; }(deducer).token == 2);
-		
-		SECTION("Prioritize rvalue when there's a choice") {
-			CHECK([](grumpy g) { return g; }(deducer).token == 2);
-		}
-		
-		SECTION("Prioritize prvalue when possible") {
-			auto source2 = kangaru::compose(kangaru::object_source{grumpy{.token = 3}}, source);
-			auto deducer = kangaru::basic_deducer<decltype(source2)&>{source2};
-			
-			CHECK([](grumpy g) { return g; }(deducer).token == 3);
-		}
-	}
-	
-	SECTION("Correctly deduce const& when has a source of any other kind of references") {
-		auto source = kangaru::compose(
-			kangaru::reference_source<grumpy>{grumpy{.token = 1}},
-			kangaru::rvalue_source{grumpy{.token = 2}}
-		);
-		
-		auto deducer = kangaru::basic_deducer<decltype(source)&>{source};
-		
-		CHECK([](grumpy const& g) { return g; }(deducer).token == 1);
+		auto source = kangaru::derived_reference_source<abstract, concrete>{1};
+		static_assert(not kangaru::source_of<decltype(source), concrete&>);
+		static_assert(kangaru::source_of<decltype(source), abstract&>);
+		CHECK(kangaru::provide<abstract&>(source).a == 1);
 	}
 }

@@ -617,18 +617,23 @@ KANGARU5_EXPORT namespace kangaru {
 		Deducer deducer;
 	};
 	
+	template<reference_kind category>
+	inline constexpr auto allow_value_category_deduction(deducer auto deduce) {
+		return filtered_value_category_deducer<decltype(deduce), category>{deduce};
+	}
+	
 	template<deducer Deducer>
 	using exclude_prvalue_deducer = filtered_value_category_deducer<Deducer, reference_kind::all_reference_kind>;
+	
+	inline constexpr auto exclude_prvalue_deduction(deducer auto deduce) {
+		return exclude_prvalue_deducer<decltype(deduce)>{deduce};
+	}
 	
 	template<deducer Deducer>
 	using exclude_references_deducer = filtered_value_category_deducer<Deducer, reference_kind::none>;
 	
-	template<deducer Deducer>
-	using lvalue_reference_deducer = filtered_value_category_deducer<Deducer, reference_kind::lvalue_reference>;
-
-	template<reference_kind category>
-	inline constexpr auto allow_value_category_deduction(deducer auto deduce) {
-		return filtered_value_category_deducer<decltype(deduce), category>{deduce};
+	inline constexpr auto exclude_reference_deduction(deducer auto deduce) {
+		return exclude_references_deducer<decltype(deduce)>{deduce};
 	}
 	
 	template<injectable Exclude>

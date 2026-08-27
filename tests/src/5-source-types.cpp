@@ -24,6 +24,128 @@ struct concrete : abstract {
 	explicit constexpr concrete(int a) : abstract{a} {}
 };
 
+struct not_injectable {};
+
+template<>
+struct kangaru::allow_injection_using<not_injectable> : std::false_type {};
+
+template<>
+struct kangaru::allow_injection_using<not_injectable&> : std::false_type {};
+
+struct not_injectable_source {
+	constexpr auto provide() const {
+		return not_injectable{};
+	}
+};
+
+struct not_injectable_ref_source {
+	constexpr auto provide() -> not_injectable& {
+		return ni;
+	}
+	
+	not_injectable ni;
+};
+
+struct not_injectable_const_ref_source {
+	constexpr auto provide() const -> not_injectable const& {
+		return ni;
+	}
+	
+	not_injectable ni;
+};
+
+static_assert(kangaru::deducible_prvalue<sleepy, sleepy_source>);
+static_assert(not kangaru::deducible_lvalue<sleepy, sleepy_source>);
+static_assert(not kangaru::deducible_rvalue<sleepy, sleepy_source>);
+static_assert(not kangaru::deducible_lvalue_const<sleepy, sleepy_source>);
+static_assert(not kangaru::deducible_rvalue_const<sleepy, sleepy_source>);
+
+static_assert(kangaru::deducible_prvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(kangaru::deducible_lvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(not kangaru::deducible_rvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(kangaru::deducible_lvalue_const<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(not kangaru::deducible_rvalue_const<sleepy, kangaru::reference_source<sleepy>>);
+
+static_assert(kangaru::deducible_prvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_lvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_rvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(kangaru::deducible_lvalue_const<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_rvalue_const<sleepy, kangaru::reference_source<sleepy const>>);
+
+static_assert(kangaru::deducible_prvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(not kangaru::deducible_lvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(kangaru::deducible_rvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(kangaru::deducible_lvalue_const<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(kangaru::deducible_rvalue_const<sleepy, kangaru::rvalue_source<sleepy>>);
+
+static_assert(kangaru::deducible_prvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(not kangaru::deducible_lvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(not kangaru::deducible_rvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(kangaru::deducible_lvalue_const<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(kangaru::deducible_rvalue_const<sleepy, kangaru::rvalue_source<sleepy const>>);
+
+// Strict does not allow deduction of other value categories
+static_assert(not kangaru::deducible_strict_prvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(kangaru::deducible_strict_lvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_rvalue<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_lvalue_const<sleepy, kangaru::reference_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_rvalue_const<sleepy, kangaru::reference_source<sleepy>>);
+
+static_assert(not kangaru::deducible_strict_prvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_lvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_rvalue<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(kangaru::deducible_strict_lvalue_const<sleepy, kangaru::reference_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_rvalue_const<sleepy, kangaru::reference_source<sleepy const>>);
+
+static_assert(not kangaru::deducible_strict_prvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_lvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(kangaru::deducible_strict_rvalue<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_lvalue_const<sleepy, kangaru::rvalue_source<sleepy>>);
+static_assert(not kangaru::deducible_strict_rvalue_const<sleepy, kangaru::rvalue_source<sleepy>>);
+
+static_assert(not kangaru::deducible_strict_prvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_lvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_rvalue<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(not kangaru::deducible_strict_lvalue_const<sleepy, kangaru::rvalue_source<sleepy const>>);
+static_assert(kangaru::deducible_strict_rvalue_const<sleepy, kangaru::rvalue_source<sleepy const>>);
+
+// Not injectable tests
+static_assert(not kangaru::deducible_prvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_lvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_rvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_lvalue_const<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_rvalue_const<not_injectable, not_injectable_source>);
+
+static_assert(not kangaru::deducible_prvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_lvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_rvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_lvalue_const<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_rvalue_const<not_injectable, not_injectable_ref_source>);
+
+static_assert(not kangaru::deducible_prvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_lvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_rvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(kangaru::deducible_lvalue_const<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_rvalue_const<not_injectable, not_injectable_const_ref_source>);
+
+static_assert(not kangaru::deducible_strict_prvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_strict_lvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_strict_rvalue<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_strict_lvalue_const<not_injectable, not_injectable_source>);
+static_assert(not kangaru::deducible_strict_rvalue_const<not_injectable, not_injectable_source>);
+
+static_assert(not kangaru::deducible_strict_prvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_strict_lvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_strict_rvalue<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_strict_lvalue_const<not_injectable, not_injectable_ref_source>);
+static_assert(not kangaru::deducible_strict_rvalue_const<not_injectable, not_injectable_ref_source>);
+
+static_assert(not kangaru::deducible_strict_prvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_strict_lvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_strict_rvalue<not_injectable, not_injectable_const_ref_source>);
+static_assert(kangaru::deducible_strict_lvalue_const<not_injectable, not_injectable_const_ref_source>);
+static_assert(not kangaru::deducible_strict_rvalue_const<not_injectable, not_injectable_const_ref_source>);
+
 TEST_CASE("Sources can provide", "[source]") {
 	CHECK((std::same_as<sleepy, decltype(kangaru::provide<sleepy>(sleepy_source{}))>));
 	
@@ -103,6 +225,22 @@ TEST_CASE("Sources can provide", "[source]") {
 			static_assert(kangaru::source_of<decltype(source2), int const&>);
 			static_assert(not kangaru::source_of<decltype(std::as_const(source2)), int&>);
 			static_assert(not kangaru::source_of<decltype(std::as_const(source2)), int const&>);
+		}
+		
+		SECTION("Can concat composed source") {
+			auto source3 = kangaru::object_source<int>{2};
+			auto concatenated = kangaru::composed_source_cat(source, kangaru::tie(source3));
+			static_assert(std::same_as<
+				kangaru::composed_source<
+					kangaru::source_reference_wrapper<sleepy_source>,
+					kangaru::source_reference_wrapper<kangaru::reference_source<grumpy>>,
+					kangaru::source_reference_wrapper<kangaru::object_source<int>>
+				>,
+				decltype(concatenated)
+			>);
+			CHECK(kangaru::provide<int>(concatenated) == 2);
+			source3 = kangaru::object_source{12};
+			CHECK(kangaru::provide<int>(concatenated) == 12);
 		}
 	}
 	

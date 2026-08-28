@@ -1,12 +1,13 @@
 #ifndef KANGARU5_DETAIL_LAZY_HPP
 #define KANGARU5_DETAIL_LAZY_HPP
 
-#include "deducer.hpp"
 #include "source.hpp"
 #include "optional.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <concepts>
+#include <type_traits>
+#include <utility>
 #endif
 
 #include "define.hpp"
@@ -15,7 +16,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<injectable T, source_of<T> Source>
 	struct lazy {
 		template<allows_construction_of<Source> S>
-		explicit constexpr lazy(S&& source) noexcept : source(KANGARU5_FWD(source)) {}
+		explicit constexpr lazy(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		constexpr auto operator*() & -> T {
 			ensure_initialized();
@@ -32,9 +33,14 @@ KANGARU5_EXPORT namespace kangaru {
 			return object.operator->();
 		}
 		
-		template<typename U> requires std::convertible_to<U&&, T&>
-		constexpr auto object_or(U&& default_value) const noexcept -> T& {
-			return object.has_value() ? static_cast<T>(*object) : KANGARU5_FWD(default_value);
+		template<typename U> requires(std::is_copy_constructible_v<T> and std::convertible_to<U&&, T>)
+		constexpr auto object_or(U&& default_value) const& -> T {
+			return object.value_or(KANGARU5_FWD(default_value));
+		}
+		
+		template<typename U> requires(std::is_move_constructible_v<T> and std::convertible_to<U&&, T>)
+		constexpr auto object_or(U&& default_value) && -> T {
+			return std::move(object).value_or(KANGARU5_FWD(default_value));
 		}
 		
 	private:
@@ -49,6 +55,11 @@ KANGARU5_EXPORT namespace kangaru {
 		Source source;
 		optional<as_contained> object;
 	};
+	
+	template<injectable T>
+	inline constexpr auto make_lazy(forwarded_source auto&& source) {
+		return lazy<T, decltype(source)>{KANGARU5_FWD(source)};
+	}
 	
 	template<source Source, injectable Type>
 	struct with_lazy_evaluation_of {

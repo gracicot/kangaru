@@ -28,4 +28,3 @@ static_assert([]{
 	a.deallocate_object<int>(obj);
 	return result;
 }() == 4);
-

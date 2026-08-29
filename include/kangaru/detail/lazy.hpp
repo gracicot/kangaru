@@ -58,7 +58,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<injectable T>
 	inline constexpr auto make_lazy(forwarded_source auto&& source) {
-		return lazy<T, decltype(source)>{KANGARU5_FWD(source)};
+		return lazy<T, deduced_source_type<decltype(source)>>{KANGARU5_FWD(source)};
 	}
 	
 	template<source Source, injectable Type>

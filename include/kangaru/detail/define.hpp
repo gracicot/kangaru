@@ -55,6 +55,12 @@
 	#else
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() false
 	#endif
+	
+	#if __has_feature(cxx_rtti)
+		#define KANGARU5_RTTI_AVAILABLE() true
+	#else
+		#define KANGARU5_RTTI_AVAILABLE() false
+	#endif
 #elif KANGARU5_IS_GNU()
 	#define KANGARU5_NO_UNIQUE_ADDRESS [[no_unique_address]]
 	#define KANGARU5_INLINE [[gnu::always_inline]]
@@ -71,6 +77,12 @@
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() (__cpp_explicit_this_parameter >= 202110L)
 	#else
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() false
+	#endif
+	
+	#if defined(__GXX_RTTI)
+		#define KANGARU5_RTTI_AVAILABLE() true
+	#else
+		#define KANGARU5_RTTI_AVAILABLE() false
 	#endif
 #elif KANGARU5_IS_MSVC()
 	// Use msvc::no_unique_address when feedback item 11026048 is fixed
@@ -89,6 +101,12 @@
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() true
 	#else
 		#define KANGARU5_DEDUCING_THIS_SUPPORTED() false
+	#endif
+	
+	#if defined(_CPPRTTI)
+		#define KANGARU5_RTTI_AVAILABLE() true
+	#else
+		#define KANGARU5_RTTI_AVAILABLE() false
 	#endif
 #else
 	#error "Unrecognized compiler"

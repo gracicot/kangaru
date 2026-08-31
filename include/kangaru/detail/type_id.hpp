@@ -7,6 +7,7 @@
 #include <string_view>
 #include <cstddef>
 #include <compare>
+#include <typeindex>
 #endif
 
 #include "define.hpp"
@@ -64,6 +65,10 @@ KANGARU5_EXPORT namespace kangaru {
 		template<typename U>
 		friend constexpr auto operator<=>(static_type_id const&, static_type_id<U> const&) {
 			return KANGARU5_NO_ADL(type_name<T>)() <=> KANGARU5_NO_ADL(type_name<U>)();
+		}
+		
+		constexpr operator std::type_index() const {
+			return typeid(T);
 		}
 	};
 	

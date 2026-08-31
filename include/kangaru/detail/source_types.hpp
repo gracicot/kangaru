@@ -16,7 +16,6 @@
 #include <concepts>
 #include <algorithm>
 #include <type_traits>
-#include <functional>
 #endif
 
 #include "define.hpp"
@@ -189,9 +188,6 @@ KANGARU5_EXPORT namespace kangaru {
 		F function;
 	};
 	
-	template<injectable T>
-	using dynamic_function_source = function_source<std::function<T()>>;
-	
 	template<unqualified_object T>
 	struct object_source {
 		template<not_self<object_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
@@ -304,32 +300,30 @@ KANGARU5_EXPORT namespace kangaru {
 	template<object T>
 	struct pointer_source {
 		template<not_self<pointer_source> From = T> requires(not deducer<std::remove_cvref_t<From>> and std::convertible_to<From&&, T>)
-		explicit constexpr pointer_source(From&& object) : object(KANGARU5_FWD(object)) {}
+		explicit constexpr pointer_source(From&& object) :
+			object{
+				std::make_unique<T>(
+					KANGARU5_FWD(object)
+				)
+			} {}
 		
 		template<typename... Args> requires((... and not_self<Args, pointer_source>) and constructor_callable<T, Args&&...>)
-		constexpr pointer_source(Args&&... args) : object(KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...)) {}
+		constexpr pointer_source(Args&&... args) :
+			object{
+				std::make_unique<T>(
+					KANGARU5_NO_ADL(construct_in_place<T>)(KANGARU5_FWD(args)...)
+				)
+			} {}
 		
-		constexpr auto provide() & -> T* {
-			return pointer();
-		}
-		
-		constexpr auto provide() && -> T* {
-			return pointer();
-		}
-		
-		constexpr auto provide() const& -> T const* {
-			return pointer();
-		}
-		
-		constexpr auto provide() const&& -> T const* {
+		constexpr auto provide() const -> T* {
 			return pointer();
 		}
 		
 	private:
-		T object;
+		std::unique_ptr<T> object;
 		
-		constexpr auto pointer() -> T* {
-			return std::addressof(object);
+		constexpr auto pointer() const -> T* {
+			return object.get();
 		}
 		
 		template<kangaru::object U>

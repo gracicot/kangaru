@@ -164,6 +164,9 @@ KANGARU5_EXPORT namespace kangaru {
 		    forwarded_wrapping_source<Source>
 		and source_of<forwarded_wrapped_source_t<Source>, T>;
 	
+	template<typename T>
+	using deduced_source_type = typename detail::source_private::deduced_source_type_impl<std::decay_t<T>>::type;
+	
 	template<injectable T, source Source>
 	struct provide_using {
 		template<allows_construction_of<Source> S>
@@ -189,8 +192,10 @@ KANGARU5_EXPORT namespace kangaru {
 		Source source;
 	};
 	
-	template<typename T>
-	using deduced_source_type = typename detail::source_private::deduced_source_type_impl<std::decay_t<T>>::type;
+	template<injectable T>
+	inline constexpr auto make_provide_using(forwarded_source auto&& source) {
+		return provide_using<T, deduced_source_type<decltype(source)>>{KANGARU5_FWD(source)};
+	}
 } // namespace kangaru
 
 #include "undef.hpp"

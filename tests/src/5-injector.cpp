@@ -1,29 +1,29 @@
 #include <catch2/catch_test_macros.hpp>
 #include <kangaru/kangaru.hpp>
 
-struct sleepy {};
-struct grumpy {};
+struct injected1 {};
+struct injected2 {};
 
 struct needs_int {
 	int a;
 };
 
 TEST_CASE("Injectors can compose", "[injector]") {
-	auto sleepy_value = kangaru::object_source{sleepy{}};
-	auto grumpy_value = kangaru::object_source{grumpy{}};
+	auto injected1_value = kangaru::object_source{injected1{}};
+	auto injected2_value = kangaru::object_source{injected2{}};
 	
 	SECTION("Simple injector") {
-		auto injector = kangaru::make_simple_injector(sleepy_value);
+		auto injector = kangaru::make_simple_injector(injected1_value);
 		
-		int result = injector([](sleepy) {
+		int result = injector([](injected1) {
 			return 42;
 		});
 		
 		REQUIRE(result == 42);
 		
-		auto const function1 = [](sleepy) {};
-		auto const function2 = [](grumpy) {};
-		auto const function3 = [](sleepy, sleepy) {};
+		auto const function1 = [](injected1) {};
+		auto const function2 = [](injected2) {};
+		auto const function3 = [](injected1, injected1) {};
 		auto const function4 = []() {};
 		
 		REQUIRE(not std::invocable<decltype(injector), decltype(function4)>);
@@ -34,21 +34,21 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	
 	SECTION("Spread injector chooses function it can call") {
 		struct function_t {
-			auto operator()(sleepy) { return 1; }
-			auto operator()(grumpy, grumpy) { return 2; }
+			auto operator()(injected1) { return 1; }
+			auto operator()(injected2, injected2) { return 2; }
 		};
 		
-		auto injector = kangaru::make_spread_injector(sleepy_value);
+		auto injector = kangaru::make_spread_injector(injected1_value);
 		static_assert(not kangaru::callable<decltype(injector), function_t>);
 	}
 	
 	SECTION("Spread injector chooses function it can call with empty fallback") {
 		struct function_t {
 			auto operator()() { return 1; }
-			auto operator()(grumpy, grumpy) { return 2; }
+			auto operator()(injected2, injected2) { return 2; }
 		};
 		
-		auto injector = kangaru::make_spread_injector(sleepy_value);
+		auto injector = kangaru::make_spread_injector(injected1_value);
 		static_assert(not kangaru::callable<decltype(injector), function_t>);
 	}
 	
@@ -60,13 +60,13 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	}
 	
 	SECTION("Spread injector") {
-		auto injector = kangaru::make_spread_injector(kangaru::tie(sleepy_value, grumpy_value));
+		auto injector = kangaru::make_spread_injector(kangaru::tie(injected1_value, injected2_value));
 		
-		REQUIRE(42 == injector([](sleepy) {
+		REQUIRE(42 == injector([](injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy) {
+		REQUIRE(42 == injector([](injected2) {
 			return 42;
 		}));
 		
@@ -74,40 +74,40 @@ TEST_CASE("Injectors can compose", "[injector]") {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, grumpy) {
+		REQUIRE(42 == injector([](injected1, injected2) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected1) {
 			return 42;
 		}));
 	}
 	
 	SECTION("Composed simple then spread injector") {
 		auto injector = kangaru::concat(
-			kangaru::make_simple_injector(sleepy_value),
-			kangaru::make_composable_spread_injector(grumpy_value)
+			kangaru::make_simple_injector(injected1_value),
+			kangaru::make_composable_spread_injector(injected2_value)
 		);
 		
-		REQUIRE(42 == injector([](sleepy) {
+		REQUIRE(42 == injector([](injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, grumpy) {
+		REQUIRE(42 == injector([](injected1, injected2) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, grumpy, grumpy) {
+		REQUIRE(42 == injector([](injected1, injected2, injected2) {
 			return 42;
 		}));
 		
-		auto const function1 = [](grumpy) {};
-		auto const function2 = [](sleepy, sleepy) {};
-		auto const function3 = [](sleepy, grumpy, sleepy) {};
+		auto const function1 = [](injected2) {};
+		auto const function2 = [](injected1, injected1) {};
+		auto const function3 = [](injected1, injected2, injected1) {};
 		
 		REQUIRE(not std::invocable<decltype(injector), decltype(function1)>);
 		REQUIRE(not std::invocable<decltype(injector), decltype(function2)>);
@@ -116,70 +116,70 @@ TEST_CASE("Injectors can compose", "[injector]") {
 	
 	SECTION("Composed spread then simple injector") {
 		auto injector = kangaru::concat(
-			kangaru::make_composable_spread_injector(grumpy_value),
-			kangaru::make_simple_injector(sleepy_value)
+			kangaru::make_composable_spread_injector(injected2_value),
+			kangaru::make_simple_injector(injected1_value)
 		);
 		
-		REQUIRE(42 == injector([](sleepy) {
+		REQUIRE(42 == injector([](injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, grumpy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected2, injected1) {
 			return 42;
 		}));
 		
-		auto const function1 = [](sleepy, grumpy) {};
+		auto const function1 = [](injected1, injected2) {};
 		
 		REQUIRE(not std::invocable<decltype(injector), decltype(function1)>);
 	}
 	
 	SECTION("Composed spread then spread injector") {
 		auto injector = kangaru::concat(
-			kangaru::make_composable_spread_injector(grumpy_value),
-			kangaru::make_composable_spread_injector(sleepy_value)
+			kangaru::make_composable_spread_injector(injected2_value),
+			kangaru::make_composable_spread_injector(injected1_value)
 		);
 		
-		REQUIRE(42 == injector([](sleepy) {
+		REQUIRE(42 == injector([](injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](sleepy, sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected1, injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy) {
+		REQUIRE(42 == injector([](injected2) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, grumpy, sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected2, injected1, injected1) {
 			return 42;
 		}));
 		
-		REQUIRE(42 == injector([](grumpy, grumpy, grumpy, sleepy, sleepy) {
+		REQUIRE(42 == injector([](injected2, injected2, injected2, injected1, injected1) {
 			return 42;
 		}));
 		
-		auto const function1 = [](sleepy, grumpy) {};
+		auto const function1 = [](injected1, injected2) {};
 		
 		REQUIRE(not std::invocable<decltype(injector), decltype(function1)>);
 	}

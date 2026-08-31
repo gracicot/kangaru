@@ -22,6 +22,7 @@ module;
 #include <initializer_list>
 #include <algorithm>
 #include <tuple>
+#include <typeindex>
 #include <version>
 
 export module kangaru;

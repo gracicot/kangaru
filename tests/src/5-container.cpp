@@ -45,6 +45,14 @@ struct service_d {
 	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<service_d>>) -> std::true_type;
 };
 
+struct stateful_source {
+	constexpr auto provide() {
+		return ++state;
+	}
+	
+	int state;
+};
+
 struct int_source {
 	auto provide() & -> int {
 		return 3;
@@ -333,6 +341,14 @@ TEMPLATE_TEST_CASE("Container act a bit like kangaru 4", "[container]",
 		auto& a1 = std::same_as<TestType, alias_polymorphic_container>
 			? static_cast<service_a&>(container.template provide<service_child_1&>())
 			: container.template provide<service_a&>();
+		
+		SECTION("Base source is a copy") {
+			auto container = TestType::make_container(stateful_source{.state = 0});
+			CHECK(kangaru::provide<int>(container) == 1);
+			auto s = container.scoped();
+			CHECK(kangaru::provide<int>(s) == 2);
+			CHECK(kangaru::provide<int>(container) == 2);
+		}
 		
 		SECTION("Scoping inherit the parent's instances") {
 			auto c = container.scoped();

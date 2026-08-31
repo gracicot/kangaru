@@ -60,7 +60,7 @@ namespace kangaru {
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
-
+		
 		template<forwarded<with_filter> Original, forwarded_source NewSource>
 		static constexpr auto rebind(Original&& original, NewSource&& new_source)
 			-> with_filter<deduced_source_type<NewSource>, Types...>
@@ -72,6 +72,11 @@ namespace kangaru {
 		
 		Source source;
 	};
+	
+	template<injectable... Ts, forwarded_source Source>
+	inline constexpr auto make_source_with_filter(Source&& source) {
+		return with_filter<deduced_source_type<Source>, Ts...>{KANGARU5_FWD(source)};
+	}
 	
 	template<source Source, type_predicate Filter>
 	struct with_filter_if {
@@ -93,11 +98,6 @@ namespace kangaru {
 	template<typename Source, typename Filter>
 		requires(not deducer<std::remove_cvref_t<Source>>)
 	with_filter_if(Source&&, Filter const&) -> with_filter_if<deduced_source_type<Source>, Filter>;
-	
-	template<injectable... Ts, forwarded_source Source>
-	inline constexpr auto make_source_with_filter(Source&& source) {
-		return with_filter<deduced_source_type<Source>, Ts...>{KANGARU5_FWD(source)};
-	}
 	
 	template<forwarded_source Source, std::default_initializable Filter>
 	inline constexpr auto make_source_with_filter_if(Source&& source, [[maybe_unused]] Filter filter) {

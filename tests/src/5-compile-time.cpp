@@ -18,7 +18,7 @@ int main() {
 	};
 	
 	auto t5 = kangaru::provide<type5>(source);
-
+	
 	(void) t5.t4.t3.agg.t1.id;
 	(void) t5.t4.t3.agg.t2.id;
 }

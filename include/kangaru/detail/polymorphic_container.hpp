@@ -209,7 +209,7 @@ namespace kangaru {
 			);
 		}
 		
-		constexpr auto scoped() const& -> polymorphic_container<ref_result_t<Source const&>, Construction, CacheMapping, Cache, Storage>
+		constexpr auto scoped() const& -> polymorphic_container
 		requires(
 			    not reference_wrapper<Cache>
 			and std::default_initializable<Cache>
@@ -218,8 +218,8 @@ namespace kangaru {
 			auto cache = Cache{};
 			cache.insert(state.begin(), state.end());
 			
-			return polymorphic_container<ref_result_t<Source const&>, Construction, CacheMapping, Cache>{
-				KANGARU5_NO_ADL(ref)(state.source.source.source.source.source.source.wrapped_source().source),
+			return polymorphic_container{
+				state.source.source.source.source.source.source.wrapped_source().source,
 				construction,
 				std::move(cache),
 			};

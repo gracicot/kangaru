@@ -204,7 +204,8 @@ KANGARU5_EXPORT namespace kangaru {
 			return map.size();
 		}
 		
-		constexpr auto erase(type_id id) -> size_type {
+		template<injectable T>
+		constexpr auto erase(static_type_id<T> id) -> size_type {
 			return map.erase(id);
 		}
 		

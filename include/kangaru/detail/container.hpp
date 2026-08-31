@@ -155,17 +155,18 @@ KANGARU5_EXPORT namespace kangaru {
 			);
 		}
 		
-		constexpr auto scoped() const& -> container<ref_result_t<Source const&>, Construction, CacheMapping, Cache, Storage>
+		constexpr auto scoped() const& -> container
 		requires(
 			    not reference_wrapper<Cache>
+			and std::copy_constructible<Source>
 			and std::default_initializable<Cache>
 			and std::default_initializable<Storage>
 		) {
 			auto cache = Cache{};
 			cache.insert(state.begin(), state.end());
 			
-			return container<ref_result_t<Source const&>, Construction, CacheMapping, Cache, Storage>{
-				KANGARU5_NO_ADL(ref)(state.source.source.source.wrapped_source().source),
+			return container{
+				state.source.source.source.wrapped_source().source,
 				construction,
 				std::move(cache),
 			};

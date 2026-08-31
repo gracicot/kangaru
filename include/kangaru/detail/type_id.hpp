@@ -67,7 +67,7 @@ KANGARU5_EXPORT namespace kangaru {
 			return KANGARU5_NO_ADL(type_name<T>)() <=> KANGARU5_NO_ADL(type_name<U>)();
 		}
 		
-		constexpr operator std::type_index() const {
+		operator std::type_index() const {
 			return typeid(T);
 		}
 	};

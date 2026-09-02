@@ -64,15 +64,15 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source, injectable Type>
 	struct with_lazy_evaluation_of {
 		template<allows_construction_of<Source> S>
-		explicit constexpr with_lazy_evaluation_of(S&& source) noexcept : source(KANGARU5_FWD(source)) {}
+		explicit constexpr with_lazy_evaluation_of(S&& source) noexcept : lazy_source(KANGARU5_FWD(source)) {}
 		
 		template<forwarded<with_lazy_evaluation_of> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> Type {
-			return *KANGARU5_FWD(source).source;
+			return *KANGARU5_FWD(source).lazy_source;
 		}
 		
 	private:
-		lazy<Type, Source> source;
+		lazy<Type, Source> lazy_source;
 	};
 	
 	template<injectable Type, forwarded_source Source>

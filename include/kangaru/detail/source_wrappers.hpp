@@ -284,32 +284,32 @@ namespace kangaru {
 	template<source Source>
 	struct sealed_source {
 		template<allows_construction_of<Source> S>
-		explicit constexpr sealed_source(S&& source) : source(KANGARU5_FWD(source)) {}
+		explicit constexpr sealed_source(S&& source) : sealed(KANGARU5_FWD(source)) {}
 		
 		template<injectable T, forwarded<sealed_source> Self>
 			requires(source_of<detail::forward_like_t<Self, Source&&>, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
+			return kangaru::provide<T>(KANGARU5_FWD(source).sealed);
 		}
 		
 		constexpr auto wrapped_source() & -> Source& {
-			return source;
+			return sealed;
 		}
 		
 		constexpr auto wrapped_source() && -> Source&& {
-			return std::move(source);
+			return std::move(sealed);
 		}
 		
 		constexpr auto wrapped_source() const& -> Source const& {
-			return source;
+			return sealed;
 		}
 		
 		constexpr auto wrapped_source() const&& -> Source const&& {
-			return std::move(source);
+			return std::move(sealed);
 		}
 		
 	private:
-		Source source;
+		Source sealed;
 	};
 	
 	template<typename Source>

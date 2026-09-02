@@ -265,7 +265,6 @@ TEST_CASE("Sources can provide", "[source]") {
 		CHECK(kangaru::provide<std::shared_ptr<abstract>>(source)->a == 1);
 	}
 	
-	// TODO: Should pointer source act more like shared pointer source?
 	SECTION("Pointer source") {
 		auto grumpy_source = kangaru::pointer_source{value_int{.token = 9}};
 		

@@ -176,7 +176,6 @@ namespace kangaru {
 	private:
 		using base = detail::polymorphic_source_private::any_source_of_base<Types...>;
 		
-		// TODO: Ensure the friend is still needed
 		friend struct any_source_of_one_ref;
 		
 		constexpr any_source_of_ref(

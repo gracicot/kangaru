@@ -31,48 +31,48 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<source Source> requires(not reference_wrapper<std::remove_const_t<Source>>)
 	struct source_reference_wrapper {
-		explicit constexpr source_reference_wrapper(Source& source) noexcept : source{std::addressof(source)} {}
+		explicit constexpr source_reference_wrapper(Source& source) noexcept : source_ptr{std::addressof(source)} {}
 		
 		template<injectable T> requires(source_of<Source&, T>)
 		constexpr auto provide() const& -> T {
-			return kangaru::provide<T>(*source);
+			return kangaru::provide<T>(*source_ptr);
 		}
 		
 		[[nodiscard]]
 		constexpr auto unwrap() const& noexcept -> Source& {
-			return *source;
+			return *source_ptr;
 		}
 		
 	private:
-		Source* source;
+		Source* source_ptr;
 	};
 	
 	template<source_ref Source> requires(not reference_wrapper<std::remove_cvref_t<Source>>)
 	struct source_forwarding_reference_wrapper {
-		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source{std::addressof(source)} {}
+		explicit constexpr source_forwarding_reference_wrapper(Source source) noexcept : source_ptr{std::addressof(source)} {}
 		
 		template<injectable T> requires(source_of<Source&, T>)
 		constexpr auto provide() const& -> T {
-			return kangaru::provide<T>(static_cast<Source&>(*source));
+			return kangaru::provide<T>(static_cast<Source&>(*source_ptr));
 		}
 		
 		template<injectable T> requires(source_of<Source, T>)
 		constexpr auto provide() const&& -> T {
-			return kangaru::provide<T>(static_cast<Source>(*source));
+			return kangaru::provide<T>(static_cast<Source>(*source_ptr));
 		}
 		
 		[[nodiscard]]
 		constexpr auto unwrap() const& noexcept -> Source& {
-			return static_cast<Source&>(*source);
+			return static_cast<Source&>(*source_ptr);
 		}
 		
 		[[nodiscard]]
 		constexpr auto unwrap() const&& noexcept -> Source {
-			return static_cast<Source>(*source);
+			return static_cast<Source>(*source_ptr);
 		}
 		
 	private:
-		std::remove_reference_t<Source>* source;
+		std::remove_reference_t<Source>* source_ptr;
 	};
 	
 	template<typename Source>

@@ -87,7 +87,7 @@ namespace kangaru {
 		
 		template<typename... S>
 			requires(
-				sizeof...(S) == sizeof...(Sources)
+				    sizeof...(S) == sizeof...(Sources)
 				and (... and std::constructible_from<Sources, S&&>)
 			)
 		explicit constexpr composed_source(detail::source_types_private::from_tuple_t, std::tuple<S...>&& sources) :

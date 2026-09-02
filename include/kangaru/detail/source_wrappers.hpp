@@ -146,11 +146,6 @@ namespace kangaru {
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return *kangaru::provide<std::remove_reference_t<T>*>(KANGARU5_FWD(source).source);
 		}
-		
-		template<object T, forwarded<with_dereference> Self> requires(not pointer<T> and wrapping_source_of<Self, T>)
-		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS forwarded<with_dereference> auto&& source) -> T {
-			return kangaru::provide<T>(KANGARU5_FWD(source).source);
-		}
 	};
 	
 	template<typename T> requires(not deducer<std::remove_cvref_t<T>>)
@@ -198,9 +193,9 @@ namespace kangaru {
 		friend auto attribute(second_step_init<with_cast_from<S, F>>) -> call_second_step_from_attribute_on_wrapped_source;
 	};
 	
-	template<injectable From>
-	inline constexpr auto make_source_with_cast_from(forwarded_source auto&& source) -> with_cast_from<deduced_source_type<decltype(source)>, From> {
-		return with_cast_from<deduced_source_type<decltype(source)>, From>{KANGARU5_FWD(source)};
+	template<injectable... From>
+	inline constexpr auto make_source_with_cast_from(forwarded_source auto&& source) -> with_cast_from<deduced_source_type<decltype(source)>, From...> {
+		return with_cast_from<deduced_source_type<decltype(source)>, From...>{KANGARU5_FWD(source)};
 	}
 	
 	template<source Source>
@@ -229,10 +224,7 @@ namespace kangaru {
 	struct with_provide_using_source {
 		template<injectable T, forwarded<with_provide_using_source> Self>
 			requires(
-				// We prevent instanciation of this function with T as a SourceFor<...> to prevent
-				// recursive constaint evaluation
-				    not detail::is_specialisation_of_v<SourceFor, T>
-				and requires { typename SourceFor<T>; }
+				    requires { typename SourceFor<T>; }
 				and source_of<SourceFor<T>, T>
 				and wrapping_source_of<Self, SourceFor<T>>
 			)

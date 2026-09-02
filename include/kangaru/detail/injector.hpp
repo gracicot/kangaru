@@ -465,25 +465,6 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 	}
 	
-	// TODO: While this implementation is simpler, it makes GCC cry
-	/* auto compose(auto first, auto second) {
-		constexpr auto call_function = [](auto function, auto... args_first) {
-			return [function, args_first...](auto... args_second) -> decltype(function(args_first..., args_second...)) {
-				return function(args_first..., args_second...);
-			};
-		};
-		
-		auto inner_injector = [second, call_function](auto function) {
-			return [call_function, function, second](auto... args_first) -> decltype(second(call_function(function, args_first...))) {
-				return second(call_function(function, args_first...));
-			};
-		};
-		
-		return [inner_injector, first](auto function) -> decltype(first(inner_injector(function))) {
-			return first(inner_injector(function));
-		};
-	} */
-	
 	template<function_object Function, function_object MakeInjector>
 	struct call_with_injector {
 	private:
@@ -495,7 +476,7 @@ KANGARU5_EXPORT namespace kangaru {
 			template<deducer... Deducers>
 			constexpr auto operator()(Deducers... deduce) const
 				-> detail::call_result_t<F&&, exclude_deducer<T, decltype(deduce)>...>
-			// TODO: It seems we need to check the return type here and I can't understand why.
+			// TODO: It seems we need to check the return type here but it's a bit unclear why.
 			//       Skipping this check or putting this check anywhere else completely fails.
 			requires(
 				callable_returns<

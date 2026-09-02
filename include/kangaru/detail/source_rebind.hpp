@@ -20,7 +20,7 @@ namespace kangaru {
 		template<template<typename> typename Branch, source Source>
 			requires(std::constructible_from<Branch<Source>, Source&&>)
 		struct rebind_wrapper<Branch<Source>> {
-			template<source NewSource> requires requires { typename Branch<NewSource>; }
+			template<source NewSource> requires(requires { typename Branch<NewSource>; })
 			struct ttype {
 				using type = Branch<NewSource>;
 			};
@@ -32,7 +32,7 @@ namespace kangaru {
 				and not std::constructible_from<Branch<Source, Param>, Source&&, Param>
 			)
 		struct rebind_wrapper<Branch<Source, Param>> {
-			template<source NewSource> requires requires { typename Branch<NewSource, Param>; }
+			template<source NewSource> requires(requires { typename Branch<NewSource, Param>; })
 			struct ttype {
 				using type = Branch<NewSource, Param>;
 			};
@@ -43,7 +43,7 @@ namespace kangaru {
 				std::constructible_from<Branch<Source, Param>, Source&&>
 			)
 		struct rebind_wrapper<Branch<Source, Param>> {
-			template<source NewSource> requires requires { typename Branch<NewSource, Param>; }
+			template<source NewSource> requires(requires { typename Branch<NewSource, Param>; })
 			struct ttype {
 				using type = Branch<NewSource, Param>;
 			};
@@ -52,9 +52,8 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept transparent_rebindable_wrapping_source =
-		    wrapping_source<std::remove_reference_t<Source>>
+		    forwarded_wrapping_source<Source>
 		and requires(Source source) {
-			// Here we need to used ttype_t instead of directly using ::ttype<...>::type because GCC 12 has issues with it.
 			typename detail::ttype_t<
 				detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Source>>,
 				std::decay_t<decltype(source.source)>
@@ -63,14 +62,15 @@ namespace kangaru {
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept stateful_rebindable_wrapping_source =
-		    wrapping_source<std::remove_reference_t<Source>>
+		    forwarded_wrapping_source<Source>
 		and requires(Source&& source) {
+			// TODO: Use reflection to detect the rebind template function
 			std::remove_cvref_t<Source>::rebind(KANGARU5_FWD(source), none_source{});
 		};
 	
 	KANGARU5_EXPORT template<typename Source>
 	concept rebindable_wrapping_source =
-		   transparent_rebindable_wrapping_source<std::remove_reference_t<Source>>
+		   transparent_rebindable_wrapping_source<Source>
 		or stateful_rebindable_wrapping_source<Source>;
 	
 	namespace detail::source_rebind_private {
@@ -78,7 +78,20 @@ namespace kangaru {
 			template<forwarded_source Wrapper, forwarded_function_object ReplaceLeaf>
 				requires(rebindable_wrapping_source<Wrapper> and not forwarded_reference_wrapper<Wrapper>)
 			constexpr auto operator()(Wrapper&& source, ReplaceLeaf&& replace_leaf) const {
+				static_assert(
+					requires { operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf)); },
+					"Leaf replacement function is not callable with the actual leaf"
+				);
 				if constexpr (stateful_rebindable_wrapping_source<Wrapper>) {
+					static_assert(
+						requires {
+							std::remove_cvref_t<Wrapper>::rebind(
+								KANGARU5_FWD(source),
+								operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
+							);
+						},
+						"Rebind function needs to be callable with the rebound source tree"
+					);
 					return std::remove_cvref_t<Wrapper>::rebind(
 						KANGARU5_FWD(source),
 						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
@@ -88,6 +101,13 @@ namespace kangaru {
 						detail::source_rebind_private::rebind_wrapper<std::remove_cvref_t<Wrapper>>,
 						decltype(operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf)))
 					>;
+					static_assert(
+						std::constructible_from<
+							rebound,
+							decltype(operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf)))
+						>,
+						"Rebound source wrapper needs to be constructible with the rebound source tree"
+					);
 					return rebound{
 						operator()(KANGARU5_FWD(source).source, KANGARU5_FWD(replace_leaf))
 					};

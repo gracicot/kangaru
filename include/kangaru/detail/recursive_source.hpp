@@ -20,8 +20,6 @@
 
 #include "define.hpp"
 
-// TODO: Consider no unique address
-
 namespace kangaru::detail::recursive_source_private {
 	template<source Alternative>
 	struct leaf_as_alternative {

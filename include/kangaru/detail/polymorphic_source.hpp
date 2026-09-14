@@ -2,7 +2,6 @@
 #define KANGARU5_DETAIL_POLYMORPHIC_SOURCE_HPP
 
 #include "type_traits.hpp"
-#include "constructor.hpp"
 #include "concepts.hpp"
 #include "two_step_init.hpp"
 #include "source_reference_wrapper.hpp"
@@ -13,7 +12,6 @@
 #ifndef KANGARU5_MODULES
 #include <memory>
 #include <cstddef>
-#include <new>
 #include <utility>
 #include <tuple>
 #include <concepts>
@@ -267,6 +265,7 @@ namespace kangaru {
 		template<typename>
 		struct override_polymorphic {};
 		
+		// TODO: Should we define a list type and simplify single override?
 		template<typename... Types>
 		struct override_polymorphic<std::tuple<Types...>> {
 			 using type = std::tuple<kangaru::any_source_of_ref<Types>...>;

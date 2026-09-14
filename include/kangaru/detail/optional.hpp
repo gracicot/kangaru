@@ -2,7 +2,6 @@
 #define KANGARU5_DETAIL_OPTIONAL_HPP
 
 #include "concepts.hpp"
-#include "source.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <concepts>
@@ -10,54 +9,66 @@
 #include <memory>
 #include <type_traits>
 #include <utility>
+#include <exception>
 #include <compare>
-#include <functional>
 #endif
 
 #include "define.hpp"
 
-namespace kangaru {
-	KANGARU5_EXPORT struct in_place_t{} inline constexpr in_place;
-	KANGARU5_EXPORT struct nullopt_t {} inline constexpr nullopt;
+namespace kangaru::detail::optional_private {
+	struct empty {};
 	
 	template<typename T>
 	concept optional_suitable = object<T> or lvalue_reference<T>;
+}
+
+KANGARU5_EXPORT namespace kangaru {
+	struct in_place_t {} inline constexpr in_place;
 	
-	KANGARU5_EXPORT template<optional_suitable T>
+	template<detail::optional_private::optional_suitable T>
 	struct optional;
 }
 
 namespace kangaru::detail::optional_private {
-	struct empty {};
-	
 	template<typename T, typename Arg>
 	concept optional_forwarded_construction_object =
 		    different_from<in_place_t, std::decay_t<Arg>>
 		and optional_suitable<T>
-		and different_from<kangaru::optional<T>, std::decay_t<Arg>>
+		and different_from<optional<T>, std::decay_t<Arg>>
 		and std::constructible_from<T, Arg&&>;
 }
 
 KANGARU5_EXPORT namespace kangaru {
+	struct nullopt_t {} inline constexpr nullopt;
+	
+	struct bad_optional_access : std::exception {
+		auto what() const noexcept -> char const* override {
+			return "kangaru::optional::value() called on a disengaged optional";
+		}
+	};
+	
 	template<object T>
 	struct optional<T> {
+		using value_type = T;
+		
 		explicit(false) constexpr optional(nullopt_t) noexcept : engaged{false}, storage{detail::optional_private::empty{}} {}
 		constexpr optional() : optional{nullopt} {};
 		
 		constexpr optional(optional const& other)
-			requires(not std::is_trivially_copy_constructible_v<T>) : engaged{other.engaged}
+			requires(std::is_copy_constructible_v<T> and not (std::is_trivially_copy_constructible_v<T> and std::is_trivially_destructible_v<T>)) :
+				engaged{other.engaged}
 		{
 			if (engaged) {
 				std::construct_at(std::addressof(storage.object), other.storage.object);
 			}
 		}
 		
-		constexpr optional(optional const& other)
-			requires(std::is_trivially_copy_constructible_v<T>) = default;
+		constexpr optional(optional const& other) noexcept
+			requires(std::is_trivially_copy_constructible_v<T> and std::is_trivially_destructible_v<T>) = default;
 		
 		constexpr optional(optional&& other)
 			noexcept(std::is_nothrow_move_constructible_v<T>)
-			requires(not std::is_trivially_move_constructible_v<T>) :
+			requires(std::is_move_constructible_v<T> and not (std::is_trivially_move_constructible_v<T> and std::is_trivially_destructible_v<T>)) :
 				engaged{other.engaged}
 		{
 			if (engaged) {
@@ -65,11 +76,10 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		constexpr optional(optional&& other)
-			noexcept(std::is_nothrow_move_constructible_v<T>)
-			requires(std::is_trivially_move_constructible_v<T>) = default;
+		constexpr optional(optional&& other) noexcept
+			requires(std::is_trivially_move_constructible_v<T> and std::is_trivially_destructible_v<T>) = default;
 		
-		template<injectable U>
+		template<typename U>
 		explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(optional<U> const& other) : engaged{other.has_value()} {
 			if (engaged) {
@@ -77,7 +87,7 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		template<injectable U>
+		template<typename U>
 		explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(optional<U>&& other) : engaged{other.has_value()} {
 			if (engaged) {
@@ -90,26 +100,13 @@ KANGARU5_EXPORT namespace kangaru {
 			engaged{true}, storage{storage_initialize, KANGARU5_FWD(args)...} {}
 		
 		template<typename U, typename... Args> requires std::constructible_from<T, std::initializer_list<U>&, Args&&...>
-		constexpr explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args) : engaged{true}, storage{storage_initialize, KANGARU5_FWD(args)...} {}
+		constexpr explicit optional(in_place_t, std::initializer_list<U> ilist, Args&&... args) : engaged{true}, storage{storage_initialize, ilist, KANGARU5_FWD(args)...} {}
 		
 		template<typename U>
 			requires detail::optional_private::optional_forwarded_construction_object<T, U>
 			explicit(!std::convertible_to<U&&, T>)
 		constexpr optional(U&& value) noexcept(std::is_nothrow_constructible_v<T, U&&>) :
 			engaged{true}, storage{storage_initialize, KANGARU5_FWD(value)} {}
-		
-		constexpr auto swap(optional const& other) -> void {
-			if (other.engaged) {
-				if (engaged) {
-					std::ranges::swap(storage.object, other.storage.object);
-				} else {
-					construct(other.storage.object);
-					other.reset();
-				}
-			} else {
-				reset();
-			}
-		}
 		
 		constexpr auto operator=(optional const& rhs)
 			noexcept(std::is_nothrow_copy_constructible_v<T> and std::is_nothrow_copy_assignable_v<T>) -> optional&
@@ -119,7 +116,7 @@ KANGARU5_EXPORT namespace kangaru {
 				if (engaged) {
 					storage.object = rhs.storage.object;
 				} else {
-					emplace(std::move(rhs.storage.object));
+					emplace(rhs.storage.object);
 				}
 			} else {
 				reset();
@@ -138,7 +135,7 @@ KANGARU5_EXPORT namespace kangaru {
 		{
 			if (rhs.engaged) {
 				if (engaged) {
-					std::ranges::swap(storage.object, rhs.storage.object);
+					storage.object = std::move(rhs.storage.object);
 				} else {
 					emplace(std::move(rhs.storage.object));
 				}
@@ -155,7 +152,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		constexpr ~optional() noexcept requires(std::is_trivially_destructible_v<T>) = default;
 		
-		constexpr ~optional() noexcept(std::is_nothrow_destructible_v<T>) {
+		constexpr ~optional() noexcept {
 			if (engaged) {
 				std::destroy_at(std::addressof(storage.object));
 			}
@@ -169,20 +166,108 @@ KANGARU5_EXPORT namespace kangaru {
 			return *this;
 		}
 		
-		constexpr auto swap(optional&& other) -> void {
+		template<typename U = std::remove_cv_t<T>>
+			requires(
+				    different_from<optional, std::remove_cvref_t<U>>
+				and std::is_constructible_v<T, U>
+				and std::is_assignable_v<T&, U>
+				and (
+					   not std::is_scalar_v<T>
+					or different_from<T, std::decay_t<U>>
+				)
+			)
+		constexpr auto operator=(U&& value) -> optional& {
+			if (engaged) {
+				storage.object = KANGARU5_FWD(value);
+			} else {
+				emplace(KANGARU5_FWD(value));
+			}
+			
+			return *this;
+		}
+		
+		template<typename U>
+			requires(
+				    std::is_constructible_v<T, U>
+				and std::is_assignable_v<T&, U>
+				and not (
+					   std::is_constructible_v<T, optional<U>&>
+					or std::is_constructible_v<T, optional<U> const&>
+					or std::is_constructible_v<T, optional<U>&&>
+					or std::is_constructible_v<T, optional<U> const&&>
+					or std::is_convertible_v<optional<U>&, T>
+					or std::is_convertible_v<optional<U> const&, T>
+					or std::is_convertible_v<optional<U>&&, T>
+					or std::is_convertible_v<optional<U> const&&, T>
+					or std::is_assignable_v<T&, optional<U>&>
+					or std::is_assignable_v<T&, optional<U> const&>
+					or std::is_assignable_v<T&, optional<U>&&>
+					or std::is_assignable_v<T&, optional<U> const&&>
+				)
+			)
+		constexpr auto operator=(optional<U> const& rhs) -> optional& {
+			if (rhs.engaged) {
+				if (engaged) {
+					storage.object = rhs.storage.object;
+				} else {
+					emplace(rhs.storage.object);
+				}
+			} else {
+				reset();
+			}
+			
+			return *this;
+		}
+		
+		template<typename U>
+			requires(
+				    std::is_constructible_v<T, U>
+				and std::is_assignable_v<T&, U>
+				and not (
+					   std::is_constructible_v<T, optional<U>&>
+					or std::is_constructible_v<T, optional<U> const&>
+					or std::is_constructible_v<T, optional<U>&&>
+					or std::is_constructible_v<T, optional<U> const&&>
+					or std::is_convertible_v<optional<U>&, T>
+					or std::is_convertible_v<optional<U> const&, T>
+					or std::is_convertible_v<optional<U>&&, T>
+					or std::is_convertible_v<optional<U> const&&, T>
+					or std::is_assignable_v<T&, optional<U>&>
+					or std::is_assignable_v<T&, optional<U> const&>
+					or std::is_assignable_v<T&, optional<U>&&>
+					or std::is_assignable_v<T&, optional<U> const&&>
+				)
+			)
+		constexpr auto operator=(optional<U>&& rhs) -> optional& {
+			if (engaged) {
+				storage.object = std::move(rhs).storage.object;
+			} else {
+				emplace(std::move(rhs).storage.object);
+			}
+			
+			return *this;
+		}
+		
+		constexpr auto swap(optional& other) noexcept(std::is_nothrow_move_constructible_v<T> && std::is_nothrow_swappable_v<T>) -> void {
 			if (other.engaged) {
 				if (engaged) {
-					std::ranges::swap(storage.object, std::move(other.storage.object));
+					using std::swap;
+					swap(storage.object, other.storage.object);
 				} else {
 					construct(std::move(other.storage.object));
 					other.reset();
 				}
 			} else {
+				other.construct(std::move(storage.object));
 				reset();
 			}
 		}
 		
-		constexpr auto reset() -> void {
+		friend constexpr auto swap(optional& lhs, optional& rhs) -> void {
+			lhs.swap(rhs);
+		}
+		
+		constexpr auto reset() noexcept -> void {
 			if (engaged) {
 				destroy();
 			}
@@ -205,19 +290,19 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		constexpr auto value() & -> T& {
-			return storage.object;
+			return has_value() ? storage.object : throw bad_optional_access{};
 		}
 		
 		constexpr auto value() const& -> T const& {
-			return storage.object;
+			return has_value() ? storage.object : throw bad_optional_access{};
 		}
 		
 		constexpr auto value() && -> T&& {
-			return std::move(storage.object);
+			return has_value() ? std::move(storage.object) : throw bad_optional_access{};
 		}
 		
 		constexpr auto value() const&& -> T const&& {
-			return std::move(storage.object);
+			return has_value() ? std::move(storage.object) : throw bad_optional_access{};
 		}
 		
 		constexpr auto operator*() & noexcept -> T& {
@@ -248,7 +333,7 @@ KANGARU5_EXPORT namespace kangaru {
 			return engaged;
 		}
 		
-		explicit constexpr operator bool() noexcept {
+		explicit constexpr operator bool() const noexcept {
 			return has_value();
 		}
 		
@@ -268,6 +353,10 @@ KANGARU5_EXPORT namespace kangaru {
 			return lhs.has_value() ? *lhs <=> rhs : std::strong_ordering::less;
 		}
 		
+		friend constexpr auto operator==(optional const& lhs, optional const& rhs) {
+			return lhs and rhs ? *lhs == *rhs : lhs.has_value() == rhs.has_value();
+		}
+		
 		template<typename U = std::remove_cv_t<T>> requires(std::is_copy_constructible_v<T> and std::convertible_to<U&&, T>)
 		constexpr auto value_or(U&& default_value) const& -> T {
 			return has_value() ? **this : static_cast<T>(KANGARU5_FWD(default_value));
@@ -279,6 +368,7 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<std::invocable<T&> F>
+			requires(detail::is_specialisation_of_v<optional, std::invoke_result_t<F, T&>>)
 		constexpr auto and_then(F&& f) & {
 			if (engaged) {
 				return std::invoke(KANGARU5_FWD(f), storage.object);
@@ -288,6 +378,7 @@ KANGARU5_EXPORT namespace kangaru {
 		}
 		
 		template<std::invocable<T const&> F>
+			requires(detail::is_specialisation_of_v<optional, std::invoke_result_t<F, T const&>>)
 		constexpr auto and_then(F&& f) const& {
 			if (engaged) {
 				return std::invoke(KANGARU5_FWD(f), storage.object);
@@ -296,7 +387,8 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		template<std::invocable<T> F>
+		template<std::invocable<T&&> F>
+			requires(detail::is_specialisation_of_v<optional, std::invoke_result_t<F, T&&>>)
 		constexpr auto and_then(F&& f) && {
 			if (engaged) {
 				return std::invoke(KANGARU5_FWD(f), std::move(storage.object));
@@ -305,7 +397,8 @@ KANGARU5_EXPORT namespace kangaru {
 			}
 		}
 		
-		template<std::invocable<T const> F>
+		template<std::invocable<T const&&> F>
+			requires(detail::is_specialisation_of_v<optional, std::invoke_result_t<F, T const&&>>)
 		constexpr auto and_then(F&& f) const&& {
 			if (engaged) {
 				return std::invoke(KANGARU5_FWD(f), std::move(storage.object));
@@ -318,7 +411,7 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr auto transform(F&& f) & {
 			using U = std::remove_cv_t<std::invoke_result_t<F, T&>>;
 			if (engaged) {
-				return optional<U>{std::invoke(KANGARU5_FWD(f), storage.object)};
+				return optional<U>(in_place, std::invoke(KANGARU5_FWD(f), storage.object));
 			} else {
 				return optional<U>{};
 			}
@@ -328,27 +421,27 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr auto transform(F&& f) const& {
 			using U = std::remove_cv_t<std::invoke_result_t<F, T const&>>;
 			if (engaged) {
-				return optional<U>{std::invoke(KANGARU5_FWD(f), storage.object)};
+				return optional<U>(in_place, std::invoke(KANGARU5_FWD(f), storage.object));
 			} else {
 				return optional<U>{};
 			}
 		}
 		
-		template<std::invocable<T> F>
+		template<std::invocable<T&&> F>
 		constexpr auto transform(F&& f) && {
-			using U = std::remove_cv_t<std::invoke_result_t<F, T>>;
+			using U = std::remove_cv_t<std::invoke_result_t<F, T&&>>;
 			if (engaged) {
-				return optional<U>{std::invoke(KANGARU5_FWD(f), std::move(storage.object))};
+				return optional<U>(std::invoke(KANGARU5_FWD(f), std::move(storage.object)));
 			} else {
 				return optional<U>{};
 			}
 		}
 		
-		template<std::invocable<T const> F>
+		template<std::invocable<T const&&> F>
 		constexpr auto transform(F&& f) const&& {
-			using U = std::remove_cv_t<std::invoke_result_t<F, T const>>;
+			using U = std::remove_cv_t<std::invoke_result_t<F, T const&&>>;
 			if (engaged) {
-				return optional<U>{std::invoke(KANGARU5_FWD(f), std::move(storage.object))};
+				return optional<U>(std::invoke(KANGARU5_FWD(f), std::move(storage.object)));
 			} else {
 				return optional<U>{};
 			}
@@ -368,7 +461,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 	private:
 		struct storage_initialize_t {} static constexpr storage_initialize{};
-
+		
 		union storage_t {
 			constexpr explicit storage_t() : empty{} {}
 			constexpr explicit storage_t(detail::optional_private::empty) : empty{} {}
@@ -380,10 +473,10 @@ KANGARU5_EXPORT namespace kangaru {
 			constexpr ~storage_t() requires(not std::is_trivially_destructible_v<T>) {}
 			
 			detail::optional_private::empty empty;
-			T object;
+			std::remove_cv_t<T> object;
 		} storage;
 		
-		constexpr auto destroy() -> void {
+		constexpr auto destroy() noexcept -> void {
 			if constexpr (not std::is_trivially_destructible_v<T>) {
 				std::destroy_at(std::addressof(storage.object));
 			}
@@ -406,6 +499,8 @@ KANGARU5_EXPORT namespace kangaru {
 		using object_type = std::remove_reference_t<T>;
 		
 	public:
+		using value_type = std::remove_reference_t<T>;
+		
 		constexpr optional() = default;
 		constexpr optional(optional const&) = default;
 		constexpr optional(optional&&) = default;
@@ -420,7 +515,7 @@ KANGARU5_EXPORT namespace kangaru {
 			)
 		explicit(false) constexpr optional(U& ref) noexcept : pointer{std::addressof(ref)} {}
 		
-		template<lvalue_reference U> requires std::convertible_to<U*, object_type*>
+		template<lvalue_reference U> requires(std::convertible_to<U*, object_type*>)
 		constexpr optional(optional<U> const& opt) noexcept : pointer{opt ? std::addressof(*opt) : nullptr} {}
 		
 		explicit(false) constexpr optional(nullopt_t) noexcept : pointer{nullptr} {}
@@ -562,11 +657,13 @@ KANGARU5_EXPORT namespace kangaru {
 			return *this ? std::move(*this) : KANGARU5_FWD(f)();
 		}
 		
-	public:
+	private:
 		object_type* pointer = nullptr;
 	};
 }
 
 #include "undef.hpp"
+
+#endif
 
 #endif // KANGARU5_DETAIL_OPTIONAL_HPP

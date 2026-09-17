@@ -459,7 +459,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<forwarded_injector Injector1, forwarded_injector... Injectors>
 	inline constexpr auto concat(Injector1&& first, Injectors&&... rest) {
 		if constexpr (sizeof...(rest) > 1) {
-			return concatenated_injector{KANGARU5_FWD(first), concat(KANGARU5_FWD(rest)...)};
+			return concatenated_injector{KANGARU5_FWD(first), KANGARU5_NO_ADL(concat)(KANGARU5_FWD(rest)...)};
 		} else {
 			return concatenated_injector{KANGARU5_FWD(first), KANGARU5_FWD(rest)...};
 		}

@@ -45,7 +45,7 @@ KANGARU5_EXPORT namespace kangaru {
 				with_cache{
 					with_heap_storage{
 						KANGARU5_NO_ADL(make_source_with_construction)(
-							KANGARU5_NO_ADL(seal_source)(make_source_with_filter_if(KANGARU5_FWD(source), detail::container_private::predicate_not_mapped{})),
+							KANGARU5_NO_ADL(seal_source)(KANGARU5_NO_ADL(make_source_with_filter_if)(KANGARU5_FWD(source), detail::container_private::predicate_not_mapped{})),
 							KANGARU5_NO_ADL(make_construction_with_two_step_init_if<detail::container_private::predicate_not_mapped>)(
 								KANGARU5_NO_ADL(make_construction_with_unique_ptr)(construction),
 								second_step_from_attribute{}

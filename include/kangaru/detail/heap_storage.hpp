@@ -85,7 +85,7 @@ namespace kangaru {
 				};
 				
 				std::construct_at(ptr.get(), in_place_construct{[&] {
-					return constructor<T>(KANGARU5_FWD(args)...);
+					return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...);
 				}});
 				
 				return ptr.release();

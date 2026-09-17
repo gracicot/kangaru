@@ -123,9 +123,9 @@ KANGARU5_EXPORT namespace kangaru {
 			return with_recursion{
 				with_construction{
 					sealed_source{
-						make_source_with_provide_using_source<
+						KANGARU5_NO_ADL(make_source_with_provide_using_source<
 							base::module_for_type::template type
-						>(
+						>)(
 							KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).impl)
 						)
 					},

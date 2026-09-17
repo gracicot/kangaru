@@ -8,6 +8,7 @@
 #include "recursive_source.hpp"
 #include "injector.hpp"
 #include "constructor.hpp"
+#include "lazy.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <utility>
@@ -56,7 +57,7 @@ KANGARU5_EXPORT namespace kangaru {
 				>
 			)
 		constexpr auto operator()(Source&& source) && {
-			auto injection_source = with_recursion{with_construction{seal_source(KANGARU5_FWD(source)), construction}};
+			auto injection_source = with_recursion{with_construction{KANGARU5_NO_ADL(seal_source)(KANGARU5_FWD(source)), construction}};
 			return make_injector(KANGARU5_NO_ADL(ref)(injection_source))(std::move(function));
 		}
 		
@@ -68,7 +69,7 @@ KANGARU5_EXPORT namespace kangaru {
 				>
 			)
 		constexpr auto operator()(Source&& source) && {
-			return std::move(function)(with_recursion{with_construction{seal_source(KANGARU5_FWD(source)), construction}});
+			return std::move(function)(with_recursion{with_construction{KANGARU5_NO_ADL(seal_source)(KANGARU5_FWD(source)), construction}});
 		}
 		
 	private:
@@ -117,8 +118,8 @@ KANGARU5_EXPORT namespace kangaru {
 		requires(
 			callable<strict_spread_injector<ref_result_t<decltype(from)&>>, constructor_function<Source>>
 		) {
-			return make_source_with_provide_using_source<pick_source>(
-				make_source_with_lazy_evaluation_of<Source>(
+			return KANGARU5_NO_ADL(make_source_with_provide_using_source<pick_source>)(
+				KANGARU5_NO_ADL(make_source_with_lazy_evaluation_of<Source>)(
 					with_construction{
 						KANGARU5_FWD(from),
 						construction,

@@ -4,6 +4,7 @@ project(kangaru VERSION 5.0.0 LANGUAGES CXX)
 
 option(KANGARU_BUILD_EXAMPLES "Build kangaru examples" OFF)
 option(KANGARU_TEST "Build test binaries" ON)
+option(KANGARU_FALLBACK_TO_EMBEDDED_OPTIONAL "Use embedded implementation of tl-optional if std optional is not available" OFF)
 
 # Variable to track module support
 set(KANGARU_HAS_CPP_MODULES OFF)
@@ -41,6 +42,7 @@ PUBLIC FILE_SET HEADERS
 	FILES
 		include/kangaru/kangaru.hpp
 		include/kangaru/short.hpp
+		include/kangaru/detail/tl/optional.hpp
 		include/kangaru/detail/allocator.hpp
 		include/kangaru/detail/attributes.hpp
 		include/kangaru/detail/cache.hpp
@@ -86,11 +88,18 @@ if(KANGARU_HAS_CPP_MODULES)
 endif()
 
 set_target_properties(kangaru PROPERTIES VERIFY_INTERFACE_HEADER_SETS ON)
-
 target_compile_features(kangaru INTERFACE cxx_std_20)
-target_include_directories(kangaru INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated/include>
-)
+
+if(NOT KANGARU_FALLBACK_TO_EMBEDDED_OPTIONAL)
+	find_package(tl-optional REQUIRED)
+	if(KANGARU_HAS_CPP_MODULES)
+		target_link_libraries(kangaru PUBLIC tl::optional)
+		target_compile_definitions(kangaru PUBLIC KANGARU5_FALLBACK_TO_EXTERNAL_TL_OPTIONAL)
+	else()
+		target_link_libraries(kangaru INTERFACE tl::optional)
+		target_compile_definitions(kangaru INTERFACE KANGARU5_FALLBACK_TO_EXTERNAL_TL_OPTIONAL)
+	endif()
+endif()
 
 if(KANGARU_BUILD_EXAMPLES)
 	add_subdirectory(examples)

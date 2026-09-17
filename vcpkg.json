@@ -5,5 +5,12 @@
   "dependencies": [
     "catch2",
     "fmt"
-  ]
+  ],
+  "default-features": [ "fallback-to-tl-optional" ],
+  "features": {
+    "fallback-to-tl-optional": {
+      "description": "Fallback to tl-optional library when optional references are not available",
+      "dependencies": [ "tl-optional" ]
+    }
+  }
 }

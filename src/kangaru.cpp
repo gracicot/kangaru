@@ -25,6 +25,21 @@ module;
 #include <typeindex>
 #include <version>
 
+
+#include "kangaru/detail/define.hpp"
+
+#if KANGARU5_OPTIONAL_IMPLEMENTATION() == 1
+	#include <optional>
+#elif KANGARU5_OPTIONAL_IMPLEMENTATION() == 2
+	#include <tl/optional.hpp>
+#elif KANGARU5_OPTIONAL_IMPLEMENTATION() == 3
+	// No includes from the outside when using embedded optional
+#else
+	#error "Unknown optional implementation"
+#endif
+
+#include "kangaru/detail/undef.hpp"
+
 export module kangaru;
 
 #define KANGARU5_MODULES

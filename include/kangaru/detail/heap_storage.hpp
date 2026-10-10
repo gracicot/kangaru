@@ -119,12 +119,12 @@ namespace kangaru {
 		auto operator=(basic_heap_storage const&) -> basic_heap_storage& = delete;
 		
 		constexpr basic_heap_storage(basic_heap_storage&& other) noexcept :
-			allocator{std::move(other.allocator)}, container{std::move(other.container)} {}
+			container{std::move(other.container)}, allocator{std::move(other.allocator)} {}
 		
 		constexpr auto operator=(basic_heap_storage&& rhs) noexcept -> basic_heap_storage& {
 			if (this == &rhs) return *this;
-			std::ranges::swap(allocator, rhs.allocator);
 			std::ranges::swap(container, rhs.container);
+			std::ranges::swap(allocator, rhs.allocator);
 			return *this;
 		}
 		

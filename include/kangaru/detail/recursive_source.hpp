@@ -649,7 +649,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, forwarded<with_recursion> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T requires(
-			   wrapping_source_of<Self, T>
+			   (wrapping_source_of<Self, T> and rebindable_source<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>)
 			or source_of<
 				wrapped_source_rebind_result_t<
 					Self&&,
@@ -666,6 +666,18 @@ KANGARU5_EXPORT namespace kangaru {
 					}
 				)
 			);
+		}
+
+		constexpr auto onion() {
+			auto& source = (*this);
+			using Self = decltype(*this);
+			return 
+				kangaru::rebind(
+					KANGARU5_FWD(source).source,
+					detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
+						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
+					}
+				);
 		}
 	};
 	

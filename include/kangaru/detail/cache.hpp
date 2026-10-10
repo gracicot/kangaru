@@ -194,7 +194,6 @@ KANGARU5_EXPORT namespace kangaru {
 			requires(
 				    std::derived_from<std::remove_cvref_t<Self>, with_cache_asymmetric>
 				and not std::is_const_v<std::remove_reference_t<Self>>
-				and cache_map_stores<std::remove_cvref_t<Self>, T>
 				and requires{ typename CacheFrom<T>; }
 				and (
 					   std::same_as<mapped_type, CacheFrom<T>>

@@ -1,7 +1,8 @@
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 #include <iostream>
 #include <string>
 
-#include <kangaru-prev/kangaru.hpp>
 
 /**
  * This example reflects snippets of code found in the documentation section 9: Custom Definitions

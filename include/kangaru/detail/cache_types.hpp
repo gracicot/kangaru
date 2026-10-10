@@ -85,13 +85,13 @@ KANGARU5_EXPORT namespace kangaru {
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U> const& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			return map.insert(value_type{value.first, static_cast<T>(value.second)});
+			return map.insert(value_type{value.first, value.second});
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U>&& value) -> std::pair<iterator, bool> {
 			insert_overrides(value.second);
-			return map.insert(value_type{value.first, static_cast<T>(std::move(value).second)});
+			return map.insert(value_type{value.first, std::move(value).second});
 		}
 		
 		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {

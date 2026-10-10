@@ -82,12 +82,6 @@ namespace kangaru::detail::injector_private {
 	template<typename F, std::size_t... S, kangaru::deducer Deducer>
 	inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
 		callable_with_deducers<F, detail::expand<Deducer, S>...>;
-	
-	template<typename>
-	inline constexpr auto sequence_size = 0;
-	
-	template<std::size_t... S>
-	inline constexpr auto sequence_size<std::index_sequence<S...>> = sizeof...(S);
 } // namespace kangaru::detail::injector_private
 
 KANGARU5_EXPORT namespace kangaru {
@@ -218,22 +212,22 @@ KANGARU5_EXPORT namespace kangaru {
 		explicit constexpr basic_spread_injector(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
-		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
+		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
-		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
+		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
-		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
+		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::parameter_sequence_t<F, max>>
-		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
+		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
@@ -315,22 +309,22 @@ KANGARU5_EXPORT namespace kangaru {
 		explicit constexpr basic_composable_spread_injector(S&& source) : source(KANGARU5_FWD(source)) {}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source&>, max>>
-		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
+		constexpr auto operator()(F&& function) & -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source&&>, max>>
-		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
+		constexpr auto operator()(F&& function) && -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source const&>, max>>
-		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
+		constexpr auto operator()(F&& function) const& -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), source);
 		}
 		
 		template<reflectable_function<max> F, typename..., typename Seq = detail::injector_private::composable_sequence_t<F, Deducer<Source const&&>, max>>
-		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::injector_private::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
+		constexpr auto operator()(F&& function) const&& -> reflected_return_type<F, detail::sequence_size<Seq>> requires detail::injector_private::callable_with_deducer_sequence_v<F, Deducer<Source const&&>, Seq> {
 			return expand_deducers(Seq{}, KANGARU5_FWD(function), std::move(source));
 		}
 		

@@ -86,6 +86,12 @@ namespace kangaru::detail {
 	
 	template<typename TType, typename... Ts>
 	using ttype_t = typename TType::template ttype<Ts...>::type;
+	
+	template<typename>
+	inline constexpr auto sequence_size = 0;
+	
+	template<std::size_t... S>
+	inline constexpr auto sequence_size<std::index_sequence<S...>> = sizeof...(S);
 }
 
 KANGARU5_EXPORT namespace kangaru {

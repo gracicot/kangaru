@@ -180,7 +180,7 @@ namespace kangaru {
 			void* source,
 			detail::function_pointer_t<auto(void*) -> Types>... provide_function
 		) noexcept :
-			base{{.provide = {provide_function...}}, source} {}
+			base{{.provide = {provide_function...}, .destroy = [](void const*) {}}, source} {}
 		
 	public:
 		template<source Source> requires(source_of_all<Source&, Types...>)
@@ -284,17 +284,17 @@ namespace kangaru {
 			return kangaru::provide<T>(KANGARU5_FWD(source).source);
 		}
 		
-		explicit constexpr operator any_source_of_one_ref() noexcept {
+		constexpr operator any_source_of_one_ref() noexcept {
 			return any_source_of_one_ref{any_source_of_ref<Primary>{source}};
 		}
 		
 		template<injectable T> requires source_of<Source&, T>
-		explicit constexpr operator any_source_of_ref<T>() & {
+		constexpr operator any_source_of_ref<T>() & {
 			return any_source_of_ref<T>{source};
 		}
 		
 		template<injectable T> requires source_of<Source const&, T>
-		explicit constexpr operator any_source_of_ref<T>() const& {
+		constexpr operator any_source_of_ref<T>() const& {
 			return any_source_of_ref<T>{source};
 		}
 		

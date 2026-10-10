@@ -1,4 +1,5 @@
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 #include <iostream>
 
 /**
@@ -54,57 +55,57 @@ int main()
 {
 	{
 		kgr::container container;
-		
+
 		// Camera is returned
 		Camera& camera1 = container.service<CameraService>();
 		camera1.projection(); // prints `default projection`
-		
+
 		// PerspectiveCamera is registered as Camera
 		container.emplace<PerspectiveCameraService>();
-		
+
 		// PerspectiveCamera is returned
 		Camera& camera2 = container.service<CameraService>();
 		camera2.projection(); // prints `perspective projection`
 	}
-	
+
 	std::cout << '\n';
-	
+
 	{
 		kgr::container container;
-		
+
 		container.service<PerspectiveCameraService>();
 		container.service<OrthogonalCameraService>();
-		
+
 		// instance of OrthogonalCamera returned
 		Camera& camera = container.service<CameraService>();
 		camera.projection();
 	}
-	
+
 	std::cout << '\n';
-	
+
 	{
 		kgr::container container;
-		
+
 		container.service<OrthogonalCameraService>();
 		container.service<PerspectiveCameraService>();
-		
+
 		// instance of PerspectiveCamera returned
 		Camera& camera = container.service<CameraService>();
 		camera.projection();
 	}
-	
+
 	std::cout << '\n';
-	
+
 	try {
 		kgr::container container;
-		
+
 		container.service<AbstractCameraServiceDefault>();
-		
+
 		std::cout << "No exceptions thrown\n";
 	} catch(kgr::abstract_not_found const& e) {
 		std::cout << "abstract_not_found thrown, what(): " << e.what() << std::endl;
 	}
-	
+
 	try {
 		kgr::container container;
 		

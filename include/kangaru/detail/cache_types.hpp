@@ -62,7 +62,55 @@ KANGARU5_EXPORT namespace kangaru {
 	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<type_id, void*>>);
+}
+
+namespace kangaru::detail::cache_types_private {
+	template<cache_map Map, different_from<void> T>
+	constexpr auto insert_overrides(Map& map, T& value) -> void {
+		using overrides = overrides_types_in_cache_t<T>;
+		std::apply([&](auto... s) {
+			[[maybe_unused]]
+			auto const for_each = [&](auto i, T& value) {
+				using override = std::tuple_element_t<i, overrides>;
+				constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
+				map.insert(std::pair{id, static_cast<override>(value)});
+			};
+			(for_each(s, value), ...);
+		}, detail::sequence_tuple_for_tuple<overrides>{});
+	}
 	
+	template<cache_map Map, different_from<void> T>
+	constexpr auto insert_or_assign_overrides(Map& map, T& value) -> void {
+		using overrides = overrides_types_in_cache_t<T>;
+		std::apply([&](auto... s) {
+			[[maybe_unused]]
+			auto const for_each = [&](auto i, T& value) {
+				using override = std::tuple_element_t<i, overrides>;
+				constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
+				map.insert_or_assign(id, static_cast<override>(value));
+			};
+			(for_each(s, value), ...);
+		}, detail::sequence_tuple_for_tuple<overrides>{});
+	}
+	
+	template<std::integral SizeType, cache_map Map, different_from<void> T>
+	constexpr auto remove_overrides(Map& map) -> SizeType {
+		auto n = SizeType{};
+		using overrides = overrides_types_in_cache_t<T>;
+		std::apply([&](auto... s) {
+			[[maybe_unused]]
+			auto const for_each = [&](auto i) {
+				using override = std::tuple_element_t<i, overrides>;
+				constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
+				n += map.erase(id);
+			};
+			(for_each(s), ...);
+		}, detail::sequence_tuple_for_tuple<overrides>{});
+		return n;
+	}
+}
+
+KANGARU5_EXPORT namespace kangaru {
 	template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;
@@ -75,199 +123,203 @@ KANGARU5_EXPORT namespace kangaru {
 		using size_type = typename Map::size_type;
 		
 		constexpr auto insert(value_type const& value) -> std::pair<iterator, bool> {
-			return map.insert(value);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(value);
 		}
 		
 		constexpr auto insert(value_type&& value) -> std::pair<iterator, bool> {
-			return map.insert(std::move(value));
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(std::move(value));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U> const& value) -> std::pair<iterator, bool> {
-			insert_overrides(value.second);
-			return map.insert(value_type{value.first, value.second});
+			detail::cache_types_private::insert_overrides(map, value.second);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(value_type{value.first, value.second});
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert(std::pair<static_type_id<T>, U>&& value) -> std::pair<iterator, bool> {
-			insert_overrides(value.second);
-			return map.insert(value_type{value.first, std::move(value).second});
+			detail::cache_types_private::insert_overrides(map, value.second);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(value_type{value.first, std::move(value).second});
 		}
 		
 		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {
-			return map.insert(hint, value);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(hint, value);
 		}
 		
 		constexpr auto insert(const_iterator hint, value_type&& value) -> std::pair<iterator, bool> {
-			return map.insert(hint, std::move(value));
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(hint, std::move(value));
 		}
 		
 		template<std::input_iterator Iterator> requires(
 			requires(Iterator it) { { *it } -> std::convertible_to<const_reference>; }
 		)
 		constexpr auto insert(Iterator begin, Iterator end) -> void {
-			map.insert(begin, end);
+			KANGARU5_NO_ADL(maybe_unwrap)(map).insert(begin, end);
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(static_type_id<T> const& k, U&& obj) -> std::pair<iterator, bool> {
-			insert_or_assign_overrides(obj);
-			return map.insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
+			detail::cache_types_private::insert_or_assign_overrides(map, obj);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert_or_assign(k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
 		template<injectable T, allows_construction_of<T> U>
 		constexpr auto insert_or_assign(const_iterator hint, static_type_id<T> const& k, U&& obj) -> iterator {
-			insert_or_assign_overrides(obj);
-			return map.insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
+			detail::cache_types_private::insert_or_assign_overrides(map, obj);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
 		}
 		
-		constexpr auto swap(polymorphic_map& other) noexcept(noexcept(map.swap(other.map))) -> void {
-			map.swap(other.map);
+		constexpr auto swap(polymorphic_map& other) noexcept(noexcept(KANGARU5_NO_ADL(maybe_unwrap)(map).swap(other.map))) -> void {
+			KANGARU5_NO_ADL(maybe_unwrap)(map).swap(other.map);
 		}
 		
 		[[nodiscard]]
 		constexpr auto find(auto const& key) -> iterator requires(
 			requires(Map c) { { c.find(key) } -> std::same_as<iterator>; }
 		) {
-			return map.find(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).find(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto find(auto const& key) const -> const_iterator requires(
 			requires(Map const c) { { c.find(key) } -> std::same_as<const_iterator>; }
 		) {
-			return map.find(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).find(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto at(auto const& key) -> mapped_type& requires(
 			requires(Map c) { { c.at(key) } -> std::same_as<mapped_type&>; }
 		) {
-			return map.at(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).at(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto at(auto const& key) const -> mapped_type const& requires(
 			requires(Map const c) { { c.at(key) } -> std::same_as<mapped_type const&>; }
 		) {
-			return map.at(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).at(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto contains(auto const& key) const -> bool requires(
 			requires(Map const c) { c.contains(key); }
 		) {
-			return map.contains(key);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).contains(key);
 		}
 		
 		[[nodiscard]]
 		constexpr auto begin() noexcept -> iterator {
-			return map.begin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).begin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto end() noexcept -> iterator {
-			return map.end();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).end();
 		}
 		
 		[[nodiscard]]
 		constexpr auto begin() const noexcept -> const_iterator {
-			return map.begin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).begin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto end() const noexcept -> const_iterator {
-			return map.end();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).end();
 		}
 		
 		[[nodiscard]]
 		constexpr auto cbegin() const noexcept -> const_iterator {
-			return map.cbegin();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).cbegin();
 		}
 		
 		[[nodiscard]]
 		constexpr auto cend() const noexcept -> const_iterator {
-			return map.cend();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).cend();
 		}
 		
 		[[nodiscard]]
 		constexpr auto empty() const noexcept -> bool {
-			return map.empty();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).empty();
 		}
 		
 		constexpr auto clear() noexcept -> void {
-			return map.clear();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).clear();
 		}
 		
 		[[nodiscard]]
 		constexpr auto size() const noexcept -> size_type {
-			return map.size();
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).size();
 		}
 		
 		template<injectable T>
 		constexpr auto erase(static_type_id<T> id) -> size_type {
-			return map.erase(id);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).erase(id);
 		}
 		
 		template<typename It>
 		constexpr auto erase(It begin, It end) -> decltype(std::declval<Map>().erase(begin, end)) {
-			return map.erase(begin, end);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).erase(begin, end);
 		}
 		
 		constexpr auto erase(iterator pos) -> iterator {
-			return map.erase(pos);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).erase(pos);
 		}
 		
 		constexpr auto erase(const_iterator pos) -> iterator {
-			return map.erase(pos);
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).erase(pos);
 		}
 		
 	private:
-		template<different_from<void> T>
-		constexpr auto insert_overrides(T& value) -> void {
-			using overrides = overrides_types_in_cache_t<T>;
-			std::apply([this, &value](auto... s) {
-				[[maybe_unused]]
-				auto const for_each = [this](auto i, T& value) {
-					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
-					map.insert(std::pair{id, static_cast<override>(value)});
-				};
-				(for_each(s, value), ...);
-			}, detail::sequence_tuple_for_tuple<overrides>{});
-		}
-		
-		template<different_from<void> T>
-		constexpr auto insert_or_assign_overrides(T& value) -> void {
-			using overrides = overrides_types_in_cache_t<T>;
-			std::apply([this, &value](auto... s) {
-				auto const for_each = [this](auto i, T& value) {
-					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
-					map.insert_or_assign(id, static_cast<override>(value));
-				};
-				(for_each(s, value), ...);
-			}, detail::sequence_tuple_for_tuple<overrides>{});
-		}
-		
-		template<different_from<void> T>
-		constexpr auto remove_overrides() -> size_type {
-			auto n = size_type{};
-			using overrides = overrides_types_in_cache_t<T>;
-			std::apply([this, &n](auto... s) {
-				auto const for_each = [this, &n](auto i) {
-					using override = std::tuple_element_t<i, overrides>;
-					constexpr auto id = KANGARU5_NO_ADL(type_id_for<override>)();
-					n += map.erase(id);
-				};
-				(for_each(s), ...);
-			}, detail::sequence_tuple_for_tuple<overrides>{});
-			return n;
-		}
-		
 		Map map;
 	};
 	
+	template<cache_map Map>
+	struct map_insert_as_assign : Map {
+		using key_type = typename Map::key_type;
+		using mapped_type = typename Map::mapped_type;
+		using reference = typename Map::reference;
+		using const_reference = typename Map::const_reference;
+		using iterator = typename Map::iterator;
+		using const_iterator = typename Map::const_iterator;
+		using value_type = typename Map::value_type;
+		using size_type = typename Map::size_type;
+		
+		constexpr auto insert(value_type const& value) -> std::pair<iterator, bool> {
+			return Map::insert_or_assign(value.first, value.second);
+		}
+		
+		constexpr auto insert(value_type&& value) -> std::pair<iterator, bool> {
+			return Map::insert_or_assign(std::move(value).first, std::move(value).second);
+		}
+		
+		template<injectable T, allows_construction_of<T> U>
+		constexpr auto insert(std::pair<static_type_id<T>, U> const& value) -> std::pair<iterator, bool> {
+			detail::cache_types_private::insert_or_assign_overrides(static_cast<Map&>(*this), value.second);
+			return Map::insert_or_assign(value.first, value.second);
+		}
+		
+		template<injectable T, allows_construction_of<T> U>
+		constexpr auto insert(std::pair<static_type_id<T>, U>&& value) -> std::pair<iterator, bool> {
+			detail::cache_types_private::insert_or_assign_overrides(static_cast<Map&>(*this), value.second);
+			return Map::insert_or_assign(std::move(value).first, std::move(value).second);
+		}
+		
+		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {
+			return Map::insert_or_assign(hint, value);
+		}
+		
+		constexpr auto insert(const_iterator hint, value_type&& value) -> std::pair<iterator, bool> {
+			return Map::insert_or_assign(hint, std::move(value));
+		}
+		
+		template<std::input_iterator Iterator> requires(
+			requires(Iterator it) { { *it } -> std::convertible_to<const_reference>; }
+		)
+		constexpr auto insert(Iterator begin, Iterator end) -> void {
+			Map::insert(begin, end);
+		}
+	};
 } // namespace kangaru
 
 #include "undef.hpp"

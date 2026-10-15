@@ -255,6 +255,7 @@ KANGARU5_EXPORT namespace kangaru {
 	template<source Source>
 	using optional_injector = basic_spread_injector<Source, basic_deducer, 1>;
 	
+	// TODO: Should we constrain?
 	template<template<typename> typename Deducer, std::size_t max>
 	struct make_basic_spread_injector_function {
 		template<forwarded_source Source>

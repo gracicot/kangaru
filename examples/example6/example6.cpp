@@ -1,4 +1,5 @@
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 #include <iostream>
 
 /**
@@ -35,6 +36,6 @@ int main()
 	using SceneService = kgr::mapped_service_t<Scene>;
 	
 	auto scene = container.service<SceneService>(1920, 1080);
-
+	
 	std::cout << "Scene created with size " << scene.width << "x" << scene.height << '\n';
 }

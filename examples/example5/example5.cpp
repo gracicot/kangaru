@@ -1,4 +1,5 @@
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 #include <iostream>
 
 /**
@@ -15,8 +16,11 @@ struct Scene {
 		camera{c.position}, width{w}, height{h} {}
 	
 private:
+	[[maybe_unused]]
 	Camera camera;
+	[[maybe_unused]]
 	int width;
+	[[maybe_unused]]
 	int height;
 };
 
@@ -34,7 +38,7 @@ int main()
 		
 		inserted = container.emplace<SceneService>(1024, 768); // construct a scene in the container.
 		std::cout << std::boolalpha << "Is inserted a second time? " << inserted << '\n';
-
+		
 		Scene& scene = container.service<SceneService>(); // works, won't try to construct it.
 		
 		(void) scene;

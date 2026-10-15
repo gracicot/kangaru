@@ -1,4 +1,3 @@
-//#include <kangaru-prev/kangaru.hpp>
 #include <kangaru/kangaru.hpp>
 #include <kangaru/compatibility_v4.hpp>
 #include <array>
@@ -57,25 +56,18 @@ auto main() -> int {
 	// We create two cameras.
 	Camera camera = container.service<CameraService>();
 	Camera furtherCamera = container.service<CameraService>(14);
-	//Scene a = container.service<SceneService>();
-	auto a = container.onion().onion();
-	a.source.source.provide<detail::polymorphic_v4_source<SceneService>>();
-	a.source.source.source.provide<kangaru::with_polymorphic_cast<kangaru::with_cast_from<detail::v4_source_wrapper<SceneService>, Scene&>, Scene&>&>();
-	a.source.source.source.source.provide<kangaru::with_polymorphic_cast<kangaru::with_cast_from<detail::v4_source_wrapper<SceneService>, Scene&>, Scene&>*>();
-	a.source.source.source.source.source.provide<kangaru::with_polymorphic_cast<kangaru::with_cast_from<detail::v4_source_wrapper<SceneService>, Scene&>, Scene&>>();
-	a.source.source.source.source.source.source.provide<kangaru::with_cast_from<detail::v4_source_wrapper<SceneService>, Scene&>>();
-	a.source.source.source.source.source.source.source.provide<detail::v4_source_wrapper<SceneService>>();
+	Scene a = container.service<SceneService>();
 	
-	// // prints 0
-	// std::cout << "Camera Position: " << camera.position << '\n';
-	//
-	// // prints 14
-	// std::cout << "Further Camera Position: " << furtherCamera.position << '\n';
-	//
-	// // A Screen has a Scene and a Camera injected in it.
-	//Screen screen1 = container.service<ScreenService>();
-	//Screen screen2 = container.service<ScreenService>();
+	// prints 0
+	std::cout << "Camera Position: " << camera.position << '\n';
+	
+	// prints 14
+	std::cout << "Further Camera Position: " << furtherCamera.position << '\n';
+	
+	// A Screen has a Scene and a Camera injected in it.
+	Screen screen1 = container.service<ScreenService>();
+	Screen screen2 = container.service<ScreenService>();
 	
 	// Spoiler: yes they are the same
-	//std::cout << "Is both scene the same? " << (&screen1.scene == &screen2.scene ? "yes" : "no") << '\n';
+	std::cout << "Is both scene the same? " << (&screen1.scene == &screen2.scene ? "yes" : "no") << '\n';
 }

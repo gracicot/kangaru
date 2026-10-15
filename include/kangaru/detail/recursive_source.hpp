@@ -41,13 +41,13 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<make_injector MakeInjector>
 	struct basic_non_empty_construction {
-		constexpr basic_non_empty_construction() requires std::default_initializable<MakeInjector> = default;
+		constexpr basic_non_empty_construction() requires(std::default_initializable<MakeInjector>) = default;
 		
 		explicit constexpr basic_non_empty_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, non_default_constructor_function<T>>
+			requires(callable<detail::call_result_t<MakeInjector const&, Source&&>, non_default_constructor_function<T>>)
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(non_default_constructor_function<T>{});
 		}
@@ -147,13 +147,13 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<make_injector MakeInjector>
 	struct basic_unsafe_exhaustive_construction {
-		constexpr basic_unsafe_exhaustive_construction() requires std::default_initializable<MakeInjector> = default;
+		constexpr basic_unsafe_exhaustive_construction() requires(std::default_initializable<MakeInjector>) = default;
 		
 		explicit constexpr basic_unsafe_exhaustive_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<unqualified_object T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<T>>
+			requires(callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<T>>)
 		constexpr auto operator()(Source&& source) const -> T {
 			return make_injector(KANGARU5_FWD(source))(constructor_function<T>{});
 		}
@@ -314,7 +314,7 @@ KANGARU5_EXPORT namespace kangaru {
 		>;
 		
 	public:
-		constexpr basic_exhaustive_construction() requires std::default_initializable<MakeInjector> = default;
+		constexpr basic_exhaustive_construction() requires(std::default_initializable<MakeInjector>) = default;
 		
 		explicit constexpr basic_exhaustive_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
@@ -337,7 +337,7 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<injectable Type, make_injector MakeInjector>
 	struct basic_placeholder_except_construction {
-		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_except_construction() requires std::default_initializable<MakeInjector> = default;
+		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_except_construction() requires(std::default_initializable<MakeInjector>) = default;
 		
 		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_except_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
@@ -359,13 +359,13 @@ KANGARU5_EXPORT namespace kangaru {
 	
 	template<make_injector MakeInjector>
 	struct basic_placeholder_construction {
-		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construction() requires std::default_initializable<MakeInjector> = default;
+		KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construction() requires(std::default_initializable<MakeInjector>) = default;
 		
 		explicit KANGARU5_CONSTEVAL_PLACEHOLDER basic_placeholder_construction(MakeInjector make_injector) noexcept :
 			make_injector{std::move(make_injector)} {}
 		
 		template<injectable T, forwarded_source Source>
-			requires callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<std::decay_t<T>>>
+			requires(callable<detail::call_result_t<MakeInjector const&, Source&&>, constructor_function<std::decay_t<T>>>)
 		auto operator()(Source&& source) const -> T;
 		
 	private:
@@ -437,7 +437,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct with_construction_original_passthrough {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_construction_original_passthrough(S&& source) noexcept
-				requires std::default_initializable<Construction> :
+				requires(std::default_initializable<Construction>) :
 			source(KANGARU5_FWD(source)),
 			passthrough{},
 			construction{} {}
@@ -501,7 +501,7 @@ KANGARU5_EXPORT namespace kangaru {
 	struct with_construction {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_construction(S&& source) noexcept
-			requires std::default_initializable<Construction> :
+			requires(std::default_initializable<Construction>) :
 			source(KANGARU5_FWD(source)) {}
 		
 		template<allows_construction_of<Source> S>

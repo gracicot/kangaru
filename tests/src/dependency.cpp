@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 TEST_CASE("Injected singles are the same returned by the container", "[dependency]") {
 	struct Service1 {};

@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 TEST_CASE("Container creates a single", "[single]") {
 	kgr::container c;
@@ -97,13 +98,13 @@ TEST_CASE("Singles are defined using tags", "[single]") {
 	SECTION("By being abstract") {
 		struct Definition : kgr::abstract {};
 		
-		REQUIRE(kgr::detail::is_single<Definition>{});
+		REQUIRE((std::derived_from<Definition, kgr::single>));
 	}
 	
 	SECTION("By extending single") {
 		struct Definition : kgr::single {};
 		
-		REQUIRE(kgr::detail::is_single<Definition>{});
+		REQUIRE((std::derived_from<Definition, kgr::single>));
 	}
 }
 

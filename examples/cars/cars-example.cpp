@@ -2,7 +2,8 @@
 #include <iomanip>
 #include <stdexcept>
 
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 struct Fuel {
 	auto getPrice() const noexcept -> double {

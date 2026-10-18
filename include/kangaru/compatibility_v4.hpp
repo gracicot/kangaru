@@ -11,7 +11,14 @@
 namespace kangaru::compatibility_v4 {
 	struct in_place_t {} constexpr in_place{};
 	
-	struct single {};
+	struct single {
+		single() = default;
+		single(single const&) = delete;
+		single(single&&) = default;
+		auto operator=(single const&) -> single& = delete;
+		auto operator=(single&&) -> single& = default;
+	};
+	
 	struct polymorphic {};
 	struct final {};
 	struct supplied {};
@@ -23,7 +30,7 @@ namespace kangaru::compatibility_v4 {
 	};
 	
 	template<typename... Types>
-	struct overrides {
+	struct overrides : polymorphic {
 		using parent_types = std::tuple<Types...>;
 	};
 }
@@ -729,7 +736,7 @@ namespace kangaru::compatibility_v4 {
 		generic_service() = default;
 		~generic_service() requires(std::is_trivially_destructible_v<Type>) = default;
 		constexpr ~generic_service() requires(not std::is_trivially_destructible_v<Type>) {
-			std::destroy_at(object);
+			std::destroy_at(std::addressof(object));
 		}
 		
 		constexpr generic_service(generic_service&& other) noexcept {
@@ -1039,6 +1046,15 @@ namespace kangaru::compatibility_v4::detail {
 }
 
 KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
+	using type_id_t = std::uint64_t;
+
+	template<typename T>
+	constexpr auto type_id() -> type_id_t {
+		return static_cast<std::uint64_t>(std::hash<kangaru::type_id>{}(type_id_for<T>()));
+	}
+}
+
+KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 	struct container;
 	
 	struct container_service {
@@ -1055,12 +1071,12 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		constexpr auto forward() const -> container& {
 			return *c;
 		}
-
+		
 		friend auto service_map(container&) -> container_service;
 	};
 	
 	struct container {
-		constexpr container(detail::container_cache_type cache = {}, detail::container_heap_storage storage = {}) :
+		container(detail::container_cache_type cache = {}, detail::container_heap_storage storage = {}) :
 			state{
 				KANGARU5_NO_ADL(make_source_with_cache_asymmetric<detail::cached_source::source_for>)(
 					with_dereference{
@@ -1243,7 +1259,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			second_step_from_attribute{}.template operator()<contained_type>(*ptr, container_source(state));
 		}
 		
-		constexpr auto fork() const& -> container {
+		auto fork() const& -> container {
 			auto cache = detail::container_cache_type{};
 			cache.insert(state.begin(), state.end());
 			

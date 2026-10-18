@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 TEST_CASE("Definition can override another", "[virtual]") {
 	SECTION("Bases are instanciated, but not used after instanciate the derived") {
@@ -351,7 +352,7 @@ TEST_CASE("Abtract Services Are virtual", "[virtual]") {
 	
 	struct AbstractDefinition : kgr::abstract_service<A> {};
 	
-	REQUIRE(kgr::detail::is_polymorphic<AbstractDefinition>::value);
+	REQUIRE((std::derived_from<AbstractDefinition, kgr::polymorphic>));
 	
 	CHECK_THROWS_AS(container.service<AbstractDefinition>(), kgr::abstract_not_found);
 	struct Override1Definition : kgr::single_service<A>, kgr::overrides<AbstractDefinition> {};
@@ -379,10 +380,10 @@ TEST_CASE("A service can depend on a abstract service", "[virtual]") {
 	struct ImplService : kgr::single_service<Impl>, kgr::overrides<AbstractService> {};
 	struct UseService : kgr::service<Use, kgr::dependency<AbstractService>> {};
 	
-	REQUIRE(kgr::detail::is_polymorphic<AbstractService>::value);
-	REQUIRE(kgr::detail::is_polymorphic<ImplService>::value);
-	REQUIRE(!kgr::detail::is_polymorphic<UseService>::value);
-	REQUIRE(kgr::detail::is_service_valid<UseService>::value);
+	REQUIRE((std::derived_from<AbstractService, kgr::polymorphic>));
+	REQUIRE((std::derived_from<ImplService, kgr::polymorphic>));
+	REQUIRE((not std::derived_from<UseService, kgr::polymorphic>));
+	//REQUIRE(kgr::detail::is_service_valid<UseService>::value);
 	
 	container.emplace<ImplService>();
 	

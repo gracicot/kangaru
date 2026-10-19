@@ -1195,7 +1195,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		template<detail::map_list Map = map<>, typename Function, typename... Args>
 			requires(not detail::map_list<Function>)
 		constexpr auto invoke(Function&& function, Args&&... args) -> decltype(auto) {
-			return make_spread_injector(make_source_with_service_map_lookup<Map>(container_source(state)))(
+			return detail::make_v4_source_injector(make_source_with_service_map_lookup<Map>(container_source(state)))(
 				[&](deducer auto... deduce) -> decltype(auto) requires(callable<Function, decltype(deduce)..., Args&&...>) {
 					return KANGARU5_FWD(function)(deduce..., KANGARU5_FWD(args)...);
 				}

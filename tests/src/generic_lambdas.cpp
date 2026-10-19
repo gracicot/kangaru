@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 #include <random>
 #include <limits>

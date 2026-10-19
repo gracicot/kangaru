@@ -146,7 +146,7 @@ namespace kangaru::compatibility_v4::detail {
 	concept v4_constructor_callable = requires(Args&&... args) {
 		{ v4_constructor<T>(KANGARU5_FWD(args)...) } -> std::same_as<T>;
 	};
-
+	
 	struct autocall_second_step;
 	
 	template<typename V4Source>
@@ -758,7 +758,7 @@ namespace kangaru::compatibility_v4 {
 		
 		template<typename... Args> requires(constructor_callable<Type, Args&&...>)
 		constexpr void emplace(Args&&... args) {
-			std::construct_at(std::addressof(object), KANGARU5_NO_ADL(constructor<Type>)(KANGARU5_FWD(args)...));
+			std::construct_at(std::addressof(object), KANGARU5_NO_ADL(construct_in_place<Type>)(KANGARU5_FWD(args)...));
 		}
 		
 	protected:

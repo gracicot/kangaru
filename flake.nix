@@ -1,8 +1,8 @@
 {
-  description = "Dev shell for pixel engine";
+  description = "Dev shell for kangaru";
 
   # Nixpkgs / NixOS version to use.
-  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
+  inputs.nixpkgs.url = "github:gracicot/nixpkgs/0af337dfbcfe12d7198c735b38f5087e57b3baa5";
 
   outputs = { self, nixpkgs }:
     let

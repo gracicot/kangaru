@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_SOURCE_TRAITS_HPP
 #define KANGARU5_DETAIL_SOURCE_TRAITS_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "source_reference_wrapper.hpp"
 #include "source.hpp"

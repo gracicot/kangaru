@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_INJECTOR_HPP
 #define KANGARU5_DETAIL_INJECTOR_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "source.hpp"
 #include "deducer.hpp"

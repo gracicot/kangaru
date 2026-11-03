@@ -1,4 +1,3 @@
-
 ///
 // optional - An implementation of std::optional with extensions
 // Written in 2017 by Sy Brand (tartanllama@gmail.com, @TartanLlama)
@@ -14,18 +13,21 @@
 // <http://creativecommons.org/publicdomain/zero/1.0/>.
 ///
 
-#ifndef KANGARU5_TL_OPTIONAL_HPP
-#define KANGARU5_TL_OPTIONAL_HPP
+#ifndef KANGARU5_DETAIL_TL_OPTIONAL_HPP
+#define KANGARU5_DETAIL_TL_OPTIONAL_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #define KANGARU5_TL_OPTIONAL_VERSION_MAJOR 1
 #define KANGARU5_TL_OPTIONAL_VERSION_MINOR 1
 #define KANGARU5_TL_OPTIONAL_VERSION_PATCH 0
 
+#ifndef KANGARU5_MODULES
 #include <exception>
 #include <functional>
-#include <new>
+#include <new> // IWYU: keep
 #include <type_traits>
 #include <utility>
+#endif
 
 #if (defined(_MSC_VER) && _MSC_VER == 1900)
 #define KANGARU5_TL_OPTIONAL_MSVC2015
@@ -2059,4 +2061,4 @@ template <class T> struct hash<kangaru::detail::tl::optional<T>> {
 };
 } // namespace std
 
-#endif
+#endif // KANGARU5_DETAIL_TL_OPTIONAL_HPP

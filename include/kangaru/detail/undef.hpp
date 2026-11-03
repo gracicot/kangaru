@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_UNDEF_HPP
 #define KANGARU5_DETAIL_UNDEF_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #ifndef KANGARU5_DETAIL_DEFINE_HPP
 #error "Must include define.hpp before including undef.hpp"

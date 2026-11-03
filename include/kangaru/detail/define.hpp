@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_DEFINE_HPP
 #define KANGARU5_DETAIL_DEFINE_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 // We include version to check __cpp_explicit_this_parameter
 #ifndef KANGARU5_MODULES

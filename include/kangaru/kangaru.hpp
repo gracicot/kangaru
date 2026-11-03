@@ -1,6 +1,7 @@
 #ifndef KANGARU5_KANGARU_HPP
 #define KANGARU5_KANGARU_HPP
 
+// IWYU pragma: begin_exports
 #include "detail/allocator.hpp"
 #include "detail/attributes.hpp"
 #include "detail/cache.hpp"
@@ -32,5 +33,6 @@
 #include "detail/two_step_init.hpp"
 #include "detail/type_traits.hpp"
 #include "detail/utility.hpp"
+// IWYU pragma: end_exports
 
 #endif // KANGARU5_KANGARU_HPP

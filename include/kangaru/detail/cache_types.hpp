@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_CACHE_TYPES_HPP
 #define KANGARU5_DETAIL_CACHE_TYPES_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "attributes.hpp"
 #include "utility.hpp"
@@ -9,7 +10,6 @@
 #include "source_reference_wrapper.hpp"
 
 #ifndef KANGARU5_MODULES
-#include <cstddef>
 #include <concepts>
 #include <iterator>
 #include <utility>

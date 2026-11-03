@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_CONTAINER_COMMON_HPP
 #define KANGARU5_DETAIL_CONTAINER_COMMON_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "attributes.hpp"
 #include "concepts.hpp"

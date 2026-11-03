@@ -1,11 +1,12 @@
 #ifndef KANGARU5_DETAIL_HEAP_STORAGE_HPP
 #define KANGARU5_DETAIL_HEAP_STORAGE_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
-#include "type_traits.hpp"
-#include "source_types.hpp"
-#include "source.hpp"
 #include "allocator.hpp"
-#include "source_rebind.hpp"
+#include "source_reference_wrapper.hpp"
+#include "constructor.hpp"
+#include "deducer.hpp"
+#include "source.hpp"
 
 #ifndef KANGARU5_MODULES
 #include <concepts>

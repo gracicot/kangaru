@@ -1,7 +1,7 @@
 #ifndef KANGARU5_DETAIL_TWO_STEP_INIT_HPP
 #define KANGARU5_DETAIL_TWO_STEP_INIT_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
-#include "source_rebind.hpp"
 #include "source.hpp"
 #include "concepts.hpp"
 #include "attributes.hpp"

@@ -1,8 +1,8 @@
 #ifndef KANGARU5_DETAIL_CONSTRUCTOR_HPP
 #define KANGARU5_DETAIL_CONSTRUCTOR_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "concepts.hpp"
-#include "type_traits.hpp"
 #include "utility.hpp"
 #include "deducer.hpp"
 

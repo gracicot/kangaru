@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_MODULAR_CONTAINER_HPP
 #define KANGARU5_DETAIL_MODULAR_CONTAINER_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "source.hpp"
 #include "source_types.hpp"

@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_EXCEPTIONS_HPP
 #define KANGARU5_DETAIL_EXCEPTIONS_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #ifndef KANGARU5_MODULES
 #include <exception>

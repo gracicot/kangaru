@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_SOURCE_TYPES_HPP
 #define KANGARU5_DETAIL_SOURCE_TYPES_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "deducer.hpp"
 #include "two_step_init.hpp"

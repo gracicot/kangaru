@@ -1,7 +1,7 @@
 #include <iostream>
-#include <string>
 
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 /**
  * This example reflects snippets of code found in the documentation section 8: Operator Services
@@ -15,6 +15,10 @@ struct Type {
 };
 
 struct MessageBus {
+	MessageBus() {
+		std::cout << "MessageBus constructed\n";
+	}
+	
 	void process_messages() {
 		std::cout << "Messages processed\n";
 	}
@@ -22,7 +26,7 @@ struct MessageBus {
 
 struct Scene {
 	explicit Scene(char const* n = "") noexcept : name{n} {
-		std::cout << "Scene created\n";
+		std::cout << "Scene created " << name << "\n";
 	}
 	
 	char const* name;
@@ -56,7 +60,7 @@ int main() {
 		container1.invoke([&](kgr::container& container3, Type type) {
 			std::cout << std::boolalpha << "Both container1 and container3 are the same? ";
 			std::cout << (&container1 == &container3) << '\n';
-		
+			
 			std::cout << std::boolalpha << "Both container3 and type.container are the same? ";
 			std::cout << (&container3 == &type.container) << '\n';
 		});
@@ -106,6 +110,7 @@ int main() {
 		kgr::container container;
 		kgr::lazy<MessageBusService> lazy_message_bus = container.service<kgr::lazy_service<MessageBusService>>();
 		
+		std::cout << "Before constructing message bus\n";
 		// MessageBus constructed here at `->` usage
 		lazy_message_bus->process_messages();
 	}

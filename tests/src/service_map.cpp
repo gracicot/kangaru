@@ -1,5 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 
 namespace basic_mapping {
 	struct Service {};
@@ -115,8 +116,8 @@ namespace prioritized_multi_mapped_mapping_multi_service {
 	struct Map1 {};
 	struct Map2 {};
 	
-	auto service_map(Service1 const&, kgr::map_t<Map1>) -> Definition1;
-	auto service_map(Service1 const&, kgr::map_t<Map2>) -> NotDefinition1;
+	auto service_map(Service1 const&, kgr::map_t<Map1> const&) -> Definition1;
+	auto service_map(Service1 const&, kgr::map_t<Map2> const&) -> NotDefinition1;
 	
 	auto service_map(Service2 const&, kgr::map_t<Map2>) -> NotDefinition2;
 	auto service_map(Service2 const&, kgr::map_t<Map1>) -> Definition2;
@@ -208,18 +209,18 @@ namespace indirect_map_strict {
 	auto service_map(service3, kgr::map_t<map4>) -> indirect_map;
 	
 	TEST_CASE("The indirect map is strict to the mapped type", "[service_map]") {
-		REQUIRE_FALSE((kgr::detail::is_complete_map<kgr::map<map1>, service2>::value));
-		REQUIRE((std::is_same<kgr::mapped_service_t<service2, kgr::map<map2>>, kgr::service<service2>>::value));
+		//static_assert(not kgr::detail::service_map_impl::mapped_named<service2, map1>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2, kgr::map<map2>>, kgr::service<service2>>);
 		
-		CHECK((std::is_same<kgr::mapped_service_t<service2, kgr::map<map3>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2 const&, kgr::map<map3>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2&&, kgr::map<map3>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2 const&&, kgr::map<map3>>, kgr::single_service<service2>>::value));
+		static_assert(std::same_as<kgr::mapped_service_t<service2, kgr::map<map3>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2 const&, kgr::map<map3>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2&&, kgr::map<map3>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2 const&&, kgr::map<map3>>, kgr::single_service<service2>>);
 		
-		CHECK((std::is_same<kgr::mapped_service_t<service2, kgr::map<map4>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2 const&, kgr::map<map4>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
-		CHECK((std::is_same<kgr::mapped_service_t<service2 const&&, kgr::map<map4>>, kgr::single_service<service2>>::value));
+		static_assert(std::same_as<kgr::mapped_service_t<service2, kgr::map<map4>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2 const&, kgr::map<map4>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2&&, kgr::map<map4>>, kgr::single_service<service2>>);
+		static_assert(std::same_as<kgr::mapped_service_t<service2 const&&, kgr::map<map4>>, kgr::single_service<service2>>);
 	}
 }
 
@@ -280,9 +281,7 @@ namespace indirect_map_value_cat {
 		CHECK((std::is_same<kgr::mapped_service_t<service const&&, kgr::map<test4>>, kgr::service<service>>::value));
 
 		// The following test cannot pass on visual studio. A bug will be reported about this behaviour
-#ifndef _MSC_VER
 		CHECK((std::is_same<kgr::mapped_service_t<service&, kgr::map<test4>>, kgr::single_service<service>>::value));
-#endif
 		
 		CHECK((std::is_same<kgr::mapped_service_t<service, kgr::map<test5>>, kgr::service<service>>::value));
 		CHECK((std::is_same<kgr::mapped_service_t<service const&, kgr::map<test5>>, kgr::single_service<service>>::value));

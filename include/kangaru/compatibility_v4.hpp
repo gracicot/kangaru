@@ -4,9 +4,6 @@
 #include "kangaru.hpp"
 
 #include "detail/define.hpp"
-#include "kangaru/detail/concepts.hpp"
-#include "kangaru/detail/two_step_init.hpp"
-#include "kangaru/detail/type_id.hpp"
 
 namespace kangaru::compatibility_v4 {
 	struct in_place_t {} constexpr in_place{};
@@ -103,7 +100,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename T, typename... Args>
 	concept default_constructible_emplaceable =
-		    std::constructible_from<T>
+		    std::default_initializable<T>
 		and requires(T& v4source, Args&&... args) {
 			{ v4source.emplace(KANGARU5_FWD(args)...) } -> std::same_as<void>;
 		};
@@ -116,8 +113,8 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename T, typename... Args>
 	inline constexpr auto constructible_with_construct_result<T, std::tuple<Args...>> =
-		   std::constructible_from<T, in_place_t, Args...>
-		or default_constructible_emplaceable<T, Args...>;
+		   std::constructible_from<T, in_place_t, Args&&...>
+		or default_constructible_emplaceable<T, Args&&...>;
 	
 	template<unqualified_object T, typename... Args>
 	constexpr auto v4_constructor_impl(Args&&... args) -> T {
@@ -139,7 +136,7 @@ namespace kangaru::compatibility_v4::detail {
 		
 		return std::apply([]<typename... A>(A&&... a) -> T {
 			return v4_constructor_impl<T>(KANGARU5_FWD(a)...);
-		}, injected);
+		}, std::move(injected));
 	}
 	
 	template<typename T, typename... Args>
@@ -375,11 +372,11 @@ namespace kangaru::compatibility_v4::detail {
 
 // service map
 namespace kangaru::compatibility_v4 {
+	template<typename M = void>
+	struct map_t {};
+	
 	template<typename...>
 	struct map {};
-	
-	template<typename = void>
-	struct map_t {};
 }
 
 namespace kangaru::compatibility_v4::detail::service_map_impl {
@@ -390,9 +387,16 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 		auto provide() const -> T;
 	};
 	
-	template<typename... Maps>
+	template<injectable Type>
+	struct converting_placeholder_source {
+		template<injectable T>
+			requires(std::convertible_to<Type, T>)
+		auto provide() const -> T;
+	};
+	
+	template<typename Map>
 	struct map_type_source {
-		template<injectable T> requires(... or std::same_as<map_t<Maps>, T>)
+		template<injectable T> requires(std::same_as<map_t<Map>, T>)
 		auto provide() const -> T;
 	};
 	
@@ -406,28 +410,6 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	
 	template<typename T>
 	concept mapping = v4_source<T> or indirect_mapping<T>;
-	
-	template<typename T>
-	concept mapped_unnamed = requires(basic_deducer<exact_placeholder_source<T>&> deducer) {
-		{ service_map(deducer) } -> mapping;
-	};
-	
-	template<typename T, typename... Maps>
-	concept mapped_named = requires(basic_deducer<exact_placeholder_source<T>&> deducer, basic_deducer<map_type_source<Maps...>&> map) {
-		{ service_map(deducer, map) } -> mapping;
-	};
-	
-	template<typename T, typename... Maps>
-	concept mapped = mapped_unnamed<T> or mapped_named<T, Maps...>;
-	
-	template<typename T>
-	using service_map_result_t = decltype(service_map(std::declval<basic_deducer<exact_placeholder_source<T>&>>()));
-	
-	template<typename T, typename... Maps>
-	using named_service_map_result_t = decltype(service_map(
-		std::declval<basic_deducer<exact_placeholder_source<T>&>>(),
-		std::declval<basic_deducer<map_type_source<Maps...>&>>()
-	));
 	
 	template<typename Mapping, typename>
 		requires(mapping<Mapping>)
@@ -443,19 +425,61 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	
 	template<typename Mapping, typename Service>
 	using evaluate_indirect_map_t = typename evaluate_indirect_map<Mapping, Service>::type;
+
+	template<typename Mapping, typename Service>
+	concept mapping_for =
+		    mapping<Mapping>
+		and (
+			   std::convertible_to<service_type<evaluate_indirect_map_t<Mapping, Service>>, Service&>
+			or std::convertible_to<service_type<evaluate_indirect_map_t<Mapping, Service>>, Service&&>
+		);
+	
+	template<typename T>
+	concept mapped_unnamed = requires(T type) {
+		{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
+	};
+	
+	template<typename T, typename Map>
+	concept mapped_named = requires(
+		T type,
+		map_t<Map> map
+	) {
+		{ service_map(KANGARU5_FWD(type), map) } -> mapping_for<T>;
+	};
+	
+	template<typename T>
+	using service_map_result_t = decltype(service_map(
+		std::declval<T>()
+	));
+	
+	template<typename T, typename Map>
+	using named_service_map_result_t = decltype(service_map(
+		std::declval<T>(),
+		std::declval<map_t<Map>>()
+	));
 	
 	template<typename T, typename>
 	struct lookup_map {};
 	
-	template<typename T, typename... Maps>
-		requires(mapped_named<T, Maps...>)
-	struct lookup_map<T, map<Maps...>> {
-		using type = evaluate_indirect_map_t<named_service_map_result_t<T, Maps...>, T>;
+	template<typename T, typename First, typename... Maps>
+		requires(mapped_named<T, First>)
+	struct lookup_map<T, map<First, Maps...>> {
+		using type = evaluate_indirect_map_t<named_service_map_result_t<T, First>, T>;
 	};
 	
-	template<typename T, typename... Maps>
-		requires(mapped_unnamed<T>)
-	struct lookup_map<T, map<Maps...>> {
+	template<typename T, typename First, typename... Maps>
+		requires(not mapped_named<T, First>)
+	struct lookup_map<T, map<First, Maps...>> : lookup_map<T, map<Maps...>> {};
+	
+	template<typename T>
+		requires(mapped_named<T, void>)
+	struct lookup_map<T, map<>> {
+		using type = evaluate_indirect_map_t<named_service_map_result_t<T, void>, T>;
+	};
+	
+	template<typename T>
+		requires(not mapped_named<T, void> and mapped_unnamed<T>)
+	struct lookup_map<T, map<>> {
 		using type = evaluate_indirect_map_t<service_map_result_t<T>, T>;
 	};
 	
@@ -1054,26 +1078,32 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 	}
 }
 
-KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
-	struct container;
-	
-	struct container_service {
-	private:
-		container* c;
-		
-	public:
-		explicit constexpr container_service(in_place_t, container& c) : c{std::addressof(c)} {}
-		
-		static constexpr auto construct(container& container) {
-			return inject(container);
+namespace kangaru::compatibility_v4 {
+	struct all {
+		constexpr inline bool operator()(type_id_t) const noexcept {
+			return true;
 		}
-		
-		constexpr auto forward() const -> container& {
-			return *c;
-		}
-		
-		friend auto service_map(container&) -> container_service;
 	};
+	
+	template<typename First, injectable... Ts>
+	struct except {
+		constexpr bool operator()(type_id_t id) const noexcept {
+			return !(... or (id == type_id<Ts>()));
+		}
+	};
+	
+	template<typename First, injectable... Ts>
+	struct only {
+		constexpr bool operator()(type_id_t id) const noexcept {
+			return (... or (id == type_id<Ts>()));
+		}
+	};
+}
+
+KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
+	struct container_service;
+	template<typename Pred>
+	struct filtered_fork_service;
 	
 	struct container {
 		container(detail::container_cache_type cache = {}, detail::container_heap_storage storage = {}) :
@@ -1170,7 +1200,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		}
 		
 	public:
-		template<injectable T> requires(detail::service_map_impl::mapped<T>)
+		template<injectable T> requires(detail::service_map_impl::mapped_unnamed<T>)
 		constexpr auto provide() -> T {
 			return service<mapped_service_t<T>>();
 		}
@@ -1259,9 +1289,21 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			second_step_from_attribute{}.template operator()<contained_type>(*ptr, container_source(state));
 		}
 		
-		auto fork() const& -> container {
+		template<typename Pred = all>
+		auto fork(Pred pred = {}) const& -> container {
 			auto cache = detail::container_cache_type{};
+
+			// TODO: Use predicate
 			cache.insert(state.begin(), state.end());
+			
+			// std::copy_if(
+			// 	state.begin(),
+			// 	state.end(),
+			// 	std::inserter(cache, cache.end()),
+			// 	[&](auto const& pair) {
+			// 		return pred(static_cast<std::uint64_t>(std::hash<kangaru::type_id>{}(pair.first)));
+			// 	}
+			// );
 			
 			return container{
 				std::move(cache),
@@ -1272,9 +1314,43 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		constexpr auto onion() {
 			return container_source(state);
 		}
+
+		friend auto service_map(container const&) -> container_service;
+		friend auto service_map(container&&) -> filtered_fork_service<all>;
+	};
+	
+	struct container_service {
+		explicit constexpr container_service(in_place_t, container& c) : c{std::addressof(c)} {}
+		
+		static constexpr auto construct(container& container) {
+			return inject(container);
+		}
+		
+		constexpr auto forward() const -> container& {
+			return *c;
+		}
 		
 	private:
+		container* c;
 	};
+
+	template<typename Predicate>
+	struct filtered_fork_service {
+		explicit filtered_fork_service(in_place_t, container& c) : c{c.fork(Predicate{})} {}
+		
+		static auto construct(container& container) {
+			return inject(container);
+		}
+		
+		auto forward() -> container {
+			return std::move(c);
+		}
+		
+	private:
+		container c;
+	};
+	
+	using fork_service = filtered_fork_service<all>;
 }
 
 namespace kangaru::compatibility_v4::detail {
@@ -1522,8 +1598,192 @@ namespace kangaru::compatibility_v4 {
 	using autowire_shared_service = shared_service<T, mapped_autowire<Map, max_dependencies>>;
 }
 
+// operator
+namespace kangaru::compatibility_v4::detail {
+	inline constexpr auto dereference(forwarded_object auto&& c) -> auto& {
+		return c;
+	}
+	
+	inline constexpr auto dereference(object auto* c) -> auto& {
+		return *c;
+	}
+	
+	template<object Container, map_list Map = map<>>
+	struct basic_invoker {
+		explicit basic_invoker(std::remove_pointer_t<Container>& container) requires(std::is_pointer_v<Container>) :
+			container{std::addressof(container)} {}
+		
+		explicit basic_invoker(Container container) requires(not std::is_pointer_v<Container>) :
+			container{std::move(container)} {}
+		
+		template<typename F, typename... Args>
+			requires(different_from<map<>, Map>)
+		auto operator()(F&& f, Args&&... args) {
+			return dereference(container).invoke(Map{}, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
+		}
+		
+		template<map_list M, typename F, typename... Args>
+			requires(std::same_as<map<>, Map>)
+		auto operator()(M map, F&& f, Args&&... args) {
+			return dereference(container).invoke(map, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
+		}
+		
+		template<map_list M = map<>, typename F, typename... Args>
+			requires(std::same_as<map<>, Map>)
+		auto operator()(F&& f, Args&&... args) {
+			return dereference(container).invoke(M{}, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
+		}
+		
+	private:
+		Container container;
+		
+		template<object T, map_list M>
+		friend auto service_map(basic_invoker<T, M>) -> service<
+			basic_invoker<T, M>,
+			dependency<
+				kangaru::detail::conditional_t<
+					std::is_pointer_v<T>,
+					container_service,
+					fork_service
+				>
+			>
+		>;
+	};
+	
+	template<object Container, v4_source Service>
+		requires(not std::derived_from<Service, single>)
+	struct basic_generator {
+		explicit basic_generator(std::remove_pointer_t<Container>& container) requires(std::is_pointer_v<Container>) :
+			container{std::addressof(container)} {}
+		
+		explicit basic_generator(Container container) requires(not std::is_pointer_v<Container>) :
+			container{std::move(container)} {}
+		
+		template<typename... Args>
+		auto operator()(Args&&... args) const -> service_type<Service> {
+			return dereference(container).template service<Service>(KANGARU5_FWD(args)...);
+		}
+		
+	private:
+		Container container;
+		
+		template<object C, v4_source S>
+		friend auto service_map(basic_generator<C, S>) -> service<
+			basic_generator<C, S>,
+			dependency<
+				kangaru::detail::conditional_t<
+					std::is_pointer_v<C>,
+					container_service,
+					fork_service
+				>
+			>
+		>;
+	};
+	
+	template<object Container, v4_source Service>
+	struct basic_lazy {
+	private:
+		using rvalue = std::remove_reference_t<service_type<Service>>&&;
+		using pointer = std::remove_cvref_t<service_type<Service>>*;
+		
+	public:
+		explicit basic_lazy(std::remove_pointer_t<Container>& container) requires(std::is_pointer_v<Container>) :
+			container{std::addressof(container)} {}
+		
+		explicit basic_lazy(Container container) requires(not std::is_pointer_v<Container>) :
+			container{std::move(container)} {}
+		
+		auto get() -> service_type<Service>& {
+			if (!service) {
+				service.emplace(dereference(container).template service<Service>());
+			}
+			
+			return service.value();
+		}
+		
+		auto operator->() {
+			return &get();
+		}
+		
+		auto operator*() & -> service_type<Service>& {
+			return get();
+		}
+		
+		auto operator*() && -> std::remove_reference_t<service_type<Service>>&& {
+			return std::move(get());
+		}
+		
+	private:
+		optional<service_type<Service>> service;
+		Container container;
+		
+		template<object C, v4_source S>
+		friend auto service_map(basic_lazy<C, S>) -> compatibility_v4::service<
+			basic_lazy<C, S>,
+			dependency<
+				kangaru::detail::conditional_t<
+					std::is_pointer_v<C>,
+					container_service,
+					fork_service
+				>
+			>
+		>;
+	};
+}
+
+namespace kangaru::compatibility_v4 {
+	using invoker = detail::basic_invoker<container*>;
+	
+	template<detail::map_list Map>
+	using mapped_invoker = detail::basic_invoker<container*, Map>;
+	
+	using forked_invoker = detail::basic_invoker<container>;
+	
+	template<detail::map_list Map>
+	using forked_mapped_invoker = detail::basic_invoker<container, Map>;
+	
+	template<detail::v4_source Service>
+	using generator = detail::basic_generator<container*, Service>;
+	
+	template<detail::v4_source Service>
+	using forked_generator = detail::basic_generator<container, Service>;
+	
+	template<detail::v4_source Service>
+	using lazy = detail::basic_lazy<container*, Service>;
+	
+	template<detail::v4_source Service>
+	using forked_lazy = detail::basic_lazy<container, Service>;
+	
+	// services
+	using invoker_service = service<invoker, dependency<container_service>>;
+	
+	template<detail::map_list Map>
+	using mapped_invoker_service = service<mapped_invoker<Map>, dependency<container_service>>;
+	
+	using forked_invoker_service = service<forked_invoker, dependency<filtered_fork_service<all>>>;
+	
+	template<detail::map_list Map, typename Predicate = all>
+	using forked_mapped_invoker_service = service<forked_mapped_invoker<Map>, dependency<filtered_fork_service<Predicate>>>;
+	
+	template<detail::v4_source Service>
+	using generator_service = service<generator<Service>, dependency<container_service>>;
+	
+	template<detail::v4_source Service, typename Predicate = all>
+	using forked_generator_service = service<forked_generator<Service>, dependency<filtered_fork_service<Predicate>>>;
+	
+	template<detail::v4_source Service>
+	using lazy_service = service<lazy<Service>, dependency<container_service>>;
+	
+	template<detail::v4_source Service, typename Predicate = all>
+	using forked_lazy_service = service<forked_lazy<Service>, dependency<filtered_fork_service<Predicate>>>;
+}
+
+namespace kangaru::compatibility_v4 {
+	using kangaru::optional;
+}
 
 KANGARU5_EXPORT namespace kgr = kangaru::compatibility_v4;
+static_assert(std::same_as<kgr::container, kangaru::compatibility_v4::container>);
 
 #include "detail/undef.hpp"
 

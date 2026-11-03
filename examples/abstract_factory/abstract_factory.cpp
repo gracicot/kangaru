@@ -1,4 +1,5 @@
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
 #include <iostream>
 #include <unordered_map>
 #include <functional>

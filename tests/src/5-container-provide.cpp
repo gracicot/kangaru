@@ -6,7 +6,7 @@
 
 #include <kangaru/kangaru.hpp>
 
-#include <fmt/core.h>
+#include <fmt/format.h>
 
 #include <compare>
 #include <type_traits>

@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_LAZY_HPP
 #define KANGARU5_DETAIL_LAZY_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "source.hpp"
 #include "optional.hpp"

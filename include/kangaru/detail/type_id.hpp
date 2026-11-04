@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_TYPE_ID_HPP
 #define KANGARU5_DETAIL_TYPE_ID_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "murmur.hpp"
 

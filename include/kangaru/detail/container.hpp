@@ -1,5 +1,6 @@
 #ifndef KANGARU5_DETAIL_CONTAINER_HPP
 #define KANGARU5_DETAIL_CONTAINER_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #include "cache_types.hpp"
 #include "optional.hpp"

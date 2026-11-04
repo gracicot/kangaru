@@ -1,5 +1,6 @@
 #ifndef KANGARU_DETAIL_TYPE_TRAITS_HPP
 #define KANGARU_DETAIL_TYPE_TRAITS_HPP
+// IWYU pragma: private, include <kangaru/kangaru.hpp>
 
 #ifndef KANGARU5_MODULES
 #include <utility>

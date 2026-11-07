@@ -20,9 +20,17 @@
 KANGARU5_EXPORT namespace kangaru {
 	struct kangaru_deducer_tag {};
 	struct kangaru_strict_deducer_tag {};
+	struct kangaru_strict_overloaded_deducer_tag {};
 	
 	template<typename Deducer>
-	concept deducer_weak = object<Deducer>;
+	concept deducer_weak = object<Deducer> and requires { typename Deducer::is_deducer; };
+	
+	template<typename Deducer>
+	concept deducer_strict_overloaded =
+		    deducer_weak<Deducer>
+		and requires {
+			requires std::same_as<typename Deducer::is_deducer, kangaru_strict_overloaded_deducer_tag>;
+		};
 	
 	template<typename Deducer>
 	concept deducer_strict =
@@ -44,6 +52,7 @@ KANGARU5_EXPORT namespace kangaru {
 		and (
 			   deducer_non_strict<Deducer>
 			or deducer_strict<Deducer>
+			or deducer_strict_overloaded<Deducer>
 		);
 	
 	template<typename Deducer, typename T>
@@ -312,6 +321,46 @@ KANGARU5_EXPORT namespace kangaru {
 			source{std::addressof(source)} {}
 		
 		explicit constexpr strict_deducer(forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
+			source{std::addressof(source)} {}
+		
+		template<deducible_strict_prvalue<Source> T>
+		constexpr operator T() {
+			return kangaru::provide<T>(static_cast<Source&&>(*source));
+		}
+		
+		template<deducible_strict_lvalue<Source> T>
+		constexpr operator T&() const {
+			return kangaru::provide<T&>(static_cast<Source&&>(*source));
+		}
+		
+		template<deducible_strict_lvalue_const<Source> T>
+		constexpr operator T const&() const {
+			return kangaru::provide<T const&>(static_cast<Source&&>(*source));
+		}
+		
+		template<deducible_strict_rvalue<Source> T>
+		constexpr operator T&&() const {
+			return kangaru::provide<T&&>(static_cast<Source&&>(*source));
+		}
+		
+		template<deducible_strict_rvalue_const<Source> T>
+		constexpr operator T const&&() const {
+			return kangaru::provide<T const&&>(static_cast<Source&&>(*source));
+		}
+		
+	private:
+		std::remove_reference_t<Source>* source;
+	};
+
+	template<source_ref Source>
+	struct overloaded_deducer {
+		using is_deducer = kangaru_strict_overloaded_deducer_tag;
+		
+		explicit constexpr overloaded_deducer(forwarded<std::remove_cvref_t<Source>> auto const&& source)
+		noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
+			source{std::addressof(source)} {}
+		
+		explicit constexpr overloaded_deducer(forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
 			source{std::addressof(source)} {}
 		
 		template<deducible_strict_prvalue<Source> T>
@@ -957,6 +1006,172 @@ namespace kangaru::detail::deducer_private {
 		}
 	}
 	
+	namespace overloaded_function_handling {
+		// Welcome to insanity
+		
+		// Only one kind of parameter will accept a lvalue const reference, and it's a lvalue const reference.
+		// If the function is callable with a lvalue const reference, then it means there's an overload that accepts it.
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		concept callable_with_lvalue_const_ref = callable_with_nth_parameter_being<
+			filtered_value_category_deducer<T, reference_kind::lvalue_const_reference>,
+			F,
+			nth,
+			max
+		>;
+		
+		// Now we have something harder to match. Sending a rvalue constant reference would indeed match a rvalue
+		// constant reference parameter, but would also match a lvalue constant reference. This means that if we
+		// Match for a lvalue constant reference before, we need to apply a different logic.
+		//
+		// If we match the lvalue constant reference:
+		//  - We try to match with deducer for a lvalue constant reference AND a rvalue constant reference,
+		//    it will result in a ambiguous match, so not callable. This is why we check that it's not callable
+		//    with such deducer and ultimately means that there is a candidate with a rvalue constant reference.
+		//
+		// On the contrary, if there was no match for lvalue constant reference:
+		//  - We match for rvalue constant reference. If it matches, we're gold.
+		//  - If we don't match, we exclude matching with mutable rvalue.
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		concept callable_with_rvalue_const_ref = (
+			(
+				    callable_with_lvalue_const_ref<T, F, nth, max>
+				and not callable_with_nth_parameter_being<
+						filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_const_reference>,
+						F,
+						nth,
+						max
+					>
+			) or (
+				    not callable_with_lvalue_const_ref<T, F, nth, max>
+				and callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
+					F,
+					nth,
+					max
+				>
+			) or (
+				    not callable_with_lvalue_const_ref<T, F, nth, max>
+				and not callable_with_nth_parameter_being<
+						filtered_value_category_deducer<T, reference_kind::rvalue_const_reference>,
+						F,
+						nth,
+						max
+					>
+				and callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+					F,
+					nth,
+					max
+				>
+				and not callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+					F,
+					nth,
+					max
+				>
+			)
+		);
+		
+		// To check for normal lvalue references, we need to first check if we already match with a const reference.
+		// If we did match, then we'll do the trick where we try to call the function with a deducer that can
+		// Deduce both kind. If the call is ambiguous, then we have a candidate in the overload set that take a lvalue ref.
+		// Otherwise, we can just match with lvalue references.
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		concept callable_with_lvalue_ref = (
+			(
+				    callable_with_lvalue_const_ref<T, F, nth, max>
+				and not callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_reference_and_lvalue_const_reference>,
+					F,
+					nth,
+					max
+				>
+			) or (
+					not callable_with_lvalue_const_ref<T, F, nth, max>
+				and callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_reference>,
+					F,
+					nth,
+					max
+				>
+			)
+		);
+		
+		// Here we finally check for rvalue references. They can match rvalue references, rvalue const references, and
+		// lvalue const references. We need take into account if we matched for them them before in order to do the right
+		// little dance of ambiguous call check.
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		concept callable_with_rvalue_ref = (
+			(
+				    callable_with_rvalue_const_ref<T, F, nth, max>
+				and not callable_with_nth_parameter_being<
+						filtered_value_category_deducer<T, reference_kind::rvalue_reference_and_rvalue_const_reference>,
+						F,
+						nth,
+						max
+					>
+			) or (
+				    not callable_with_rvalue_const_ref<T, F, nth, max>
+				and callable_with_lvalue_const_ref<T, F, nth, max>
+				and not callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::lvalue_const_reference_and_rvalue_reference>,
+					F,
+					nth,
+					max
+				>
+			) or (
+				    not callable_with_rvalue_const_ref<T, F, nth, max>
+				and not callable_with_lvalue_const_ref<T, F, nth, max>
+				and callable_with_nth_parameter_being<
+					filtered_value_category_deducer<T, reference_kind::rvalue_reference>,
+					F,
+					nth,
+					max
+				>
+			)
+		);
+		
+		template<typename F, std::size_t nth, std::size_t max>
+		concept function_nth_parameter_prvalue_overloaded =
+			#if KANGARU5_AMBIGUOUS_BASED_PRVALUE_DETECTION()
+					not callable_with_nth_parameter_being<ambiguous_prvalue_deducer, F, nth, max>
+				and callable_with_nth_parameter_being<ambiguous_overloaded_reference_deducer, F, nth, max>
+			#else
+				callable_with_nth_parameter_being<prvalue_detector_deducer, F, nth, max>
+			#endif
+		;
+		
+		template<typename T, typename F, std::size_t nth, std::size_t max>
+		inline consteval auto reference_kind_for_nth_parameter_overloaded() -> reference_kind {
+			if (function_nth_parameter_prvalue_overloaded<F, nth, max>) {
+				return reference_kind::none;
+			} else {
+				auto lvalue_const_ref = callable_with_lvalue_const_ref<T, F, nth, max>
+					? reference_kind::lvalue_const_reference
+					: reference_kind::none;
+				
+				auto rvalue_const_ref = callable_with_rvalue_const_ref<T, F, nth, max>
+					? reference_kind::rvalue_const_reference
+					: reference_kind::none;
+				
+				auto lvalue_ref = callable_with_lvalue_ref<T, F, nth, max>
+					? reference_kind::lvalue_reference
+					: reference_kind::none;
+				
+				auto rvalue_ref = callable_with_rvalue_ref<T, F, nth, max>
+					? reference_kind::rvalue_reference
+					: reference_kind::none;
+				
+				return (
+					  lvalue_ref
+					| lvalue_const_ref
+					| rvalue_ref
+					| rvalue_const_ref
+				);
+			}
+		}
+	}
+	
 	template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
 	using filtered_value_category_deducer_for = filtered_value_category_deducer<
 		Deducer,
@@ -964,8 +1179,14 @@ namespace kangaru::detail::deducer_private {
 	>;
 	
 	template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
+	using overloaded_filtered_value_category_deducer_for = filtered_value_category_deducer<
+		Deducer,
+		KANGARU5_NO_ADL(overloaded_function_handling::reference_kind_for_nth_parameter_overloaded<placeholder_deducer, F, nth, arity>)()
+	>;
+	
+	template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
 	using prvalue_filtered_deducer_for = detail::conditional_t<
-			not function_nth_parameter_prvalue<F, nth, arity>
+		    not function_nth_parameter_prvalue<F, nth, arity>
 		and callable_with_nth_parameter_being<exclude_prvalue_deducer<Deducer>, F, nth, arity>,
 		exclude_prvalue_deducer<Deducer>,
 		exclude_references_deducer<Deducer>
@@ -975,7 +1196,11 @@ namespace kangaru::detail::deducer_private {
 	using filtered_deducer_for = detail::conditional_t<
 		deducer_strict<Deducer>,
 		filtered_value_category_deducer_for<F, Deducer, nth, arity>,
-		prvalue_filtered_deducer_for<F, Deducer, nth, arity>
+		detail::conditional_t<
+			deducer_strict_overloaded<Deducer>,
+			overloaded_filtered_value_category_deducer_for<F, Deducer, nth, arity>,
+			prvalue_filtered_deducer_for<F, Deducer, nth, arity>
+		>
 	>;
 	
 	template<typename F, kangaru::deducer... Deducers, std::size_t... S>

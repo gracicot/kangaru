@@ -471,14 +471,14 @@ KANGARU5_EXPORT namespace kangaru {
 			
 			template<deducer... Deducers>
 			constexpr auto operator()(Deducers... deduce) const
-				-> detail::call_result_t<F&&, exclude_deducer<T, decltype(deduce)>...>
+				-> detail::call_result_t<F&&, exclude_deducer<decltype(deduce), T>...>
 			// TODO: It seems we need to check the return type here but it's a bit unclear why.
 			//       Skipping this check or putting this check anywhere else completely fails.
 			requires(
 				callable_returns<
 					T,
 					F&&,
-					exclude_deducer<T, decltype(deduce)>...
+					exclude_deducer<decltype(deduce), T>...
 				>
 			) {
 				return KANGARU5_FWD(func)(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
@@ -490,7 +490,7 @@ KANGARU5_EXPORT namespace kangaru {
 			// requires callable_template_1t<
 			// 	F&&,
 			// 	T,
-			// 	exclude_deducer<T, decltype(deduce)>...
+			// 	exclude_deducer<decltype(deduce), T>...
 			// > {
 			// 	return KANGARU5_FWD(func).template operator()<T>(KANGARU5_NO_ADL(exclude_deduction<T>)(deduce)...);
 			// }

@@ -390,7 +390,13 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	template<injectable Type>
 	struct converting_placeholder_source {
 		template<injectable T>
-			requires(std::convertible_to<Type, T>)
+			requires(
+				    std::same_as<std::remove_cvref_t<Type>, std::remove_cvref_t<T>>
+				and (
+					   std::convertible_to<Type, T>
+					or std::convertible_to<Type&&, T>
+				)
+			)
 		auto provide() const -> T;
 	};
 	
@@ -434,29 +440,112 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			or std::convertible_to<service_type<evaluate_indirect_map_t<Mapping, Service>>, Service&&>
 		);
 	
-	template<typename T>
-	concept mapped_unnamed = requires(T type) {
-		{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
+	template<typename Map>
+	struct service_map_function {
+		template<typename Arg>
+		auto operator()(Arg&& arg) const -> decltype(service_map(std::declval<Arg>(), std::declval<map_t<Map>>()));
 	};
 	
-	template<typename T, typename Map>
-	concept mapped_named = requires(
-		T type,
-		map_t<Map> map
-	) {
-		{ service_map(KANGARU5_FWD(type), map) } -> mapping_for<T>;
+	struct unnamed_service_map_function {
+		template<typename Arg>
+		auto operator()(Arg&& arg) const -> decltype(service_map(std::declval<Arg>()));
 	};
 	
 	template<typename T>
-	using service_map_result_t = decltype(service_map(
-		std::declval<T>()
-	));
+	using const_service_map_deducer = filtered_value_category_deducer<
+		overloaded_deducer<converting_placeholder_source<T>&>,
+		reference_kind::all_reference_kind
+	>;
+	
+	template<typename T>
+	using mutable_service_map_deducer = filtered_value_category_deducer<
+		overloaded_deducer<converting_placeholder_source<T>&>,
+		reference_kind::lvalue_reference_and_rvalue_reference
+	>;
+	
+	template<typename T>
+	using prvalue_service_map_deducer = filtered_value_category_deducer<
+		basic_deducer<converting_placeholder_source<T>&>,
+		reference_kind::none
+	>;
+	
+	template<typename T>
+	concept mapped_unnamed_prvalue =
+		    callable<unnamed_service_map_function, prvalue_service_map_deducer<T>>
+		and requires(
+			unnamed_service_map_function service_map,
+			prvalue_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T>
+	concept mapped_unnamed_mutable =
+		    callable<unnamed_service_map_function, mutable_service_map_deducer<T>>
+		and requires(
+			unnamed_service_map_function service_map,
+			mutable_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T>
+	concept mapped_unnamed_const =
+		    callable<unnamed_service_map_function, const_service_map_deducer<T>>
+		and requires(
+			unnamed_service_map_function service_map,
+			const_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T>
+	concept mapped_unnamed = mapped_unnamed_const<T> or mapped_unnamed_prvalue<T>;
 	
 	template<typename T, typename Map>
-	using named_service_map_result_t = decltype(service_map(
-		std::declval<T>(),
-		std::declval<map_t<Map>>()
-	));
+	concept mapped_named_prvalue =
+		    callable<service_map_function<Map>, prvalue_service_map_deducer<T>>
+		and requires(
+			service_map_function<Map> service_map,
+			prvalue_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T, typename Map>
+	concept mapped_named_mutable =
+		    callable<service_map_function<Map>, mutable_service_map_deducer<T>>
+		and requires(
+			service_map_function<Map> service_map,
+			mutable_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T, typename Map>
+	concept mapped_named_const =
+		    callable<service_map_function<Map>, const_service_map_deducer<T>>
+		and requires(
+			service_map_function<Map> service_map,
+			const_service_map_deducer<T> type
+		) {
+			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+
+	template<typename T, typename Map>
+	concept mapped_named = mapped_named_const<T, Map> or mapped_named_prvalue<T, Map>;
+	
+	template<typename T>
+	using service_map_result_t = kangaru::detail::call_result_t<
+		unnamed_service_map_function,
+		T
+	>;
+	
+	template<typename T, typename Map>
+	using named_service_map_result_t = kangaru::detail::call_result_t<
+		service_map_function<Map>,
+		T
+	>;
 	
 	template<typename T, typename>
 	struct lookup_map {};
@@ -1292,7 +1381,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		template<typename Pred = all>
 		auto fork(Pred pred = {}) const& -> container {
 			auto cache = detail::container_cache_type{};
-
+			
 			// TODO: Use predicate
 			cache.insert(state.begin(), state.end());
 			

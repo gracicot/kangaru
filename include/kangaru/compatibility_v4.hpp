@@ -62,6 +62,9 @@ namespace kangaru::compatibility_v4::detail {
 }
 
 namespace kangaru::compatibility_v4::detail {
+	template<typename...> [[noreturn]]
+	auto unimplemented_noreturn();
+	
 	template<v4_source>
 	struct parent_types_or_empty {
 		using type = std::tuple<>;
@@ -452,20 +455,14 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	};
 	
 	template<typename T>
-	using const_service_map_deducer = filtered_value_category_deducer<
-		overloaded_deducer<converting_placeholder_source<T>&>,
+	using ref_service_map_deducer = filtered_value_category_deducer<
+		basic_deducer<exact_placeholder_source<T>&>,
 		reference_kind::all_reference_kind
 	>;
 	
 	template<typename T>
-	using mutable_service_map_deducer = filtered_value_category_deducer<
-		overloaded_deducer<converting_placeholder_source<T>&>,
-		reference_kind::lvalue_reference_and_rvalue_reference
-	>;
-	
-	template<typename T>
 	using prvalue_service_map_deducer = filtered_value_category_deducer<
-		basic_deducer<converting_placeholder_source<T>&>,
+		basic_deducer<exact_placeholder_source<T>&>,
 		reference_kind::none
 	>;
 	
@@ -480,27 +477,17 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 		};
 	
 	template<typename T>
-	concept mapped_unnamed_mutable =
-		    callable<unnamed_service_map_function, mutable_service_map_deducer<T>>
+	concept mapped_unnamed_ref =
+		    callable<unnamed_service_map_function, ref_service_map_deducer<T>>
 		and requires(
 			unnamed_service_map_function service_map,
-			mutable_service_map_deducer<T> type
+			ref_service_map_deducer<T> type
 		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T>
-	concept mapped_unnamed_const =
-		    callable<unnamed_service_map_function, const_service_map_deducer<T>>
-		and requires(
-			unnamed_service_map_function service_map,
-			const_service_map_deducer<T> type
-		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
-		};
-	
-	template<typename T>
-	concept mapped_unnamed = mapped_unnamed_const<T> or mapped_unnamed_prvalue<T>;
+	concept mapped_unnamed = mapped_unnamed_ref<T> or mapped_unnamed_prvalue<T>;
 	
 	template<typename T, typename Map>
 	concept mapped_named_prvalue =
@@ -513,27 +500,17 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 		};
 	
 	template<typename T, typename Map>
-	concept mapped_named_mutable =
-		    callable<service_map_function<Map>, mutable_service_map_deducer<T>>
+	concept mapped_named_ref =
+		    callable<service_map_function<Map>, ref_service_map_deducer<T>>
 		and requires(
 			service_map_function<Map> service_map,
-			mutable_service_map_deducer<T> type
+			ref_service_map_deducer<T> type
 		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T, typename Map>
-	concept mapped_named_const =
-		    callable<service_map_function<Map>, const_service_map_deducer<T>>
-		and requires(
-			service_map_function<Map> service_map,
-			const_service_map_deducer<T> type
-		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
-		};
-
-	template<typename T, typename Map>
-	concept mapped_named = mapped_named_const<T, Map> or mapped_named_prvalue<T, Map>;
+	concept mapped_named = mapped_named_ref<T, Map> or mapped_named_prvalue<T, Map>;
 	
 	template<typename T>
 	using service_map_result_t = kangaru::detail::call_result_t<
@@ -1403,7 +1380,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		constexpr auto onion() {
 			return container_source(state);
 		}
-
+		
 		friend auto service_map(container const&) -> container_service;
 		friend auto service_map(container&&) -> filtered_fork_service<all>;
 	};
@@ -1422,7 +1399,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 	private:
 		container* c;
 	};
-
+	
 	template<typename Predicate>
 	struct filtered_fork_service {
 		explicit filtered_fork_service(in_place_t, container& c) : c{c.fork(Predicate{})} {}
@@ -1726,17 +1703,16 @@ namespace kangaru::compatibility_v4::detail {
 	private:
 		Container container;
 		
-		template<object T, map_list M>
-		friend auto service_map(basic_invoker<T, M>) -> service<
-			basic_invoker<T, M>,
+		friend auto service_map(basic_invoker) -> service<
+			basic_invoker,
 			dependency<
 				kangaru::detail::conditional_t<
-					std::is_pointer_v<T>,
+					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		>;
+		> { unimplemented_noreturn<basic_invoker>(); }
 	};
 	
 	template<object Container, v4_source Service>
@@ -1756,17 +1732,16 @@ namespace kangaru::compatibility_v4::detail {
 	private:
 		Container container;
 		
-		template<object C, v4_source S>
-		friend auto service_map(basic_generator<C, S>) -> service<
-			basic_generator<C, S>,
+		friend auto service_map(basic_generator) -> service<
+			basic_generator,
 			dependency<
 				kangaru::detail::conditional_t<
-					std::is_pointer_v<C>,
+					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		>;
+		> { unimplemented_noreturn<basic_generator>(); }
 	};
 	
 	template<object Container, v4_source Service>
@@ -1806,17 +1781,16 @@ namespace kangaru::compatibility_v4::detail {
 		optional<service_type<Service>> service;
 		Container container;
 		
-		template<object C, v4_source S>
-		friend auto service_map(basic_lazy<C, S>) -> compatibility_v4::service<
-			basic_lazy<C, S>,
+		friend auto service_map(basic_lazy) -> compatibility_v4::service<
+			basic_lazy,
 			dependency<
 				kangaru::detail::conditional_t<
-					std::is_pointer_v<C>,
+					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		>;
+		> { unimplemented_noreturn<basic_lazy>(); }
 	};
 }
 

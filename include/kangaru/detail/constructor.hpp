@@ -66,7 +66,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<deducer Deducer1, typename... Args>
 			requires detail::constructor_private::raw_constructor_callable<
 				Type,
-				exclude_special_constructors_deducer<Type, Deducer1>,
+				exclude_special_constructors_deducer<Deducer1, Type>,
 				Args...
 			>
 		constexpr auto operator()(Deducer1 deduce1, Args&&... args) const -> Type {

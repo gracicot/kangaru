@@ -20,17 +20,9 @@
 KANGARU5_EXPORT namespace kangaru {
 	struct kangaru_deducer_tag {};
 	struct kangaru_strict_deducer_tag {};
-	struct kangaru_strict_overloaded_deducer_tag {};
 	
 	template<typename Deducer>
 	concept deducer_weak = object<Deducer> and requires { typename Deducer::is_deducer; };
-	
-	template<typename Deducer>
-	concept deducer_strict_overloaded =
-		    deducer_weak<Deducer>
-		and requires {
-			requires std::same_as<typename Deducer::is_deducer, kangaru_strict_overloaded_deducer_tag>;
-		};
 	
 	template<typename Deducer>
 	concept deducer_strict =
@@ -52,7 +44,6 @@ KANGARU5_EXPORT namespace kangaru {
 		and (
 			   deducer_non_strict<Deducer>
 			or deducer_strict<Deducer>
-			or deducer_strict_overloaded<Deducer>
 		);
 	
 	template<typename Deducer, typename T>
@@ -351,48 +342,8 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		std::remove_reference_t<Source>* source;
 	};
-
-	template<source_ref Source>
-	struct overloaded_deducer {
-		using is_deducer = kangaru_strict_overloaded_deducer_tag;
-		
-		explicit constexpr overloaded_deducer(forwarded<std::remove_cvref_t<Source>> auto const&& source)
-		noexcept requires std::is_const_v<std::remove_reference_t<Source>> :
-			source{std::addressof(source)} {}
-		
-		explicit constexpr overloaded_deducer(forwarded<std::remove_cvref_t<Source>> auto&& source) noexcept :
-			source{std::addressof(source)} {}
-		
-		template<deducible_strict_prvalue<Source> T>
-		constexpr operator T() {
-			return kangaru::provide<T>(static_cast<Source&&>(*source));
-		}
-		
-		template<deducible_strict_lvalue<Source> T>
-		constexpr operator T&() const {
-			return kangaru::provide<T&>(static_cast<Source&&>(*source));
-		}
-		
-		template<deducible_strict_lvalue_const<Source> T>
-		constexpr operator T const&() const {
-			return kangaru::provide<T const&>(static_cast<Source&&>(*source));
-		}
-		
-		template<deducible_strict_rvalue<Source> T>
-		constexpr operator T&&() const {
-			return kangaru::provide<T&&>(static_cast<Source&&>(*source));
-		}
-		
-		template<deducible_strict_rvalue_const<Source> T>
-		constexpr operator T const&&() const {
-			return kangaru::provide<T const&&>(static_cast<Source&&>(*source));
-		}
-		
-	private:
-		std::remove_reference_t<Source>* source;
-	};
 	
-	template<injectable Exclude, deducer Deducer>
+	template<deducer Deducer, injectable... Exclude>
 	struct exclude_deducer {
 		using is_deducer = typename Deducer::is_deducer;
 		
@@ -400,61 +351,61 @@ KANGARU5_EXPORT namespace kangaru {
 			deducer{deducer} {}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
+			requires((... and different_from<Exclude, T>) and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
 		constexpr operator T() {
 			return deducer.operator T();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&> and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
+			requires((... and different_from<Exclude, T&>) and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
 		constexpr operator T&() {
 			return deducer.operator T&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&> and deducer_for<Deducer, T const&> and not deducer_for<Deducer const, T const&>)
+			requires((... and different_from<Exclude, T const&>) and deducer_for<Deducer, T const&> and not deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() {
 			return deducer.operator T const&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&&> and deducer_for<Deducer, T&&> and not deducer_for<Deducer const, T&&>)
+			requires((... and different_from<Exclude, T&&>) and deducer_for<Deducer, T&&> and not deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() {
 			return deducer.operator T&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&&> and deducer_for<Deducer, T const&&> and not deducer_for<Deducer const, T const&&>)
+			requires((... and different_from<Exclude, T const&&>) and deducer_for<Deducer, T const&&> and not deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() {
 			return deducer.operator T const&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T>)
+			requires((... and different_from<Exclude, T>) and deducer_for<Deducer const, T>)
 		constexpr operator T() const {
 			return deducer.operator T();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&> and deducer_for<Deducer const, T&>)
+			requires((... and different_from<Exclude, T&>) and deducer_for<Deducer const, T&>)
 		constexpr operator T&() const {
 			return deducer.operator T&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&> and deducer_for<Deducer const, T const&>)
+			requires((... and different_from<Exclude, T const&>) and deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() const {
 			return deducer.operator T const&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&&> and deducer_for<Deducer const, T&&>)
+			requires((... and different_from<Exclude, T&&>) and deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() const {
 			return deducer.operator T&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&&> and deducer_for<Deducer const, T const&&>)
+			requires((... and different_from<Exclude, T const&&>) and deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() const {
 			return deducer.operator T const&&();
 		}
@@ -463,75 +414,74 @@ KANGARU5_EXPORT namespace kangaru {
 		Deducer deducer;
 	};
 	
-	template<injectable T>
+	template<injectable... Types>
 	inline constexpr auto exclude_deduction(deducer auto deducer) {
-		return exclude_deducer<T, decltype(deducer)>{deducer};
+		return exclude_deducer<decltype(deducer), Types...>{deducer};
 	}
 	
-	template<unqualified_object Exclude, deducer Deducer>
-		requires(injectable<Exclude>)
-	struct exclude_special_constructors_deducer {
+	template<deducer Deducer, injectable... Include>
+	struct include_only_deducer {
 		using is_deducer = typename Deducer::is_deducer;
 		
-		explicit constexpr exclude_special_constructors_deducer(std::same_as<Deducer> auto deducer) noexcept :
+		explicit constexpr include_only_deducer(std::same_as<Deducer> auto deducer) noexcept :
 			deducer{deducer} {}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
+			requires((... or std::same_as<Include, T>) and deducer_for<Deducer, T> and not deducer_for<Deducer const, T>)
 		constexpr operator T() {
 			return deducer.operator T();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
+			requires((... or std::same_as<Include, T&>) and deducer_for<Deducer, T&> and not deducer_for<Deducer const, T&>)
 		constexpr operator T&() {
 			return deducer.operator T&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T const&> and not deducer_for<Deducer const, T const&>)
+			requires((... or std::same_as<Include, T const&>) and deducer_for<Deducer, T const&> and not deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() {
 			return deducer.operator T const&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T&&> and not deducer_for<Deducer const, T&&>)
+			requires((... or std::same_as<Include, T&&>) and deducer_for<Deducer, T&&> and not deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() {
 			return deducer.operator T&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer, T const&&> and not deducer_for<Deducer const, T const&&>)
+			requires((... or std::same_as<Include, T const&&>) and deducer_for<Deducer, T const&&> and not deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() {
 			return deducer.operator T const&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T>)
+			requires((... or std::same_as<Include, T>) and deducer_for<Deducer const, T>)
 		constexpr operator T() const {
 			return deducer.operator T();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T&>)
+			requires((... or std::same_as<Include, T&>) and deducer_for<Deducer const, T&>)
 		constexpr operator T&() const {
 			return deducer.operator T&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T const&>)
+			requires((... or std::same_as<Include, T const&>) and deducer_for<Deducer const, T const&>)
 		constexpr operator T const&() const {
 			return deducer.operator T const&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T&&>)
+			requires((... or std::same_as<Include, T&&>) and deducer_for<Deducer const, T&&>)
 		constexpr operator T&&() const {
 			return deducer.operator T&&();
 		}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and deducer_for<Deducer const, T const&&>)
+			requires((... or std::same_as<Include, T const&&>) and deducer_for<Deducer const, T const&&>)
 		constexpr operator T const&&() const {
 			return deducer.operator T const&&();
 		}
@@ -540,9 +490,25 @@ KANGARU5_EXPORT namespace kangaru {
 		Deducer deducer;
 	};
 	
+	template<injectable... Types>
+	inline constexpr auto include_only_deduction(deducer auto deducer) {
+		return include_only_deducer<decltype(deducer), Types...>{deducer};
+	}
+	
+	template<deducer Deducer, unqualified_object Exclude>
+	using exclude_special_constructors_deducer = exclude_deducer<Deducer, Exclude, Exclude&, Exclude&&, Exclude const&, Exclude const&&>;
+	
 	template<unqualified_object T> requires(injectable<T>)
 	inline constexpr auto exclude_special_constructors_for(deducer auto deducer) {
-		return exclude_special_constructors_deducer<T, decltype(deducer)>{deducer};
+		return exclude_special_constructors_deducer<decltype(deducer), T>{deducer};
+	}
+	
+	template<deducer Deducer, unqualified_object Include>
+	using include_only_special_constructors_deducer = include_only_deducer<Deducer, Include, Include&, Include&&, Include const&, Include const&&>;
+	
+	template<unqualified_object T> requires(injectable<T>)
+	inline constexpr auto include_only_special_constructors_for(deducer auto deducer) {
+		return include_only_special_constructors_deducer<decltype(deducer), T>{deducer};
 	}
 	
 	enum struct reference_kind : std::uint8_t {
@@ -686,182 +652,89 @@ KANGARU5_EXPORT namespace kangaru {
 		return exclude_references_deducer<decltype(deduce)>{deduce};
 	}
 	
-	template<injectable Exclude>
-	struct exclude_deducer<Exclude, prvalue_detector_deducer> {
+	template<injectable... Exclude>
+	struct exclude_deducer<prvalue_detector_deducer, Exclude...> {
 		using is_deducer = typename prvalue_detector_deducer::is_deducer;
 		
 		explicit constexpr exclude_deducer(std::same_as<prvalue_detector_deducer> auto deducer) noexcept {}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T>)
+			requires((... and different_from<Exclude, T>) and injectable<T>)
 		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&> and injectable<T&>)
+			requires((... and different_from<Exclude, T&>) and injectable<T&>)
 		operator T& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T&&> and injectable<T&&>)
+			requires((... and different_from<Exclude, T&&>) and injectable<T&&>)
 		operator T&& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&> and injectable<T const&>)
+			requires((... and different_from<Exclude, T const&>) and injectable<T const&>)
 		operator T const& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T const&&> and injectable<T const&&>)
+			requires((... and different_from<Exclude, T const&&>) and injectable<T const&&>)
 		operator T const&& () const = delete;
 	};
 	
-	template<injectable Exclude, weak_deducible Exclude2>
-	struct exclude_deducer<Exclude, exclude_special_constructors_deducer<Exclude2, prvalue_detector_deducer>> {
-	private:
-		using deducer = exclude_special_constructors_deducer<Exclude2, prvalue_detector_deducer>;
-		
-	public:
-		using is_deducer = typename deducer::is_deducer;
-		
-		explicit constexpr exclude_deducer(std::same_as<deducer> auto deducer) noexcept {}
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T> and different_from<Exclude2, T> and injectable<T>)
-		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T&> and different_from<Exclude2, T> and injectable<T&>)
-		constexpr operator T&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T const&> and different_from<Exclude2, T> and injectable<T const&>)
-		constexpr operator T const&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T&&> and different_from<Exclude2, T> and injectable<T&&>)
-		constexpr operator T&&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T const&&> and different_from<Exclude2, T> and injectable<T const&&>)
-		constexpr operator T const&&() const = delete;
-	};
-	
-	template<injectable Exclude, injectable Exclude2>
-	struct exclude_deducer<Exclude, exclude_deducer<Exclude2, prvalue_detector_deducer>> {
-	private:
-		using deducer = exclude_special_constructors_deducer<Exclude2, prvalue_detector_deducer>;
-		
-	public:
-		using is_deducer = typename deducer::is_deducer;
-		
-		explicit constexpr exclude_deducer(std::same_as<deducer> auto deducer) noexcept {}
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T> and different_from<Exclude2, T> and injectable<T>)
-		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T&> and different_from<Exclude2, T&> and injectable<T&>)
-		constexpr operator T&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T const&> and different_from<Exclude2, T const&> and injectable<T const&>)
-		constexpr operator T const&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T&&> and different_from<Exclude2, T&&> and injectable<T&&>)
-		constexpr operator T&&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude, T const&&> and different_from<Exclude2, T const&&> and injectable<T const&&>)
-		constexpr operator T const&&() const = delete;
-	};
-	
-	template<weak_deducible Exclude>
-	struct exclude_special_constructors_deducer<Exclude, prvalue_detector_deducer> {
+	template<injectable... Include>
+	struct include_only_deducer<prvalue_detector_deducer, Include...> {
 		using is_deducer = typename prvalue_detector_deducer::is_deducer;
 		
-		explicit constexpr exclude_special_constructors_deducer(std::same_as<prvalue_detector_deducer> auto deducer) noexcept {}
+		explicit constexpr include_only_deducer(std::same_as<prvalue_detector_deducer> auto deducer) noexcept {}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T>)
+			requires((... or std::same_as<Include, T>) and injectable<T>)
 		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T&>)
+			requires((... or std::same_as<Include, T&>) and injectable<T&>)
 		operator T& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T&&>)
+			requires((... or std::same_as<Include, T&&>) and injectable<T&&>)
 		operator T&& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T const&>)
+			requires((... or std::same_as<Include, T const&>) and injectable<T const&>)
 		operator T const& () const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude, T> and injectable<T const&&>)
+			requires((... or std::same_as<Include, T const&&>) and injectable<T const&&>)
 		operator T const&& () const = delete;
 	};
 	
-	template<weak_deducible Exclude, injectable Exclude2>
-	struct exclude_special_constructors_deducer<Exclude, exclude_deducer<Exclude2, prvalue_detector_deducer>> {
+	template<injectable... Exclude2, injectable... Exclude>
+	struct exclude_deducer<exclude_deducer<prvalue_detector_deducer, Exclude2...>, Exclude...> {
 	private:
-		using deducer = exclude_deducer<Exclude2, prvalue_detector_deducer>;
+		using deducer = exclude_deducer<prvalue_detector_deducer, Exclude2...>;
 		
 	public:
 		using is_deducer = typename deducer::is_deducer;
 		
-		explicit constexpr exclude_special_constructors_deducer(std::same_as<deducer> auto deducer) noexcept {}
+		explicit constexpr exclude_deducer(std::same_as<deducer> auto deducer) noexcept {}
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T>)
+			requires((... and different_from<Exclude, T>) and (... and different_from<Exclude2, T>) and injectable<T>)
 		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude2, T&> and different_from<Exclude, T> and injectable<T&>)
-		constexpr operator T&() const = delete;
+			requires((... and different_from<Exclude, T&>) and (... and different_from<Exclude2, T&>) and injectable<T&>)
+		operator T&() const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude2, T const&> and different_from<Exclude, T> and injectable<T const&>)
-		constexpr operator T const&() const = delete;
+			requires((... and different_from<Exclude, T&&>) and (... and different_from<Exclude2, T&&>) and injectable<T&&>)
+		operator T&&() const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude2, T&&> and different_from<Exclude, T> and injectable<T&&>)
-		constexpr operator T&&() const = delete;
+			requires((... and different_from<Exclude, T const&>) and (... and different_from<Exclude2, T const&>) and injectable<T const&>)
+		operator T const&() const = delete;
 		
 		template<weak_deducible T>
-			requires(different_from<Exclude2, T const&&> and different_from<Exclude, T> and injectable<T const&&>)
-		constexpr operator T const&&() const = delete;
-	};
-	
-	template<weak_deducible Exclude, weak_deducible Exclude2>
-	struct exclude_special_constructors_deducer<Exclude, exclude_special_constructors_deducer<Exclude2, prvalue_detector_deducer>> {
-	private:
-		using deducer = exclude_deducer<Exclude2, prvalue_detector_deducer>;
-		
-	public:
-		using is_deducer = typename deducer::is_deducer;
-		
-		explicit constexpr exclude_special_constructors_deducer(std::same_as<deducer> auto deducer) noexcept {}
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T>)
-		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T&>)
-		constexpr operator T&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T const&>)
-		constexpr operator T const&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T&&>)
-		constexpr operator T&&() const = delete;
-		
-		template<weak_deducible T>
-			requires(different_from<Exclude2, T> and different_from<Exclude, T> and injectable<T const&&>)
-		constexpr operator T const&&() const = delete;
+			requires((... and different_from<Exclude, T const&&>) and (... and different_from<Exclude2, T const&&>) and injectable<T const&&>)
+		operator T const&&() const = delete;
 	};
 	
 	template<reference_kind kind>
@@ -891,57 +764,57 @@ KANGARU5_EXPORT namespace kangaru {
 		operator T const&& () const = delete;
 	};
 	
-	template<reference_kind kind, weak_deducible Exclude>
-	struct filtered_value_category_deducer<exclude_special_constructors_deducer<Exclude, prvalue_detector_deducer>, kind> {
+	template<reference_kind kind, injectable... Exclude>
+	struct filtered_value_category_deducer<exclude_deducer<prvalue_detector_deducer, Exclude...>, kind> {
 		using is_deducer = typename prvalue_detector_deducer::is_deducer;
 		
 		explicit constexpr filtered_value_category_deducer(std::same_as<prvalue_detector_deducer> auto deducer) noexcept {}
 		
 		template<weak_deducible T>
-			requires(kind == reference_kind::none and different_from<Exclude, T> and injectable<T>)
+			requires(kind == reference_kind::none and (... and different_from<Exclude, T>) and injectable<T>)
 		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::lvalue_reference) != reference_kind::none and different_from<Exclude, T> and injectable<T&>)
+			requires((kind & reference_kind::lvalue_reference) != reference_kind::none and (... and different_from<Exclude, T&>) and injectable<T&>)
 		operator T& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_reference) != reference_kind::none and different_from<Exclude, T> and injectable<T&&>)
+			requires((kind & reference_kind::rvalue_reference) != reference_kind::none and (... and different_from<Exclude, T&&>) and injectable<T&&>)
 		operator T&& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and different_from<Exclude, T> and injectable<T const&>)
+			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and (... and different_from<Exclude, T const&>) and injectable<T const&>)
 		operator T const& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and different_from<Exclude, T> and injectable<T const&&>)
+			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and (... and different_from<Exclude, T const&&>) and injectable<T const&&>)
 		operator T const&& () const = delete;
 	};
 	
-	template<reference_kind kind, injectable Exclude>
-	struct filtered_value_category_deducer<exclude_deducer<Exclude, prvalue_detector_deducer>, kind> {
+	template<reference_kind kind, injectable... Include>
+	struct filtered_value_category_deducer<include_only_deducer<prvalue_detector_deducer, Include...>, kind> {
 		using is_deducer = typename prvalue_detector_deducer::is_deducer;
 		
 		explicit constexpr filtered_value_category_deducer(std::same_as<prvalue_detector_deducer> auto deducer) noexcept {}
 		
 		template<weak_deducible T>
-			requires(kind == reference_kind::none and different_from<Exclude, T> and injectable<T>)
+			requires(kind == reference_kind::none and (... or std::same_as<Include, T>) and injectable<T>)
 		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::lvalue_reference) != reference_kind::none and different_from<Exclude, T&> and injectable<T&>)
+			requires((kind & reference_kind::lvalue_reference) != reference_kind::none and (... or std::same_as<Include, T&>) and injectable<T&>)
 		operator T& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_reference) != reference_kind::none and different_from<Exclude, T&&> and injectable<T&&>)
+			requires((kind & reference_kind::rvalue_reference) != reference_kind::none and (... or std::same_as<Include, T&&>) and injectable<T&&>)
 		operator T&& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and different_from<Exclude, T const&> and injectable<T const&>)
+			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and (... or std::same_as<Include, T const&>) and injectable<T const&>)
 		operator T const& () const = delete;
 		
 		template<weak_deducible T>
-			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and different_from<Exclude, T const&&> and injectable<T const&&>)
+			requires((kind & reference_kind::rvalue_const_reference) != reference_kind::none and (... or std::same_as<Include, T const&&>) and injectable<T const&&>)
 		operator T const&& () const = delete;
 	};
 }
@@ -1141,24 +1014,24 @@ namespace kangaru::detail::deducer_private {
 			#endif
 		;
 		
-		template<typename T, typename F, std::size_t nth, std::size_t max>
+		template<typename T, typename F>
 		inline consteval auto reference_kind_for_nth_parameter_overloaded() -> reference_kind {
-			if (function_nth_parameter_prvalue_overloaded<F, nth, max>) {
+			if (function_nth_parameter_prvalue_overloaded<F, 0, 1>) {
 				return reference_kind::none;
 			} else {
-				auto lvalue_const_ref = callable_with_lvalue_const_ref<T, F, nth, max>
+				auto lvalue_const_ref = callable_with_lvalue_const_ref<T, F, 0, 1>
 					? reference_kind::lvalue_const_reference
 					: reference_kind::none;
 				
-				auto rvalue_const_ref = callable_with_rvalue_const_ref<T, F, nth, max>
+				auto rvalue_const_ref = callable_with_rvalue_const_ref<T, F, 0, 1>
 					? reference_kind::rvalue_const_reference
 					: reference_kind::none;
 				
-				auto lvalue_ref = callable_with_lvalue_ref<T, F, nth, max>
+				auto lvalue_ref = callable_with_lvalue_ref<T, F, 0, 1>
 					? reference_kind::lvalue_reference
 					: reference_kind::none;
 				
-				auto rvalue_ref = callable_with_rvalue_ref<T, F, nth, max>
+				auto rvalue_ref = callable_with_rvalue_ref<T, F, 0, 1>
 					? reference_kind::rvalue_reference
 					: reference_kind::none;
 				
@@ -1178,10 +1051,10 @@ namespace kangaru::detail::deducer_private {
 		KANGARU5_NO_ADL(reference_kind_for_nth_parameter<placeholder_deducer, F, nth, arity>)()
 	>;
 	
-	template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
+	template<typename F, typename Deducer>
 	using overloaded_filtered_value_category_deducer_for = filtered_value_category_deducer<
 		Deducer,
-		KANGARU5_NO_ADL(overloaded_function_handling::reference_kind_for_nth_parameter_overloaded<placeholder_deducer, F, nth, arity>)()
+		KANGARU5_NO_ADL(overloaded_function_handling::reference_kind_for_nth_parameter_overloaded<placeholder_deducer, F>)()
 	>;
 	
 	template<typename F, typename Deducer, std::size_t nth, std::size_t arity>
@@ -1196,11 +1069,7 @@ namespace kangaru::detail::deducer_private {
 	using filtered_deducer_for = detail::conditional_t<
 		deducer_strict<Deducer>,
 		filtered_value_category_deducer_for<F, Deducer, nth, arity>,
-		detail::conditional_t<
-			deducer_strict_overloaded<Deducer>,
-			overloaded_filtered_value_category_deducer_for<F, Deducer, nth, arity>,
-			prvalue_filtered_deducer_for<F, Deducer, nth, arity>
-		>
+		prvalue_filtered_deducer_for<F, Deducer, nth, arity>
 	>;
 	
 	template<typename F, kangaru::deducer... Deducers, std::size_t... S>
@@ -1219,6 +1088,14 @@ namespace kangaru::detail::deducer_private {
 	template<typename F, std::size_t... S, kangaru::deducer... Deducers>
 	inline constexpr auto callable_with_deducers_impl_v<F, std::index_sequence<S...>, Deducers...> =
 		callable<F, filtered_deducer_for<F, Deducers, S, sizeof...(S)>...>;
+	
+	template<typename Type, typename Function, typename Deducer>
+	using overloaded_deducer_for_type = filtered_value_category_deducer<
+		include_only_deducer<Deducer, Type, Type&, Type&&, Type const&, Type const&&>,
+		detail::deducer_private::overloaded_function_handling::reference_kind_for_nth_parameter_overloaded<
+			include_only_deducer<placeholder_deducer, Type, Type&, Type&&, Type const&, Type const&&>, Function
+		>()
+	>;
 }
 
 KANGARU5_EXPORT namespace kangaru {
@@ -1246,6 +1123,11 @@ KANGARU5_EXPORT namespace kangaru {
 	template<typename F, deducer... Deducers>
 		requires callable_with_deducers<F, Deducers...>
 	using call_with_deducers_result = decltype(KANGARU5_NO_ADL(call_with_deducers)(std::declval<F>(), std::declval<Deducers>()...));
+	
+	template<unqualified_object Type, deducer Deducer>
+	inline constexpr auto overloaded_call_with_deducer(callable<Deducer> auto&& function, Deducer deducer) -> detail::call_result_t<decltype(function), detail::deducer_private::overloaded_deducer_for_type<Type, decltype(function), Deducer>> {
+		return KANGARU5_FWD(function)(detail::deducer_private::overloaded_deducer_for_type<Type, decltype(function), Deducer>(deducer));
+	}
 } // namespace kangaru
 
 #include "undef.hpp"

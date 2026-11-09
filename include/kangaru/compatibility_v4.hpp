@@ -823,7 +823,8 @@ namespace kangaru {
 namespace kangaru::compatibility_v4 {
 	template<typename Type>
 	struct generic_service {
-		generic_service() = default;
+		constexpr generic_service() : empty{} {}
+		
 		~generic_service() requires(std::is_trivially_destructible_v<Type>) = default;
 		constexpr ~generic_service() requires(not std::is_trivially_destructible_v<Type>) {
 			std::destroy_at(std::addressof(object));

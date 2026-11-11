@@ -26,21 +26,6 @@ namespace kangaru {
 	KANGARU5_EXPORT struct runtime_dynamic_storage {
 		using dynamic_deleter = auto(void* ptr, void* resource) noexcept -> void;
 		
-		KANGARU5_UNSAFE constexpr runtime_dynamic_storage(void* ptr, dynamic_deleter* deleter) noexcept : ptr{ptr}, deleter{deleter} {}
-		
-		runtime_dynamic_storage(runtime_dynamic_storage const&) = delete;
-		auto operator=(runtime_dynamic_storage const&) -> runtime_dynamic_storage& = delete;
-		
-		constexpr runtime_dynamic_storage(runtime_dynamic_storage&& other) noexcept :
-			ptr{std::exchange(other.ptr, nullptr)}, deleter{std::exchange(other.deleter, nullptr)} {}
-		
-		constexpr auto operator=(runtime_dynamic_storage&& rhs) noexcept -> runtime_dynamic_storage& {
-			if (this == &rhs) return *this;
-			std::ranges::swap(ptr, rhs.ptr);
-			std::ranges::swap(deleter, rhs.deleter);
-			return *this;
-		}
-		
 		void* ptr;
 		dynamic_deleter KANGARU5_UNSAFE* deleter;
 	};
@@ -65,8 +50,9 @@ namespace kangaru {
 			{ container.erase(container.begin()) } -> std::same_as<typename T::iterator>;
 			{ container.erase(std::as_const(container).begin()) } -> std::same_as<typename T::iterator>;
 		};
-	
-	namespace detail::heap_storage_private {
+} // namespace kangaru
+
+namespace kangaru::detail::heap_storage_private {
 		template<object_allocator Allocator>
 		struct basic_heap_storage_base {
 			template<typename ObjectType>
@@ -102,9 +88,10 @@ namespace kangaru {
 				}
 			};
 		};
-	} // namespace detail::heap_storage_private
-	
-	KANGARU5_EXPORT template<heap_storage_container Container, object_allocator Allocator = default_allocator>
+} // namespace kangaru::detail::heap_storage_private
+
+KANGARU5_EXPORT namespace kangaru {
+	template<heap_storage_container Container, object_allocator Allocator = default_allocator>
 	struct basic_heap_storage : private detail::heap_storage_private::basic_heap_storage_base<Allocator> {
 		constexpr basic_heap_storage() = default;
 		
@@ -124,8 +111,9 @@ namespace kangaru {
 		
 		constexpr auto operator=(basic_heap_storage&& rhs) noexcept -> basic_heap_storage& {
 			if (this == &rhs) return *this;
-			std::ranges::swap(container, rhs.container);
-			std::ranges::swap(allocator, rhs.allocator);
+			using std::swap;
+			swap(container, rhs.container);
+			swap(allocator, rhs.allocator);
 			return *this;
 		}
 		
@@ -164,31 +152,29 @@ namespace kangaru {
 			}
 		};
 		Container container;
-		
-		KANGARU5_NO_UNIQUE_ADDRESS
 		Allocator allocator;
 	};
 	
-	KANGARU5_EXPORT using default_heap_storage = basic_heap_storage<std::vector<runtime_dynamic_storage>, default_allocator>;
+	using default_heap_storage = basic_heap_storage<std::vector<runtime_dynamic_storage>, default_allocator>;
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept heap_storage =
 		    std::move_constructible<T>
 		and requires(T storage, int value) {
 			{ storage.template emplace<int>(value) } -> std::same_as<int*>;
 		};
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept dereferenceable_heap_storage = heap_storage<T> or requires {
 		requires heap_storage<reference_wrapper_wrapped_source_t<T>>;
 	};
 	
-	KANGARU5_EXPORT template<typename T>
+	template<typename T>
 	concept forwarded_heap_storage = dereferenceable_heap_storage<std::remove_cvref_t<T>>;
 	
 	static_assert(heap_storage_container<std::vector<runtime_dynamic_storage>>);
 	
-	KANGARU5_EXPORT template<source Source, dereferenceable_heap_storage Storage = default_heap_storage>
+	template<source Source, dereferenceable_heap_storage Storage = default_heap_storage>
 	struct with_heap_storage {
 		template<allows_construction_of<Source> S>
 		explicit constexpr with_heap_storage(S&& source) noexcept
@@ -199,8 +185,6 @@ namespace kangaru {
 		template<allows_construction_of<Source> S>
 		constexpr with_heap_storage(S&& source, Storage storage) noexcept :
 			source(KANGARU5_FWD(source)), storage{std::move(storage)} {}
-		
-		Source source;
 		
 		template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args...>)
 		constexpr auto emplace(Args&&... args) -> T* {
@@ -227,8 +211,8 @@ namespace kangaru {
 			);
 		}
 		
-	private:
-		Storage storage = {};
+		Source source;
+		Storage storage;
 	};
 	
 	template<typename Source, typename Storage>
@@ -239,14 +223,14 @@ namespace kangaru {
 		requires(not deducer<std::remove_cvref_t<Source>>)
 	with_heap_storage(Source&&) -> with_heap_storage<deduced_source_type<Source>>;
 	
-	KANGARU5_EXPORT template<forwarded_source Source, forwarded_heap_storage Storage>
+	template<forwarded_source Source, forwarded_heap_storage Storage>
 	inline constexpr auto make_source_with_heap_storage(Source&& source, Storage&& storage) {
 		return with_heap_storage<deduced_source_type<Source>, std::decay_t<Storage>>{
 			KANGARU5_FWD(source), KANGARU5_FWD(storage)
 		};
 	}
 	
-	KANGARU5_EXPORT template<forwarded_source Source>
+	template<forwarded_source Source>
 	inline constexpr auto make_source_with_heap_storage(Source&& source) {
 		return with_heap_storage<deduced_source_type<Source>>{KANGARU5_FWD(source)};
 	}

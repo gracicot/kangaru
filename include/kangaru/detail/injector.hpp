@@ -96,7 +96,7 @@ KANGARU5_EXPORT namespace kangaru {
 	concept forwarded_injector = injector<std::remove_cvref_t<T>>;
 	
 	template<typename F, std::size_t max>
-	concept reflectable_function = (forwarded_function_object<F> or std::is_function_v<std::remove_pointer_t<F>>) and requires {
+	concept reflectable_function = forwarded_function<F> and requires {
 		typename detail::injector_private::parameter_sequence_impl<F, std::make_index_sequence<max>>::type;
 	};
 	

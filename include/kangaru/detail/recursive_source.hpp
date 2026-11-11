@@ -330,7 +330,7 @@ KANGARU5_EXPORT namespace kangaru {
 		KANGARU5_NO_UNIQUE_ADDRESS
 		MakeInjector make_injector;
 	};
-
+	
 	struct no_construction {};
 	
 	using exhaustive_construction = basic_exhaustive_construction<make_spread_injector_function>;
@@ -667,18 +667,6 @@ KANGARU5_EXPORT namespace kangaru {
 					}
 				)
 			);
-		}
-
-		constexpr auto onion() {
-			auto& source = (*this);
-			using Self = decltype(*this);
-			return 
-				kangaru::rebind(
-					KANGARU5_FWD(source).source,
-					detail::recursive_source_private::leaf_as_alternative<with_recursion<fwd_ref_result_t<forwarded_wrapped_source_t<Self>&&>>>{
-						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
-					}
-				);
 		}
 	};
 	

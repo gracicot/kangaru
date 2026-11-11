@@ -143,14 +143,14 @@ KANGARU5_EXPORT namespace kangaru {
 		
 	public:
 		template<injectable T>
-		constexpr auto provide() & -> T requires source_of<decltype(container_source(state)), T> {
+		constexpr auto provide() & -> T requires(source_of<decltype(container_source(state)), T>) {
 			return kangaru::provide<T>(
 				container_source(state)
 			);
 		}
 		
 		template<injectable T>
-		constexpr auto provide() && -> T requires source_of<decltype(container_source(std::move(state))), T> {
+		constexpr auto provide() && -> T requires(source_of<decltype(container_source(std::move(state))), T>) {
 			return kangaru::provide<T>(
 				container_source(std::move(state))
 			);

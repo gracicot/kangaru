@@ -5,6 +5,14 @@
 
 #include "detail/define.hpp"
 
+namespace kangaru::compatibility_v4::detail {
+	using kangaru::detail::call_result_t;
+	using kangaru::detail::expand;
+	using kangaru::detail::forward_like_t;
+	using kangaru::detail::conditional_t;
+	using kangaru::detail::is_specialisation_of_v;
+}
+
 namespace kangaru::compatibility_v4 {
 	struct in_place_t {} constexpr in_place{};
 	
@@ -62,8 +70,8 @@ namespace kangaru::compatibility_v4::detail {
 }
 
 namespace kangaru::compatibility_v4::detail {
-	template<typename...> [[noreturn]]
-	auto unimplemented_noreturn();
+	[[noreturn]]
+	auto unimplemented_noreturn() -> void;
 	
 	template<v4_source>
 	struct parent_types_or_empty {
@@ -204,7 +212,7 @@ namespace kangaru::compatibility_v4::detail {
 			requires(v4_source<std::remove_cvref_t<T>> and wrapping_source_of<Self, T>)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			if constexpr (reference<T>) {
-				return kangaru::provide<kangaru::detail::forward_like_t<T, v4_source_wrapper<std::remove_cvref_t<T>>>>(KANGARU5_FWD(source).source).v4_service();
+				return kangaru::provide<detail::forward_like_t<T, v4_source_wrapper<std::remove_cvref_t<T>>>>(KANGARU5_FWD(source).source).v4_service();
 			} else {
 				return kangaru::provide<v4_source_wrapper<T>>(KANGARU5_FWD(source).source).v4_service();
 			}
@@ -224,40 +232,65 @@ namespace kangaru::compatibility_v4::detail {
 	template<typename T>
 	using v4_source_wrapper_type_t = typename v4_source_wrapper_type<T>::type;
 	
-	template<unqualified_object Type, reference... Args>
-	struct inject_constructor_with_additional_args_impl_function {
+	template<reference Function, reference... Args>
+	struct inject_with_additional_args_function_impl {
+		Function function;
 		std::tuple<Args...> args;
 		
-		template<deducer... Deducers> requires(constructor_callable<Type, Deducers..., Args...>)
+		template<deducer... Deducers> requires(callable<Function, Deducers..., Args...>)
 		constexpr auto operator()(Deducers... deduce) const {
 			return std::apply([&](Args... args) {
-				return KANGARU5_NO_ADL(constructor<Type>)(deduce..., KANGARU5_FWD(args)...);
+				return KANGARU5_FWD(function)(deduce..., KANGARU5_FWD(args)...);
 			}, std::move(args));
 		}
 	};
 	
-	template<unqualified_object Type>
-	struct inject_constructor_with_additional_args_function {
-		template<forwarded_injector Injector, typename... Args>
-			requires(callable<Injector&&, inject_constructor_with_additional_args_impl_function<Type, Args&&...>>)
-		constexpr auto operator()(Injector&& inject, Args&&... args) const {
-			return inject(inject_constructor_with_additional_args_impl_function<Type, Args&&...>{
+	struct inject_with_additional_args_function {
+		template<forwarded_injector Injector, forwarded_function Function, typename... Args>
+			requires(callable<Injector&&, inject_with_additional_args_function_impl<Function&&, Args&&...>>)
+		constexpr auto operator()(Injector&& inject, Function&& function, Args&&... args) const {
+			return inject(inject_with_additional_args_function_impl<Function&&, Args&&...>{
+				KANGARU5_FWD(function),
 				std::forward_as_tuple(KANGARU5_FWD(args)...)
 			});
 		}
 	};
 	
-	template<unqualified_object Type, forwarded_injector Injector, typename... Args>
-		requires(callable<Injector&&, inject_constructor_with_additional_args_impl_function<Type, Args&&...>>)
-	auto inject_constructor_with_additional_args(Injector&& inject, Args&&... args) {
-		return inject_constructor_with_additional_args_function<Type>{}(KANGARU5_FWD(inject), KANGARU5_FWD(args)...);
+	template<typename Injector, typename Function, typename... Args>
+	concept inject_with_additional_args_callable =
+		    forwarded_function<Function>
+		and forwarded_injector<Injector>
+		and callable<inject_with_additional_args_function, Injector&&, Function&&, Args&&...>;
+	
+	template<forwarded_injector Injector, forwarded_function Function, typename... Args>
+		requires(inject_with_additional_args_callable<Injector&&, Function&&, Args&&...>)
+	auto inject_with_additional_args(Injector&& inject, Function&& function, Args&&... args) {
+		return inject_with_additional_args_function{}(KANGARU5_FWD(inject), KANGARU5_FWD(function), KANGARU5_FWD(args)...);
 	}
+	
+	template<unqualified_object Type>
+	struct inject_constructor_with_additional_args_function {
+		template<forwarded_injector Injector, typename... Args>
+			requires(callable<Injector&&, inject_with_additional_args_function_impl<constructor_function<Type>&&, Args&&...>>)
+		constexpr auto operator()(Injector&& inject, Args&&... args) const {
+			return inject(inject_with_additional_args_function_impl<constructor_function<Type>&&, Args&&...>{
+				constructor_function<Type>{},
+				std::forward_as_tuple(KANGARU5_FWD(args)...)
+			});
+		}
+	};
 	
 	template<typename Type, typename Injector, typename... Args>
 	concept inject_constructor_with_additional_args_callable =
 		    unqualified_object<Type>
 		and forwarded_injector<Injector>
-		and callable<Injector&&, inject_constructor_with_additional_args_impl_function<Type, Args&&...>>;
+		and callable<inject_constructor_with_additional_args_function<Type>, Injector&&, Args&&...>;
+	
+	template<unqualified_object Type, forwarded_injector Injector, typename... Args>
+		requires(inject_constructor_with_additional_args_callable<Type, Injector&&, Args&&...>)
+	auto inject_constructor_with_additional_args(Injector&& inject, Args&&... args) {
+		return inject_constructor_with_additional_args_function<Type>{}(KANGARU5_FWD(inject), KANGARU5_FWD(args)...);
+	}
 	
 	template<typename Function, std::size_t max, typename...>
 	struct v4_parameter_dependency_sequence {};
@@ -289,7 +322,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename F, std::size_t... S, kangaru::deducer Deducer>
 	inline constexpr auto callable_with_deducer_sequence_v<F, Deducer, std::index_sequence<S...>> =
-		callable_with_deducers<F, kangaru::detail::expand<Deducer, S>...>;
+		callable_with_deducers<F, detail::expand<Deducer, S>...>;
 	
 	template<source Source, template<source_ref> typename Deducer, std::size_t max>
 	struct basic_v4_source_injector {
@@ -513,13 +546,13 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	concept mapped_named = mapped_named_ref<T, Map> or mapped_named_prvalue<T, Map>;
 	
 	template<typename T>
-	using service_map_result_t = kangaru::detail::call_result_t<
+	using service_map_result_t = detail::call_result_t<
 		unnamed_service_map_function,
 		T
 	>;
 	
 	template<typename T, typename Map>
-	using named_service_map_result_t = kangaru::detail::call_result_t<
+	using named_service_map_result_t = detail::call_result_t<
 		service_map_function<Map>,
 		T
 	>;
@@ -555,7 +588,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 
 namespace kangaru::compatibility_v4::detail {
 	template<typename T>
-	concept map_list = kangaru::detail::is_specialisation_of_v<map, T>;
+	concept map_list = detail::is_specialisation_of_v<map, T>;
 	
 	template<typename T, typename Map>
 	concept map_exists_for =
@@ -599,7 +632,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename Function, map_list Map, std::size_t... S>
 	inline constexpr auto callable_clang_22_workaround =
-		callable<Function, kangaru::detail::expand<autowire_placeholder_deducer<Map>, S>...>;
+		callable<Function, expand<autowire_placeholder_deducer<Map>, S>...>;
 	
 	template<typename Function, map_list Map, typename>
 	struct autowire_sequence_impl {};
@@ -724,7 +757,7 @@ namespace kangaru::compatibility_v4 {
 
 namespace kangaru::compatibility_v4::detail {
 	template<typename T>
-	using source_wrapper_for = kangaru::detail::conditional_t<
+	using source_wrapper_for = detail::conditional_t<
 		std::derived_from<T, single>,
 		detail::polymorphic_v4_source<T>,
 		detail::v4_source_wrapper<T>
@@ -745,7 +778,7 @@ namespace kangaru::compatibility_v4 {
 	using inject_t = detail::construct_injected<T>;
 	
 	template<typename T>
-	using remove_rvalue_reference_t = kangaru::detail::conditional_t<
+	using remove_rvalue_reference_t = detail::conditional_t<
 		std::is_rvalue_reference_v<T>,
 		std::remove_reference_t<T>,
 		T
@@ -1104,8 +1137,8 @@ namespace kangaru::compatibility_v4::detail {
 	};
 	
 	using container_cache_type = map_insert_as_assign<polymorphic_map<std::unordered_map<type_id, any_source_of_one_ref>>>;
-	using container_heap_storage = default_heap_storage;
 	using container_construction = basic_unsafe_exhaustive_construction<make_v4_source_injector_function>;
+	using container_cache_type_base = polymorphic_map<std::unordered_map<type_id, any_source_of_one_ref>>;
 	
 	struct throw_if_service_not_found {
 		template<typename Service>
@@ -1164,6 +1197,108 @@ namespace kangaru::compatibility_v4 {
 		constexpr bool operator()(type_id_t id) const noexcept {
 			return (... or (id == type_id<Ts>()));
 		}
+	};
+}
+
+namespace kangaru::compatibility_v4::detail {
+	struct container_heap_storage {
+		constexpr container_heap_storage() = default;
+		
+		constexpr container_heap_storage(std::vector<runtime_dynamic_storage> container) noexcept :
+			container{std::move(container)} {}
+		
+		constexpr container_heap_storage(
+			std::vector<runtime_dynamic_storage> container,
+			default_allocator allocator
+		) noexcept :
+			container{std::move(container)},
+			allocator{std::move(allocator)} {}
+		
+		container_heap_storage(container_heap_storage const&) = delete;
+		auto operator=(container_heap_storage const&) -> container_heap_storage& = delete;
+		
+		constexpr container_heap_storage(container_heap_storage&& other) noexcept :
+			container{std::move(other.container)}, allocator{std::move(other.allocator)} {}
+		
+		constexpr auto operator=(container_heap_storage&& rhs) noexcept -> container_heap_storage& {
+			if (this == &rhs) return *this;
+			using std::swap;
+			swap(container, rhs.container);
+			swap(allocator, rhs.allocator);
+			return *this;
+		}
+		
+		KANGARU5_CONSTEXPR_VOIDSTAR ~container_heap_storage() {
+			for (auto it = container.rbegin(); it < container.rend(); ++it) {
+				it->deleter(it->ptr, std::addressof(allocator));
+			}
+		}
+		
+		template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args&&...>)
+		constexpr auto emplace(Args&&... args) {
+			auto ptr = std::unique_ptr<T, destroy>{
+				construct<T>(allocator, KANGARU5_FWD(args)...),
+				destroy{std::addressof(allocator)},
+			};
+			
+			container.push_back(runtime_dynamic_storage{
+				ptr.get(),
+				destroyer<T>(),
+			});
+			
+			return ptr.release();
+		}
+		
+		constexpr auto move_all_from(container_heap_storage&& other) {
+			container.reserve(other.container.size() + container.size());
+			container.insert(container.cend(), other.container.begin(), other.container.end());
+			other.container.clear();
+		}
+		
+	private:
+		struct destroy {
+			default_allocator* allocator;
+			
+			template<typename ObjectType>
+			constexpr auto operator()(ObjectType* ptr) const noexcept -> void {
+				destroyer<ObjectType>()(ptr, allocator);
+			}
+		};
+		
+		template<typename ObjectType>
+		static constexpr auto destroyer() {
+			return [](void* ptr, void* allocator) KANGARU5_CONSTEXPR_VOIDSTAR noexcept {
+				auto const object_ptr = static_cast<ObjectType*>(ptr);
+				std::destroy_at(object_ptr);
+				static_cast<default_allocator*>(allocator)->deallocate_object<ObjectType>(object_ptr);
+			};
+		}
+		
+		template<unqualified_object T, typename... Args> requires(constructor_callable<T, Args...>)
+		constexpr auto construct(default_allocator& allocator, Args&&... args) -> T* {
+			auto ptr = std::unique_ptr<T, deallocate_uninitialized>{
+				allocator.allocate_object<T>(),
+				deallocate_uninitialized{std::addressof(allocator)}
+			};
+			
+			std::construct_at(ptr.get(), in_place_construct{[&] {
+				return KANGARU5_NO_ADL(constructor<T>)(KANGARU5_FWD(args)...);
+			}});
+			
+			return ptr.release();
+		}
+		
+		struct deallocate_uninitialized {
+			default_allocator* allocator;
+			
+			template<typename ObjectType>
+			constexpr auto operator()(ObjectType* ptr) const {
+				allocator->deallocate_object<ObjectType>(ptr);
+			}
+		};
+		
+		std::vector<runtime_dynamic_storage> container;
+		default_allocator allocator;
 	};
 }
 
@@ -1266,36 +1401,64 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			return with_service_map_lookup<deduced_source_type<Source>, Map>{KANGARU5_FWD(source)};
 		}
 		
+		template<detail::map_list Map, typename S>
+		constexpr auto mapped_source(S&& state) {
+			return make_source_with_service_map_lookup<Map>(container_source(KANGARU5_FWD(state)));
+		}
+		
 	public:
 		template<injectable T> requires(detail::service_map_impl::mapped_unnamed<T>)
-		constexpr auto provide() -> T {
-			return service<mapped_service_t<T>>();
+		constexpr auto provide() -> T  {
+			return kangaru::provide<T>(mapped_source<map<>>(state));
 		}
 		
 		template<detail::v4_source Service>
 			requires(std::derived_from<Service, single>)
-		constexpr auto service() -> service_type<Service> {
+		constexpr auto service() -> service_type<Service>  {
 			return kangaru::provide<service_type<Service>>(kangaru::provide<detail::polymorphic_v4_source<Service>>(container_source(state)));
 		}
 		
 		template<detail::v4_source Service, typename... Args>
 			requires(not std::derived_from<Service, single>)
-		constexpr auto service(Args&&... args) -> service_type<Service> {
+		constexpr auto service(Args&&... args)
+			-> service_type<Service>
+			requires(
+				detail::inject_constructor_with_additional_args_callable<
+					detail::v4_source_wrapper<Service>,
+					decltype(detail::make_v4_source_injector(container_source(state))),
+					Args&&...
+				>
+			)
+		{
 			auto service = detail::inject_constructor_with_additional_args<detail::v4_source_wrapper<Service>>(
 				detail::make_v4_source_injector(container_source(state)),
 				KANGARU5_FWD(args)...
 			);
-			// second step
+			second_step_from_attribute{}.operator()<decltype(service)&>(service, *this);
 			return kangaru::provide<service_type<Service>>(std::move(service));
 		}
 		
 		template<detail::map_list Map = map<>, typename Function, typename... Args>
 			requires(not detail::map_list<Function>)
-		constexpr auto invoke(Function&& function, Args&&... args) -> decltype(auto) {
-			return detail::make_v4_source_injector(make_source_with_service_map_lookup<Map>(container_source(state)))(
-				[&](deducer auto... deduce) -> decltype(auto) requires(callable<Function, decltype(deduce)..., Args&&...>) {
-					return KANGARU5_FWD(function)(deduce..., KANGARU5_FWD(args)...);
-				}
+		constexpr auto invoke(Function&& function, Args&&... args)
+			-> detail::call_result_t<
+				detail::inject_with_additional_args_function,
+				detail::call_result_t<detail::make_v4_source_injector_function, decltype(mapped_source<Map>(state))>,
+				Function&&,
+				Args&&...
+			>
+			requires(
+				detail::inject_with_additional_args_callable<
+					detail::call_result_t<detail::make_v4_source_injector_function, decltype(mapped_source<Map>(state))>,
+					Function&&,
+					Args&&...
+				>
+			)
+		{
+			return detail::inject_with_additional_args(
+				detail::make_v4_source_injector(mapped_source<Map>(state)),
+				KANGARU5_FWD(function),
+				KANGARU5_FWD(args)...
 			);
 		}
 		
@@ -1356,30 +1519,51 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			second_step_from_attribute{}.template operator()<contained_type>(*ptr, container_source(state));
 		}
 		
+		/*
+		 * This function merges a container with another.
+		 * The receiving container will prefer it's own instances in a case of conflicts.
+		 */
+		[[deprecated("Removed from kangaru 5 container")]]
+		inline void merge(container&& other) {
+			state.insert(other.state.begin(), other.state.end());
+			state.source.source.storage.move_all_from(std::move(other.state.source.source.storage));
+		}
+		
+		/**
+		 * This function will add all services form the container sent as parameter into this one.
+		 * Note that the lifetime of the container sent as parameter must be at least as long as this one.
+		 * If the container you rebase from won't live long enough, consider using the merge function.
+		 * 
+		 * It takes a predicate type as argument to filter.
+		 */
+		template<typename Predicate> [[deprecated("Removed from kangaru 5 container")]]
+		void rebase(container const& other, Predicate predicate) {
+			std::copy_if(
+				other.state.begin(), other.state.end(),
+				std::inserter(state, state.end()),
+				[&predicate](auto const& i) {
+					return predicate(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(i.first)));
+				}
+			);
+		}
+		
 		template<typename Pred = all>
 		auto fork(Pred pred = {}) const& -> container {
 			auto cache = detail::container_cache_type{};
 			
-			// TODO: Use predicate
-			cache.insert(state.begin(), state.end());
-			
-			// std::copy_if(
-			// 	state.begin(),
-			// 	state.end(),
-			// 	std::inserter(cache, cache.end()),
-			// 	[&](auto const& pair) {
-			// 		return pred(static_cast<std::uint64_t>(std::hash<kangaru::type_id>{}(pair.first)));
-			// 	}
-			// );
+			std::copy_if(
+				state.begin(),
+				state.end(),
+				std::inserter(static_cast<detail::container_cache_type_base&>(cache), cache.end()),
+				[&](auto const& pair) {
+					return pred(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(pair.first)));
+				}
+			);
 			
 			return container{
 				std::move(cache),
 				detail::container_heap_storage{},
 			};
-		}
-		
-		constexpr auto onion() {
-			return container_source(state);
 		}
 		
 		friend auto service_map(container const&) -> container_service;
@@ -1484,7 +1668,7 @@ namespace kangaru::compatibility_v4 {
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
 					Type,
-					kangaru::detail::call_result_t<
+					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
 						ref_result_t<container&>
 					>,
@@ -1505,7 +1689,7 @@ namespace kangaru::compatibility_v4 {
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
 					Type,
-					kangaru::detail::call_result_t<
+					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
 						ref_result_t<container&>
 					>,
@@ -1544,7 +1728,7 @@ namespace kangaru::compatibility_v4 {
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
 					Type,
-					kangaru::detail::call_result_t<
+					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
 						ref_result_t<container&>
 					>,
@@ -1565,7 +1749,7 @@ namespace kangaru::compatibility_v4 {
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
 					Type,
-					kangaru::detail::call_result_t<
+					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
 						ref_result_t<container&>
 					>,
@@ -1707,13 +1891,13 @@ namespace kangaru::compatibility_v4::detail {
 		friend auto service_map(basic_invoker) -> service<
 			basic_invoker,
 			dependency<
-				kangaru::detail::conditional_t<
+				detail::conditional_t<
 					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		> { unimplemented_noreturn<basic_invoker>(); }
+		> { unimplemented_noreturn(); }
 	};
 	
 	template<object Container, v4_source Service>
@@ -1736,13 +1920,13 @@ namespace kangaru::compatibility_v4::detail {
 		friend auto service_map(basic_generator) -> service<
 			basic_generator,
 			dependency<
-				kangaru::detail::conditional_t<
+				detail::conditional_t<
 					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		> { unimplemented_noreturn<basic_generator>(); }
+		> { unimplemented_noreturn(); }
 	};
 	
 	template<object Container, v4_source Service>
@@ -1785,13 +1969,13 @@ namespace kangaru::compatibility_v4::detail {
 		friend auto service_map(basic_lazy) -> compatibility_v4::service<
 			basic_lazy,
 			dependency<
-				kangaru::detail::conditional_t<
+				detail::conditional_t<
 					std::is_pointer_v<Container>,
 					container_service,
 					fork_service
 				>
 			>
-		> { unimplemented_noreturn<basic_lazy>(); }
+		> { unimplemented_noreturn(); }
 	};
 }
 

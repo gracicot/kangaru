@@ -142,11 +142,11 @@ KANGARU5_EXPORT namespace kangaru {
 			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(value_type{value.first, std::move(value).second});
 		}
 		
-		constexpr auto insert(const_iterator hint, value_type const& value) -> std::pair<iterator, bool> {
+		constexpr auto insert(const_iterator hint, value_type const& value) -> iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(hint, value);
 		}
 		
-		constexpr auto insert(const_iterator hint, value_type&& value) -> std::pair<iterator, bool> {
+		constexpr auto insert(const_iterator hint, value_type&& value) -> iterator {
 			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert(hint, std::move(value));
 		}
 		
@@ -167,6 +167,14 @@ KANGARU5_EXPORT namespace kangaru {
 		constexpr auto insert_or_assign(const_iterator hint, static_type_id<T> const& k, U&& obj) -> iterator {
 			detail::cache_types_private::insert_or_assign_overrides(map, obj);
 			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert_or_assign(hint, k, static_cast<T>(KANGARU5_FWD(obj)));
+		}
+		
+		constexpr auto insert_or_assign(const_iterator hint, value_type const& value) -> iterator {
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert_or_assign(hint, value);
+		}
+		
+		constexpr auto insert_or_assign(const_iterator hint, value_type&& value) -> iterator {
+			return KANGARU5_NO_ADL(maybe_unwrap)(map).insert_or_assign(hint, std::move(value));
 		}
 		
 		constexpr auto swap(polymorphic_map& other) noexcept(noexcept(KANGARU5_NO_ADL(maybe_unwrap)(map).swap(other.map))) -> void {

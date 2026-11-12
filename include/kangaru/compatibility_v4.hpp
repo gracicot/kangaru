@@ -58,7 +58,7 @@ namespace kangaru::compatibility_v4 {
 
 namespace kangaru::compatibility_v4::detail {
 	template<typename T>
-	concept v4_source = requires(T source) {
+	concept v4_source = not std::is_polymorphic_v<T> and requires(T source) {
 		{ source.forward() } -> different_from<void>;
 	};
 	
@@ -124,8 +124,11 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename T, typename... Args>
 	inline constexpr auto constructible_with_construct_result<T, std::tuple<Args...>> =
-		   std::constructible_from<T, in_place_t, Args&&...>
-		or default_constructible_emplaceable<T, Args&&...>;
+		    (... and (not deducer<std::remove_cvref_t<Args>>))
+		and (
+			   std::constructible_from<T, in_place_t, Args&&...>
+			or default_constructible_emplaceable<T, Args&&...>
+		);
 	
 	template<unqualified_object T, typename... Args>
 	constexpr auto v4_constructor_impl(Args&&... args) -> T {
@@ -1185,17 +1188,17 @@ namespace kangaru::compatibility_v4 {
 		}
 	};
 	
-	template<typename First, injectable... Ts>
+	template<injectable... Services>
 	struct except {
 		constexpr bool operator()(type_id_t id) const noexcept {
-			return !(... or (id == type_id<Ts>()));
+			return !(... or (id == type_id<detail::polymorphic_v4_source<Services>>()));
 		}
 	};
 	
-	template<typename First, injectable... Ts>
+	template<injectable... Services>
 	struct only {
 		constexpr bool operator()(type_id_t id) const noexcept {
-			return (... or (id == type_id<Ts>()));
+			return (... or (id == type_id<detail::polymorphic_v4_source<Services>>()));
 		}
 	};
 }
@@ -1300,6 +1303,58 @@ namespace kangaru::compatibility_v4::detail {
 		std::vector<runtime_dynamic_storage> container;
 		default_allocator allocator;
 	};
+	
+	template<source Source, detail::map_list Map>
+	struct with_service_map_lookup {
+		Source source;
+		
+		template<injectable T, forwarded<with_service_map_lookup> Self>
+			requires(
+					not detail::v4_source<T>
+				and requires{ typename mapped_service_t<T, Map>; }
+				and std::same_as<T, service_type<inject_t<mapped_service_t<T, Map>>>>
+				and wrapping_source_of<Self, inject_t<mapped_service_t<T, Map>>>
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return kangaru::provide<inject_t<mapped_service_t<T, Map>>>(KANGARU5_FWD(source).source).forward();
+		}
+	};
+	
+	template<detail::map_list Map, forwarded_source Source>
+	inline constexpr auto make_source_with_service_map_lookup(Source&& source) {
+		return with_service_map_lookup<deduced_source_type<Source>, Map>{KANGARU5_FWD(source)};
+	}
+
+	template<typename Container, typename State>
+	constexpr auto container_source(Container& container, State& state) {
+		auto rebound_state = State::rebind(
+			KANGARU5_FWD(state),
+			KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(state).source)
+		);
+		
+		return with_recursion{
+			with_alternative{
+				KANGARU5_NO_ADL(make_source_with_passthrough<5>)(
+					cache_with_two_step_init{
+						rebound_state,
+						call_second_step_with_transformed_source{
+							second_step_from_attribute{},
+							detail::get_recursing_source{},
+						}
+					}
+				),
+				composed_source{
+					external_reference_source{container},
+					KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(state).source.source.source.source)
+				},
+			},
+		};
+	}
+	
+	template<detail::map_list Map, typename Container, typename S>
+	inline constexpr auto mapped_container_source(Container& container, S& state) {
+		return KANGARU5_NO_ADL(make_source_with_service_map_lookup<Map>)(KANGARU5_NO_ADL(container_source)(container, state));
+	}
 }
 
 KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
@@ -1354,68 +1409,16 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			detail::cached_source::source_for
 		> state;
 		
-		template<typename S>
-		constexpr auto container_source(S&& source) {
-			auto rebound_state = std::remove_cvref_t<S>::rebind(
-				KANGARU5_FWD(source),
-				KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source)
-			);
-			
-			return with_recursion{
-				with_alternative{
-					KANGARU5_NO_ADL(make_source_with_passthrough<5>)(
-						cache_with_two_step_init{
-							rebound_state,
-							call_second_step_with_transformed_source{
-								second_step_from_attribute{},
-								detail::get_recursing_source{},
-							}
-						}
-					),
-					composed_source{
-						external_reference_source{*this},
-						KANGARU5_NO_ADL(fwd_ref)(KANGARU5_FWD(source).source.source.source.source)
-					},
-				},
-			};
-		}
-		
-		template<source Source, detail::map_list Map>
-		struct with_service_map_lookup {
-			Source source;
-			
-			template<injectable T, forwarded<with_service_map_lookup> Self>
-				requires(
-					    not detail::v4_source<T>
-					and requires{ typename mapped_service_t<T, Map>; }
-					and std::same_as<T, service_type<inject_t<mapped_service_t<T, Map>>>>
-					and wrapping_source_of<Self, inject_t<mapped_service_t<T, Map>>>
-				)
-			constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
-				return kangaru::provide<inject_t<mapped_service_t<T, Map>>>(KANGARU5_FWD(source).source).forward();
-			}
-		};
-		
-		template<detail::map_list Map, forwarded_source Source>
-		static constexpr auto make_source_with_service_map_lookup(Source&& source) {
-			return with_service_map_lookup<deduced_source_type<Source>, Map>{KANGARU5_FWD(source)};
-		}
-		
-		template<detail::map_list Map, typename S>
-		constexpr auto mapped_source(S&& state) {
-			return make_source_with_service_map_lookup<Map>(container_source(KANGARU5_FWD(state)));
-		}
-		
 	public:
 		template<injectable T> requires(detail::service_map_impl::mapped_unnamed<T>)
 		constexpr auto provide() -> T  {
-			return kangaru::provide<T>(mapped_source<map<>>(state));
+			return kangaru::provide<T>(detail::mapped_container_source<map<>>(*this, state));
 		}
 		
 		template<detail::v4_source Service>
 			requires(std::derived_from<Service, single>)
 		constexpr auto service() -> service_type<Service>  {
-			return kangaru::provide<service_type<Service>>(kangaru::provide<detail::polymorphic_v4_source<Service>>(container_source(state)));
+			return kangaru::provide<service_type<Service>>(kangaru::provide<detail::polymorphic_v4_source<Service>>(detail::container_source(*this, state)));
 		}
 		
 		template<detail::v4_source Service, typename... Args>
@@ -1425,13 +1428,13 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
 					detail::v4_source_wrapper<Service>,
-					decltype(detail::make_v4_source_injector(container_source(state))),
+					decltype(detail::make_v4_source_injector(detail::container_source(*this, state))),
 					Args&&...
 				>
 			)
 		{
 			auto service = detail::inject_constructor_with_additional_args<detail::v4_source_wrapper<Service>>(
-				detail::make_v4_source_injector(container_source(state)),
+				detail::make_v4_source_injector(detail::container_source(*this, state)),
 				KANGARU5_FWD(args)...
 			);
 			second_step_from_attribute{}.operator()<decltype(service)&>(service, *this);
@@ -1443,20 +1446,20 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		constexpr auto invoke(Function&& function, Args&&... args)
 			-> detail::call_result_t<
 				detail::inject_with_additional_args_function,
-				detail::call_result_t<detail::make_v4_source_injector_function, decltype(mapped_source<Map>(state))>,
+				detail::call_result_t<detail::make_v4_source_injector_function, decltype(detail::mapped_container_source<Map>(*this, state))>,
 				Function&&,
 				Args&&...
 			>
 			requires(
 				detail::inject_with_additional_args_callable<
-					detail::call_result_t<detail::make_v4_source_injector_function, decltype(mapped_source<Map>(state))>,
+					detail::call_result_t<detail::make_v4_source_injector_function, decltype(detail::mapped_container_source<Map>(*this, state))>,
 					Function&&,
 					Args&&...
 				>
 			)
 		{
 			return detail::inject_with_additional_args(
-				detail::make_v4_source_injector(mapped_source<Map>(state)),
+				detail::make_v4_source_injector(detail::mapped_container_source<Map>(*this, state)),
 				KANGARU5_FWD(function),
 				KANGARU5_FWD(args)...
 			);
@@ -1487,7 +1490,15 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			requires(
 				cache_map_stores<detail::container_cache_type, detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>>
 			)
-		constexpr auto emplace(Args&&... args) -> bool {
+		constexpr auto emplace(Args&&... args) -> bool
+			requires(
+				detail::inject_constructor_with_additional_args_callable<
+					detail::v4_source_wrapper<Service>,
+					detail::call_result_t<detail::make_v4_source_injector_function, decltype(detail::container_source(*this, state))>,
+					Args&&...
+				>
+			)
+		{
 			return contains<Service>() ? false : (replace<Service>(KANGARU5_FWD(args)...), true);
 		}
 		
@@ -1495,7 +1506,16 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			requires(
 				cache_map_stores<detail::container_cache_type, detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>>
 			)
-		constexpr auto replace(Args&&... args) -> void {
+		constexpr auto replace(Args&&... args)
+			-> void
+			requires(
+				detail::inject_constructor_with_additional_args_callable<
+					detail::v4_source_wrapper<Service>,
+					detail::call_result_t<detail::make_v4_source_injector_function, decltype(detail::container_source(*this, state))>,
+					Args&&...
+				>
+			)
+		{
 			using contained_type = detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>;
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<detail::polymorphic_v4_source<Service>>)();
 			
@@ -1507,7 +1527,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 					return contained_type{
 						with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>{
 							detail::inject_constructor_with_additional_args<detail::v4_source_wrapper<Service>>(
-								detail::make_v4_source_injector(container_source(state)),
+								detail::make_v4_source_injector(detail::container_source(*this, state)),
 								KANGARU5_FWD(args)...
 							)
 						},
@@ -1516,17 +1536,24 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 			);
 			
 			cache.insert_or_assign(id, *ptr);
-			second_step_from_attribute{}.template operator()<contained_type>(*ptr, container_source(state));
+			second_step_from_attribute{}.template operator()<contained_type>(*ptr, detail::container_source(*this, state));
 		}
 		
 		/*
 		 * This function merges a container with another.
 		 * The receiving container will prefer it's own instances in a case of conflicts.
 		 */
-		[[deprecated("Removed from kangaru 5 container")]]
 		inline void merge(container&& other) {
 			state.insert(other.state.begin(), other.state.end());
 			state.source.source.storage.move_all_from(std::move(other.state.source.source.storage));
+		}
+		
+		/*
+		 * This function merges a container with another.
+		 * The receiving container will prefer it's own instances in a case of conflicts.
+		 */
+		inline void merge(container& other) {
+			merge(std::move(other));
 		}
 		
 		/**
@@ -1536,29 +1563,26 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		 * 
 		 * It takes a predicate type as argument to filter.
 		 */
-		template<typename Predicate> [[deprecated("Removed from kangaru 5 container")]]
-		void rebase(container const& other, Predicate predicate) {
-			std::copy_if(
-				other.state.begin(), other.state.end(),
-				std::inserter(state, state.end()),
-				[&predicate](auto const& i) {
-					return predicate(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(i.first)));
+		template<typename Predicate = all>
+		void rebase(container const& other, Predicate predicate = {}) {
+			for (auto const& [type, source] : other.state) {
+				if (predicate(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(type)))) {
+					auto elem = std::array{std::pair{type, source}};
+					state.insert(elem.begin(), elem.end());
 				}
-			);
+			}
 		}
 		
-		template<typename Pred = all>
-		auto fork(Pred pred = {}) const& -> container {
+		template<typename Predicate = all>
+		auto fork(Predicate predicate = {}) const& -> container {
 			auto cache = detail::container_cache_type{};
 			
-			std::copy_if(
-				state.begin(),
-				state.end(),
-				std::inserter(static_cast<detail::container_cache_type_base&>(cache), cache.end()),
-				[&](auto const& pair) {
-					return pred(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(pair.first)));
+			for (auto const& [type, source] : state) {
+				if (predicate(static_cast<type_id_t>(std::hash<kangaru::type_id>{}(type)))) {
+					auto elem = std::array{std::pair{type, source}};
+					cache.insert(elem.begin(), elem.end());
 				}
-			);
+			}
 			
 			return container{
 				std::move(cache),

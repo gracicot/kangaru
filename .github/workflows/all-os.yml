@@ -169,7 +169,7 @@ jobs:
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
-          buildPresetAdditionalArgs: "['--', '-j1', '--target container_provide_tests']"
+          buildPresetAdditionalArgs: "['--target container_provide_tests', '--', '-j1']"
 
       - name: 'Run CMake C++${{ matrix.cxx }}'
         uses: lukka/run-cmake@v10

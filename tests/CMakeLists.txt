@@ -39,6 +39,9 @@ function(kangaru_add_test TEST_NAME)
 	add_test(${TEST_NAME} "${TEST_NAME}_test")
 endfunction()
 
+add_custom_target(container_provide_tests)
+set_target_properties(container_provide_tests PROPERTIES EXCLUDE_FROM_ALL ON)
+
 function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	set(TEST_FILE "${TEST_NAME}.cpp")
 	
@@ -46,11 +49,13 @@ function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=1)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q1" "${TEST_NAME}_${TEST_TYPE}_q1_test")
+	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q1_test")
 	
 	add_executable("${TEST_NAME}_${TEST_TYPE}_q2_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q2" "${TEST_NAME}_${TEST_TYPE}_q2_test")
+	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q2_test")
 endfunction()
 
 if(KANGARU_TEST)

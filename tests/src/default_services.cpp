@@ -1,5 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
+
+#include "v4_test_helper.hpp"
 
 TEST_CASE("kgr::service must be constructible", "[default_services]") {
 	struct Service {};

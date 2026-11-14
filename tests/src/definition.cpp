@@ -1,5 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
-#include <kangaru-prev/kangaru.hpp>
+#include <kangaru/kangaru.hpp>
+#include <kangaru/compatibility_v4.hpp>
+#include <fmt/core.h>
+
+#include "v4_test_helper.hpp"
 
 TEST_CASE("The definition may not contain virtual members", "[definition]") {
 	struct Service {};
@@ -78,8 +82,8 @@ namespace template_construct {
 
 struct Service {};
 struct Definition {
-	template<typename T>
-	static auto construct(T&&) -> decltype(kgr::inject()) { return kgr::inject(); }
+	template<typename T> requires(not kangaru::deducer<T>)
+	static auto construct(T&& t) -> decltype(kgr::inject()) { return kgr::inject(); }
 	void emplace() {}
 	Service forward() { return {}; }
 };
@@ -295,5 +299,6 @@ TEST_CASE("Supplied services has different constraints", "[definition]") {
 	SECTION("Need arguments when emplaced") {
 		REQUIRE_FALSE(kgr::detail::is_emplace_valid<Definition>::value);
 		REQUIRE(kgr::detail::is_emplace_valid<Definition, int>::value);
+		kgr::container{}.emplace<Definition>(1);
 	}
 }

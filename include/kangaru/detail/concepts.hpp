@@ -79,6 +79,9 @@ KANGARU5_EXPORT namespace kangaru {
 	concept pointer_to_member_function = pointer_to_member<T> and std::is_member_function_pointer_v<T>;
 	
 	template<typename T>
+	concept pointer_to_data_member = pointer_to_member<T> and std::is_member_object_pointer_v<T>;
+	
+	template<typename T>
 	concept type_predicate = function_object<T> and std::default_initializable<T> and not pointer<T>;
 	
 	template<typename T>

@@ -14,7 +14,7 @@ namespace kangaru::compatibility_v4::detail {
 	template<typename Service, typename... Args>
 	struct is_construction_valid {
 		static constexpr auto value = requires(kgr::container& container, Args&&... args) {
-			{ container.service<Service>(std::forward<Args>(args)...) } -> std::same_as<service_type<Service>>;
+			{ container.replace<Service>(std::forward<Args>(args)...) };
 		};
 	};
 	
@@ -40,9 +40,8 @@ namespace kangaru::compatibility_v4::detail {
 		static constexpr auto value = std::derived_from<Service, supplied>;
 	};
 	
-	template<typename Service, typename>
+	template<typename Service, typename F>
 	struct is_valid_autocall_function {
-		// autocall is not checked yet
-		static constexpr auto value = true;
+		static constexpr auto value = autocall_entry_callable<Service, F>;
 	};
 }

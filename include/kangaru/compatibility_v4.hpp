@@ -1140,7 +1140,7 @@ namespace kangaru::compatibility_v4::detail {
 	};
 	
 	using container_cache_type = map_insert_as_assign<polymorphic_map<std::unordered_map<type_id, any_source_of_one_ref>>>;
-	using container_construction = basic_unsafe_exhaustive_construction<make_v4_source_injector_function>;
+	using container_construction = basic_exhaustive_construction<make_v4_source_injector_function>;
 	using container_cache_type_base = polymorphic_map<std::unordered_map<type_id, any_source_of_one_ref>>;
 	
 	struct throw_if_service_not_found {
@@ -1411,13 +1411,24 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		
 	public:
 		template<injectable T> requires(detail::service_map_impl::mapped_unnamed<T>)
-		constexpr auto provide() -> T  {
+		constexpr auto provide() -> T
+			requires(
+				source_of<decltype(detail::mapped_container_source<map<>>(*this, state)), T>
+			)
+		{
 			return kangaru::provide<T>(detail::mapped_container_source<map<>>(*this, state));
 		}
 		
 		template<detail::v4_source Service>
 			requires(std::derived_from<Service, single>)
-		constexpr auto service() -> service_type<Service>  {
+		constexpr auto service() -> service_type<Service>
+			requires(
+				source_of<
+					decltype(detail::container_source(*this, state)),
+					detail::polymorphic_v4_source<Service>
+				>
+			)
+		{
 			return kangaru::provide<service_type<Service>>(kangaru::provide<detail::polymorphic_v4_source<Service>>(detail::container_source(*this, state)));
 		}
 		
@@ -1437,7 +1448,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 				detail::make_v4_source_injector(detail::container_source(*this, state)),
 				KANGARU5_FWD(args)...
 			);
-			second_step_from_attribute{}.operator()<decltype(service)&>(service, *this);
+			second_step_from_attribute{}.operator()<decltype(service)>(service, *this);
 			return kangaru::provide<service_type<Service>>(std::move(service));
 		}
 		
@@ -1472,7 +1483,9 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		
 		template<detail::v4_source... Services, typename Function, typename... Args>
 			requires(sizeof...(Services) > 0 and callable<Function&&, service_type<Services>..., Args&&...>)
-		constexpr auto invoke(Function&& function, Args&&... args) {
+		constexpr auto invoke(Function&& function, Args&&... args) -> decltype(
+			KANGARU5_FWD(function)(service<Services>()..., KANGARU5_FWD(args)...)
+		) {
 			return KANGARU5_FWD(function)(service<Services>()..., KANGARU5_FWD(args)...);
 		}
 		
@@ -1634,9 +1647,53 @@ namespace kangaru::compatibility_v4::detail {
 		{ service.call(KANGARU5_FWD(function), KANGARU5_FWD(args)...) };
 	};
 	
+	template<v4_source Service, typename F>
+	struct service_call_function {
+		Service& service;
+		template<typename... Args>
+			requires(service_call_callable<Service, typename F::value_type, Args&&...>)
+		constexpr auto operator()(Args&&... args) const {
+			return service.call(F::value, KANGARU5_FWD(args)...);
+		}
+	};
+	
+	template<typename Service, typename Function>
+	concept autocall_function_invocable =
+		    v4_source<Service>
+		and not pointer_to_data_member<typename Function::value_type>
+		and requires(container& container, service_call_function<Service, Function> function) {
+			{ container.invoke<typename Service::map>(function) };
+		};
+	
+	template<typename Service, typename Function, typename... Services>
+	concept autocall_invoke_invocable =
+		    v4_source<Service>
+		and not pointer_to_data_member<typename Function::value_type>
+		and (... and v4_source<Services>)
+		and requires(container& container, service_call_function<Service, Function> function) {
+			{ container.invoke<Services...>(function) };
+		};
+	
+	template<typename Service, typename Function>
+	inline constexpr auto autocall_entry_callable = autocall_function_invocable<Service, Function>;
+	
+	template<typename Service, typename Function, typename... Services>
+	inline constexpr auto autocall_entry_callable<Service, invoke<Function, Services...>> =
+		autocall_invoke_invocable<Service, Function, Services...>;
+	
+	template<typename Service, typename Functions>
+	inline constexpr auto autocall_entries_callable = false;
+	
+	template<typename Service, typename... Functions>
+	inline constexpr auto autocall_entries_callable<Service, std::tuple<Functions...>> =
+		(... and autocall_entry_callable<Service, Functions>);
+	
 	struct autocall_second_step {
 		template<injectable T, forwarded_source Source, v4_source Service = decltype(std::declval<T>().v4_service())>
-			requires(service_with_second_step<Service>)
+			requires(
+				    service_with_second_step<Service>
+				and autocall_entries_callable<Service, typename Service::autocall_functions>
+			)
 		constexpr auto operator()(v4_source_wrapper<Service>& object, Source&& source) const -> void {
 			auto& container = kangaru::provide<compatibility_v4::container&>(KANGARU5_FWD(source));
 			std::apply([&](auto... functions) {
@@ -1647,16 +1704,12 @@ namespace kangaru::compatibility_v4::detail {
 	private:
 		template<v4_source Service, typename F>
 		static constexpr auto autocall_one(F, container& container, Service& service) -> void {
-			container.invoke<typename Service::map>([&](auto&&... args) requires service_call_callable<Service, typename F::value_type, decltype(args)...> {
-				service.call(F::value, KANGARU5_FWD(args)...);
-			});
+			container.invoke<typename Service::map>(service_call_function<Service, F>{service});
 		}
 		
-		template<v4_source Service, typename F, v4_source... Params>
-		static constexpr auto autocall_one(invoke<F, Params...>, container& container, Service& service) -> void {
-			container.invoke<Params...>([&](auto&&... args) requires service_call_callable<Service, typename F::value_type, decltype(args)...> {
-				service.call(F::value, KANGARU5_FWD(args)...);
-			});
+		template<v4_source Service, typename F, v4_source... Services>
+		static constexpr auto autocall_one(invoke<F, Services...>, container& container, Service& service) -> void {
+			container.invoke<Services...>(service_call_function<Service, F>{service});
 		}
 	};
 }
@@ -1835,7 +1888,7 @@ namespace kangaru::compatibility_v4 {
 		template<typename... Args>
 		static auto construct(inject_t<container_service> container_service, Args&&... args) {
 			auto& container = container_service.forward();
-			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(container)(
+			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(KANGARU5_NO_ADL(ref)(container))(
 				[&](deducer auto... deduce) requires(constructor_callable<Type, decltype(deduce)..., Args&&...>) {
 					return KANGARU5_NO_ADL(inject)(
 						std::make_shared<Type>(KANGARU5_NO_ADL(construct_in_place<Type>)(deduce..., KANGARU5_FWD(args)...))

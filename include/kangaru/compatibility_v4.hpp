@@ -1448,6 +1448,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 				detail::make_v4_source_injector(detail::container_source(*this, state)),
 				KANGARU5_FWD(args)...
 			);
+			static_assert(callable_template_1t<second_step_from_attribute, decltype(service), decltype(service)&, container&>);
 			second_step_from_attribute{}.operator()<decltype(service)>(service, *this);
 			return kangaru::provide<service_type<Service>>(std::move(service));
 		}
@@ -1859,8 +1860,9 @@ namespace kangaru::compatibility_v4 {
 		}
 	};
 	
+	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
-	struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : unique_service<Type> {
+	struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::unique_ptr<Type>> {
 		template<typename... Args>
 		static auto construct(inject_t<container_service> container_service, Args&&... args)
 			-> inject_result<std::unique_ptr<Type>>
@@ -1875,16 +1877,19 @@ namespace kangaru::compatibility_v4 {
 			);
 		}
 		
+		constexpr auto forward() -> std::unique_ptr<Type> {
+			return std::move(this->instance());
+		}
+		
 		template<typename T, typename... Args>
 		constexpr auto call(T method, Args&&... args) -> std::invoke_result_t<T, Type&, Args&&...> {
 			return std::invoke(method, *this->instance(), KANGARU5_FWD(args)...);
 		}
 	};
 	
+	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
-	struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : shared_service<Type> {
-		using shared_service<Type>::shared_service;
-		
+	struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::shared_ptr<Type>> {
 		template<typename... Args>
 		static auto construct(inject_t<container_service> container_service, Args&&... args) {
 			auto& container = container_service.forward();
@@ -1895,6 +1900,10 @@ namespace kangaru::compatibility_v4 {
 					);
 				}
 			);
+		}
+		
+		auto forward() -> std::shared_ptr<Type> {
+			return this->instance();
 		}
 		
 		template<typename T, typename... Args>

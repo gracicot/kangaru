@@ -138,28 +138,28 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<weak_deducible T>
 			requires(injectable<T>)
-		operator T () const;
+		operator T () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&>)
-		operator T& () const;
+		operator T& () const { detail::unimplemented_noreturn(); }
 		
 		#if KANGARU5_LVALUE_CONST_AMBIGUOUS()
 		template<weak_deducible T>
 			requires(injectable<T const&>)
-		operator T const& () const;
+		operator T const& () const { detail::unimplemented_noreturn(); }
 		#endif
 		
 		#if KANGARU5_RVALUE_CONST_AMBIGUOUS()
 		template<weak_deducible T>
 			requires(injectable<T const&&>)
-		operator T const&& () const;
+		operator T const&& () const { detail::unimplemented_noreturn(); }
 		#endif
 		
 		#if KANGARU5_RVALUE_AMBIGUOUS()
 		template<weak_deducible T>
 			requires(injectable<T&&>)
-		operator T&& () const;
+		operator T&& () const { detail::unimplemented_noreturn(); }
 		#endif
 	};
 	
@@ -168,7 +168,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<weak_deducible T>
 			requires(injectable<T>)
-		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION ();
+		operator T KANGARU5_VOLATILE_PRVALUE_DETECTION () { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&>)
@@ -192,23 +192,23 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<weak_deducible T>
 			requires(injectable<T>)
-		operator T ();
+		operator T () { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&>)
-		operator T& () const;
+		operator T& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T const&>)
-		operator T const& () const;
+		operator T const& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T const&&>)
-		operator T const&& () const;
+		operator T const&& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&&>)
-		operator T&& () const;
+		operator T&& () const { detail::unimplemented_noreturn(); }
 	};
 	
 	struct placeholder_deducer {
@@ -216,23 +216,23 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<weak_deducible T>
 			requires(injectable<T>)
-		operator T ();
+		operator T () { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&>)
-		operator T& () const;
+		operator T& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T const&>)
-		operator T const& () const;
+		operator T const& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T&&>)
-		operator T&& () const;
+		operator T&& () const { detail::unimplemented_noreturn(); }
 		
 		template<weak_deducible T>
 			requires(injectable<T const&&>)
-		operator T const&& () const;
+		operator T const&& () const { detail::unimplemented_noreturn(); }
 	};
 	
 	template<source_ref Source>

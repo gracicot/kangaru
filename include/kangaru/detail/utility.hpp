@@ -93,6 +93,9 @@ namespace kangaru::detail {
 	
 	template<std::size_t... S>
 	inline constexpr auto sequence_size<std::index_sequence<S...>> = sizeof...(S);
+	
+	[[noreturn]]
+	void unimplemented_noreturn();
 }
 
 KANGARU5_EXPORT namespace kangaru {

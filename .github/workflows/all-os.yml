@@ -200,6 +200,7 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
+          buildPresetAdditionalArgs: "['--', '-j1']"
           configurePresetAdditionalArgs: >-
             [
               '-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}',

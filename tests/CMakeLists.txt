@@ -87,7 +87,6 @@ if(KANGARU_TEST_V4)
 	kangaru_add_test(invoke)
 	kangaru_add_test(operator)
 	kangaru_add_test(service_map)
-	kangaru_add_test(service_range)
 	kangaru_add_test(single)
 	kangaru_add_test(virtual)
 

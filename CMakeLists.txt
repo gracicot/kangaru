@@ -7,10 +7,8 @@ option(KANGARU_TEST "Build test binaries" ON)
 option(KANGARU_FALLBACK_TO_EMBEDDED_OPTIONAL "Use embedded implementation of tl-optional if std optional is not available" OFF)
 option(KANGARU_TEST_V5 "Build v5 tests" ON)
 option(KANGARU_TEST_V4 "Build v4 tests" ON)
-option(KANGARU_TEST_PROVIDE_QUARTER_1 "Build first quarter of provide tests" ON)
-option(KANGARU_TEST_PROVIDE_QUARTER_2 "Build second quarter of provide tests" ON)
-option(KANGARU_TEST_PROVIDE_QUARTER_3 "Build third quarter of provide tests" ON)
-option(KANGARU_TEST_PROVIDE_QUARTER_4 "Build fourth quarter of provide tests" ON)
+option(KANGARU_TEST_PROVIDE_HALF_1 "Build first half of provide tests" ON)
+option(KANGARU_TEST_PROVIDE_HALF_2 "Build second half of provide tests" ON)
 
 # Variable to track module support
 set(KANGARU_HAS_CPP_MODULES OFF)

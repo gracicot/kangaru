@@ -533,7 +533,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			unnamed_service_map_function service_map,
 			prvalue_service_map_deducer<T> type
 		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T>
@@ -543,7 +543,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			unnamed_service_map_function service_map,
 			ref_mutable_service_map_deducer<T> type
 		) {
-			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T>
@@ -553,7 +553,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			unnamed_service_map_function service_map,
 			ref_const_service_map_deducer<T> type
 		) {
-			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T>
@@ -569,7 +569,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			service_map_function<Map> service_map,
 			prvalue_service_map_deducer<T> type
 		) {
-			{ call_with_deducers(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T, typename Map>
@@ -579,7 +579,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			service_map_function<Map> service_map,
 			ref_mutable_service_map_deducer<T> type
 		) {
-			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T, typename Map>
@@ -589,7 +589,7 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 			service_map_function<Map> service_map,
 			ref_const_service_map_deducer<T> type
 		) {
-			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+			{ service_map(KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T, typename Map>

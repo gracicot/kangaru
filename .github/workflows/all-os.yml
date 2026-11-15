@@ -162,14 +162,6 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'Run CMake C++${{ matrix.cxx }} (provide tests)'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci-windows'
-          buildPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
-          buildPresetAdditionalArgs: "['--target container_provide_tests', '--', '-j1']"
-
       - name: 'Run CMake C++${{ matrix.cxx }}'
         uses: lukka/run-cmake@v10
         with:
@@ -201,14 +193,6 @@ jobs:
 
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
-
-      - name: 'Run CMake C++${{ matrix.cxx }} (provide tests)'
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: 'ci-windows'
-          buildPreset: 'ci-windows'
-          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
-          buildPresetAdditionalArgs: "['--target container_provide_tests', '--', '-j1']"
 
       - name: 'Run CMake C++${{ matrix.cxx }}'
         uses: lukka/run-cmake@v10

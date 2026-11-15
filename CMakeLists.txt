@@ -47,7 +47,7 @@ PUBLIC FILE_SET HEADERS
 		include
 	FILES
 		include/kangaru/kangaru.hpp
-		include/kangaru/short.hpp
+		include/kangaru/compatibility_v4.hpp
 		include/kangaru/detail/tl/optional.hpp
 		include/kangaru/detail/allocator.hpp
 		include/kangaru/detail/attributes.hpp

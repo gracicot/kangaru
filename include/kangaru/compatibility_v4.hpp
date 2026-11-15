@@ -421,6 +421,24 @@ namespace kangaru::compatibility_v4 {
 namespace kangaru::compatibility_v4::detail::service_map_impl {
 	auto service_map(auto&&) requires false;
 	
+	template<typename T>
+	struct constify {
+		using type = T const;
+	};
+	
+	template<typename T>
+	struct constify<T&&> {
+		using type = T const&&;
+	};
+	
+	template<typename T>
+	struct constify<T&> {
+		using type = T const&;
+	};
+	
+	template<typename T>
+	using constify_t = typename constify<T>::type;
+	
 	template<injectable T>
 	struct exact_placeholder_source {
 		auto provide() const -> T;
@@ -491,9 +509,15 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 	};
 	
 	template<typename T>
-	using ref_service_map_deducer = filtered_value_category_deducer<
+	using ref_mutable_service_map_deducer = filtered_value_category_deducer<
 		basic_deducer<exact_placeholder_source<T>&>,
-		reference_kind::all_reference_kind
+		reference_kind::lvalue_reference_and_rvalue_reference
+	>;
+	
+	template<typename T>
+	using ref_const_service_map_deducer = filtered_value_category_deducer<
+		basic_deducer<exact_placeholder_source<constify_t<T>>&>,
+		reference_kind::lvalue_const_reference_and_rvalue_const_reference
 	>;
 	
 	template<typename T>
@@ -513,17 +537,30 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 		};
 	
 	template<typename T>
-	concept mapped_unnamed_ref =
-		    callable<unnamed_service_map_function, ref_service_map_deducer<T>>
+	concept mapped_unnamed_ref_mutable =
+		    callable<unnamed_service_map_function, ref_mutable_service_map_deducer<T>>
 		and requires(
 			unnamed_service_map_function service_map,
-			ref_service_map_deducer<T> type
+			ref_mutable_service_map_deducer<T> type
 		) {
 			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T>
-	concept mapped_unnamed = mapped_unnamed_ref<T> or mapped_unnamed_prvalue<T>;
+	concept mapped_unnamed_ref_const =
+		    callable<unnamed_service_map_function, ref_const_service_map_deducer<T>>
+		and requires(
+			unnamed_service_map_function service_map,
+			ref_const_service_map_deducer<T> type
+		) {
+			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T>
+	concept mapped_unnamed =
+		   mapped_unnamed_ref_mutable<T>
+		or mapped_unnamed_ref_const<T>
+		or mapped_unnamed_prvalue<T>;
 	
 	template<typename T, typename Map>
 	concept mapped_named_prvalue =
@@ -536,17 +573,30 @@ namespace kangaru::compatibility_v4::detail::service_map_impl {
 		};
 	
 	template<typename T, typename Map>
-	concept mapped_named_ref =
-		    callable<service_map_function<Map>, ref_service_map_deducer<T>>
+	concept mapped_named_ref_mutable =
+		    callable<service_map_function<Map>, ref_mutable_service_map_deducer<T>>
 		and requires(
 			service_map_function<Map> service_map,
-			ref_service_map_deducer<T> type
+			ref_mutable_service_map_deducer<T> type
 		) {
 			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
 		};
 	
 	template<typename T, typename Map>
-	concept mapped_named = mapped_named_ref<T, Map> or mapped_named_prvalue<T, Map>;
+	concept mapped_named_ref_const =
+		    callable<service_map_function<Map>, ref_const_service_map_deducer<T>>
+		and requires(
+			service_map_function<Map> service_map,
+			ref_const_service_map_deducer<T> type
+		) {
+			{ overloaded_call_with_deducer<std::remove_cvref_t<T>>(service_map, KANGARU5_FWD(type)) } -> mapping_for<T>;
+		};
+	
+	template<typename T, typename Map>
+	concept mapped_named =
+		   mapped_named_ref_mutable<T, Map>
+		or mapped_named_ref_const<T, Map>
+		or mapped_named_prvalue<T, Map>;
 	
 	template<typename T>
 	using service_map_result_t = detail::call_result_t<

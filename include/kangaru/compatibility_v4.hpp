@@ -1716,27 +1716,38 @@ namespace kangaru::compatibility_v4::detail {
 }
 
 namespace kangaru::compatibility_v4::detail {
-	template<typename T>
-	auto service_arg_for_service_type(std::shared_ptr<T> const&) -> std::decay<T>;
-	template<typename T>
-	auto service_arg_for_service_type(std::unique_ptr<T> const&) -> std::decay<T>;
-	template<typename T>
-	auto service_arg_for_service_type(T const&) -> std::decay<T>;
-	
-	template<template<typename, typename> class, typename, std::size_t>
+	template<template<typename, typename> typename, template<typename> typename, typename, std::size_t>
 	struct autowire_map;
 	
-	template<template<typename, typename> class service_type, typename... Maps, std::size_t max_dependencies>
-	struct autowire_map<service_type, map<Maps...>, max_dependencies> {
+	template<template<typename, typename> class service_type, template<typename> typename Unwrap, typename... Maps, std::size_t max_dependencies>
+	struct autowire_map<service_type, Unwrap, map<Maps...>, max_dependencies> {
 		template<typename T>
 		using mapped_service = service_type<
-			typename decltype(KANGARU5_NO_ADL(service_arg_for_service_type)(std::declval<T>()))::type,
-			autowire_map<service, map<Maps...>, max_dependencies>
+			Unwrap<T>,
+			autowire_map<service, std::decay_t, map<Maps...>, max_dependencies>
 		>;
 	};
 	
 	template<map_list Map = map<>, std::size_t max_dependencies = 8>
-	using autowire_tag = detail::autowire_map<service, Map, max_dependencies>;
+	using autowire_tag = detail::autowire_map<service, std::decay_t, Map, max_dependencies>;
+	
+	template<map_list Map>
+	struct container_with_mapped_provide {
+		container* c;
+		
+		template<injectable T, forwarded<container_with_mapped_provide> Self>
+			requires(
+				requires(Self&& source) {
+					{ source.c->template service<mapped_service_t<T, Map>>() } -> std::same_as<T>;
+				}
+			)
+		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
+			return source.c->template service<mapped_service_t<T, Map>>();
+		}
+	};
+	
+	template<typename T>
+	using unwrap_pointer_t = std::decay_t<decltype(*std::declval<T>())>;
 }
 
 namespace kangaru::compatibility_v4 {
@@ -1748,7 +1759,7 @@ namespace kangaru::compatibility_v4 {
 					Type,
 					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
-						ref_result_t<container&>
+						detail::container_with_mapped_provide<Map>
 					>,
 					Args&&...
 				>
@@ -1757,11 +1768,13 @@ namespace kangaru::compatibility_v4 {
 			generic_service<Type>{in_place,
 				in_place_construct{[&] {
 					return detail::inject_constructor_with_additional_args<Type>(
-						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(KANGARU5_NO_ADL(ref)(container)),
+						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(detail::container_with_mapped_provide<Map>{&container}),
 						KANGARU5_FWD(args)...
 					);
 				}}
 			} {}
+		
+		service() = default;
 		
 		template<typename... Args>
 			requires(
@@ -1769,7 +1782,7 @@ namespace kangaru::compatibility_v4 {
 					Type,
 					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
-						ref_result_t<container&>
+						detail::container_with_mapped_provide<Map>
 					>,
 					Args&&...
 				>
@@ -1778,7 +1791,7 @@ namespace kangaru::compatibility_v4 {
 			generic_service<Type>::emplace(
 				in_place_construct{[&]() {
 					return detail::inject_constructor_with_additional_args<Type>(
-						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(KANGARU5_NO_ADL(ref)(container)),
+						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(detail::container_with_mapped_provide<Map>{&container}),
 						KANGARU5_FWD(args)...
 					);
 				}}
@@ -1808,7 +1821,7 @@ namespace kangaru::compatibility_v4 {
 					Type,
 					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
-						ref_result_t<container&>
+						detail::container_with_mapped_provide<Map>
 					>,
 					Args&&...
 				>
@@ -1817,7 +1830,7 @@ namespace kangaru::compatibility_v4 {
 			generic_service<Type>{in_place,
 				in_place_construct{[&] {
 					return detail::inject_constructor_with_additional_args<Type>(
-						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(KANGARU5_NO_ADL(ref)(container)),
+						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(detail::container_with_mapped_provide<Map>{&container}),
 						KANGARU5_FWD(args)...
 					);
 				}}
@@ -1829,7 +1842,7 @@ namespace kangaru::compatibility_v4 {
 					Type,
 					detail::call_result_t<
 						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
-						ref_result_t<container&>
+						detail::container_with_mapped_provide<Map>
 					>,
 					Args&&...
 				>
@@ -1838,7 +1851,7 @@ namespace kangaru::compatibility_v4 {
 			generic_service<Type>::emplace(
 				in_place_construct{[&] {
 					return detail::inject_constructor_with_additional_args<Type>(
-						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(KANGARU5_NO_ADL(ref)(container)),
+						detail::make_basic_autowire_injector<basic_deducer, Map, max_dependencies>(detail::container_with_mapped_provide<Map>{&container}),
 						KANGARU5_FWD(args)...
 					);
 				}}
@@ -1912,15 +1925,15 @@ namespace kangaru::compatibility_v4 {
 		}
 	};
 	
-	using autowire = detail::autowire_map<service, map<>, 8>;
-	using autowire_single = detail::autowire_map<single_service, map<>, 8>;
-	using autowire_unique = detail::autowire_map<unique_service, map<>, 8>;
-	using autowire_shared = detail::autowire_map<shared_service, map<>, 8>;
+	using autowire = detail::autowire_map<service, std::decay_t, map<>, 8>;
+	using autowire_single = detail::autowire_map<single_service, std::decay_t, map<>, 8>;
+	using autowire_unique = detail::autowire_map<unique_service, detail::unwrap_pointer_t, map<>, 8>;
+	using autowire_shared = detail::autowire_map<shared_service, detail::unwrap_pointer_t, map<>, 8>;
 }
 
 namespace kangaru::compatibility_v4 {
 	template<detail::map_list Map, std::size_t max_dependencies = 8>
-	using mapped_autowire = detail::autowire_map<service, Map, max_dependencies>;
+	using mapped_autowire = detail::autowire_map<service, std::decay_t, Map, max_dependencies>;
 	
 	template<typename T, detail::map_list Map = map<>, std::size_t max_dependencies = 8>
 	using autowire_service = service<T, mapped_autowire<Map, max_dependencies>>;

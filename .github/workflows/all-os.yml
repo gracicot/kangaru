@@ -220,7 +220,7 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          buildPresetAdditionalArgs: "['--', '-j1']"
+          buildPresetAdditionalArgs: "['--', '-j2']"
           configurePresetAdditionalArgs: >-
             [
               '-DCMAKE_CXX_STANDARD=20',
@@ -239,7 +239,7 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
-          buildPresetAdditionalArgs: "['--', '-j1']"
+          buildPresetAdditionalArgs: "['--', '-j2']"
           configurePresetAdditionalArgs: >-
             [
               '-DCMAKE_CXX_STANDARD=23',

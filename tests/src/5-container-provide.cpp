@@ -116,17 +116,17 @@ auto test_provide(auto&& container, auto check) {
 		check(static_cast<Final>(accessor<level>(result)));
 		test_provide_on_all<agg_mapped_rref_dependent_on<T>&&, Final>(FWD(container), check);
 	}
+}
+#elif KANGARU5_TEST_Q == 2
+template<typename T, typename Final = T>
+auto test_provide(auto&& container, auto check) {
+	constexpr auto level = 0;
 	
 	{
 		decltype(auto) result = kangaru::provide<unmapped_dependent_on<T>>(FWD(container));
 		check(static_cast<Final>(accessor<level>(result)));
 		test_provide_on_all<unmapped_dependent_on<T>, Final>(FWD(container), check);
 	}
-}
-#elif KANGARU5_TEST_Q == 2
-template<typename T, typename Final = T>
-auto test_provide(auto&& container, auto check) {
-	constexpr auto level = 0;
 	
 	{
 		decltype(auto) result = kangaru::provide<std::unique_ptr<unmapped_dependent_on<T>>>(FWD(container));
@@ -139,6 +139,11 @@ auto test_provide(auto&& container, auto check) {
 		check(static_cast<Final>(accessor<level>(result)));
 		test_provide_on_all<mapped_value_dependent_on<T>, Final>(FWD(container), check);
 	}
+}
+#elif KANGARU5_TEST_Q == 3
+template<typename T, typename Final = T>
+auto test_provide(auto&& container, auto check) {
+	constexpr auto level = 0;
 	
 	{
 		decltype(auto) result = kangaru::provide<mapped_ref_dependent_on<T>&>(FWD(container));

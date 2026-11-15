@@ -182,21 +182,20 @@ jobs:
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: >-
             [
-              '-DCMAKE_CXX_STANDARD=23',
+              '-DCMAKE_CXX_STANDARD=20',
               '-DKANGARU_TEST_PROVIDE_HALF_1=OFF',
               '-DKANGARU_TEST_PROVIDE_HALF_2=OFF'
             ]
 
   windows-msvc-2026-provide:
     runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
-    name: MSVC ${{ matrix.vs }} Windows Provide ${{ matrix.provide }}/2 C++${{ matrix.cxx }}
+    name: MSVC ${{ matrix.vs }} Windows Provide ${{ matrix.provide }}/4
     strategy:
       fail-fast: false
       matrix:
         vs: [2026]
         windows: [2025]
-        provide: [1, 2]
-        cxx: [20, 23]
+        provide: [1, 2, 3, 4]
 
     steps:
       - uses: actions/checkout@v5
@@ -211,7 +210,7 @@ jobs:
       - name: Run vcpkg
         uses: lukka/run-vcpkg@v11
 
-      - name: 'Run CMake C++${{ matrix.cxx }}'
+      - name: 'Run CMake C++20'
         uses: lukka/run-cmake@v10
         with:
           configurePreset: 'ci-windows'
@@ -220,11 +219,32 @@ jobs:
           buildPresetAdditionalArgs: "['--', '-j1']"
           configurePresetAdditionalArgs: >-
             [
-              '-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}',
+              '-DCMAKE_CXX_STANDARD=20',
               '-DKANGARU_BUILD_EXAMPLES=OFF',
               '-DKANGARU_TEST_V5=OFF',
               '-DKANGARU_TEST_V4=OFF',
-              '-DKANGARU_TEST_PROVIDE_HALF_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
-              '-DKANGARU_TEST_PROVIDE_HALF_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_3=${{ matrix.provide == 3 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}',
+            ]
+
+      - name: 'Run CMake C++23'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
+          buildPresetAdditionalArgs: "['--', '-j1']"
+          configurePresetAdditionalArgs: >-
+            [
+              '-DCMAKE_CXX_STANDARD=23',
+              '-DKANGARU_BUILD_EXAMPLES=OFF',
+              '-DKANGARU_TEST_V5=OFF',
+              '-DKANGARU_TEST_V4=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_3=${{ matrix.provide == 3 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}',
             ]
 

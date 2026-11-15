@@ -178,7 +178,7 @@ jobs:
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}', '-DKANGARU_TEST_PROVIDE_HALF_1=OFF', '-DKANGARU_TEST_PROVIDE_HALF_2=OFF']"
 
-  windows-msvc-2026:
+  windows-msvc-2026-provide:
     runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
     name: MSVC ${{ matrix.vs }} Windows C++${{ matrix.cxx }} (provide ${{ matrix.provide }}/2)
     strategy:

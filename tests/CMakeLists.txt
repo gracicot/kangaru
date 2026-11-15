@@ -45,20 +45,24 @@ set_target_properties(container_provide_tests PROPERTIES EXCLUDE_FROM_ALL ON)
 function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	set(TEST_FILE "${TEST_NAME}.cpp")
 	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q1_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=1)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q1" "${TEST_NAME}_${TEST_TYPE}_q1_test")
-	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q1_test")
+	if(KANGARU_TEST_PROVIDE_HALF_1)
+		add_executable("${TEST_NAME}_${TEST_TYPE}_q1_test" "src/${TEST_FILE}")
+		target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE kangaru_test_common)
+		target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=1)
+		add_test("${TEST_NAME}_${TEST_TYPE}_q1" "${TEST_NAME}_${TEST_TYPE}_q1_test")
+		add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q1_test")
+	endif()
 	
-	add_executable("${TEST_NAME}_${TEST_TYPE}_q2_test" "src/${TEST_FILE}")
-	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE kangaru_test_common)
-	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2)
-	add_test("${TEST_NAME}_${TEST_TYPE}_q2" "${TEST_NAME}_${TEST_TYPE}_q2_test")
-	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q2_test")
+	if(KANGARU_TEST_PROVIDE_HALF_2)
+		add_executable("${TEST_NAME}_${TEST_TYPE}_q2_test" "src/${TEST_FILE}")
+		target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE kangaru_test_common)
+		target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2)
+		add_test("${TEST_NAME}_${TEST_TYPE}_q2" "${TEST_NAME}_${TEST_TYPE}_q2_test")
+		add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q2_test")
+	endif()
 endfunction()
 
-if(KANGARU_TEST)
+if(KANGARU_TEST_V5)
 	kangaru_add_test(5-allocator)
 	kangaru_add_test(5-attributes)
 	kangaru_add_test(5-cache-source-heap-storage)
@@ -66,7 +70,80 @@ if(KANGARU_TEST)
 	kangaru_add_test(5-concepts)
 	kangaru_add_test(5-constructor)
 	kangaru_add_test(5-container-base)
+	kangaru_add_test(5-container)
+	kangaru_add_test(5-deducer)
+	kangaru_add_test(5-exceptions)
+	kangaru_add_test(5-incremental-source)
+	kangaru_add_test(5-injector)
+	kangaru_add_test(5-lazy)
+	kangaru_add_test(5-modular-container)
+	kangaru_add_test(5-modular-source)
+	if(KANGARU_HAS_CPP_MODULES)
+		kangaru_add_test(5-modules)
+	endif()
+	kangaru_add_test(5-murmur)
+	kangaru_add_test(5-playground)
+	kangaru_add_test(5-polymorphic-source)
+	kangaru_add_test(5-recursive-source)
+	kangaru_add_test(5-source-rebind)
+	kangaru_add_test(5-source-reference-wrapper)
+	kangaru_add_test(5-source-types)
+	kangaru_add_test(5-source-wrappers)
+	kangaru_add_test(5-source)
+	kangaru_add_test(5-two-step-init)
+	kangaru_add_test(5-type-id)
+endif()
+
+if(KANGARU_TEST_V4)
+	kangaru_add_test(autocall)
+	kangaru_add_test(autowire)
+	kangaru_add_test(basic)
+	kangaru_add_test(container)
+	kangaru_add_test(default_services)
+	kangaru_add_test(definition)
+	kangaru_add_test(dependency)
+	kangaru_add_test(invoke)
+	kangaru_add_test(noexcept_compiler_disabled_supplied noexcept.cpp)
+	kangaru_add_test(noexcept_compiler_disabled_abstract noexcept.cpp)
+	kangaru_add_test(noexcept_macro_disabled_supplied noexcept.cpp)
+	kangaru_add_test(noexcept_macro_disabled_abstract noexcept.cpp)
+	kangaru_add_test(operator)
+	kangaru_add_test(service_map)
+	kangaru_add_test(service_range)
+	kangaru_add_test(single)
+	kangaru_add_test(virtual)
+	kangaru_add_compilation_failure(not_service_no_forward "The type sent to kgr::container::service\\(\\.\\.\\.\\) is not a service\\.")
+	kangaru_add_compilation_failure(not_service_has_forward "The service type must not contain any virtual functions or virtual inheritance\\.")
 	
+	target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
+		$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
+	)
+	
+	target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
+		$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
+	)
+	
+	target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+	)
+	
+	target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+	)
+	
+	target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)
+	target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_ABSTRACT_ABORT)
+	target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
+	target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
+	
+	kangaru_add_test(generic_lambdas)
+	kangaru_add_test(type_id_cxx14)
+	kangaru_add_test(noexcept_invoke)
+endif()
+
+if(KANGARU_TEST_PROVIDE_HALF_1 OR KANGARU_TEST_PROVIDE_HALF_2)
 	kangaru_add_template_test(5-container-provide provide_test_self)
 	kangaru_add_template_test(5-container-provide provide_test_polymorphic_self)
 	kangaru_add_template_test(5-container-provide provide_test_mapped_ref)
@@ -105,73 +182,5 @@ if(KANGARU_TEST)
 	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_value)
 	kangaru_add_template_test(5-container-provide provide_test_mapped_ref_construction_using_assume_cached_ref)
 	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_ref)
-	
-	kangaru_add_test(5-container)
-	kangaru_add_test(5-deducer)
-	kangaru_add_test(5-exceptions)
-	kangaru_add_test(5-incremental-source)
-	kangaru_add_test(5-injector)
-	kangaru_add_test(5-lazy)
-	kangaru_add_test(5-modular-container)
-	kangaru_add_test(5-modular-source)
-	if(KANGARU_HAS_CPP_MODULES)
-		kangaru_add_test(5-modules)
-	endif()
-	kangaru_add_test(5-murmur)
-	kangaru_add_test(5-playground)
-	kangaru_add_test(5-polymorphic-source)
-	kangaru_add_test(5-recursive-source)
-	kangaru_add_test(5-source-rebind)
-	kangaru_add_test(5-source-reference-wrapper)
-	kangaru_add_test(5-source-types)
-	kangaru_add_test(5-source-wrappers)
-	kangaru_add_test(5-source)
-	kangaru_add_test(5-two-step-init)
-	kangaru_add_test(5-type-id)
-	kangaru_add_test(autocall)
-	kangaru_add_test(autowire)
-	kangaru_add_test(basic)
-	kangaru_add_test(container)
-	kangaru_add_test(default_services)
-	kangaru_add_test(definition)
-	kangaru_add_test(dependency)
-	kangaru_add_test(invoke)
-	kangaru_add_test(noexcept_compiler_disabled_supplied noexcept.cpp)
-	kangaru_add_test(noexcept_compiler_disabled_abstract noexcept.cpp)
-	kangaru_add_test(noexcept_macro_disabled_supplied noexcept.cpp)
-	kangaru_add_test(noexcept_macro_disabled_abstract noexcept.cpp)
-	kangaru_add_test(operator)
-	kangaru_add_test(service_map)
-	kangaru_add_test(service_range)
-	kangaru_add_test(single)
-	kangaru_add_test(virtual)
-	kangaru_add_compilation_failure(not_service_no_forward "The type sent to kgr::container::service\\(\\.\\.\\.\\) is not a service\\.")
-	kangaru_add_compilation_failure(not_service_has_forward "The service type must not contain any virtual functions or virtual inheritance\\.")
 endif()
 
-target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
-)
-
-target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
-)
-
-target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
-)
-
-target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
-)
-
-target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)
-target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_ABSTRACT_ABORT)
-target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
-target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
-
-kangaru_add_test(generic_lambdas)
-kangaru_add_test(type_id_cxx14)
-kangaru_add_test(noexcept_invoke)

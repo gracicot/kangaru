@@ -176,5 +176,53 @@ jobs:
           configurePreset: 'ci-windows'
           buildPreset: 'ci-windows'
           testPreset: 'ci-windows'
+          configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}', '-DKANGARU_TEST_PROVIDE_HALF_1=OFF', '-DKANGARU_TEST_PROVIDE_HALF_2=OFF']"
+
+  windows-msvc-2026:
+    runs-on: windows-${{ matrix.windows }}-vs${{ matrix.vs }}
+    name: MSVC ${{ matrix.vs }} Windows C++${{ matrix.cxx }} (provide ${{ matrix.provide }}/2)
+    strategy:
+      fail-fast: false
+      matrix:
+        vs: [2026]
+        windows: [2025]
+        cxx: [20, 23]
+        provide: [1, 2]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: egor-tensin/vs-shell@v2
+        with:
+          arch: x64
+
+      - name: get-cmake
+        uses: lukka/get-cmake@v4.1.2
+
+      - name: Run vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: 'Run CMake C++${{ matrix.cxx }} (provide tests)'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
           configurePresetAdditionalArgs: "['-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}']"
+          buildPresetAdditionalArgs: "['--target container_provide_tests', '--', '-j1']"
+
+      - name: 'Run CMake C++${{ matrix.cxx }}'
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: 'ci-windows'
+          buildPreset: 'ci-windows'
+          testPreset: 'ci-windows'
+          configurePresetAdditionalArgs: >-
+            [
+              '-DCMAKE_CXX_STANDARD=${{ matrix.cxx }}',
+              '-DKANGARU_BUILD_EXAMPLES=OFF',
+              '-DKANGARU_TEST_V5=OFF',
+              '-DKANGARU_TEST_V4=OFF',
+              '-DKANGARU_TEST_PROVIDE_HALF_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_HALF_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
+            ]
 

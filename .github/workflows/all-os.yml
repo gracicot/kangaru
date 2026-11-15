@@ -170,8 +170,10 @@ jobs:
           configurePresetAdditionalArgs: >-
             [
               '-DCMAKE_CXX_STANDARD=20',
-              '-DKANGARU_TEST_PROVIDE_HALF_1=OFF',
-              '-DKANGARU_TEST_PROVIDE_HALF_2=OFF'
+              '-DKANGARU_TEST_PROVIDE_QUARTER_1=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_2=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_3=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=OFF'
             ]
 
       - name: 'Run CMake C++23'
@@ -182,9 +184,11 @@ jobs:
           testPreset: 'ci-windows'
           configurePresetAdditionalArgs: >-
             [
-              '-DCMAKE_CXX_STANDARD=20',
-              '-DKANGARU_TEST_PROVIDE_HALF_1=OFF',
-              '-DKANGARU_TEST_PROVIDE_HALF_2=OFF'
+              '-DCMAKE_CXX_STANDARD=23',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_1=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_2=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_3=OFF',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=OFF'
             ]
 
   windows-msvc-2026-provide:
@@ -226,7 +230,7 @@ jobs:
               '-DKANGARU_TEST_PROVIDE_QUARTER_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
               '-DKANGARU_TEST_PROVIDE_QUARTER_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
               '-DKANGARU_TEST_PROVIDE_QUARTER_3=${{ matrix.provide == 3 && 'ON' || 'OFF' }}',
-              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}'
             ]
 
       - name: 'Run CMake C++23'
@@ -245,6 +249,6 @@ jobs:
               '-DKANGARU_TEST_PROVIDE_QUARTER_1=${{ matrix.provide == 1 && 'ON' || 'OFF' }}',
               '-DKANGARU_TEST_PROVIDE_QUARTER_2=${{ matrix.provide == 2 && 'ON' || 'OFF' }}',
               '-DKANGARU_TEST_PROVIDE_QUARTER_3=${{ matrix.provide == 3 && 'ON' || 'OFF' }}',
-              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}',
+              '-DKANGARU_TEST_PROVIDE_QUARTER_4=${{ matrix.provide == 4 && 'ON' || 'OFF' }}'
             ]
 

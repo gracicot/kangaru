@@ -39,26 +39,26 @@ function(kangaru_add_test TEST_NAME)
 	add_test(${TEST_NAME} "${TEST_NAME}_test")
 endfunction()
 
-add_custom_target(container_provide_tests)
-set_target_properties(container_provide_tests PROPERTIES EXCLUDE_FROM_ALL ON)
-
 function(kangaru_add_template_test TEST_NAME TEST_TYPE)
 	set(TEST_FILE "${TEST_NAME}.cpp")
-	
+
 	add_executable("${TEST_NAME}_${TEST_TYPE}_q1_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q1_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=1)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q1" "${TEST_NAME}_${TEST_TYPE}_q1_test")
-	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q1_test")
 	
 	add_executable("${TEST_NAME}_${TEST_TYPE}_q2_test" "src/${TEST_FILE}")
 	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE kangaru_test_common)
 	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q2_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=2)
 	add_test("${TEST_NAME}_${TEST_TYPE}_q2" "${TEST_NAME}_${TEST_TYPE}_q2_test")
-	add_dependencies(container_provide_tests "${TEST_NAME}_${TEST_TYPE}_q2_test")
+	
+	add_executable("${TEST_NAME}_${TEST_TYPE}_q3_test" "src/${TEST_FILE}")
+	target_link_libraries("${TEST_NAME}_${TEST_TYPE}_q3_test" PRIVATE kangaru_test_common)
+	target_compile_definitions("${TEST_NAME}_${TEST_TYPE}_q3_test" PRIVATE KANGARU5_TEST_TYPE=${TEST_TYPE} KANGARU5_TEST_Q=3)
+	add_test("${TEST_NAME}_${TEST_TYPE}_q3" "${TEST_NAME}_${TEST_TYPE}_q3_test")
 endfunction()
 
-if(KANGARU_TEST)
+if(KANGARU_TEST_V5)
 	kangaru_add_test(5-allocator)
 	kangaru_add_test(5-attributes)
 	kangaru_add_test(5-cache-source-heap-storage)
@@ -66,46 +66,6 @@ if(KANGARU_TEST)
 	kangaru_add_test(5-concepts)
 	kangaru_add_test(5-constructor)
 	kangaru_add_test(5-container-base)
-	
-	kangaru_add_template_test(5-container-provide provide_test_self)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_self)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_ref)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_object_source)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_object_source)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_object_source_source)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_object_source_source)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source_source)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source_source)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source_source_auto_mapped)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source_source_auto_mapped)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_has_empty)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_has_empty)
-	kangaru_add_template_test(5-container-provide provide_test_unmapped_has_empty)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_unmapped_has_empty)
-	kangaru_add_template_test(5-container-provide provide_test_empty_injectable)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_empty_injectable)
-	kangaru_add_template_test(5-container-provide provide_test_remapped)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_remapped)
-	kangaru_add_template_test(5-container-provide provide_test_remapped_sptr)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_remapped_sptr)
-	kangaru_add_template_test(5-container-provide provide_test_unmapped_dependent_on_mapped_value)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_unmapped_dependent_on_mapped_value)
-	kangaru_add_template_test(5-container-provide provide_test_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_assume_cached_ref)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_assume_cached_ref)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_construction_using_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_construction_using_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_value_construction_using_assume_cached_ref)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_construction_using_assume_cached_ref)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_ref_construction_using_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_value)
-	kangaru_add_template_test(5-container-provide provide_test_mapped_ref_construction_using_assume_cached_ref)
-	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_ref)
-	
 	kangaru_add_test(5-container)
 	kangaru_add_test(5-deducer)
 	kangaru_add_test(5-exceptions)
@@ -128,6 +88,9 @@ if(KANGARU_TEST)
 	kangaru_add_test(5-source)
 	kangaru_add_test(5-two-step-init)
 	kangaru_add_test(5-type-id)
+endif()
+
+if(KANGARU_TEST_V4)
 	kangaru_add_test(autocall)
 	kangaru_add_test(autowire)
 	kangaru_add_test(basic)
@@ -147,31 +110,78 @@ if(KANGARU_TEST)
 	kangaru_add_test(virtual)
 	kangaru_add_compilation_failure(not_service_no_forward "The type sent to kgr::container::service\\(\\.\\.\\.\\) is not a service\\.")
 	kangaru_add_compilation_failure(not_service_has_forward "The service type must not contain any virtual functions or virtual inheritance\\.")
+	
+	target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
+		$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
+	)
+	
+	target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
+		$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
+		$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
+	)
+	
+	target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+	)
+	
+	target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE
+		$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
+	)
+	
+	target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)
+	target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_ABSTRACT_ABORT)
+	target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
+	target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
+	
+	kangaru_add_test(generic_lambdas)
+	kangaru_add_test(type_id_cxx14)
+	kangaru_add_test(noexcept_invoke)
 endif()
 
-target_compile_options(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
-)
-
-target_compile_options(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-fno-exceptions>
-	$<$<CXX_COMPILER_ID:MSVC>:/EHs-c->
-)
-
-target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
-)
-
-target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE
-	$<$<CXX_COMPILER_ID:MSVC>:_HAS_EXCEPTIONS=0>
-)
-
-target_compile_definitions(noexcept_macro_disabled_supplied_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_SUPPLIED_ABORT)
-target_compile_definitions(noexcept_macro_disabled_abstract_test PRIVATE KGR_KANGARU_NOEXCEPTION KGR_KANGARU_TEST_ABSTRACT_ABORT)
-target_compile_definitions(noexcept_compiler_disabled_supplied_test PRIVATE KGR_KANGARU_TEST_SUPPLIED_ABORT)
-target_compile_definitions(noexcept_compiler_disabled_abstract_test PRIVATE KGR_KANGARU_TEST_ABSTRACT_ABORT)
-
-kangaru_add_test(generic_lambdas)
-kangaru_add_test(type_id_cxx14)
-kangaru_add_test(noexcept_invoke)
+if(KANGARU_TEST_PROVIDE_QUARTER_1)
+	kangaru_add_template_test(5-container-provide provide_test_self)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_self)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_ref)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_object_source)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_object_source)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_ref_construction_using_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_ref_construction_using_assume_cached_ref)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_ref_construction_using_assume_cached_ref)
+endif()
+if(KANGARU_TEST_PROVIDE_QUARTER_2)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source_source)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source_source)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source_source_auto_mapped)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source_source_auto_mapped)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_has_empty)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_has_empty)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_unmapped_dependent_on_mapped_value)
+	kangaru_add_template_test(5-container-provide provide_test_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_assume_cached_ref)
+endif()
+if(KANGARU_TEST_PROVIDE_QUARTER_3)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_assume_cached_ref)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_construction_using_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_construction_using_assume_cached_value)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_remapped_sptr)
+	kangaru_add_template_test(5-container-provide provide_test_unmapped_dependent_on_mapped_value)
+	kangaru_add_template_test(5-container-provide provide_test_unmapped_has_empty)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_unmapped_has_empty)
+	kangaru_add_template_test(5-container-provide provide_test_empty_injectable)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_empty_injectable)
+endif()
+if(KANGARU_TEST_PROVIDE_QUARTER_4)
+	kangaru_add_template_test(5-container-provide provide_test_remapped)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_remapped)
+	kangaru_add_template_test(5-container-provide provide_test_remapped_sptr)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_construction_using_assume_cached_ref)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_construction_using_assume_cached_ref)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_object_source_source)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_object_source_source)
+	kangaru_add_template_test(5-container-provide provide_test_mapped_value_base_reference_source)
+	kangaru_add_template_test(5-container-provide provide_test_polymorphic_mapped_value_base_reference_source)
+endif()

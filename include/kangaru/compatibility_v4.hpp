@@ -87,7 +87,6 @@ namespace kangaru::compatibility_v4::detail {
 	template<v4_source T>
 	using parent_types_or_empty_t = typename parent_types_or_empty<T>::type;
 	
-	
 	template<v4_source Service>
 	struct default_or_service {
 		using type = Service;
@@ -241,8 +240,8 @@ namespace kangaru::compatibility_v4::detail {
 		std::tuple<Args...> args;
 		
 		template<deducer... Deducers> requires(callable<Function, Deducers..., Args...>)
-		constexpr auto operator()(Deducers... deduce) const {
-			return std::apply([&](Args... args) {
+		constexpr auto operator()(Deducers... deduce) const -> decltype(auto) {
+			return std::apply([&](Args... args) -> decltype(auto) {
 				return KANGARU5_FWD(function)(deduce..., KANGARU5_FWD(args)...);
 			}, std::move(args));
 		}
@@ -251,7 +250,7 @@ namespace kangaru::compatibility_v4::detail {
 	struct inject_with_additional_args_function {
 		template<forwarded_injector Injector, forwarded_function Function, typename... Args>
 			requires(callable<Injector&&, inject_with_additional_args_function_impl<Function&&, Args&&...>>)
-		constexpr auto operator()(Injector&& inject, Function&& function, Args&&... args) const {
+		constexpr auto operator()(Injector&& inject, Function&& function, Args&&... args) const -> call_result_t<Injector&&, inject_with_additional_args_function_impl<Function&&, Args&&...>> {
 			return inject(inject_with_additional_args_function_impl<Function&&, Args&&...>{
 				KANGARU5_FWD(function),
 				std::forward_as_tuple(KANGARU5_FWD(args)...)
@@ -266,8 +265,12 @@ namespace kangaru::compatibility_v4::detail {
 		and callable<inject_with_additional_args_function, Injector&&, Function&&, Args&&...>;
 	
 	template<forwarded_injector Injector, forwarded_function Function, typename... Args>
+	using inject_with_additional_args_result_t =
+		call_result_t<inject_with_additional_args_function, Injector&&, Function&&, Args&&...>;
+	
+	template<forwarded_injector Injector, forwarded_function Function, typename... Args>
 		requires(inject_with_additional_args_callable<Injector&&, Function&&, Args&&...>)
-	auto inject_with_additional_args(Injector&& inject, Function&& function, Args&&... args) {
+	auto inject_with_additional_args(Injector&& inject, Function&& function, Args&&... args) -> inject_with_additional_args_result_t<Injector&&, Function&&, Args&&...> {
 		return inject_with_additional_args_function{}(KANGARU5_FWD(inject), KANGARU5_FWD(function), KANGARU5_FWD(args)...);
 	}
 	
@@ -275,7 +278,7 @@ namespace kangaru::compatibility_v4::detail {
 	struct inject_constructor_with_additional_args_function {
 		template<forwarded_injector Injector, typename... Args>
 			requires(callable<Injector&&, inject_with_additional_args_function_impl<constructor_function<Type>&&, Args&&...>>)
-		constexpr auto operator()(Injector&& inject, Args&&... args) const {
+		constexpr auto operator()(Injector&& inject, Args&&... args) const -> Type {
 			return inject(inject_with_additional_args_function_impl<constructor_function<Type>&&, Args&&...>{
 				constructor_function<Type>{},
 				std::forward_as_tuple(KANGARU5_FWD(args)...)
@@ -291,7 +294,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<unqualified_object Type, forwarded_injector Injector, typename... Args>
 		requires(inject_constructor_with_additional_args_callable<Type, Injector&&, Args&&...>)
-	auto inject_constructor_with_additional_args(Injector&& inject, Args&&... args) {
+	auto inject_constructor_with_additional_args(Injector&& inject, Args&&... args) -> Type {
 		return inject_constructor_with_additional_args_function<Type>{}(KANGARU5_FWD(inject), KANGARU5_FWD(args)...);
 	}
 	
@@ -916,11 +919,11 @@ namespace kangaru::compatibility_v4 {
 			std::destroy_at(std::addressof(object));
 		}
 		
-		constexpr generic_service(generic_service&& other) noexcept {
+		constexpr generic_service(generic_service&& other) noexcept requires(std::move_constructible<Type>) {
 			emplace(std::move(other.instance()));
 		}
 		
-		constexpr generic_service& operator=(generic_service&& other) noexcept {
+		constexpr generic_service& operator=(generic_service&& other) noexcept requires(std::is_move_assignable_v<Type>){
 			emplace(std::move(other.instance()));
 			return *this;
 		}
@@ -1693,6 +1696,36 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 }
 
 namespace kangaru::compatibility_v4::detail {
+	template<typename Service, typename... Args>
+	concept valid_service = v4_source<Service> and requires(container& container, Args&&... args) {
+		{ container.service<Service>(KANGARU5_FWD(args)...) } -> std::same_as<service_type<Service>>;
+	};
+	
+	template<typename Function, typename... Args>
+	concept valid_invoke = forwarded_function<Function> and requires(container& container, Args&&... args) {
+		{ container.invoke(KANGARU5_FWD(args)...) };
+	};
+	
+	template<typename Map, typename Function, typename... Args>
+	concept valid_mapped_invoke =
+		    map_list<Map>
+		and forwarded_function<Function>
+		and requires(container& container, Function&& function, Args&&... args) {
+			{ container.invoke(Map{}, KANGARU5_FWD(function), KANGARU5_FWD(args)...) };
+		};
+	
+	template<map_list Map, typename Function, typename... Args>
+	using container_mapped_invoke_result_t = decltype(
+		std::declval<container&>().invoke(Map{}, std::declval<Function>(), std::declval<Args>()...)
+	);
+	
+	template<map_list Map, typename Function, typename... Args>
+	using container_invoke_result_t = decltype(
+		std::declval<container&>().invoke(std::declval<Function>(), std::declval<Args>()...)
+	);
+}
+
+namespace kangaru::compatibility_v4::detail {
 	template<typename Service, typename F, typename... Args>
 	concept service_call_callable = v4_source<Service> and requires(Service& service, F&& function, Args&&... args) {
 		{ service.call(KANGARU5_FWD(function), KANGARU5_FWD(args)...) };
@@ -1703,7 +1736,7 @@ namespace kangaru::compatibility_v4::detail {
 		Service& service;
 		template<typename... Args>
 			requires(service_call_callable<Service, typename F::value_type, Args&&...>)
-		constexpr auto operator()(Args&&... args) const {
+		constexpr auto operator()(Args&&... args) const -> decltype(service.call(F::value, KANGARU5_FWD(args)...)) {
 			return service.call(F::value, KANGARU5_FWD(args)...);
 		}
 	};
@@ -1886,6 +1919,8 @@ namespace kangaru::compatibility_v4 {
 				}}
 			} {}
 		
+		single_service() = default;
+		
 		template<typename... Args>
 			requires(
 				detail::inject_constructor_with_additional_args_callable<
@@ -1926,6 +1961,8 @@ namespace kangaru::compatibility_v4 {
 	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
 	struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::unique_ptr<Type>> {
+		unique_service() = default;
+		
 		template<typename... Args>
 		static auto construct(inject_t<container_service> container_service, Args&&... args)
 			-> inject_result<std::unique_ptr<Type>>
@@ -1953,6 +1990,8 @@ namespace kangaru::compatibility_v4 {
 	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
 	struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::shared_ptr<Type>> {
+		shared_service() = default;
+		
 		template<typename... Args>
 		static auto construct(inject_t<container_service> container_service, Args&&... args) {
 			auto& container = container_service.forward();
@@ -2017,20 +2056,20 @@ namespace kangaru::compatibility_v4::detail {
 			container{std::move(container)} {}
 		
 		template<typename F, typename... Args>
-			requires(different_from<map<>, Map>)
-		auto operator()(F&& f, Args&&... args) {
+			requires(different_from<map<>, Map> and valid_mapped_invoke<Map, F&&, Args&&...>)
+		auto operator()(F&& f, Args&&... args) const -> container_mapped_invoke_result_t<Map, F&&, Args&&...> {
 			return dereference(container).invoke(Map{}, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
 		}
 		
 		template<map_list M, typename F, typename... Args>
-			requires(std::same_as<map<>, Map>)
-		auto operator()(M map, F&& f, Args&&... args) {
+			requires(std::same_as<map<>, Map> and valid_mapped_invoke<M, F&&, Args&&...>)
+		auto operator()(M map, F&& f, Args&&... args) const -> container_mapped_invoke_result_t<Map, F&&, Args&&...> {
 			return dereference(container).invoke(map, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
 		}
 		
 		template<map_list M = map<>, typename F, typename... Args>
-			requires(std::same_as<map<>, Map>)
-		auto operator()(F&& f, Args&&... args) {
+			requires(std::same_as<map<>, Map> and valid_mapped_invoke<M, F&&, Args&&...>)
+		auto operator()(F&& f, Args&&... args) const -> container_mapped_invoke_result_t<Map, F&&, Args&&...> {
 			return dereference(container).invoke(M{}, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
 		}
 		
@@ -2058,7 +2097,7 @@ namespace kangaru::compatibility_v4::detail {
 		explicit basic_generator(Container container) requires(not std::is_pointer_v<Container>) :
 			container{std::move(container)} {}
 		
-		template<typename... Args>
+		template<typename... Args> requires(valid_service<Service, Args&&...>)
 		auto operator()(Args&&... args) const -> service_type<Service> {
 			return dereference(container).template service<Service>(KANGARU5_FWD(args)...);
 		}
@@ -2091,7 +2130,7 @@ namespace kangaru::compatibility_v4::detail {
 		explicit basic_lazy(Container container) requires(not std::is_pointer_v<Container>) :
 			container{std::move(container)} {}
 		
-		auto get() -> service_type<Service>& {
+		auto get() -> service_type<Service>& requires(valid_service<Service>) {
 			if (!service) {
 				service.emplace(dereference(container).template service<Service>());
 			}
@@ -2099,15 +2138,15 @@ namespace kangaru::compatibility_v4::detail {
 			return service.value();
 		}
 		
-		auto operator->() {
+		auto operator->() requires(valid_service<Service>) {
 			return &get();
 		}
 		
-		auto operator*() & -> service_type<Service>& {
+		auto operator*() & -> service_type<Service>& requires(valid_service<Service>) {
 			return get();
 		}
 		
-		auto operator*() && -> std::remove_reference_t<service_type<Service>>&& {
+		auto operator*() && -> std::remove_reference_t<service_type<Service>>&& requires(valid_service<Service>) {
 			return std::move(get());
 		}
 		

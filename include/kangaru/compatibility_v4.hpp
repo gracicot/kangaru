@@ -1965,17 +1965,26 @@ namespace kangaru::compatibility_v4 {
 		}
 	};
 	
-	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
 	struct unique_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::unique_ptr<Type>> {
 		unique_service() = default;
 		
 		template<typename... Args>
+			requires(
+				detail::inject_constructor_with_additional_args_callable<
+					Type,
+					detail::call_result_t<
+						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
+						detail::container_with_mapped_provide<Map>
+					>,
+					Args&&...
+				>
+			)
 		static auto construct(inject_t<container_service> container_service, Args&&... args)
 			-> inject_result<std::unique_ptr<Type>>
 		{
 			auto& container = container_service.forward();
-			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(KANGARU5_NO_ADL(ref)(container))(
+			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(detail::container_with_mapped_provide<Map>{&container})(
 				[&](deducer auto... deduce) requires(constructor_callable<Type, decltype(deduce)..., Args&&...>) {
 					return KANGARU5_NO_ADL(inject)(
 						std::make_unique<Type>(KANGARU5_NO_ADL(construct_in_place<Type>)(deduce..., KANGARU5_FWD(args)...))
@@ -1994,15 +2003,24 @@ namespace kangaru::compatibility_v4 {
 		}
 	};
 	
-	// TODO: properly guard construct function
 	template<typename Type, detail::map_list Map, std::size_t max_dependencies>
 	struct shared_service<Type, detail::autowire_tag<Map, max_dependencies>> : generic_service<std::shared_ptr<Type>> {
 		shared_service() = default;
 		
 		template<typename... Args>
+			requires(
+				detail::inject_constructor_with_additional_args_callable<
+					Type,
+					detail::call_result_t<
+						detail::make_basic_autowire_injector_function<basic_deducer, Map, max_dependencies>,
+						detail::container_with_mapped_provide<Map>
+					>,
+					Args&&...
+				>
+			)
 		static auto construct(inject_t<container_service> container_service, Args&&... args) {
 			auto& container = container_service.forward();
-			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(KANGARU5_NO_ADL(ref)(container))(
+			return KANGARU5_NO_ADL(make_basic_spread_injector<basic_deducer, max_dependencies>)(detail::container_with_mapped_provide<Map>{&container})(
 				[&](deducer auto... deduce) requires(constructor_callable<Type, decltype(deduce)..., Args&&...>) {
 					return KANGARU5_NO_ADL(inject)(
 						std::make_shared<Type>(KANGARU5_NO_ADL(construct_in_place<Type>)(deduce..., KANGARU5_FWD(args)...))

@@ -330,6 +330,9 @@ namespace test_autowire_default_services {
 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::shared_ptr<service2>>>::value);
 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::shared_ptr<service3>>>::value);
 		REQUIRE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::shared_ptr<service4>>>::value);
+		REQUIRE_FALSE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::unique_ptr<service1>>, int>::value);
+		REQUIRE_FALSE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::shared_ptr<service2>>, int>::value);
+		REQUIRE_FALSE(kgr::detail::is_service_valid<kgr::mapped_service_t<std::shared_ptr<service3>>, int>::value);
 		
 		kgr::container container;
 		

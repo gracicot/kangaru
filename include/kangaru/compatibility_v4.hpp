@@ -396,15 +396,8 @@ namespace kangaru::compatibility_v4::detail {
 	template<template<typename> typename Deducer, std::size_t max>
 	inline constexpr auto make_basic_v4_source_injector = make_basic_v4_source_injector_function<Deducer, max>{};
 	
-	using make_fast_v4_source_injector_function = make_basic_v4_source_injector_function<basic_deducer, 4>;
-	using make_v4_source_injector_function = make_basic_v4_source_injector_function<basic_deducer, 8>;
-	using make_slow_v4_source_injector_function = make_basic_v4_source_injector_function<basic_deducer, 16>;
-	using make_optional_v4_source_injector_function = make_basic_v4_source_injector_function<basic_deducer, 1>;
-
-	inline constexpr auto make_fast_v4_source_injector = make_fast_v4_source_injector_function{};
+	using make_v4_source_injector_function = make_basic_v4_source_injector_function<basic_deducer, 16>;
 	inline constexpr auto make_v4_source_injector = make_v4_source_injector_function{};
-	inline constexpr auto make_slow_v4_source_injector = make_slow_v4_source_injector_function{};
-	inline constexpr auto make_optional_v4_source_injector = make_optional_v4_source_injector_function{};
 }
 
 namespace kangaru::compatibility_v4 {

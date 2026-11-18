@@ -5,6 +5,7 @@
 
 #include "detail/define.hpp"
 
+// TODO: Remove references to unexported symbols
 namespace kangaru::compatibility_v4::detail {
 	using kangaru::detail::call_result_t;
 	using kangaru::detail::expand;
@@ -119,28 +120,21 @@ namespace kangaru::compatibility_v4::detail {
 	using construct_result_t = decltype(T::construct(std::declval<Args>()...));
 	
 	template<typename T, typename ConstructResult>
+	inline constexpr auto constructible_via_emplace_only = false;
+	
+	template<typename T, typename... Args>
+	inline constexpr auto constructible_via_emplace_only<T, std::tuple<Args...>> =
+		    (... and (not deducer<std::remove_cvref_t<Args>>))
+		and not std::constructible_from<T, in_place_t, Args&&...>
+		and default_constructible_emplaceable<T, Args&&...>;
+	
+	template<typename T, typename ConstructResult>
 	inline constexpr auto constructible_with_construct_result = false;
 	
 	template<typename T, typename... Args>
 	inline constexpr auto constructible_with_construct_result<T, std::tuple<Args...>> =
 		    (... and (not deducer<std::remove_cvref_t<Args>>))
-		and (
-			   std::constructible_from<T, in_place_t, Args&&...>
-			or default_constructible_emplaceable<T, Args&&...>
-		);
-	
-	template<unqualified_object T, typename... Args>
-	constexpr auto v4_constructor_impl(Args&&... args) -> T {
-		if constexpr (std::constructible_from<T, in_place_t, decltype(args)...>) {
-			return T(in_place, KANGARU5_FWD(args)...);
-		} else if constexpr (default_constructible_emplaceable<T, decltype(args)...>) {
-			auto result = T();
-			result.emplace(KANGARU5_FWD(args)...);
-			return result;
-		} else {
-			static_assert(not std::same_as<T, T>);
-		}
-	}
+		and std::constructible_from<T, in_place_t, Args&&...>;
 	
 	template<unqualified_object T, typename... Args>
 		requires(constructible_with_construct_result<T, construct_result_t<T, Args&&...>>)
@@ -148,21 +142,41 @@ namespace kangaru::compatibility_v4::detail {
 		auto injected = T::construct(KANGARU5_FWD(args)...);
 		
 		return std::apply([]<typename... A>(A&&... a) -> T {
-			return v4_constructor_impl<T>(KANGARU5_FWD(a)...);
+			return T(in_place, KANGARU5_FWD(a)...);
 		}, std::move(injected));
 	}
 	
-	template<typename T, typename... Args>
-	concept v4_constructor_callable = requires(Args&&... args) {
-		{ v4_constructor<T>(KANGARU5_FWD(args)...) } -> std::same_as<T>;
-	};
+	template<unqualified_object T, typename... Args>
+		requires(constructible_via_emplace_only<T, construct_result_t<T, Args&&...>>)
+	constexpr auto v4_constructor_emplace(T& service, Args&&... args) -> void {
+		auto injected = T::construct(KANGARU5_FWD(args)...);
+		
+		std::apply([&service]<typename... A>(A&&... a) -> void {
+			service.emplace(KANGARU5_FWD(a)...);
+		}, std::move(injected));
+	}
 	
 	struct autocall_second_step;
 	
 	template<typename V4Source>
 	struct v4_source_wrapper {
-		template<typename... Args> requires(not std::derived_from<V4Source, abstract> and (... and not_self<Args, v4_source_wrapper>) and v4_constructor_callable<V4Source, Args&&...>)
+		template<typename... Args>
+			requires(
+				    not std::derived_from<V4Source, abstract>
+				and (... and not_self<Args, v4_source_wrapper>)
+				and constructible_with_construct_result<V4Source, construct_result_t<V4Source, Args&&...>>
+			)
 		explicit(sizeof...(Args) == 1) constexpr v4_source_wrapper(Args&&... args) : v4_source(KANGARU5_NO_ADL(v4_constructor<V4Source>)(KANGARU5_FWD(args)...)) {}
+		
+		template<typename... Args>
+			requires(
+				    not std::derived_from<V4Source, abstract>
+				and (... and not_self<Args, v4_source_wrapper>)
+				and constructible_via_emplace_only<V4Source, construct_result_t<V4Source, Args&&...>>
+			)
+		explicit(sizeof...(Args) == 1) constexpr v4_source_wrapper(Args&&... args) : v4_source() {
+			v4_constructor_emplace(v4_source, KANGARU5_FWD(args)...);
+		}
 		
 		template<injectable T, forwarded<v4_source_wrapper> Self>
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> decltype(KANGARU5_FWD(source).v4_source.forward()) {
@@ -1179,10 +1193,10 @@ namespace kangaru::compatibility_v4::detail {
 		using source_for = typename mapping<T>::type;
 	};
 	
-	struct predicate_not_single {
+	struct predicate_not_single_has_autocall {
 		template<injectable T>
 		consteval bool operator()() const {
-			return not std::derived_from<T, single>;
+			return not allow_runtime_caching_v<T> and not std::same_as<second_step_init_t<T>, noop_second_step>;
 		}
 	};
 	
@@ -1425,7 +1439,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 								KANGARU5_NO_ADL(make_source_with_source_wrapping)(
 									KANGARU5_NO_ADL(make_source_with_construction)(
 										KANGARU5_NO_ADL(seal_source)(detail::container_base()),
-										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<detail::predicate_not_single>)(
+										KANGARU5_NO_ADL(make_construction_with_two_step_init_if<detail::predicate_not_single_has_autocall>)(
 											detail::container_construction{},
 											second_step_from_attribute{}
 										)
@@ -1450,7 +1464,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 								construction_with_two_step_init_if<
 									detail::container_construction,
 									second_step_from_attribute,
-									detail::predicate_not_single
+									detail::predicate_not_single_has_autocall
 								>
 							>
 						>
@@ -1545,7 +1559,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		
 		template<detail::v4_source Service>
 			requires(
-				cache_map_stores<detail::container_cache_type, detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>>
+				cache_map_stores<detail::container_cache_type, detail::polymorphic_v4_source<Service>>
 			)
 		bool contains() {
 			constexpr auto id = KANGARU5_NO_ADL(type_id_for<detail::polymorphic_v4_source<Service>>)();
@@ -1555,7 +1569,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		
 		template<detail::v4_source Service, typename... Args>
 			requires(
-				cache_map_stores<detail::container_cache_type, detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>>
+				cache_map_stores<detail::container_cache_type, detail::polymorphic_v4_source<Service>>
 			)
 		constexpr auto emplace(Args&&... args) -> bool
 			requires(
@@ -1571,7 +1585,7 @@ KANGARU5_EXPORT namespace kangaru::compatibility_v4 {
 		
 		template<detail::v4_source Service, typename... Args>
 			requires(
-				cache_map_stores<detail::container_cache_type, detail::with_polymorphic_v4_cast<with_cast_from<detail::v4_source_wrapper<Service>, service_type<Service>>, service_type<Service>>>
+				cache_map_stores<detail::container_cache_type, detail::polymorphic_v4_source<Service>>
 			)
 		constexpr auto replace(Args&&... args)
 			-> void
@@ -2063,13 +2077,13 @@ namespace kangaru::compatibility_v4::detail {
 		
 		template<map_list M, typename F, typename... Args>
 			requires(std::same_as<map<>, Map> and valid_mapped_invoke<M, F&&, Args&&...>)
-		auto operator()(M map, F&& f, Args&&... args) const -> container_mapped_invoke_result_t<Map, F&&, Args&&...> {
+		auto operator()(M map, F&& f, Args&&... args) const -> container_mapped_invoke_result_t<M, F&&, Args&&...> {
 			return dereference(container).invoke(map, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
 		}
 		
 		template<map_list M = map<>, typename F, typename... Args>
 			requires(std::same_as<map<>, Map> and valid_mapped_invoke<M, F&&, Args&&...>)
-		auto operator()(F&& f, Args&&... args) const -> container_mapped_invoke_result_t<Map, F&&, Args&&...> {
+		auto operator()(F&& f, Args&&... args) const -> container_mapped_invoke_result_t<M, F&&, Args&&...> {
 			return dereference(container).invoke(M{}, KANGARU5_FWD(f), KANGARU5_FWD(args)...);
 		}
 		

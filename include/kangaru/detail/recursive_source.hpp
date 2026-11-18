@@ -182,13 +182,38 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, forwarded_source Source>
 			requires(
-				    callable_template_1t_returns<T, Construction, T, Source&&>
+				    std::same_as<SecondStep, noop_second_step>
+				and callable_template_1t_returns<T, Construction, T, Source&&>
 				and callable_template_1t<SecondStep, T, T&, Source&&>
+			)
+		constexpr auto operator()(Source&& source) const -> T {
+			return construction.template operator()<T>(KANGARU5_FWD(source));
+		}
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				    not std::same_as<SecondStep, noop_second_step>
+				and callable_template_1t_returns<T, Construction, T, Source&&>
+				and callable_template_1t<SecondStep, T, T&, Source&&>
+				and object<T>
 			)
 		constexpr auto operator()(Source&& source) const -> T {
 			decltype(auto) result = construction.template operator()<T>(KANGARU5_FWD(source));
 			void(second_step.template operator()<T>(result, KANGARU5_FWD(source)));
 			return result;
+		}
+		
+		template<injectable T, forwarded_source Source>
+			requires(
+				    not std::same_as<SecondStep, noop_second_step>
+				and callable_template_1t_returns<T, Construction, T, Source&&>
+				and callable_template_1t<SecondStep, T, T&, Source&&>
+				and reference<T>
+			)
+		constexpr auto operator()(Source&& source) const -> T {
+			auto result = construction.template operator()<T>(KANGARU5_FWD(source));
+			void(second_step.template operator()<T>(result, KANGARU5_FWD(source)));
+			return KANGARU5_FWD(result);
 		}
 		
 	private:
@@ -218,8 +243,15 @@ KANGARU5_EXPORT namespace kangaru {
 			second_step{std::move(second_step)} {}
 		
 		template<injectable T, forwarded_source Source>
+			requires(std::same_as<SecondStep, noop_second_step>)
+		constexpr auto operator()(Source&& source) const -> T {
+			return construction.template operator()<T>(KANGARU5_FWD(source));
+		}
+		
+		template<injectable T, forwarded_source Source>
 			requires(
-				    callable_template_1t_returns<T, Construction, T, Source&&>
+				    not std::same_as<SecondStep, noop_second_step>
+				and callable_template_1t_returns<T, Construction, T, Source&&>
 				and SecondStepIf{}.template operator()<T>()
 				and callable_template_1t<SecondStep, T, T&, Source&&>
 				and unqualified_object<T>
@@ -235,7 +267,8 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<injectable T, forwarded_source Source>
 			requires(
-				    callable_template_1t_returns<T, Construction, T, Source&&>
+				    not std::same_as<SecondStep, noop_second_step>
+				and callable_template_1t_returns<T, Construction, T, Source&&>
 				and SecondStepIf{}.template operator()<T>()
 				and callable_template_1t<SecondStep, T, T&, Source&&>
 				and reference<T>

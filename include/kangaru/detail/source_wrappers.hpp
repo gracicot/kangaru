@@ -206,7 +206,9 @@ namespace kangaru {
 		template<wrapping_source T, forwarded<with_source_wrapping> Self>
 			requires(
 				    wrapping_source_of<Self, wrapped_source_t<T>>
-				and std::constructible_from<T, wrapped_source_t<T>>
+				and requires(std::add_pointer_t<auto() -> wrapped_source_t<T>> wrapped_prvalue) {
+					T(wrapped_prvalue());
+				}
 			)
 		constexpr KANGARU5_PROVIDE_FUNCTION_FRIEND auto provide(KANGARU5_PROVIDE_FUNCTION_THIS Self&& source) -> T {
 			return T(kangaru::provide<wrapped_source_t<T>>(KANGARU5_FWD(source).source));

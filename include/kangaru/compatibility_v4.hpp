@@ -37,7 +37,7 @@ namespace kangaru::compatibility_v4 {
 	
 	template<typename... Types>
 	struct overrides : polymorphic {
-		using parent_types = std::tuple<Types...>;
+		using parent_types = kangaru::override_type_list<Types...>;
 	};
 }
 
@@ -76,7 +76,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<v4_source>
 	struct parent_types_or_empty {
-		using type = std::tuple<>;
+		using type = kangaru::override_type_list<>;
 	};
 	
 	template<v4_source Service>
@@ -861,12 +861,12 @@ namespace kangaru::compatibility_v4 {
 namespace kangaru::compatibility_v4::detail {
 	template<typename T>
 	struct override_wrap_service {
-		using type = std::tuple<>;
+		using type = kangaru::override_type_list<>;
 	};
 	
 	template<typename... Parents>
-	struct override_wrap_service<std::tuple<Parents...>> {
-		using type = std::tuple<polymorphic_v4_source<Parents>...>;
+	struct override_wrap_service<kangaru::override_type_list<Parents...>> {
+		using type = kangaru::override_type_list<polymorphic_v4_source<Parents>...>;
 	};
 	
 	template<typename OverrideTuple>
@@ -911,7 +911,7 @@ namespace kangaru {
 			    requires{ typename Service::parent_types; }
 			and requires{ typename compatibility_v4::detail::override_wrap_service_t<typename Service::parent_types>; }
 		)
-	struct overrides_types_in_cache<compatibility_v4::detail::with_polymorphic_v4_cast<with_cast_from<compatibility_v4::detail::v4_source_wrapper<Service>, compatibility_v4::service_type<Service>>, compatibility_v4::service_type<Service>>> {
+	struct overrides_in_cache<compatibility_v4::detail::with_polymorphic_v4_cast<with_cast_from<compatibility_v4::detail::v4_source_wrapper<Service>, compatibility_v4::service_type<Service>>, compatibility_v4::service_type<Service>>> {
 		using type = typename compatibility_v4::detail::override_wrap_service_t<typename Service::parent_types>;
 	};
 }
@@ -1228,7 +1228,7 @@ namespace kangaru::compatibility_v4::detail {
 	
 	template<typename T>
 	struct overrides_types {
-		using type = std::tuple<>;
+		using type = kangaru::override_type_list<>;
 	};
 }
 

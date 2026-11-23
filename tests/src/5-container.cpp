@@ -78,13 +78,13 @@ struct int_wrapper {
 struct service_child_1 : service_a {
 	service_child_1() = default;
 	friend auto attribute(kangaru::allow_runtime_caching<service_child_1&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_child_1&>) -> std::tuple<service_a&>;
+	friend auto attribute(kangaru::overrides_in_cache<service_child_1&>) -> service_a&;
 };
 
 struct service_child_2 : service_a {
 	service_child_2() = default;
 	friend auto attribute(kangaru::allow_runtime_caching<service_child_2&>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<service_child_2&>) -> std::tuple<service_a&>;
+	friend auto attribute(kangaru::overrides_in_cache<service_child_2&>) -> service_a&;
 };
 
 struct shared_abstract {
@@ -96,8 +96,8 @@ struct shared_abstract {
 struct shared_concrete : shared_abstract {
 	shared_concrete() = default;
 	friend auto attribute(kangaru::allow_runtime_caching<std::shared_ptr<shared_concrete>>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<std::shared_ptr<shared_concrete>>)
-		-> std::tuple<std::shared_ptr<shared_abstract>>;
+	friend auto attribute(kangaru::overrides_in_cache<std::shared_ptr<shared_concrete>>)
+		-> std::shared_ptr<shared_abstract>;
 };
 
 struct dynamic_provided_abstract {
@@ -115,8 +115,8 @@ struct dynamic_provided_concrete : dynamic_provided_abstract {
 	explicit constexpr dynamic_provided_concrete(std::int32_t value) : dynamic_provided_abstract{value} {}
 	
 	friend auto attribute(kangaru::assume_runtime_cached<std::shared_ptr<dynamic_provided_concrete>>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<std::shared_ptr<dynamic_provided_concrete>>)
-		-> std::tuple<std::shared_ptr<dynamic_provided_abstract>>;
+	friend auto attribute(kangaru::overrides_in_cache<std::shared_ptr<dynamic_provided_concrete>>)
+		-> std::shared_ptr<dynamic_provided_abstract>;
 };
 
 struct has_second_step {

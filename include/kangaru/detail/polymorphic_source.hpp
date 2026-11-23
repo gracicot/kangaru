@@ -266,10 +266,9 @@ namespace kangaru {
 		template<typename>
 		struct override_polymorphic {};
 		
-		// TODO: Should we define a list type and simplify single override?
 		template<typename... Types>
-		struct override_polymorphic<std::tuple<Types...>> {
-			 using type = std::tuple<kangaru::any_source_of_ref<Types>...>;
+		struct override_polymorphic<override_type_list<Types...>> {
+			 using type = override_type_list<kangaru::any_source_of_ref<Types>...>;
 		};
 		
 		template<typename Tuple>
@@ -300,8 +299,8 @@ namespace kangaru {
 		}
 		
 		template<kangaru::source S, injectable P>
-		friend auto attribute(overrides_types_in_cache<with_polymorphic_cast<S, P>>)
-			-> detail::polymorphic_source_private::override_polymorphic_t<overrides_types_in_cache_t<P>>;
+		friend auto attribute(overrides_in_cache<with_polymorphic_cast<S, P>>)
+			-> detail::polymorphic_source_private::override_polymorphic_t<overrides_in_cache_t<P>>;
 		
 		template<kangaru::source S, injectable P>
 		friend auto attribute(second_step_init<with_polymorphic_cast<S, P>>)

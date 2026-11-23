@@ -67,7 +67,7 @@ KANGARU5_EXPORT namespace kangaru {
 namespace kangaru::detail::cache_types_private {
 	template<cache_map Map, different_from<void> T>
 	constexpr auto insert_overrides(Map& map, T& value) -> void {
-		using overrides = overrides_types_in_cache_t<T>;
+		using overrides = overrides_in_cache_t<T>;
 		std::apply([&](auto... s) {
 			[[maybe_unused]]
 			auto const for_each = [&](auto i, T& value) {
@@ -81,7 +81,7 @@ namespace kangaru::detail::cache_types_private {
 	
 	template<cache_map Map, different_from<void> T>
 	constexpr auto insert_or_assign_overrides(Map& map, T& value) -> void {
-		using overrides = overrides_types_in_cache_t<T>;
+		using overrides = overrides_in_cache_t<T>;
 		std::apply([&](auto... s) {
 			[[maybe_unused]]
 			auto const for_each = [&](auto i, T& value) {
@@ -96,7 +96,7 @@ namespace kangaru::detail::cache_types_private {
 	template<std::integral SizeType, cache_map Map, different_from<void> T>
 	constexpr auto remove_overrides(Map& map) -> SizeType {
 		auto n = SizeType{};
-		using overrides = overrides_types_in_cache_t<T>;
+		using overrides = overrides_in_cache_t<T>;
 		std::apply([&](auto... s) {
 			[[maybe_unused]]
 			auto const for_each = [&](auto i) {

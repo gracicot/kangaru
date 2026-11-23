@@ -11,6 +11,11 @@
 
 #include "define.hpp"
 
+namespace kangaru {
+	template<typename... Overrides>
+	struct override_type_list {};
+}
+
 namespace kangaru::detail::attribute_private {
 	auto attribute(auto&&) -> void requires false;
 	
@@ -41,7 +46,42 @@ namespace kangaru::detail::attribute_private {
 	
 	template<template<weak_injectable> typename Trait, weak_injectable T>
 	using evaluate_attribute_t = typename evaluate_attribute<Trait, T>::type;
+	
+	template<typename T>
+	struct wrap_in_type_list {
+		using type = override_type_list<T>;
+	};
+	
+	template<typename... Overrides>
+	struct wrap_in_type_list<override_type_list<Overrides...>> {
+		using type = override_type_list<Overrides...>;
+	};
+	
+	template<typename T>
+	using wrap_in_type_list_t = typename wrap_in_type_list<T>::type;
+	
+	template<std::size_t, typename>
+	struct type_list_element;
+	
+	template<std::size_t I>
+	struct type_list_element<I, override_type_list<>> {};
+	
+	template<typename Head, typename... Tail>
+	struct type_list_element<0, override_type_list<Head, Tail...>> {
+		using type = Head;
+	};
+	
+	template<std::size_t I, typename Head, typename... Tail>
+	struct type_list_element<I, override_type_list<Head, Tail...>> : type_list_element<I - 1, override_type_list<Tail...>> {};
 }
+
+template<typename... Overrides>
+struct std::tuple_size<kangaru::override_type_list<Overrides...>> :
+	std::integral_constant<std::size_t, sizeof...(Overrides)> {};
+
+template<typename... Overrides, std::size_t N>
+struct std::tuple_element<N, kangaru::override_type_list<Overrides...>> :
+	kangaru::detail::attribute_private::type_list_element<N, kangaru::override_type_list<Overrides...>> {};
 
 KANGARU5_EXPORT namespace kangaru {
 	template<typename T>
@@ -62,23 +102,25 @@ KANGARU5_EXPORT namespace kangaru {
 	template<weak_injectable T>
 	inline constexpr auto allow_empty_injection_v = detail::attribute_private::evaluate_attribute_t<allow_empty_injection, T>::value;
 	
-	// Consider having one type by default and a special list of types if necessary.
 	template<typename T>
-	struct overrides_types_in_cache {
+	struct overrides_in_cache {
 		template<weak_injectable A> requires(std::same_as<T, A>)
 		struct ttype {
-			using type = detail::attribute_private::attribute_function_t<overrides_types_in_cache, A, std::tuple<>>;
+			using type = detail::attribute_private::attribute_function_t<overrides_in_cache, A, override_type_list<>>;
 		};
 	};
 	
 	template<typename T>
-	using overrides_types_in_cache_t = typename detail::attribute_private::evaluate_attribute_t<overrides_types_in_cache, T>::type;
+	using overrides_in_cache_t = detail::attribute_private::wrap_in_type_list_t<typename detail::attribute_private::evaluate_attribute_t<overrides_in_cache, T>::type>;
 	
 	template<typename T>
 	struct allow_injection_using {
 		template<weak_injectable A> requires(std::same_as<T, A>)
 		using ttype = typename detail::attribute_private::attribute_function_t<allow_injection_using, A, std::true_type>;
 	};
+	
+	template<typename... Overrides>
+	struct allow_injection_using<override_type_list<Overrides...>> : std::false_type {};
 	
 	template<weak_injectable T>
 	inline constexpr auto allow_injection_using_v = detail::attribute_private::evaluate_attribute_t<allow_injection_using, T>::value;

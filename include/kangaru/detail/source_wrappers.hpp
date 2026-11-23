@@ -188,7 +188,7 @@ namespace kangaru {
 		}
 		
 		template<kangaru::source S, injectable F>
-		friend auto attribute(overrides_types_in_cache<with_cast_from<S, F>>) -> overrides_types_in_cache<S>;
+		friend auto attribute(overrides_in_cache<with_cast_from<S, F>>) -> overrides_in_cache<S>;
 		
 		template<kangaru::source S, injectable F>
 		friend auto attribute(second_step_init<with_cast_from<S, F>>) -> call_second_step_from_attribute_on_wrapped_source;

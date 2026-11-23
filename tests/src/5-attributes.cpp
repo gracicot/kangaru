@@ -142,23 +142,23 @@ static_assert(std::same_as<my_second_step, kangaru::second_step_init_t<attrf_sec
 static_assert(std::same_as<my_second_step, kangaru::second_step_init_t<attrs_second_step_init>>);
 
 // Override types in cache
-static_assert(std::same_as<std::tuple<>, kangaru::overrides_types_in_cache_t<default_value>>);
+static_assert(std::same_as<kangaru::override_type_list<>, kangaru::overrides_in_cache_t<default_value>>);
 
 struct base_class {};
 
-struct attrf_overrides_types_in_cache {
-	friend auto attribute(kangaru::overrides_types_in_cache<attrf_overrides_types_in_cache>) -> std::tuple<base_class>;
+struct attrf_overrides_in_cache {
+	friend auto attribute(kangaru::overrides_in_cache<attrf_overrides_in_cache>) -> base_class;
 };
 
-struct attrs_overrides_types_in_cache {};
+struct attrs_overrides_in_cache {};
 
 template<>
-struct kangaru::overrides_types_in_cache<attrs_overrides_types_in_cache> {
-	using type = std::tuple<base_class>;
+struct kangaru::overrides_in_cache<attrs_overrides_in_cache> {
+	using type = base_class;
 };
 
-static_assert(std::same_as<std::tuple<base_class>, kangaru::overrides_types_in_cache_t<attrf_overrides_types_in_cache>>);
-static_assert(std::same_as<std::tuple<base_class>, kangaru::overrides_types_in_cache_t<attrs_overrides_types_in_cache>>);
+static_assert(std::same_as<kangaru::override_type_list<base_class>, kangaru::overrides_in_cache_t<attrf_overrides_in_cache>>);
+static_assert(std::same_as<kangaru::override_type_list<base_class>, kangaru::overrides_in_cache_t<attrs_overrides_in_cache>>);
 
 TEST_CASE("allow_runtime_caching", "[attributes]") {
 	// This test is successful and has at least one runtime assertion.

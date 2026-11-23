@@ -20,8 +20,8 @@ struct dynamic_provided_concrete : dynamic_provided_abstract {
 	explicit constexpr dynamic_provided_concrete(std::int32_t value) : dynamic_provided_abstract{value} {}
 	
 	friend auto attribute(kangaru::assume_runtime_cached<std::shared_ptr<dynamic_provided_concrete>>) -> std::true_type;
-	friend auto attribute(kangaru::overrides_types_in_cache<std::shared_ptr<dynamic_provided_concrete>>)
-		-> std::tuple<std::shared_ptr<dynamic_provided_abstract>>;
+	friend auto attribute(kangaru::overrides_in_cache<std::shared_ptr<dynamic_provided_concrete>>)
+		-> std::shared_ptr<dynamic_provided_abstract>;
 };
 
 auto self_contained_base(auto&& base) {

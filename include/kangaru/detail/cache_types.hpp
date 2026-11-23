@@ -62,7 +62,9 @@ KANGARU5_EXPORT namespace kangaru {
 	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<type_id, void*>>);
-	
+}
+
+KANGARU5_EXPORT namespace kangaru {
 	template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;
@@ -225,7 +227,7 @@ KANGARU5_EXPORT namespace kangaru {
 	private:
 		template<different_from<void> T>
 		constexpr auto insert_overrides(T& value) -> void {
-			using overrides = overrides_types_in_cache_t<T>;
+			using overrides = overrides_in_cache_t<T>;
 			std::apply([this, &value](auto... s) {
 				[[maybe_unused]]
 				auto const for_each = [this](auto i, T& value) {
@@ -239,7 +241,7 @@ KANGARU5_EXPORT namespace kangaru {
 		
 		template<different_from<void> T>
 		constexpr auto insert_or_assign_overrides(T& value) -> void {
-			using overrides = overrides_types_in_cache_t<T>;
+			using overrides = overrides_in_cache_t<T>;
 			std::apply([this, &value](auto... s) {
 				auto const for_each = [this](auto i, T& value) {
 					using override = std::tuple_element_t<i, overrides>;
@@ -253,7 +255,7 @@ KANGARU5_EXPORT namespace kangaru {
 		template<different_from<void> T>
 		constexpr auto remove_overrides() -> size_type {
 			auto n = size_type{};
-			using overrides = overrides_types_in_cache_t<T>;
+			using overrides = overrides_in_cache_t<T>;
 			std::apply([this, &n](auto... s) {
 				auto const for_each = [this, &n](auto i) {
 					using override = std::tuple_element_t<i, overrides>;

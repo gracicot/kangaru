@@ -62,9 +62,7 @@ KANGARU5_EXPORT namespace kangaru {
 	concept forwarded_dereferenceable_cache_map = cache_map<std::remove_cvref_t<T>>;
 	
 	static_assert(cache_map<std::unordered_map<type_id, void*>>);
-}
-
-KANGARU5_EXPORT namespace kangaru {
+	
 	template<dereferenceable_cache_map Map>
 	struct polymorphic_map {
 		using key_type = typename Map::key_type;

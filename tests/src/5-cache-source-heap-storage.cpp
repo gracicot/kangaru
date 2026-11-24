@@ -26,7 +26,7 @@ struct Derived1 final : Base1 {
 		return id;
 	}
 	
-	friend auto attribute(kangaru::overrides_types_in_cache<Derived1*>) -> std::tuple<Base1*>;
+	friend auto attribute(kangaru::overrides_in_cache<Derived1*>) -> Base1*;
 };
 
 struct Derived2 final : Base1, Base2 {
@@ -36,7 +36,7 @@ struct Derived2 final : Base1, Base2 {
 		return id;
 	}
 	
-	friend auto attribute(kangaru::overrides_types_in_cache<Derived2*>) -> std::tuple<Base1*, Base2*>;
+	friend auto attribute(kangaru::overrides_in_cache<Derived2*>) -> kangaru::override_type_list<Base1*, Base2*>;
 };
 
 struct increment_source {
